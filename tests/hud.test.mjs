@@ -88,3 +88,15 @@ test('the UFO photo stops at the share the remaining data budget can send', () =
   assert.equal(ufoStopPct(0, 300), 0);
   assert.equal(ufoStopPct(50, 0), 0, 'no photo size: nothing to send');
 });
+
+import { normalizeAlarm } from '../src/ui/alarms.js';
+
+test("K2's false alarm kind names map to the reading the player can check", () => {
+  const a = normalizeAlarm('o2Leak');
+  assert.equal(a.kind, 'o2Leak');
+  assert.equal(a.stat, 'o2');
+  assert.equal(normalizeAlarm('powerFail').stat, 'energy');
+  assert.equal(normalizeAlarm('radiation').stat, 'radiation');
+  assert.notEqual(normalizeAlarm('o2Leak').id, normalizeAlarm('o2Leak').id, 'two alarms of one kind are two alarms');
+  assert.deepEqual(normalizeAlarm({ id: 'x', stat: 'o2', value: 2, unit: '%' }), { id: 'x', stat: 'o2', value: 2, unit: '%' });
+});

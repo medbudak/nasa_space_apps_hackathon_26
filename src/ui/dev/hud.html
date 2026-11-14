@@ -101,7 +101,7 @@
       power: { getStatus, setOrder },
       onAlarmResolve: (r) => { document.querySelector('[data-clock]').textContent += ` · alarm ${r.id}: ${r.answer} (${r.correct ? 'right' : 'wrong'}${r.verified ? ', checked' : ''})`; },
     });
-    window.devHud = { hud, state };
+    window.devHud = { hud, state, bus };
 
     let run = 0;
     document.querySelector('[data-run]').addEventListener('click', (e) => {
