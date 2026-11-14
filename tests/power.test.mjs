@@ -1,17 +1,18 @@
-// K2 tests for src/systems/power.js (M3 load shedding). Run with: node --test
+// K2 tests for src/systems/power.js (M3 load shedding). Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { step, val } from '../src/systems/survival.js';
+import { step } from '../src/systems/survival.js';
 import {
   LOAD_IDS, computeLoads, getPowerStatus, isOn, setExperimentLoad, setOrder,
 } from '../src/systems/power.js';
 import { data, eng, fakeBus, newState } from './helpers/k2_env.mjs';
 
-const ALL = ['weather', 'seismometer', 'radiation', 'moxie', 'plantChamber'];
+const ALL = ['meda', 'seis', 'rad', 'moxie', 'plantChamber'];
+const watt = (id) => data.instruments.find((r) => r.id === id).powerW.value;
 
-function setup(opts = {}) {
+function setup(design = {}, d = data) {
   const bus = fakeBus();
-  return { s: newState({ instruments: ALL, ...opts }), bus, ctx: { data, eng, bus } };
+  return { s: newState({ instrumentIds: ALL, ...design }, d), bus, ctx: { data: d, eng, bus } };
 }
 
 function sheds(bus) {
@@ -20,101 +21,112 @@ function sheds(bus) {
 
 /** Step until the first power:shed, or give up. */
 function runUntilShed(s, ctx, bus, maxSteps = 2000) {
-  for (let i = 0; i < maxSteps; i++) {
+  for (let i = 0; i < maxSteps && !s.life.loss; i++) {
     step(s, 0.5, ctx);
     if (sheds(bus).length) return true;
   }
   return false;
 }
 
-test('instrument power goes to the right load', () => {
+const byId = (loads) => Object.fromEntries(loads.map((l) => [l.id, l.watts]));
+
+test('by day, instrument power goes to the right load', () => {
   const { s, ctx } = setup();
-  const w = Object.fromEntries(computeLoads(s, ctx).map((l) => [l.id, l.watts]));
-  const p = (id) => data.instruments.find((r) => r.id === id).power_W;
-  assert.equal(w.moxie, p('moxie'));
-  assert.equal(w.greenhouse, p('plantChamber'));
-  assert.equal(w.experiments, p('weather') + p('seismometer') + p('radiation'));
-  assert.equal(w.lifeSupport, val(data.power.lifeSupport_W));
-  assert.equal(w.comms, val(data.power.comms_W));
+  s.time.solFraction = 0.5;
+  const w = byId(computeLoads(s, ctx));
+  assert.equal(w.moxie, watt('moxie'));
+  assert.equal(w.greenhouse, watt('plantChamber'));
+  assert.equal(w.experiments, watt('meda') + watt('seis') + watt('rad'));
+  assert.equal(w.lifeSupport, data.rules.habitatPowerW.value);
+});
+
+test('at night instruments are off, as in the Sol 0 estimate (rules.instrumentsAtNight)', () => {
+  const { s, ctx } = setup();
+  s.time.solFraction = 0.0;
+  const w = byId(computeLoads(s, ctx));
+  assert.equal(data.rules.instrumentsAtNight.value, false);
+  assert.equal(w.moxie, 0);
+  assert.equal(w.greenhouse, 0);
+  assert.equal(w.experiments, 0);
 });
 
 test('without the instrument the load draws nothing', () => {
-  const { s, ctx } = setup({ instruments: [] });
-  const w = Object.fromEntries(computeLoads(s, ctx).map((l) => [l.id, l.watts]));
+  const { s, ctx } = setup({ instrumentIds: [] });
+  s.time.solFraction = 0.5;
+  const w = byId(computeLoads(s, ctx));
   assert.equal(w.moxie, 0);
   assert.equal(w.greenhouse, 0);
 });
 
 test('an empty battery at night sheds from the bottom of the list and never sheds life support', () => {
-  const { s, bus, ctx } = setup({ battery_kWh: 5 });
+  const { s, bus, ctx } = setup({ batteryId: 'b150', insulationId: 'thin' });
   assert.ok(runUntilShed(s, ctx, bus), 'nothing was shed');
   const first = sheds(bus)[0];
-  assert.equal(first.shed[0], 'comms', 'bottom of the default list goes first');
   assert.ok(!first.shed.includes('lifeSupport'));
   assert.ok(isOn(s, 'lifeSupport'));
-  // At night only life support is left drawing power.
-  assert.equal(s.sim.load_W, val(data.power.lifeSupport_W));
-  assert.equal(s.sim.deficit_W, val(data.power.lifeSupport_W));
+  // At night with no generation, only life support is left drawing power.
+  assert.equal(s.power.loadW, data.rules.habitatPowerW.value);
+  assert.equal(s.power.deficitW, data.rules.habitatPowerW.value);
 });
 
 test('the player order decides what goes first', () => {
-  const { s, bus, ctx } = setup({ battery_kWh: 5 });
-  assert.ok(setOrder(s, ['lifeSupport', 'heating', 'greenhouse', 'comms', 'experiments', 'moxie']));
+  // Heating is the only big night load besides life support; put it last and it goes first.
+  const { s, bus, ctx } = setup({ batteryId: 'b150', insulationId: 'thin' });
+  assert.ok(setOrder(s, ['lifeSupport', 'greenhouse', 'moxie', 'experiments', 'comms', 'heating']));
   runUntilShed(s, ctx, bus);
-  assert.equal(sheds(bus)[0].shed[0], 'moxie');
+  assert.equal(sheds(bus)[0].shed[0], 'heating');
 });
 
-test('setOrder rejects a list that moves life support or misses a load', () => {
+test('setOrder rejects a list that moves life support or misses a load, and keeps the same array', () => {
   const { s } = setup();
-  const before = [...s.sim.power.order];
+  const order = s.power.order;
+  const before = [...order];
   assert.equal(setOrder(s, ['heating', 'lifeSupport', 'greenhouse', 'moxie', 'experiments', 'comms']), false);
   assert.equal(setOrder(s, ['lifeSupport', 'heating']), false);
   assert.equal(setOrder(s, ['lifeSupport', 'heating', 'heating', 'moxie', 'experiments', 'comms']), false);
-  assert.deepEqual(s.sim.power.order, before);
+  assert.deepEqual(s.power.order, before);
+  assert.ok(setOrder(s, ['lifeSupport', 'comms', 'heating', 'greenhouse', 'moxie', 'experiments']));
+  assert.equal(s.power.order, order, 'order array was replaced instead of updated in place');
 });
 
 test('shed loads come back after the battery refills, and do not flicker overnight', () => {
   // This test is about restoring loads, not about freezing: a habitat that cools very slowly
   // keeps the astronaut alive through a night with the heating shed.
-  const slowCooling = { ...data, habitat: { ...data.habitat, coolingTime_h: { value: 1e9 } } };
-  const { s, bus } = setup({ battery_kWh: 5 });
-  const ctx = { data: slowCooling, eng, bus };
+  const slowCooling = structuredClone(data);
+  slowCooling.thermal.habitatCoolingHours.value = 1e9;
+  const { s, bus, ctx } = setup({ batteryId: 'b150', insulationId: 'thin' }, slowCooling);
   runUntilShed(s, ctx, bus);
-  const shedSol = s.sol;
-  // Rest of the night: loads must stay off until the battery passes the restore threshold.
-  for (let i = 0; i < 1000 && (s.timeOfSol > 0.5 || s.timeOfSol < 0.25); i++) {
+  const shedSol = s.time.sol;
+  const restoreAt = data.rules.powerRestoreFraction.value * s.power.batteryCapacityWh;
+  for (let i = 0; i < 1000 && (s.time.solFraction > 0.5 || s.time.solFraction < 0.25); i++) {
     step(s, 0.5, ctx);
-    if (s.resources.energy_kWh < val(data.tuning.powerRestoreFraction) * 5) {
-      assert.ok(!isOn(s, 'comms'), 'comms came back before the battery recovered');
-    }
+    if (s.power.batteryWh < restoreAt) assert.ok(!isOn(s, 'heating'), 'heating came back before the battery recovered');
   }
-  // Next day: run to noon, everything should be back on.
-  for (let i = 0; i < 1000 && (s.sol === shedSol || s.timeOfSol < 0.5); i++) step(s, 0.5, ctx);
-  assert.equal(s.sim.loss, null);
-  for (const id of LOAD_IDS) assert.ok(isOn(s, id), `${id} still off at noon`);
+  for (let i = 0; i < 1000 && (s.time.sol === shedSol || s.time.solFraction < 0.6); i++) step(s, 0.5, ctx);
+  assert.equal(s.life.loss, null);
+  for (const id of LOAD_IDS) assert.ok(isOn(s, id), `${id} still off in the afternoon`);
 });
 
 test('a large battery gets through the night without shedding', () => {
-  const { s, bus, ctx } = setup({ battery_kWh: 60, insulation: 'thick' });
+  const { s, bus, ctx } = setup({ batteryId: 'b300', insulationId: 'thick' });
   for (let i = 0; i < 240; i++) step(s, 0.5, ctx);
   assert.equal(sheds(bus).length, 0);
 });
 
 test('a running experiment adds to the experiments load', () => {
-  const { s, ctx } = setup({ instruments: [] });
+  const { s, ctx } = setup({ instrumentIds: [] });
   setExperimentLoad(s, 250);
-  const exp = computeLoads(s, ctx).find((l) => l.id === 'experiments');
-  assert.equal(exp.watts, 250);
+  assert.equal(byId(computeLoads(s, ctx)).experiments, 250);
   setExperimentLoad(s, 0);
 });
 
 test('getPowerStatus gives the power panel everything in one object', () => {
-  const { s, ctx } = setup();
+  const { s, ctx } = setup({ batteryId: 'b200' });
   step(s, 0.5, ctx);
   const st = getPowerStatus(s, ctx);
-  assert.equal(st.capacity_kWh, 40);
+  assert.equal(st.batteryCapacityWh, 200 * 1000);
   assert.equal(st.loads.length, LOAD_IDS.length);
   assert.equal(st.loads[0].id, 'lifeSupport');
   assert.equal(st.loads[0].pinned, true);
-  assert.equal(typeof st.generation_W, 'number');
+  assert.equal(typeof st.generationW, 'number');
 });

@@ -1,52 +1,47 @@
-// survival.js — K2: surface simulation step (time, day/night, energy, temperature, O2).
+// survival.js — K2: surface simulation (time, day/night, energy, heat, O2, radiation, EVA, loss).
 //
-// Works on K1's gameState (src/core/state.js on the `enes` branch):
-//   state.sol, state.timeOfSol (0..1)
-//   state.design.landingSiteId, state.design.power.{solarArea_m2, battery_kWh}, state.design.insulation
-//   state.resources.{oxygen_kg, energy_kWh, radiation_mSv}
-// Fields K1's schema does not have yet live in one K2 sub-object, state.sim (requested from K1):
-//   state.sim.{generation_W, load_W, deficit_W, dustLoss, outside_C, inside_C, events}
+// State (K1's src/core/state.js, D-003). This file creates and updates:
+//   state.time  { sol, solFraction }
+//   state.power { batteryWh, batteryCapacityWh, generationW, loadW, deficitW, dust,
+//                 order[], off{}, experimentW }            (the last three: power.js)
+//   state.env   { outsideC, insideC }
+//   state.life  { o2Kg, radiationMSv, eva{}, body{}, loss }
+//     eva, body and loss are not in K1's schema yet (requested); they live under life until then.
+//   state.outcome = 'lost' on a loss; state.stats.{energyUsedKWh, solsSurvived}
+// Design choices are ids in state.design (siteId, powerId, batteryId, insulationId, ...).
 //
-// Nothing is imported from K1's files, so this module and its tests run on their own.
-// The game passes in:
-//   ctx.data — parsed src/data/nasa_data.json (every number { value, unit, src, verified })
-//   ctx.eng  — src/core/engineering.js
+// The game passes ctx = { data, eng, bus? }:
+//   data — parsed src/data/nasa_data.json
+//   eng  — src/core/engineering.js (sunCos, solarPower, surfaceTemp, heatingPower, oxygenToReturn)
+//          plus habitatTemp, requested from K1 (Newton cooling toward outside). Until K1 adds it,
+//          the habitat simply does not cool when its heating is shed (a warning is logged once).
 //
-// From engineering.js this file uses solarPower_W (exists) and three formulas requested from K1:
-//   eng.sunCosZenith(timeOfSol)                              -> cos of solar zenith, 0 at night
-//   eng.surfaceTemp_C({ min_C, max_C, timeOfSol })           -> outside temperature, °C
-//   eng.heatingPower_W({ inside_C, outside_C, insulation })  -> heater draw, W
-// and for the point of no return (M4), K1's existing formula:
-//   eng.oxygenToReturn({ distanceM, speedMs, o2KgPerSec, safetyFactor }) -> kg
-// and one more requested from K1, for the habitat cooling down when its heating is shed:
-//   eng.habitatTemp_C({ inside_C, outside_C, dtHours, coolingTime_h }) -> new inside °C
-//     (Newton's law of cooling: inside moves toward outside with time constant coolingTime_h)
-//
-// No gameplay numbers are written in this file.
+// No gameplay numbers are written in this file: they all come from nasa_data.json.
 
-import { val, landingSite } from './simData.js';
+import { val, rowVal, designRows } from './simData.js';
 import { initPower, computeLoads, sumOn, updateShedding, isOn } from './power.js';
 
-export { val, landingSite };
-
 /**
- * Prepare the surface run after Sol 0: start the clock, fill the battery and O2,
- * and create state.sim. Call once when the surface scene starts a new run.
+ * Fill state.time / power / env / life for a new surface run, after Sol 0.
+ * Call once when the surface scene starts a new run (not on a reload: they exist then).
  */
-export function initSurvival(state, data) {
-  if (state.sol < 1) state.sol = 1;
-  state.timeOfSol = val(data.tuning.startTimeOfSol);
-  state.resources.energy_kWh = state.design.power.battery_kWh;
-  state.resources.oxygen_kg = val(data.life.oxygenStart_kg);
-  state.sim = {
-    generation_W: 0,
-    load_W: 0,
-    deficit_W: 0, // > 0 when the battery is empty and the loads are not covered
-    dustLoss: 0, // 0..1 share of panel output lost to dust
-    outside_C: 0,
-    inside_C: val(data.habitat.target_C),
-    events: null, // filled by events.js
-    power: null, // filled by power.js
+export function createSurvivalState(state, data) {
+  const { battery } = designRows(state, data);
+  const capacityWh = rowVal(battery, 'capacityKWh') * 1000;
+
+  state.time = { sol: 1, solFraction: val(data.time.startSolFraction, 'time.startSolFraction') };
+  state.power = {
+    batteryWh: capacityWh, // start full
+    batteryCapacityWh: capacityWh,
+    generationW: 0,
+    loadW: 0,
+    deficitW: 0, // > 0 when the battery is empty and the loads are not covered
+    dust: 0, // 0..1 share of panel output lost to dust
+  };
+  state.env = { outsideC: 0, insideC: val(data.thermal.habitatTargetC, 'thermal.habitatTargetC') };
+  state.life = {
+    o2Kg: val(data.life.o2StartKg, 'life.o2StartKg'),
+    radiationMSv: 0,
     eva: {
       outside: false,
       distanceM: 0, // from the habitat airlock; set by surface.js as the astronaut walks
@@ -63,156 +58,144 @@ export function initSurvival(state, data) {
       cold: false, // the astronaut is in dangerous cold right now
       coldHours: 0, // game hours of cold in a row; resets when warm
     },
-    loss: null, // set once by checkLoss(): { reasonKey, sol, timeOfSol, values }
+    loss: null, // set once by checkLoss(): { reasonKey, sol, solFraction, values }
   };
   initPower(state);
   return state;
 }
 
-/** Real seconds -> fraction of a sol. */
-export function realSecondsToSol(seconds, data) {
-  return seconds / val(data.tuning.solDuration);
+/** Real seconds -> game hours. */
+export function realSecondsToHours(seconds, data) {
+  return (seconds / val(data.time.solRealSeconds, 'time.solRealSeconds')) * val(data.mars.solHours, 'mars.solHours');
 }
 
-/** Fraction of a sol -> game hours (a sol is longer than an Earth day). */
-export function solToHours(solAmount, data) {
-  return solAmount * val(data.mars.solLength);
+/** True while the Sun is down at the landing site. */
+export function isNight(state, { data, eng }) {
+  const { site } = designRows(state, data);
+  return eng.sunCos(state.time.solFraction, rowVal(site, 'latitudeDeg')) === 0;
 }
 
 /**
  * Advance the simulation by realDt seconds of real time.
- * Changes state.sol, state.timeOfSol, state.resources and state.sim.
+ * Does nothing once the mission is lost.
  */
 export function step(state, realDt, ctx) {
-  if (state.sim.loss) return state; // the mission is over: nothing moves any more
-  const dSol = realSecondsToSol(realDt, ctx.data);
-  const dtHours = solToHours(dSol, ctx.data);
-  advanceTime(state, dSol);
+  if (state.life.loss) return state;
+  const dtHours = realSecondsToHours(realDt, ctx.data);
+  advanceTime(state, dtHours / val(ctx.data.mars.solHours, 'mars.solHours'));
   updateEnvironment(state, ctx);
   updatePower(state, dtHours, ctx);
   updateHabitatTemp(state, dtHours, ctx);
   updateRadiation(state, dtHours, ctx.data);
-  updateLife(state, dSol, ctx.data);
+  updateLife(state, dtHours, ctx.data);
   updateEva(state, dtHours, ctx);
   updateBody(state, dtHours, ctx.data);
+  updateStats(state, dtHours);
   checkLoss(state, ctx);
   return state;
 }
 
 function advanceTime(state, dSol) {
-  state.timeOfSol += dSol;
-  while (state.timeOfSol >= 1) {
-    state.timeOfSol -= 1;
-    state.sol += 1;
+  const t = state.time;
+  t.solFraction += dSol;
+  while (t.solFraction >= 1) {
+    t.solFraction -= 1;
+    t.sol += 1;
   }
 }
 
 function updateEnvironment(state, { data, eng }) {
-  const site = landingSite(data, state.design.landingSiteId);
-  state.sim.outside_C = eng.surfaceTemp_C({
-    min_C: site.nightMin_C,
-    max_C: site.dayMax_C,
-    timeOfSol: state.timeOfSol,
+  const { site } = designRows(state, data);
+  state.env.outsideC = eng.surfaceTemp({
+    minC: rowVal(site, 'nightMinC'),
+    maxC: rowVal(site, 'dayMaxC'),
+    solFraction: state.time.solFraction,
   });
+}
+
+/** Panel output at this moment, plus any continuous source (RTG). */
+export function generationW(state, { data, eng }) {
+  const { site, powerSource } = designRows(state, data);
+  let w = rowVal(powerSource, 'continuousW', { optional: true });
+  if (powerSource.panelEfficiency) {
+    w += eng.solarPower({
+      irradiance: val(data.mars.solarIrradianceWm2, 'mars.solarIrradianceWm2'),
+      area: rowVal(powerSource, 'panelAreaM2'),
+      efficiency: rowVal(powerSource, 'panelEfficiency'),
+      cosZ: eng.sunCos(state.time.solFraction, rowVal(site, 'latitudeDeg')),
+      dust: state.power.dust,
+    });
+  }
+  return w;
 }
 
 function updatePower(state, dtHours, ctx) {
-  const { data, eng } = ctx;
-  const sim = state.sim;
-  const res = state.resources;
-  const power = state.design.power;
-
-  sim.generation_W = eng.solarPower_W({
-    irradiance_Wm2: val(data.mars.solarIrradiance),
-    area_m2: power.solarArea_m2,
-    efficiency: val(data.power.panelEfficiency),
-    cosZenith: eng.sunCosZenith(state.timeOfSol),
-    dustLoss: sim.dustLoss,
-  });
+  const p = state.power;
+  p.generationW = generationW(state, ctx);
 
   // Only loads that are switched on draw power (power.js decides which).
-  sim.load_W = sumOn(computeLoads(state, ctx));
+  p.loadW = sumOn(computeLoads(state, ctx));
 
   // Battery bookkeeping: surplus charges, shortfall drains, clamp to [0, capacity].
-  const next = res.energy_kWh + ((sim.generation_W - sim.load_W) * dtHours) / 1000;
-  res.energy_kWh = Math.min(Math.max(next, 0), power.battery_kWh);
+  const next = p.batteryWh + (p.generationW - p.loadW) * dtHours;
+  p.batteryWh = Math.min(Math.max(next, 0), p.batteryCapacityWh);
 
-  // Shed or restore loads for the next step; sets sim.load_W and sim.deficit_W.
+  // Shed or restore loads for the next step; sets loadW and deficitW.
   updateShedding(state, ctx);
 }
+
+let warnedNoHabitatTemp = false;
 
 // With its heating on, the habitat holds its set point (simplified: it snaps back as soon as
 // heating returns). With heating shed, it cools toward the outside temperature.
 function updateHabitatTemp(state, dtHours, { data, eng }) {
-  const sim = state.sim;
+  const env = state.env;
   if (isOn(state, 'heating')) {
-    sim.inside_C = val(data.habitat.target_C);
+    env.insideC = val(data.thermal.habitatTargetC, 'thermal.habitatTargetC');
     return;
   }
-  sim.inside_C = eng.habitatTemp_C({
-    inside_C: sim.inside_C,
-    outside_C: sim.outside_C,
+  if (typeof eng.habitatTemp !== 'function') {
+    if (!warnedNoHabitatTemp) console.warn('[survival] engineering.habitatTemp is missing: the habitat will not cool');
+    warnedNoHabitatTemp = true;
+    return;
+  }
+  env.insideC = eng.habitatTemp({
+    insideC: env.insideC,
+    outsideC: env.outsideC,
     dtHours,
-    coolingTime_h: val(data.habitat.coolingTime_h),
+    coolingHours: val(data.thermal.habitatCoolingHours, 'thermal.habitatCoolingHours'),
   });
 }
 
 // Surface dose accumulates all the time (inside and outside; simplified, no habitat shielding).
 // The source value is per Earth day (24 h).
 function updateRadiation(state, dtHours, data) {
-  state.resources.radiation_mSv += (val(data.radiation.surfaceMSvPerDay) * dtHours) / 24;
+  state.life.radiationMSv += (val(data.radiation.surfaceMSvPerDay, 'radiation.surfaceMSvPerDay') * dtHours) / 24;
 }
 
-function updateLife(state, dSol, data) {
-  if (state.sim.eva.outside) return; // outside, the astronaut breathes from the suit
-  const use = val(data.life.oxygenPerCrewPerSol_kg) * val(data.life.crew) * dSol;
-  state.resources.oxygen_kg = Math.max(0, state.resources.oxygen_kg - use);
+// Habitat O2 use. The source value is per crew member per Earth day (24 h).
+function updateLife(state, dtHours, data) {
+  if (state.life.eva.outside) return; // outside, the astronaut breathes from the suit
+  const perHour = val(data.life.o2KgPerCrewPerDay, 'life.o2KgPerCrewPerDay') / 24;
+  const use = perHour * val(data.life.crew, 'life.crew') * dtHours;
+  state.life.o2Kg = Math.max(0, state.life.o2Kg - use);
 }
 
 // Body cold (simplified): inside, the habitat air is below the danger line;
 // outside, the suit joints are frozen. Counts game hours of cold in a row.
 function updateBody(state, dtHours, data) {
-  const { sim } = state;
-  sim.body.cold = sim.eva.outside
-    ? sim.eva.jointsFrozen
-    : sim.inside_C <= val(data.body.coldBelow_C);
-  sim.body.coldHours = sim.body.cold ? sim.body.coldHours + dtHours : 0;
+  const { eva, body } = state.life;
+  body.cold = eva.outside
+    ? eva.jointsFrozen
+    : state.env.insideC <= val(data.thermal.bodyColdBelowC, 'thermal.bodyColdBelowC');
+  body.coldHours = body.cold ? body.coldHours + dtHours : 0;
 }
 
-// ---------------------------------------------------------------------------
-// Loss conditions (D-006). The report card is still shown after a loss.
-
-/**
- * Check the loss conditions once; on the first one met, record it in state.sim.loss,
- * set state.outcome = 'lost', and return it. Returns null while the mission goes on.
- * Order matters only when two happen in the same step: the first listed is reported.
- * Called by step(); surface.js reads state.sim.loss and moves to the ending scene.
- */
-export function checkLoss(state, { data }) {
-  const { sim, resources } = state;
-  if (sim.loss) return sim.loss;
-
-  let reasonKey = null;
-  let values = {};
-  if (sim.eva.outside && sim.eva.suitO2Kg <= 0) {
-    reasonKey = 'loss.suitOxygen';
-    values = { distanceM: Math.round(sim.eva.distanceM) };
-  } else if (!sim.eva.outside && resources.oxygen_kg <= 0) {
-    reasonKey = 'loss.oxygen';
-  } else if (sim.body.coldHours >= val(data.loss.coldHours)) {
-    reasonKey = 'loss.cold';
-    values = { coldHours: val(data.loss.coldHours), inside_C: Math.round(sim.inside_C) };
-  } else if (resources.radiation_mSv > val(data.loss.radiationLimit_mSv)) {
-    reasonKey = 'loss.radiation';
-    values = { dose_mSv: Math.round(resources.radiation_mSv), limit_mSv: val(data.loss.radiationLimit_mSv) };
-  } else if (typeof sim.sanity === 'number' && sim.sanity <= 0) {
-    reasonKey = 'loss.sanity'; // sim.sanity is created by sanity.js (not written yet)
-  }
-  if (!reasonKey) return null;
-
-  sim.loss = { reasonKey, sol: state.sol, timeOfSol: state.timeOfSol, values };
-  state.outcome = 'lost';
-  return sim.loss;
+// Run totals for K1's report card.
+function updateStats(state, dtHours) {
+  if (!state.stats) return;
+  state.stats.energyUsedKWh += (state.power.loadW * dtHours) / 1000;
+  state.stats.solsSurvived = state.time.sol - 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -223,11 +206,10 @@ export function checkLoss(state, { data }) {
 
 /** Leave the habitat with a full suit. */
 export function startEva(state, data) {
-  const eva = state.sim.eva;
-  Object.assign(eva, {
+  Object.assign(state.life.eva, {
     outside: true,
     distanceM: 0,
-    suitO2Kg: val(data.eva.suitO2_kg),
+    suitO2Kg: val(data.eva.suitO2Kg, 'eva.suitO2Kg'),
     jointsFrozen: false,
     thawed: false,
     speedFactor: 1,
@@ -240,39 +222,75 @@ export function startEva(state, data) {
 
 /** Back inside the airlock. */
 export function endEva(state) {
-  Object.assign(state.sim.eva, { outside: false, distanceM: 0, noReturn: false, requiredO2Kg: 0 });
+  Object.assign(state.life.eva, { outside: false, distanceM: 0, noReturn: false, requiredO2Kg: 0 });
 }
 
 /** surface.js reports where the astronaut is. */
 export function setEvaPosition(state, { distanceM, nearWreck = false }) {
-  state.sim.eva.distanceM = Math.max(0, distanceM);
-  state.sim.eva.nearWreck = nearWreck;
+  state.life.eva.distanceM = Math.max(0, distanceM);
+  state.life.eva.nearWreck = nearWreck;
 }
 
 /** Current walking speed in m/s (normal speed × freeze factor). */
 export function walkSpeedMs(state, data) {
-  return val(data.eva.walkSpeed_ms) * state.sim.eva.speedFactor;
+  return val(data.eva.walkSpeedMs, 'eva.walkSpeedMs') * state.life.eva.speedFactor;
 }
 
 function updateEva(state, dtHours, { data, eng }) {
-  const eva = state.sim.eva;
+  const eva = state.life.eva;
   if (!eva.outside) return;
 
-  const o2PerHour = val(data.eva.oxygenPerHour_kg);
+  const o2PerHour = val(data.life.evaO2KgPerHour, 'life.evaO2KgPerHour');
   eva.suitO2Kg = Math.max(0, eva.suitO2Kg - o2PerHour * dtHours);
 
-  if (!eva.jointsFrozen && !eva.thawed && state.sim.outside_C <= val(data.eva.jointFreezeBelow_C)) {
+  if (!eva.jointsFrozen && !eva.thawed && state.env.outsideC <= val(data.eva.jointFreezeBelowC, 'eva.jointFreezeBelowC')) {
     eva.jointsFrozen = true;
-    eva.speedFactor = val(data.eva.jointFreezeSpeedFactor);
+    eva.speedFactor = val(data.eva.jointFreezeSpeedFactor, 'eva.jointFreezeSpeedFactor');
   }
 
   eva.requiredO2Kg = eng.oxygenToReturn({
     distanceM: eva.distanceM,
     speedMs: walkSpeedMs(state, data),
     o2KgPerSec: o2PerHour / 3600,
-    safetyFactor: val(data.eva.noReturnSafetyFactor),
+    safetyFactor: val(data.rules.noReturnSafetyFactor, 'rules.noReturnSafetyFactor'),
   });
   eva.noReturn = eva.suitO2Kg < eva.requiredO2Kg;
+}
+
+// ---------------------------------------------------------------------------
+// Loss conditions (D-006). The report card is still shown after a loss.
+
+/**
+ * Check the loss conditions; on the first one met, record it in state.life.loss,
+ * set state.outcome = 'lost', and return it. Returns null while the mission goes on.
+ * When two happen in the same step, the first listed is reported.
+ * Called by step(); surface.js reads state.life.loss and moves to the ending scene.
+ */
+export function checkLoss(state, { data }) {
+  const life = state.life;
+  if (life.loss) return life.loss;
+
+  let reasonKey = null;
+  let values = {};
+  if (life.eva.outside && life.eva.suitO2Kg <= 0) {
+    reasonKey = 'loss.suitOxygen';
+    values = { distanceM: Math.round(life.eva.distanceM) };
+  } else if (!life.eva.outside && life.o2Kg <= 0) {
+    reasonKey = 'loss.oxygen';
+  } else if (life.body.coldHours >= val(data.rules.coldLossHours, 'rules.coldLossHours')) {
+    reasonKey = 'loss.cold';
+    values = { coldHours: val(data.rules.coldLossHours, 'rules.coldLossHours'), insideC: Math.round(state.env.insideC) };
+  } else if (life.radiationMSv > val(data.rules.radiationLimitMSv, 'rules.radiationLimitMSv')) {
+    reasonKey = 'loss.radiation';
+    values = { doseMSv: Math.round(life.radiationMSv), limitMSv: val(data.rules.radiationLimitMSv, 'rules.radiationLimitMSv') };
+  } else if (typeof life.sanity === 'number' && life.sanity <= 0) {
+    reasonKey = 'loss.sanity'; // life.sanity is created by sanity.js (not written yet)
+  }
+  if (!reasonKey) return null;
+
+  life.loss = { reasonKey, sol: state.time.sol, solFraction: state.time.solFraction, values };
+  state.outcome = 'lost';
+  return life.loss;
 }
 
 // ---------------------------------------------------------------------------
@@ -281,8 +299,8 @@ function updateEva(state, dtHours, { data, eng }) {
 
 /** Spend game time in game hours; runs the simulation forward. */
 export function spendTime(state, hours, ctx) {
-  let left = (hours / val(ctx.data.mars.solLength)) * val(ctx.data.tuning.solDuration);
-  while (left > 0) {
+  let left = hours / realSecondsToHours(1, ctx.data); // in real seconds
+  while (left > 0 && !state.life.loss) {
     const dt = Math.min(1, left);
     step(state, dt, ctx);
     left -= dt;
@@ -290,16 +308,16 @@ export function spendTime(state, hours, ctx) {
   return true;
 }
 
-/** Spend battery energy in kWh. */
-export function spendEnergy(state, kWh) {
-  if (state.resources.energy_kWh < kWh) return false;
-  state.resources.energy_kWh -= kWh;
+/** Spend battery energy in Wh. */
+export function spendEnergy(state, wh) {
+  if (state.power.batteryWh < wh) return false;
+  state.power.batteryWh -= wh;
   return true;
 }
 
-/** Spend oxygen in kg. */
+/** Spend habitat oxygen in kg. */
 export function spendO2(state, kg) {
-  if (state.resources.oxygen_kg < kg) return false;
-  state.resources.oxygen_kg -= kg;
+  if (state.life.o2Kg < kg) return false;
+  state.life.o2Kg -= kg;
   return true;
 }

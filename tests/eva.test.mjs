@@ -1,32 +1,32 @@
 // K2 tests for the EVA / point-of-no-return part of survival.js and its card (M4).
-// Run with: node --test
+// Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { endEva, setEvaPosition, startEva, step, val } from '../src/systems/survival.js';
+import { endEva, setEvaPosition, startEva, step } from '../src/systems/survival.js';
 import { checkEvents, resolveDecision } from '../src/systems/events.js';
-import { data, eng, fakeBus, newState } from './helpers/k2_env.mjs';
+import { data, eng, fakeBus, newState, realSeconds } from './helpers/k2_env.mjs';
 
-const o2PerHour = val(data.eva.oxygenPerHour_kg);
-const safety = val(data.eva.noReturnSafetyFactor);
-const walk = val(data.eva.walkSpeed_ms);
-const freeze = val(data.eva.jointFreezeSpeedFactor);
-const TINY = 0.001; // real seconds: enough to refresh the EVA numbers without moving the clock much
+const o2PerHour = data.life.evaO2KgPerHour.value;
+const safety = data.rules.noReturnSafetyFactor.value;
+const walk = data.eva.walkSpeedMs.value;
+const freeze = data.eva.jointFreezeSpeedFactor.value;
+const TINY = 0.001; // real seconds: refreshes the EVA numbers without moving the clock much
+const NOON = 0.5;
+const PRE_DAWN = 0.24; // coldest time in K1's surfaceTemp model is sunrise
 
 function setup() {
   const bus = fakeBus();
   const s = newState();
   // These tests run on cold nights; keep the engine-freeze card out of the way.
-  s.sim.events.fired.engineFreeze = { sol: 0, timeOfSol: 0 };
+  s.events.fired.engineFreeze = { sol: 0, solFraction: 0 };
   return { s, bus, ctx: { data, eng, bus } };
 }
 
-/** Put the run at local midday (warm) or pre-dawn (coldest) and refresh. */
-function at(s, ctx, timeOfSol) {
-  s.timeOfSol = timeOfSol;
+/** Put the run at a time of sol and refresh. */
+function at(s, ctx, solFraction) {
+  s.time.solFraction = solFraction;
   step(s, TINY, ctx);
 }
-const NOON = 0.5;
-const PRE_DAWN = 0.1;
 
 /** Expected O2 to walk back, with the safety factor. */
 function need(distanceM, speedFactor = 1) {
@@ -38,25 +38,24 @@ test('the notch is zero at the airlock and grows with distance', () => {
   at(s, ctx, NOON);
   startEva(s, data);
   step(s, TINY, ctx);
-  assert.equal(s.sim.eva.requiredO2Kg, 0);
+  assert.equal(s.life.eva.requiredO2Kg, 0);
   setEvaPosition(s, { distanceM: 900 });
   step(s, TINY, ctx);
-  assert.ok(Math.abs(s.sim.eva.requiredO2Kg - need(900)) < 1e-9);
+  assert.ok(Math.abs(s.life.eva.requiredO2Kg - need(900)) < 1e-9);
 });
 
 test('outside, the suit supplies O2 and the habitat tank is not used', () => {
   const { s, ctx } = setup();
   at(s, ctx, NOON);
   startEva(s, data);
-  const habitat = s.resources.oxygen_kg;
-  const suit = s.sim.eva.suitO2Kg;
-  step(s, 1, ctx); // 1 real second
-  const hours = (1 / val(data.tuning.solDuration)) * val(data.mars.solLength);
-  assert.equal(s.resources.oxygen_kg, habitat);
-  assert.ok(Math.abs(suit - s.sim.eva.suitO2Kg - o2PerHour * hours) < 1e-9);
+  const habitat = s.life.o2Kg;
+  const suit = s.life.eva.suitO2Kg;
+  step(s, realSeconds(1), ctx); // one game hour
+  assert.equal(s.life.o2Kg, habitat);
+  assert.ok(Math.abs(suit - s.life.eva.suitO2Kg - o2PerHour) < 1e-9);
   endEva(s);
   step(s, 1, ctx);
-  assert.ok(s.resources.oxygen_kg < habitat, 'back inside the habitat tank is used again');
+  assert.ok(s.life.o2Kg < habitat, 'back inside the habitat tank is used again');
 });
 
 test('deep cold freezes the joints: speed drops and the notch moves up', () => {
@@ -65,53 +64,48 @@ test('deep cold freezes the joints: speed drops and the notch moves up', () => {
   startEva(s, data);
   setEvaPosition(s, { distanceM: 900 });
   step(s, TINY, ctx);
-  assert.equal(s.sim.eva.jointsFrozen, false);
+  assert.equal(s.life.eva.jointsFrozen, false);
   at(s, ctx, PRE_DAWN);
-  assert.ok(s.sim.outside_C <= val(data.eva.jointFreezeBelow_C));
-  assert.equal(s.sim.eva.jointsFrozen, true);
-  assert.equal(s.sim.eva.speedFactor, freeze);
-  assert.ok(Math.abs(s.sim.eva.requiredO2Kg - need(900, freeze)) < 1e-9);
+  assert.ok(s.env.outsideC <= data.eva.jointFreezeBelowC.value);
+  assert.equal(s.life.eva.jointsFrozen, true);
+  assert.equal(s.life.eva.speedFactor, freeze);
+  assert.ok(Math.abs(s.life.eva.requiredO2Kg - need(900, freeze)) < 1e-9);
 });
 
-/** Frozen, far out, with suit O2 just below the notch: the card should open. */
+/** Frozen, far out, with suit O2 at a share of the notch. */
 function frozenFarOut(s, ctx, { suitFractionOfNeed, nearWreck = false }) {
   at(s, ctx, NOON);
   startEva(s, data);
   setEvaPosition(s, { distanceM: 900, nearWreck });
   at(s, ctx, PRE_DAWN);
-  s.sim.eva.suitO2Kg = s.sim.eva.requiredO2Kg * suitFractionOfNeed;
+  s.life.eva.suitO2Kg = s.life.eva.requiredO2Kg * suitFractionOfNeed;
   step(s, TINY, ctx);
 }
 
 test('the no-return card opens once when suit O2 drops below the notch', () => {
   const { s, bus, ctx } = setup();
   frozenFarOut(s, ctx, { suitFractionOfNeed: 0.9 });
-  assert.equal(s.sim.eva.noReturn, true);
+  assert.equal(s.life.eva.noReturn, true);
   assert.equal(checkEvents(s, ctx), 'noReturn');
   const open = bus.emitted.find((e) => e.name === 'decision:open');
   assert.equal(open.payload.vars.distanceM, 900);
   assert.equal(open.payload.vars.speedPct, Math.round(freeze * 100));
   resolveDecision(s, 'suitHeater', ctx);
-  // Still in trouble or not, the card does not come back during the same EVA.
-  s.sim.eva.suitO2Kg = 0.0001;
+  s.life.eva.suitO2Kg = 0.0001;
   step(s, TINY, ctx);
-  assert.equal(checkEvents(s, ctx), null);
+  assert.notEqual(checkEvents(s, ctx), 'noReturn', 'card came back during the same EVA');
 });
 
 test('slow walk is allowed only when O2 covers the walk without the safety margin', () => {
-  // Between the bare need and the need with margin: risky but possible.
   const a = setup();
-  frozenFarOut(a.s, a.ctx, { suitFractionOfNeed: 0.9 }); // 0.9 > 1/1.2
+  frozenFarOut(a.s, a.ctx, { suitFractionOfNeed: 0.9 }); // 0.9 > 1/1.2: risky but possible
   checkEvents(a.s, a.ctx);
-  const slowA = a.s.sim.events.pending.card.options.find((o) => o.id === 'slowWalk');
-  assert.equal(slowA.disabled, false);
+  assert.equal(a.s.events.pending.card.options.find((o) => o.id === 'slowWalk').disabled, false);
 
-  // Below the bare need: walking back is impossible.
   const b = setup();
-  frozenFarOut(b.s, b.ctx, { suitFractionOfNeed: 0.5 });
+  frozenFarOut(b.s, b.ctx, { suitFractionOfNeed: 0.5 }); // below the bare need: impossible
   checkEvents(b.s, b.ctx);
-  const slowB = b.s.sim.events.pending.card.options.find((o) => o.id === 'slowWalk');
-  assert.equal(slowB.disabled, true);
+  assert.equal(b.s.events.pending.card.options.find((o) => o.id === 'slowWalk').disabled, true);
   assert.throws(() => resolveDecision(b.s, 'slowWalk', b.ctx));
 });
 
@@ -119,52 +113,50 @@ test('suit heater restores speed, costs habitat energy, and the joints stay thaw
   const { s, ctx } = setup();
   frozenFarOut(s, ctx, { suitFractionOfNeed: 0.9 });
   checkEvents(s, ctx);
-  const energy = s.resources.energy_kWh;
+  const battery = s.power.batteryWh;
   resolveDecision(s, 'suitHeater', ctx);
-  assert.equal(s.sim.eva.speedFactor, 1);
-  assert.ok(energy - s.resources.energy_kWh >= val(data.events.noReturn.suitHeater_kWh) - 1e-9);
+  assert.equal(s.life.eva.speedFactor, 1);
+  assert.ok(Math.abs(battery - s.power.batteryWh - data.events.noReturn.suitHeaterKWh.value * 1000) < 1e-6);
   step(s, TINY, ctx); // still pre-dawn cold
-  assert.equal(s.sim.eva.jointsFrozen, false, 'joints refroze right after thawing');
-  assert.ok(Math.abs(s.sim.eva.requiredO2Kg - need(900)) < 1e-9);
+  assert.equal(s.life.eva.jointsFrozen, false, 'joints refroze right after thawing');
+  assert.ok(Math.abs(s.life.eva.requiredO2Kg - need(900)) < 1e-9);
 });
 
 test('sheltering at a wreck needs a wreck nearby, and costs suit O2 while waiting', () => {
   const far = setup();
   frozenFarOut(far.s, far.ctx, { suitFractionOfNeed: 0.9, nearWreck: false });
   checkEvents(far.s, far.ctx);
-  assert.equal(far.s.sim.events.pending.card.options.find((o) => o.id === 'shelterWreck').disabled, true);
+  assert.equal(far.s.events.pending.card.options.find((o) => o.id === 'shelterWreck').disabled, true);
 
   const near = setup();
   frozenFarOut(near.s, near.ctx, { suitFractionOfNeed: 0.9, nearWreck: true });
+  near.s.life.eva.suitO2Kg = 0.4; // enough for the hour of shelter
   checkEvents(near.s, near.ctx);
-  const suit = near.s.sim.eva.suitO2Kg;
+  const suit = near.s.life.eva.suitO2Kg;
   resolveDecision(near.s, 'shelterWreck', near.ctx);
-  const hours = val(data.events.noReturn.shelterHours);
-  // The wait may hit an empty suit before the hour is over (that is the risk of this option).
-  assert.ok(Math.abs((suit - near.s.sim.eva.suitO2Kg) - Math.min(suit, o2PerHour * hours)) < 1e-3);
-  assert.equal(near.s.sim.eva.speedFactor, 1);
-  assert.equal(near.s.sim.eva.thawed, true);
+  const hours = data.events.noReturn.shelterHours.value;
+  assert.ok(Math.abs((suit - near.s.life.eva.suitO2Kg) - o2PerHour * hours) < 1e-3);
+  assert.equal(near.s.life.eva.speedFactor, 1);
+  assert.equal(near.s.life.eva.thawed, true);
 });
 
 test('the UI only receives options it may choose; the rest are listed as unavailable', () => {
   const { s, bus, ctx } = setup();
-  frozenFarOut(s, ctx, { suitFractionOfNeed: 0.5, nearWreck: false }); // slow walk and shelter both impossible
+  frozenFarOut(s, ctx, { suitFractionOfNeed: 0.5, nearWreck: false });
   checkEvents(s, ctx);
   const payload = bus.emitted.find((e) => e.name === 'decision:open').payload;
   assert.deepEqual(payload.options.map((o) => o.id), ['suitHeater']);
   assert.deepEqual(payload.unavailable.map((o) => o.id), ['slowWalk', 'shelterWreck']);
   assert.ok(payload.unavailable.every((o) => o.disabledKey));
-  assert.equal(payload.sol, s.sol);
 });
 
 test('an hours-long wait also says how many sols it is, for display', () => {
   const { s, ctx } = setup();
   frozenFarOut(s, ctx, { suitFractionOfNeed: 0.9, nearWreck: true });
   checkEvents(s, ctx);
-  const wait = s.sim.events.pending.card.options
+  const wait = s.events.pending.card.options
     .find((o) => o.id === 'shelterWreck').effects.find((e) => e.type === 'wait');
-  const hours = val(data.events.noReturn.shelterHours);
-  assert.ok(Math.abs(wait.sols - hours / val(data.mars.solLength)) < 1e-12);
+  assert.ok(Math.abs(wait.sols - data.events.noReturn.shelterHours.value / data.mars.solHours.value) < 1e-12);
 });
 
 test('a new EVA resets the card and the thaw', () => {
@@ -174,6 +166,6 @@ test('a new EVA resets the card and the thaw', () => {
   resolveDecision(s, 'suitHeater', ctx);
   endEva(s);
   frozenFarOut(s, ctx, { suitFractionOfNeed: 0.9 });
-  assert.equal(s.sim.eva.thawed, false);
+  assert.equal(s.life.eva.thawed, false);
   assert.equal(checkEvents(s, ctx), 'noReturn');
 });

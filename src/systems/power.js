@@ -1,61 +1,76 @@
 // power.js — K2: load prioritisation and load shedding (M3).
 //
 // Every load the habitat can power, in the player's priority order (top = most important).
-// When the battery is empty and the panels cannot cover the loads, loads are switched off
+// When the battery is empty and generation cannot cover the loads, loads are switched off
 // from the bottom of the list until the rest fit (real-world "load shedding", what
 // Opportunity did in the 2018 storm). When the battery has refilled to
-// tuning.powerRestoreFraction of capacity, shed loads come back one per step, top first.
+// rules.powerRestoreFraction of capacity, shed loads come back one per step, top first.
 //
 // Life support is pinned to the top and is never shed.
 //
-// State (K2's part of gameState, under state.sim.power):
-//   order[]   load ids, top first
-//   off{}     id -> true while that load is shed
-//   experiment_W  extra draw set by K6 while an experiment runs
+// State, in K1's state.power (D-003):
+//   order[]      load ids, top first
+//   off{}        id -> true while that load is shed
+//   experimentW  extra draw set by K6 while an experiment runs
 //
 // For K3's power panel: getPowerStatus(state, ctx) and setOrder(state, order).
 // Other systems ask isOn(state, id) before using a load (e.g. MOXIE output, greenhouse heat).
 
-import { val, tableRow } from './simData.js';
+import { val, rowVal, designRows } from './simData.js';
 
 export const LOAD_IDS = Object.freeze(['lifeSupport', 'heating', 'greenhouse', 'moxie', 'experiments', 'comms']);
 const PINNED = new Set(['lifeSupport']);
 
 // Which load each instrument from nasa_data.json feeds. Instruments not listed here
-// (camera, radar, spectrometer, drone) draw power only while used; K6 adds that via experiment_W.
+// (camera, rimfax, spectrometer, drone) draw power only while used; K6 adds that via experimentW.
 const INSTRUMENT_LOAD = Object.freeze({
   plantChamber: 'greenhouse',
   moxie: 'moxie',
-  weather: 'experiments',
-  seismometer: 'experiments',
-  radiation: 'experiments',
+  meda: 'experiments',
+  seis: 'experiments',
+  rad: 'experiments',
 });
 
 export function initPower(state) {
-  state.sim.power = { order: [...LOAD_IDS], off: {}, experiment_W: 0 };
+  Object.assign(state.power, { order: [...LOAD_IDS], off: {}, experimentW: 0 });
   return state;
 }
 
-/** Draw of every load in W, in priority order: [{ id, watts, on, pinned }]. */
-export function computeLoads(state, { data, eng }) {
-  const watts = Object.fromEntries(LOAD_IDS.map((id) => [id, 0]));
-  watts.lifeSupport = val(data.power.lifeSupport_W);
-  watts.heating = eng.heatingPower_W({
-    inside_C: state.sim.inside_C,
-    outside_C: state.sim.outside_C,
-    insulation: state.design.insulation,
-  });
-  watts.comms = val(data.power.comms_W);
-  for (const id of state.design.instruments ?? []) {
-    const load = INSTRUMENT_LOAD[id];
-    if (load) watts[load] += tableRow(data, 'instruments', id).power_W;
-  }
-  watts.experiments += state.sim.power.experiment_W;
+function sunUp(state, { data, eng }, site) {
+  return eng.sunCos(state.time.solFraction, rowVal(site, 'latitudeDeg')) > 0;
+}
 
-  return state.sim.power.order.map((id) => ({
+/** Draw of every load in W, in priority order: [{ id, watts, on, pinned }]. */
+export function computeLoads(state, ctx) {
+  const { data, eng } = ctx;
+  const d = designRows(state, data);
+  const watts = Object.fromEntries(LOAD_IDS.map((id) => [id, 0]));
+
+  watts.lifeSupport = val(data.rules.habitatPowerW, 'rules.habitatPowerW');
+  watts.heating = eng.heatingPower({
+    insideC: state.env.insideC,
+    outsideC: state.env.outsideC,
+    conductanceWK: rowVal(d.thinInsulation, 'conductanceWK'),
+    factor: rowVal(d.insulation, 'heatingFactor'),
+  });
+  // The comms row has no power figure yet: reads as 0 until K1 adds one.
+  watts.comms = rowVal(d.comms, 'powerW', { optional: true });
+
+  // Same rule as the Sol 0 estimate (evaluateDesign): instruments run at night only if
+  // rules.instrumentsAtNight is set, so the night the player lives matches the night the design screen promised.
+  const instrumentsRun = sunUp(state, ctx, d.site) || Boolean(data.rules.instrumentsAtNight?.value);
+  if (instrumentsRun) {
+    for (const inst of d.instruments) {
+      const load = INSTRUMENT_LOAD[inst.id];
+      if (load) watts[load] += rowVal(inst, 'powerW', { optional: true });
+    }
+  }
+  watts.experiments += state.power.experimentW;
+
+  return state.power.order.map((id) => ({
     id,
     watts: watts[id],
-    on: !state.sim.power.off[id],
+    on: !state.power.off[id],
     pinned: PINNED.has(id),
   }));
 }
@@ -68,50 +83,49 @@ export function sumOn(loads) {
  * Called by survival.step() after the battery update.
  * Sheds loads (bottom first) when the battery is empty and generation < load;
  * restores one shed load per step (top first) once the battery is back above the threshold.
- * Updates state.sim.load_W / deficit_W to match. Emits power:shed when loads are switched off.
+ * Updates state.power.loadW / deficitW to match. Emits power:shed when loads are switched off.
  */
 export function updateShedding(state, ctx) {
-  const sim = state.sim;
-  const off = sim.power.off;
+  const p = state.power;
   const loads = computeLoads(state, ctx);
-  const gen = sim.generation_W;
+  const gen = p.generationW;
 
-  if (state.resources.energy_kWh <= 0 && sumOn(loads) > gen) {
+  if (p.batteryWh <= 0 && sumOn(loads) > gen) {
     const shed = [];
     for (let i = loads.length - 1; i >= 0 && sumOn(loads) > gen; i--) {
       const l = loads[i];
       if (!l.on || l.pinned || l.watts === 0) continue;
       l.on = false;
-      off[l.id] = true;
+      p.off[l.id] = true;
       shed.push(l.id);
     }
     if (shed.length) {
       ctx.bus?.emit('power:shed', {
-        sol: state.sol,
-        timeOfSol: state.timeOfSol,
+        sol: state.time.sol,
+        solFraction: state.time.solFraction,
         shed,
-        generation_W: gen,
-        load_W: sumOn(loads),
+        generationW: gen,
+        loadW: sumOn(loads),
       });
     }
   } else {
-    const restoreAt = val(ctx.data.tuning.powerRestoreFraction) * state.design.power.battery_kWh;
-    if (state.resources.energy_kWh >= restoreAt) {
+    const restoreAt = val(ctx.data.rules.powerRestoreFraction, 'rules.powerRestoreFraction') * p.batteryCapacityWh;
+    if (p.batteryWh >= restoreAt) {
       const next = loads.find((l) => !l.on);
       if (next) {
         next.on = true;
-        delete off[next.id];
+        delete p.off[next.id];
       }
     }
   }
 
-  sim.load_W = sumOn(loads);
-  sim.deficit_W = state.resources.energy_kWh <= 0 ? Math.max(0, sim.load_W - gen) : 0;
+  p.loadW = sumOn(loads);
+  p.deficitW = p.batteryWh <= 0 ? Math.max(0, p.loadW - gen) : 0;
 }
 
 /** True unless the load is currently shed. */
 export function isOn(state, id) {
-  return !state.sim.power.off[id];
+  return !state.power.off[id];
 }
 
 /**
@@ -125,23 +139,24 @@ export function setOrder(state, order) {
     order.every((id) => LOAD_IDS.includes(id)) &&
     [...PINNED].every((id, i) => order[i] === id);
   if (!valid) return false;
-  state.sim.power.order = [...order];
+  state.power.order.splice(0, LOAD_IDS.length, ...order); // in place: others may hold this array
   return true;
 }
 
 /** K6: set the extra draw of a running experiment in W (0 when it stops). */
 export function setExperimentLoad(state, watts) {
-  state.sim.power.experiment_W = Math.max(0, watts);
+  state.power.experimentW = Math.max(0, watts);
 }
 
 /** Snapshot for K3's power panel and HUD. */
 export function getPowerStatus(state, ctx) {
+  const p = state.power;
   return {
-    generation_W: state.sim.generation_W,
-    load_W: state.sim.load_W,
-    deficit_W: state.sim.deficit_W,
-    energy_kWh: state.resources.energy_kWh,
-    capacity_kWh: state.design.power.battery_kWh,
+    generationW: p.generationW,
+    loadW: p.loadW,
+    deficitW: p.deficitW,
+    batteryWh: p.batteryWh,
+    batteryCapacityWh: p.batteryCapacityWh,
     loads: computeLoads(state, ctx),
   };
 }

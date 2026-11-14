@@ -3,33 +3,36 @@
 // Event shape (D-003): { id, once?, trigger(state, ctx), effect?(state, ctx), decision?(state, ctx) }
 //   trigger   -> true when the event should fire now
 //   effect    -> applied immediately when it fires (optional)
-//   decision  -> returns a card { titleKey, bodyKey, options[] } (optional)
+//   decision  -> returns a card (optional)
 //
 // A card is { titleKey, bodyKey, vars?, options[] }; vars fills {name} slots in the texts.
-// A card option is { id, labelKey, effects[], disabled?, disabledKey? }. A disabled option is
-// shown greyed out with the disabledKey text and cannot be chosen. The same effects[] list is
+// A card option is { id, labelKey, effects[], disabled?, disabledKey? }. The same effects[] list is
 //   1) shown to the player before choosing (every cost is visible up front),
 //   2) applied when chosen,
 //   3) written to state.decisionLog so the report card can explain the outcome.
 //
 // Effect types:
-//   { type: 'resource', stat: 'energy_kWh' | 'oxygen_kg' | 'radiation_mSv', delta }  // state.resources
+//   { type: 'resource', stat: 'batteryWh' | 'o2Kg' | 'radiationMSv', delta }
+//                         // batteryWh -> state.power, o2Kg and radiationMSv -> state.life
 //   { type: 'wait', sols, hours?, estimate: {...} }  // runs the simulation forward; sols is
 //                                                     // always set (for display), hours wins if given
-//   { type: 'flag', key, value }                      // state.sim.events.flags
-//   { type: 'eva', set: { speedFactor, jointsFrozen } } // changes the EVA state
+//   { type: 'flag', key, value }                      // state.events.flags
+//   { type: 'eva', set: { speedFactor, jointsFrozen, thawed } } // changes state.life.eva
 //   { type: 'estimate', ...numbers }                  // shown on the card only, applies nothing
 //
-// The decision:open payload is K2's proposal and still has to be agreed with K3.
-// Text is never written here: titleKey / bodyKey / labelKey are keys in K5's story.json.
-// Numbers come from ctx.data.events.<eventId>.
+// decision:open payload (agreed with K3's src/ui/decisionCard.js):
+//   { eventId, sol, titleKey, bodyKey, vars, options[], unavailable[], choose(choiceId) }
+// Disabled options are left out of options[] and listed in unavailable[] ({ id, labelKey, disabledKey }).
+//
+// Text is never written here: the keys are in K5's content/story.json.
+// Numbers come from nasa_data.json (events.<eventId>, life, rules, ...).
 
 import { val } from './simData.js';
-import { spendTime } from './survival.js';
+import { spendTime, isNight } from './survival.js';
 
-/** Create the event-engine state under state.sim. Call after initSurvival(). */
-export function initEvents(state) {
-  state.sim.events = { fired: {}, pending: null, flags: {} };
+/** Create state.events. Call after createSurvivalState(). */
+export function createEventState(state) {
+  state.events = { fired: {}, pending: null, flags: {} };
   return state;
 }
 
@@ -39,19 +42,19 @@ export function initEvents(state) {
  * Returns the id of the event that opened a card, or null.
  */
 export function checkEvents(state, ctx) {
-  const ev = state.sim.events;
-  if (ev.pending) return null;
+  const ev = state.events;
+  if (ev.pending || state.life.loss) return null;
 
   for (const event of ctx.events ?? EVENTS) {
     if (event.once !== false && ev.fired[event.id]) continue;
     if (!event.trigger(state, ctx)) continue;
 
-    ev.fired[event.id] = { sol: state.sol, timeOfSol: state.timeOfSol };
+    ev.fired[event.id] = { sol: state.time.sol, solFraction: state.time.solFraction };
     event.effect?.(state, ctx);
 
     if (event.decision) {
       const card = event.decision(state, ctx);
-      ev.pending = { eventId: event.id, sol: state.sol, card };
+      ev.pending = { eventId: event.id, sol: state.time.sol, card };
       ctx.bus?.emit('decision:open', cardPayload(state, event.id, card, ctx));
       return event.id;
     }
@@ -67,7 +70,7 @@ export function checkEvents(state, ctx) {
 function cardPayload(state, eventId, card, ctx) {
   return {
     eventId,
-    sol: state.sol,
+    sol: state.time.sol,
     ...card,
     options: card.options.filter((o) => !o.disabled),
     unavailable: card.options
@@ -79,7 +82,7 @@ function cardPayload(state, eventId, card, ctx) {
 
 /** Apply the chosen option of the open card, log it, and close the card. Returns the log entry. */
 export function resolveDecision(state, choiceId, ctx) {
-  const pending = state.sim.events.pending;
+  const pending = state.events.pending;
   if (!pending) throw new Error('events: no decision is open');
   const option = pending.card.options.find((o) => o.id === choiceId);
   if (!option) throw new Error(`events: unknown choice "${choiceId}" for ${pending.eventId}`);
@@ -90,33 +93,33 @@ export function resolveDecision(state, choiceId, ctx) {
   // Same shape as K1's logDecision(); pushed here so it lands in the state passed in.
   const entry = { sol: pending.sol, eventId: pending.eventId, choice: choiceId, effects: option.effects };
   state.decisionLog.push(entry);
-  state.sim.events.pending = null;
+  state.events.pending = null;
   ctx.bus?.emit('decision:made', entry);
   return entry;
 }
 
-const RESOURCE_STATS = new Set(['energy_kWh', 'oxygen_kg', 'radiation_mSv']);
-
 export function applyEffect(state, effect, ctx) {
   switch (effect.type) {
-    case 'resource': {
-      if (!RESOURCE_STATS.has(effect.stat)) throw new Error(`events: unknown resource "${effect.stat}"`);
-      const res = state.resources;
-      let next = Math.max(0, res[effect.stat] + effect.delta);
-      if (effect.stat === 'energy_kWh') next = Math.min(next, state.design.power.battery_kWh);
-      res[effect.stat] = next;
+    case 'resource':
+      if (effect.stat === 'batteryWh') {
+        const p = state.power;
+        p.batteryWh = Math.min(Math.max(0, p.batteryWh + effect.delta), p.batteryCapacityWh);
+      } else if (effect.stat === 'o2Kg' || effect.stat === 'radiationMSv') {
+        state.life[effect.stat] = Math.max(0, state.life[effect.stat] + effect.delta);
+      } else {
+        throw new Error(`events: unknown resource "${effect.stat}"`);
+      }
       break;
-    }
     case 'wait': {
-      const hours = effect.hours ?? effect.sols * val(ctx.data.mars.solLength);
+      const hours = effect.hours ?? effect.sols * val(ctx.data.mars.solHours, 'mars.solHours');
       spendTime(state, hours, ctx);
       break;
     }
     case 'flag':
-      state.sim.events.flags[effect.key] = effect.value;
+      state.events.flags[effect.key] = effect.value;
       break;
     case 'eva':
-      Object.assign(state.sim.eva, effect.set);
+      Object.assign(state.life.eva, effect.set);
       break;
     case 'estimate':
       break; // display only
@@ -125,14 +128,10 @@ export function applyEffect(state, effect, ctx) {
   }
 }
 
-function isNight(state, ctx) {
-  return ctx.eng.sunCosZenith(state.timeOfSol) === 0;
-}
-
 // ---------------------------------------------------------------------------
 // Event catalogue, in priority order: when two events trigger in the same step,
-// the earlier one opens its card first (life-threatening ones on top). More crises (storm, quake, SPE, conjunction, dust devil,
-// radiator failure) are added here in S10–14.
+// the earlier one opens its card first (life-threatening ones on top).
+// More crises (storm, quake, SPE, conjunction, dust devil, radiator failure) are added in S10–14.
 
 export const EVENTS = [
   {
@@ -141,23 +140,23 @@ export const EVENTS = [
     id: 'noReturn',
     once: false, // can happen on any EVA; eva.cardShown limits it to once per EVA
     trigger: (state) => {
-      const eva = state.sim.eva;
+      const eva = state.life.eva;
       return eva.outside && eva.noReturn && !eva.cardShown;
     },
     effect: (state) => {
-      state.sim.eva.cardShown = true;
+      state.life.eva.cardShown = true;
     },
     decision: (state, ctx) => {
       const { data } = ctx;
-      const eva = state.sim.eva;
+      const eva = state.life.eva;
       const cfg = data.events.noReturn;
-      const safety = val(data.eva.noReturnSafetyFactor);
-      const o2PerHour = val(data.eva.oxygenPerHour_kg);
+      const safety = val(data.rules.noReturnSafetyFactor, 'rules.noReturnSafetyFactor');
+      const o2PerHour = val(data.life.evaO2KgPerHour, 'life.evaO2KgPerHour');
       // Without the safety factor: the bare O2 the walk takes at the current speed.
       const bareNeedKg = eva.requiredO2Kg / safety;
       // At normal speed (after thawing the joints).
       const thawedNeedKg = eva.requiredO2Kg * eva.speedFactor;
-      const shelterHours = val(cfg.shelterHours);
+      const shelterHours = val(cfg.shelterHours, 'events.noReturn.shelterHours');
 
       return {
         titleKey: 'event.noReturn.title',
@@ -186,7 +185,7 @@ export const EVENTS = [
             labelKey: 'event.noReturn.option.suitHeater',
             effects: [
               { type: 'eva', set: { speedFactor: 1, jointsFrozen: false, thawed: true } },
-              { type: 'resource', stat: 'energy_kWh', delta: -val(cfg.suitHeater_kWh) },
+              { type: 'resource', stat: 'batteryWh', delta: -val(cfg.suitHeaterKWh, 'events.noReturn.suitHeaterKWh') * 1000 },
               { type: 'estimate', suitO2Kg: -round2(thawedNeedKg / safety) },
             ],
           },
@@ -200,7 +199,7 @@ export const EVENTS = [
               {
                 type: 'wait',
                 hours: shelterHours,
-                sols: shelterHours / val(data.mars.solLength),
+                sols: shelterHours / val(data.mars.solHours, 'mars.solHours'),
                 estimate: { suitO2Kg: -round2(o2PerHour * shelterHours) },
               },
               { type: 'eva', set: { speedFactor: 1, jointsFrozen: false, thawed: true } },
@@ -217,17 +216,21 @@ export const EVENTS = [
     trigger: (state, ctx) => {
       const cfg = ctx.data.events.engineFreeze;
       return (
-        state.sol >= val(cfg.earliestSol) &&
+        state.time.sol >= val(cfg.earliestSol, 'events.engineFreeze.earliestSol') &&
         isNight(state, ctx) &&
-        state.sim.outside_C <= val(cfg.triggerBelow_C)
+        state.env.outsideC <= val(cfg.triggerBelowC, 'events.engineFreeze.triggerBelowC')
       );
     },
     effect: (state) => {
-      state.sim.events.flags.engineFrozen = true;
+      state.events.flags.engineFrozen = true;
     },
     decision: (state, ctx) => {
-      const cfg = ctx.data.events.engineFreeze;
-      const o2PerSol = val(ctx.data.life.oxygenPerCrewPerSol_kg) * val(ctx.data.life.crew);
+      const { data } = ctx;
+      const cfg = data.events.engineFreeze;
+      const waitSols = val(cfg.waitSols, 'events.engineFreeze.waitSols');
+      // O2 for the wait: per crew member per Earth day, over the length of the wait in hours.
+      const o2PerHour = (val(data.life.o2KgPerCrewPerDay, 'life.o2KgPerCrewPerDay') / 24) * val(data.life.crew, 'life.crew');
+      const waitHours = waitSols * val(data.mars.solHours, 'mars.solHours');
       return {
         titleKey: 'event.engineFreeze.title',
         bodyKey: 'event.engineFreeze.body',
@@ -237,7 +240,7 @@ export const EVENTS = [
             id: 'batteryHeat',
             labelKey: 'event.engineFreeze.option.batteryHeat',
             effects: [
-              { type: 'resource', stat: 'energy_kWh', delta: -val(cfg.batteryHeat_kWh) },
+              { type: 'resource', stat: 'batteryWh', delta: -val(cfg.batteryHeatKWh, 'events.engineFreeze.batteryHeatKWh') * 1000 },
               { type: 'flag', key: 'greenhouseHeatingCut', value: true },
               { type: 'flag', key: 'engineFrozen', value: false },
             ],
@@ -247,8 +250,8 @@ export const EVENTS = [
             id: 'manualHeat',
             labelKey: 'event.engineFreeze.option.manualHeat',
             effects: [
-              { type: 'resource', stat: 'oxygen_kg', delta: -val(cfg.manualOxygen_kg) },
-              { type: 'resource', stat: 'radiation_mSv', delta: val(cfg.manualRadiation_mSv) },
+              { type: 'resource', stat: 'o2Kg', delta: -val(cfg.manualO2Kg, 'events.engineFreeze.manualO2Kg') },
+              { type: 'resource', stat: 'radiationMSv', delta: val(cfg.manualRadiationMSv, 'events.engineFreeze.manualRadiationMSv') },
               { type: 'flag', key: 'engineFrozen', value: false },
             ],
           },
@@ -257,7 +260,7 @@ export const EVENTS = [
             id: 'wait',
             labelKey: 'event.engineFreeze.option.wait',
             effects: [
-              { type: 'wait', sols: val(cfg.waitSols), estimate: { oxygen_kg: -o2PerSol * val(cfg.waitSols) } },
+              { type: 'wait', sols: waitSols, estimate: { o2Kg: -round2(o2PerHour * waitHours) } },
               { type: 'flag', key: 'engineFrozen', value: false },
             ],
           },

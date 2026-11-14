@@ -1,7 +1,7 @@
-// K2 tests for src/systems/events.js. Run with: node --test
+// K2 tests for src/systems/events.js (M2 decision cards). Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { step, val } from '../src/systems/survival.js';
+import { step, isNight } from '../src/systems/survival.js';
 import { checkEvents, resolveDecision } from '../src/systems/events.js';
 import { data, eng, fakeBus, newState } from './helpers/k2_env.mjs';
 
@@ -14,7 +14,7 @@ function setup() {
 
 /** Step the simulation (0.5 s at a time) until a card opens. */
 function runUntilCard(state, ctx, maxSteps = 1000) {
-  for (let i = 0; i < maxSteps; i++) {
+  for (let i = 0; i < maxSteps && !state.life.loss; i++) {
     step(state, 0.5, ctx);
     if (checkEvents(state, ctx)) return true;
   }
@@ -24,11 +24,12 @@ function runUntilCard(state, ctx, maxSteps = 1000) {
 test('engine-freeze card opens on a cold night, not in the day', () => {
   const { s, bus, ctx } = setup();
   assert.ok(runUntilCard(s, ctx), 'card never opened');
-  assert.equal(eng.sunCosZenith(s.timeOfSol), 0, 'should be night');
-  assert.ok(s.sim.outside_C <= val(cfg.triggerBelow_C));
+  assert.ok(isNight(s, ctx), 'should be night');
+  assert.ok(s.env.outsideC <= cfg.triggerBelowC.value);
 
   const open = bus.emitted.find((e) => e.name === 'decision:open');
   assert.equal(open.payload.eventId, 'engineFreeze');
+  assert.equal(open.payload.sol, s.time.sol);
   assert.equal(open.payload.options.length, 3);
   assert.equal(typeof open.payload.choose, 'function');
 });
@@ -36,23 +37,31 @@ test('engine-freeze card opens on a cold night, not in the day', () => {
 test('every option shows its numeric costs before the choice', () => {
   const { s, ctx } = setup();
   runUntilCard(s, ctx);
-  for (const option of s.sim.events.pending.card.options) {
+  for (const option of s.events.pending.card.options) {
     const numeric = option.effects.filter((e) => e.type === 'resource' || e.type === 'wait');
     assert.ok(numeric.length > 0, `${option.id} has no visible cost`);
   }
 });
 
+test('resource effects use the names K3\'s card knows (batteryWh, o2Kg, radiationMSv)', () => {
+  const { s, ctx } = setup();
+  runUntilCard(s, ctx);
+  const stats = s.events.pending.card.options
+    .flatMap((o) => o.effects).filter((e) => e.type === 'resource').map((e) => e.stat);
+  for (const stat of stats) assert.ok(['batteryWh', 'o2Kg', 'radiationMSv'].includes(stat), stat);
+});
+
 test('battery heating costs energy, cuts greenhouse heat and is logged', () => {
   const { s, bus, ctx } = setup();
   runUntilCard(s, ctx);
-  const before = s.resources.energy_kWh;
+  const before = s.power.batteryWh;
 
   const entry = resolveDecision(s, 'batteryHeat', ctx);
 
-  assert.ok(Math.abs(before - s.resources.energy_kWh - val(cfg.batteryHeat_kWh)) < 1e-9);
-  assert.equal(s.sim.events.flags.greenhouseHeatingCut, true);
-  assert.equal(s.sim.events.flags.engineFrozen, false);
-  assert.equal(s.sim.events.pending, null);
+  assert.ok(Math.abs(before - s.power.batteryWh - cfg.batteryHeatKWh.value * 1000) < 1e-6);
+  assert.equal(s.events.flags.greenhouseHeatingCut, true);
+  assert.equal(s.events.flags.engineFrozen, false);
+  assert.equal(s.events.pending, null);
   assert.deepEqual(s.decisionLog, [entry]);
   assert.equal(entry.eventId, 'engineFreeze');
   assert.equal(entry.choice, 'batteryHeat');
@@ -62,22 +71,22 @@ test('battery heating costs energy, cuts greenhouse heat and is logged', () => {
 test('manual heating costs O2 and radiation', () => {
   const { s, ctx } = setup();
   runUntilCard(s, ctx);
-  const o2 = s.resources.oxygen_kg;
-  const dose = s.resources.radiation_mSv; // surface dose so far
+  const o2 = s.life.o2Kg;
+  const dose = s.life.radiationMSv;
   resolveDecision(s, 'manualHeat', ctx);
-  assert.ok(Math.abs(o2 - s.resources.oxygen_kg - val(cfg.manualOxygen_kg)) < 1e-9);
-  assert.ok(Math.abs(s.resources.radiation_mSv - dose - val(cfg.manualRadiation_mSv)) < 1e-9);
+  assert.ok(Math.abs(o2 - s.life.o2Kg - cfg.manualO2Kg.value) < 1e-9);
+  assert.ok(Math.abs(s.life.radiationMSv - dose - cfg.manualRadiationMSv.value) < 1e-9);
 });
 
-test('waiting moves the clock forward one sol and uses a sol of O2', () => {
+test('waiting moves the clock forward one sol and uses that much O2', () => {
   const { s, ctx } = setup();
   runUntilCard(s, ctx);
-  const sol = s.sol;
-  const o2 = s.resources.oxygen_kg;
+  const sol = s.time.sol;
+  const o2 = s.life.o2Kg;
+  const estimate = s.events.pending.card.options.find((o) => o.id === 'wait').effects[0].estimate.o2Kg;
   resolveDecision(s, 'wait', ctx);
-  assert.equal(s.sol, sol + 1);
-  const perSol = val(data.life.oxygenPerCrewPerSol_kg) * val(data.life.crew);
-  assert.ok(Math.abs(o2 - s.resources.oxygen_kg - perSol) < 1e-3);
+  assert.equal(s.time.sol, sol + 1);
+  assert.ok(Math.abs(o2 - s.life.o2Kg + estimate) < 0.01, 'card estimate and real use differ');
 });
 
 test('the choose callback in the card payload resolves the decision', () => {
@@ -95,23 +104,21 @@ test('no new card opens while one is pending, and a once-event fires only once',
   assert.equal(runUntilCard(s, ctx, 500), false, 'engineFreeze fired twice');
 });
 
-test('energy from an effect never goes above battery capacity or below zero', () => {
-  const { s, ctx } = setup();
-  runUntilCard(s, ctx);
-  s.resources.energy_kWh = 1;
-  resolveDecision(s, 'batteryHeat', ctx);
-  assert.equal(s.resources.energy_kWh, 0);
-});
-
 test('a life-threatening EVA card wins over the engine card when both trigger', () => {
   const { s, ctx } = setup();
-  runUntilCard(s, ctx); // engineFreeze is now open: resolve it and set up the clash again
+  runUntilCard(s, ctx);
   resolveDecision(s, 'batteryHeat', ctx);
-  delete s.sim.events.fired.engineFreeze;
-  s.sim.eva.outside = true;
-  s.sim.eva.noReturn = true;
-  s.sim.eva.cardShown = false;
+  delete s.events.fired.engineFreeze;
+  Object.assign(s.life.eva, { outside: true, noReturn: true, cardShown: false });
   assert.equal(checkEvents(s, ctx), 'noReturn');
+});
+
+test('battery from an effect never goes below zero', () => {
+  const { s, ctx } = setup();
+  runUntilCard(s, ctx);
+  s.power.batteryWh = 1;
+  resolveDecision(s, 'batteryHeat', ctx);
+  assert.equal(s.power.batteryWh, 0);
 });
 
 test('unknown choice throws instead of silently doing nothing', () => {

@@ -1,31 +1,50 @@
-// Shared test setup for K2's tests (survival, events).
+// Shared test setup for K2's tests: K1's real state, formulas and data, plus K2's requested values.
 import { readFileSync } from 'node:fs';
-import { initSurvival } from '../../src/systems/survival.js';
-import { initEvents } from '../../src/systems/events.js';
+import * as engineering from '../../src/core/engineering.js';
+import { createState } from '../../src/core/state.js';
+import { createSurvivalState } from '../../src/systems/survival.js';
+import { createEventState } from '../../src/systems/events.js';
 
-export const data = JSON.parse(
-  readFileSync(new URL('../fixtures/survival_data.json', import.meta.url)),
-);
+const read = (rel) => JSON.parse(readFileSync(new URL(rel, import.meta.url)));
+const realData = read('../../src/data/nasa_data.json');
+const requested = read('../fixtures/k2_requested.json');
 
-// Test doubles for K1's engineering.js. solarPower_W matches K1's real signature;
-// the other three are requested from K1 and only have rough shapes here.
+const isEntry = (o) => o && typeof o === 'object' && 'value' in o;
+
+/** Add entries that do not exist; never overwrite a value K1 has already filled in. */
+function addMissing(target, extra) {
+  for (const [key, v] of Object.entries(extra)) {
+    if (key.startsWith('_')) continue;
+    if (isEntry(v)) {
+      if (target[key]?.value == null) target[key] = v;
+    } else {
+      target[key] ??= {};
+      addMissing(target[key], v);
+    }
+  }
+}
+
+function withRequested(base) {
+  const data = structuredClone(base);
+  addMissing(data, requested.add);
+  addMissing(data, { life: requested.fill.life });
+  for (const [table, rows] of Object.entries(requested.fill.rows)) {
+    for (const [id, fields] of Object.entries(rows)) {
+      const row = data[table].find((r) => r.id === id);
+      addMissing(row, fields);
+    }
+  }
+  return data;
+}
+
+export const data = withRequested(realData);
+
+// K1's real formulas, plus the one K2 still waits for. The double goes away once K1 adds it.
 export const eng = {
-  solarPower_W: ({ irradiance_Wm2, area_m2, efficiency, cosZenith, dustLoss = 0 }) =>
-    irradiance_Wm2 * area_m2 * efficiency * Math.max(0, cosZenith) * (1 - dustLoss),
-  // Requested: sun up from 06:00 to 18:00 local (timeOfSol 0.25..0.75), peak at noon.
-  sunCosZenith: (f) => (f >= 0.25 && f <= 0.75 ? Math.sin(Math.PI * (f - 0.25) / 0.5) : 0),
-  // Requested: coldest just before dawn, warmest early afternoon.
-  surfaceTemp_C: ({ min_C, max_C, timeOfSol }) =>
-    (min_C + max_C) / 2 - ((max_C - min_C) / 2) * Math.cos(2 * Math.PI * (timeOfSol - 0.1)),
-  // Requested: heater draw grows with the inside/outside gap; thick insulation halves it.
-  heatingPower_W: ({ inside_C, outside_C, insulation }) =>
-    Math.max(0, inside_C - outside_C) * (insulation === 'thick' ? 10 : 20),
-  // Requested: Newton's law of cooling toward the outside temperature.
-  habitatTemp_C: ({ inside_C, outside_C, dtHours, coolingTime_h }) =>
-    outside_C + (inside_C - outside_C) * Math.exp(-dtHours / coolingTime_h),
-  // Same as K1's oxygenToReturn in src/core/engineering.js (enes branch).
-  oxygenToReturn: ({ distanceM, speedMs, o2KgPerSec, safetyFactor }) =>
-    speedMs <= 0 ? Infinity : (distanceM / speedMs) * o2KgPerSec * safetyFactor,
+  ...engineering,
+  habitatTemp:
+    engineering.habitatTemp ??
+    (({ insideC, outsideC, dtHours, coolingHours }) => outsideC + (insideC - outsideC) * Math.exp(-dtHours / coolingHours)),
 };
 
 /** Minimal stand-in for K1's bus.js: records every emit. */
@@ -34,35 +53,25 @@ export function fakeBus() {
   return { emitted, emit: (name, payload) => emitted.push({ name, payload }) };
 }
 
-/**
- * The parts of K1's createState() (src/core/state.js, enes branch) that K2 touches.
- * Replace with the real createState() once K1's files are on main.
- */
-function k1State() {
-  return {
-    sol: 0,
-    timeOfSol: 0,
-    design: {
-      landingSiteId: null,
-      power: { solarArea_m2: 0, rtg: false, battery_kWh: 0 },
-      insulation: null,
-      instruments: [],
-    },
-    resources: { oxygen_kg: 0, energy_kWh: 0, radiation_mSv: 0 },
-    decisionLog: [],
-  };
+export const DEFAULT_DESIGN = {
+  siteId: 'meridiani',
+  powerId: 'solar',
+  batteryId: 'b300',
+  insulationId: 'thick',
+  commsId: 'relay',
+  instrumentIds: [],
+};
+
+/** K1's real createState() with a Sol 0 design, then K2's surface state on top. */
+export function newState(design = {}, d = data) {
+  const s = createState(1);
+  Object.assign(s.design, DEFAULT_DESIGN, design);
+  createSurvivalState(s, d);
+  createEventState(s);
+  return s;
 }
 
-export function newState({
-  landingSiteId = 'meridiani', solarArea_m2 = 100, battery_kWh = 40, insulation = 'thin', instruments = [],
-} = {}) {
-  const s = k1State();
-  s.design.landingSiteId = landingSiteId;
-  s.design.instruments = instruments;
-  s.design.power.solarArea_m2 = solarArea_m2;
-  s.design.power.battery_kWh = battery_kWh;
-  s.design.insulation = insulation;
-  initSurvival(s, data);
-  initEvents(s);
-  return s;
+/** Game hours -> real seconds at the data's time scale. */
+export function realSeconds(hours, d = data) {
+  return (hours / d.time.solHours.value) * d.time.solRealSeconds.value;
 }
