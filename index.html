@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOL 14: Red Horizon</title>
+  <meta name="description" content="Design a crewed Mars mission, then live with your engineering choices for 14 sols. NASA Space Apps 2026.">
+  <!-- css/style.css is K3's file. -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Bare layout only, so the game is usable before style.css exists. */
+    html, body { margin: 0; height: 100%; background: #0d0a0a; color: #f2e8e4; font-family: system-ui, sans-serif; }
+    #app { position: relative; width: 100%; max-width: 1280px; margin: 0 auto; aspect-ratio: 16 / 9; }
+    #game { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+    #ui { position: absolute; inset: 0; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" width="960" height="540"></canvas>
+    <div id="ui"></div>
+  </div>
+  <noscript>This game needs JavaScript.</noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
