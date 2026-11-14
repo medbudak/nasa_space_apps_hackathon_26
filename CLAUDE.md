@@ -1,9 +1,9 @@
-# CLAUDE.md
+# CLAUDE.md — SOL 14: RED HORIZON
 
-Shared instructions for the whole team and for Claude. Keep this file short.
-Team decisions live in DECISIONS.md, which is loaded here:
+Shared instructions for the whole team and for Claude. Team decisions live in DECISIONS.md; roles, file ownership and the five module contracts live in AGENTS.md. Both are loaded here:
 
 @DECISIONS.md
+@AGENTS.md
 
 ## Project context
 
@@ -13,7 +13,41 @@ Team decisions live in DECISIONS.md, which is loaded here:
 - Competing demands named in the challenge: mission objectives, spacecraft design, science instruments, launch vehicles, budget, power, mass, communications and orbit constraints.
 - Audience: students who rarely get to attempt a whole mission. The game should make these trade-offs concrete instead of abstract.
 
-Anything beyond this (platform, stack, mechanics, scope) is decided by the team and recorded in DECISIONS.md. If it is not recorded there, it has not been decided.
+The game is version 3.0.0: a 2D pixel-art side-scroller. `Sol 0` design → `Sol 1–14` surface operations → cause-and-effect report card + UFO epilogue (D-011). Anything beyond this (platform, stack, mechanics, scope) is decided by the team and recorded in DECISIONS.md. If it is not recorded there, it has not been decided.
+
+## Commands
+
+```sh
+npm test                       # = node tools/build.js data && node --test "tests/*.test.js"
+node tools/build.js data       # data/*.json + content/story.json -> src/data/nasa_data.js, story.js
+node tools/build.js assets     # assets/** -> assets/processed/** (chroma-key, crop, downscale)
+npm start                      # npx serve . -l 8080   (or: python -m http.server 8080)
+```
+
+- `http://localhost:8080/?demo=1` is the judges' quick mode (5 sols); `?lang=en` starts in English.
+- The game must also run by double-clicking `index.html` (`file://`).
+- `node --test` on Node 22+ wants a **glob, not a folder**: `node --test "tests/*.test.js"`. A bare `node --test` also collects `_legacy/tests`.
+- No Node on a machine? VS Code's Electron can run as Node: set `ELECTRON_RUN_AS_NODE=1` and call `Code.exe tools/build.js data`. In PowerShell pipe the output through `| Out-String` or it is lost.
+- Browser check: Edge headless (`msedge --headless=new --allow-file-access-from-files --virtual-time-budget=5000 --screenshot=...`). Modal and toast entry animations come out half transparent in screenshots; inject `*{animation:none!important}` when checking.
+- **Do not run the PowerShell "sync" script in `CLAUDE_PROMPTS.md`.** It belongs to v2 (ES modules + `dist/app.bundle.js`); v3 has no `src/core/nasa_data.js`, `story_data.js` or `dist/`. Use `node tools/build.js data` instead.
+
+## Real architecture (where it differs from the design docs)
+
+- **Not ES modules.** `ARCHITECTURE.md`, `API.md` and ADR 0001 say ES modules, but the code uses classic `<script>` files and the `window.SOL14` namespace (`S` for short). Every file is an IIFE: `(function (S) { ... })(window.SOL14 = window.SOL14 || {})`. Do not use `import`/`export`, `fetch` or runtime `getImageData`: they fail under `file://`.
+- **Script order matters.** Keep the order in `index.html` and the `CORE_SCRIPTS` array in `tests/helpers/load_core.js` in sync. Update both when adding a file. Core and systems files must not touch the DOM: the tests run them DOM-less in a `vm` context.
+- **Shared core `src/core/base.js`:** `S.bus` (on/emit), `S.t(key, vars)` (`{name}` placeholders; a missing key shows the key), `S.util`, `S.makeRng(seed)` (deterministic RNG: use it instead of `Math.random` for QA).
+- **Generated files, never edit by hand:** `src/data/*.js` (build data) and `assets/processed/**` + `manifest.json` (build assets). Change the source JSON or PNG and rerun the build.
+- Data: `data/nasa_data.json` + `forensics_cases.json` + `experiments_config.json` + `events_catalog.json` merge at build time into one `S.DATA` object (`DATA.forensics`, `DATA.experimentsCfg`, `DATA.events`).
+- DOM backgrounds use the `--bg:url(...)` CSS variable, so `S.Sprites.screen()` returns an **absolute URL** (relative `url()` resolved against `styles/` and 404'd).
+- The audio engine (`src/fx/audio.js`) opens no AudioContext before the first click or key press (avoids autoplay warnings).
+- Internal resolution is a **640×360** canvas; sprite sizes are set in the `ASSETS` manifest in `tools/build.js`. Full-screen scenes are 960×540.
+- Scene flow (`src/main.js`): `loading → menu → design → transit → world → ending → report`.
+
+## Folders
+
+- `_legacy/`: the old v2 (ES modules) version. **Reference only: do not run or edit.** `_legacy/content/story.json` has full TR/EN texts that can feed the new `content/story.json`.
+- The Turkish-named `*.png` files in the root are the original images; the game uses the mapped copies under `assets/` (mapping: `ARCHITECTURE.md` §3).
+- `menü tasarım örnekleri/`: reference images for the menu UI. PDFs: design doc v2, roadmap, K4 task card (design sources).
 
 ## How decisions are made
 
@@ -46,19 +80,23 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 - A PR that touches shared files (listed below) or the shared game model needs a quick OK from one teammate. A PR that only touches your own area can be merged by you once the project runs.
 - Before merging, check that the project starts and the main game flow still works.
 - If `main` breaks, fixing it comes first. Whoever merged the breaking change fixes it or reverts it.
-- Commit messages: short, English, imperative ("Add launch vehicle picker"). Prefixes like `feat:`, `fix:` or `docs:` are welcome but optional.
-- Shared files: dependency manifests and lockfiles, the entry point, global config, shared types/models, CLAUDE.md and DECISIONS.md. REFERENCES.md is shared too, but anyone may append a line to it without asking. For the others, tell the team before you edit one, keep the change small, and commit it on its own.
+- Commit messages: short, English, imperative ("Add launch vehicle picker"). A role prefix and type from `CONTRIBUTING.md` (`[K2] feat: ...`) or plain `feat:`, `fix:`, `docs:` are welcome but optional.
+- Shared files: `package.json`, the entry point (`index.html`, `src/main.js`), `src/core/base.js`, `src/core/state.js`, `tools/build.js`, `tests/helpers/load_core.js`, global config, CLAUDE.md, AGENTS.md and DECISIONS.md. REFERENCES.md is shared too, but anyone may append a line to it without asking. For the others, tell the team before you edit one, keep the change small, and commit it on its own.
 - Never commit secrets (API keys, tokens, `.env`). Personal notes go in `CLAUDE.local.md`, which is gitignored.
 
 ## Working rules
 
-- Numbers live in data, not in code. Every gameplay value is read from the game data file and carries a `src` field with its source. Values simplified for gameplay are flagged as simplified. A value without a source does not go into the game.
-- Stub first, then the real thing. Hand over a correctly shaped placeholder early so nobody waits on you. Placeholder numbers are marked `src: "PLACEHOLDER"`, and none may remain at content lock.
-- Edit only the files your role owns (ownership is recorded in DECISIONS.md). If you need a change in someone else's area, ask the owner.
-- Player-facing text is not hard-coded in UI code. It lives in the text data file, in Turkish and English.
+- Numbers live in data, not in code: `data/nasa_data.json` (and the other `data/*.json`), each with a `src` URL. Values simplified for gameplay are flagged as simplified and say so; never put an official URL on a number that source does not state (D-009). A value without a source does not go into the game.
+- Stub first, then the real thing. Hand over a correctly shaped placeholder early so nobody waits on you. Placeholder numbers are marked as placeholders, and none may remain at content lock.
+- Edit only the files your role owns (AGENTS.md §1). If you need a change in someone else's area, ask the owner or emit a bus event.
+- Player-facing text is not hard-coded in code. It lives in `content/story.json`, in both `tr` and `en`, read with `S.t('key')`. `tests/data_integrity.test.js` checks every key used in code and data.
+- State lives only in `gameState` (`src/core/state.js`); modules trigger each other with `S.bus.emit(...)`.
+- Mini-games are called as `await runMinigame(type, config)` → `{ success, score, timeUsed }`, and each needs an ESC/cancel path.
+- Scientific accuracy: night about −80 °C, thin atmosphere (~0.6 kPa, no "hot air" → radiator failure instead), quakes up to ~M4.7, 0.38 g, Pu-238 does not make fuel (RHU + Sabatier), no harvest within 14 sols (germination experiment only), light delay 3–22 min, blue sunset.
+- Pixel art: `image-rendering: pixelated`, no blurry scaling, no text or HUD baked into images.
 - Anything fictional or compressed for gameplay (a compressed map, a fictional scene) is labeled as such in the game and on the project page.
 - REFERENCES.md is the single log for sources, licenses and AI use. Don't start a separate licenses file.
-- A feature is done only when it works on `main`, works on the live deploy, at least one other person has tried it, and the data/validation owner has checked its numbers and texts.
+- A feature is done only when `npm test` passes, it works on `main` and on the live deploy (also via `file://`), at least one other person has tried it, and the data/validation owner has checked its numbers and texts.
 - Stuck for more than 15 minutes? Ask in the team chat.
 - After content lock, no new features or text: new ideas go to a "next version" list. After feature freeze, only game-breaking bugs are fixed.
 
@@ -66,6 +104,7 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 
 - Code, comments, commit messages, PRs, issues and repo docs are in English.
 - Team chat and conversations with Claude can be in any language. Claude replies in the language it is addressed in.
+- The v3 design docs (`README.md`, `ARCHITECTURE.md`, `API.md`, `DESIGN.md`, `PLAN.md`, ...) are in Turkish. The submission texts in `docs/submission/` are in English.
 
 ## Rules for Claude
 
@@ -121,3 +160,23 @@ REFERENCES.md is the running log for all of this. Keep it current so the submiss
 ## Optional: i-have-adhd skill
 
 `.claude/skills/i-have-adhd/` makes Claude answer action-first: the next step first, numbered steps, no filler. It is off by default. Turn it on with `/i-have-adhd` and off with "stop adhd mode". Source: github.com/ayghri/i-have-adhd (MIT License).
+
+## Environment notes
+
+- The project path can contain spaces and Turkish characters (e.g. `Masaüstü`): always quote paths.
+- On Windows, both PowerShell and Git Bash are used; `npm test` works in either.
+
+## Status snapshot (2026-11-14)
+
+Carried over from the v3 source:
+- `content/story.json`: TR/EN with matching placeholders. When adding text, add both languages; `tests/data_integrity.test.js` checks every key in code and data catalogues.
+- `tests/`: `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`) and `rhythm` → 45/45 pass.
+- `docs/submission/SPACE_APPS_PROJECT_PAGE_EN.md` is written (GitHub Pages links are `<…>` placeholders).
+- Scientific fix: the speed-of-sound experiment needs `supercam` (the microphone is on SuperCam, not Mastcam-Z).
+- Player interest and game rhythm plan (RIT-01…13): `src/core/objectives.js` (`S.Objectives`) gives one main objective + at most one optional one + the MAV checklist, with a HUD objective card and a `?` hint; entering the habitat postpones crises for `gameplay.habitatCalmMinutes` (`Events.isCalm`); crises with a `preSignalKey` (dust storm) show on the HUD `threatPreSignalMinutes` ahead even without the instrument; a checkpoint every sol morning (`S.saveCheckpoint` / `loadCheckpoint`) with "retry from SOL X morning" on loss; local playtest log `SOL14_DEBUG.playtestLog()` / `exportPlaytest()`; the pendulum reward works (`rewards.sandPitSpeedFactor`). Not done: cutting to 2 wrecks / 3 experiments, lettuce/radish/zinnia greenhouse art, new tutorial flow.
+
+Update this section as things change.
+
+## Document map
+
+`README.md` (concept) · `REQUIREMENTS.md` (M1–M9) · `PLAN.md` (30-hour plan) · `ARCHITECTURE.md` · `API.md` · `DESIGN.md` · `TESTING.md` · `DEPLOYMENT.md` · `RULES.md` · `CONTRIBUTING.md` · `SECURITY.md` · `CHANGELOG.md` · `CLAUDE_PROMPTS.md` · `sol_14_red_horizon_t_m_g_rseller_i_in_ai_prompt_k_t_phanesi.md` (image prompt library) · `docs/decisions/` · `docs/submission/`
