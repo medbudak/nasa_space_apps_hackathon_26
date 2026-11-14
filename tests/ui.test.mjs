@@ -140,3 +140,37 @@ test('every sample align is solvable inside its dial range', () => {
   }
   for (const [k, row] of Object.entries(alignRows)) assert.ok(row.src, `${k} has no src`);
 });
+
+// ---- qte ----
+import { catchResult, measureResult } from '../src/minigames/qte.js';
+import { sampleQtes, qteRows } from '../src/ui/dev/stub_samples.js';
+
+test('a catch counts only inside the hand window, at the end of the fall', () => {
+  const tf = 1;
+  assert.equal(catchResult(0.5, tf, 0.15).caught, false, 'halfway in time is only a quarter of the height');
+  assert.equal(catchResult(0.95, tf, 0.15).caught, true);
+  assert.equal(catchResult(0.9, tf, 0.15).caught, false);
+});
+
+test('things fall slower on Mars than on Earth in the catch sample', () => {
+  const c = sampleQtes.catch;
+  assert.ok(c.eventSeconds > c.compareSeconds * 1.5);
+  assert.ok(near(c.eventSeconds, Math.sqrt((2 * 1.5) / 3.73), 1e-9));
+});
+
+test('a measurement within ±10% passes and is scored by closeness', () => {
+  const ok = measureResult([1.0, 1.1, 1.05], 1.05, 0.1);
+  assert.equal(ok.success, true);
+  assert.equal(ok.measuredSeconds, 1.05);
+  assert.equal(ok.score, 100);
+  const off = measureResult([1.3], 1.0, 0.1);
+  assert.equal(off.success, false);
+  assert.equal(off.errorPct, 30);
+  assert.equal(off.score, 0);
+});
+
+test('the pendulum sample times 10 swings of T = 2π√(L/g)', () => {
+  const c = sampleQtes.pendulum;
+  assert.ok(near(c.eventSeconds * c.cycles, 10 * 2 * Math.PI * Math.sqrt(1 / 3.73), 1e-9));
+  for (const [k, row] of Object.entries(qteRows)) assert.ok(row.src, `${k} has no src`);
+});

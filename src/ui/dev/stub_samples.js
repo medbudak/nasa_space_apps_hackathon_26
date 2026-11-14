@@ -3,6 +3,8 @@
 // real converter numbers from K1's nasa_data.json, each with its `src`. `hint` says where
 // the real value should come from.
 
+import { fallTime, pendulumPeriod } from '../../core/engineering.js';
+
 const P = (value, hint = '') => ({ value, src: 'PLACEHOLDER', verified: false, hint });
 const v = (row) => row.value;
 
@@ -170,5 +172,42 @@ export const sampleAligns = {
     mode: 'photo', titleKey: 'align.photo.title', introKey: 'align.photo.intro', response: 'beam',
     beamWidthDeg: v(alignRows.photoBeamWidthDeg), minDeg: -60, maxDeg: 60, startDeg: -50, targetDeg: 18, stepDeg: 1,
     successPct: v(alignRows.successPct), holdSeconds: v(alignRows.holdSeconds),
+  },
+};
+
+// ---- qte -----------------------------------------------------------------------
+// Durations are computed the way a caller (K2, K6) would: with engineering.js and nasa_data.json values.
+export const qteRows = {
+  marsGravity: { value: 3.73, src: 'nasa_data.json mars.gravity (NSSDCA Mars Fact Sheet)', verified: true },
+  earthGravity: { value: 9.80665, src: 'nasa_data.json constants.g0 (NIST)', verified: true },
+  tolerance: { value: 0.1, src: 'nasa_data.json rules.experimentTolerance (D-006)', verified: true },
+  shelfHeightM: P(1.5, 'game tuning: shelf above the hand'),
+  catchWindow: P(0.15, 'game tuning: share of the drop counted as in the hand'),
+  pendulumLengthM: P(1, 'K6: experiment setting'),
+  dropHeightM: { value: 2, src: 'experiments_config.json freefall.dropHeightM (K6)', verified: false },
+  soundDistanceM: { value: 50, src: 'experiments_config.json speed_of_sound.distanceM (K6)', verified: false },
+  soundSpeedMarsMs: { value: 240, src: 'experiments_config.json speed_of_sound.expectedMarsSpeedMs (K6)', verified: false },
+};
+const g = v(qteRows.marsGravity);
+
+export const sampleQtes = {
+  catch: {
+    mode: 'catch', titleKey: 'qte.catch.title', introKey: 'qte.catch.intro',
+    eventSeconds: fallTime(v(qteRows.shelfHeightM), g),
+    compareSeconds: fallTime(v(qteRows.shelfHeightM), v(qteRows.earthGravity)),
+    catchWindow: v(qteRows.catchWindow), rounds: 3, needed: 2, delaysSeconds: [1.2, 0.7, 1.6],
+  },
+  pendulum: {
+    mode: 'stopwatch', scene: 'pendulum', titleKey: 'qte.pendulum.title', introKey: 'qte.pendulum.intro',
+    eventSeconds: pendulumPeriod(v(qteRows.pendulumLengthM), g), cycles: 10, trials: 1, tolerance: v(qteRows.tolerance),
+  },
+  drop: {
+    mode: 'stopwatch', scene: 'drop', titleKey: 'qte.drop.title', introKey: 'qte.drop.intro',
+    eventSeconds: fallTime(v(qteRows.dropHeightM), g), trials: 3, tolerance: v(qteRows.tolerance), delaysSeconds: [1.5, 1.1, 1.8],
+  },
+  sound: {
+    mode: 'stopwatch', scene: 'sound', titleKey: 'qte.sound.title', introKey: 'qte.sound.intro',
+    eventSeconds: v(qteRows.soundDistanceM) / v(qteRows.soundSpeedMarsMs), trials: 3, tolerance: v(qteRows.tolerance),
+    delaysSeconds: [1.4, 1.0, 1.7],
   },
 };

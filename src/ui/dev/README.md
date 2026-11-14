@@ -64,6 +64,13 @@ top of `src/minigames/align.js`; samples in `sampleAligns` (panel, antenna, phot
 (power ∝ cos of the angle error); `'beam'` is a simplified Gaussian beam and says so on screen. Callers roll `targetDeg` with the
 seeded RNG. Tuning values (`alignRows`) are placeholders for K1 to move into `nasa_data.json`.
 
+QTE (`template: 'qte'`), two modes; config format at the top of `src/minigames/qte.js`, samples in `sampleQtes`:
+- `mode: 'catch'`: a tool falls in real Mars gravity; press Space when it reaches the hand. The caller passes the fall time from
+  `engineering.fallTime(height, mars.gravity)` and the Earth time for comparison.
+- `mode: 'stopwatch'` (K6's experiments): `scene: 'pendulum' | 'drop' | 'sound'`. Space starts and stops the stopwatch; several
+  trials are averaged and compared with the expected time within `tolerance`. The caller passes the event time
+  (`pendulumPeriod`, `fallTime`, distance / speed of sound). `detail.measuredSeconds` goes back to K6, who turns it into g or a speed.
+
 `onDone` result: `{ success, score, timeUsed, detail }`. `timeUsed` is real seconds. `detail` is template-specific
 (converter: `{input, outputs, energyWh, gameMinutes}`); it is an addition to the D-003 shape. Esc closes a mini-game
 with `success: false`. Decision cards cannot be closed with Esc; the player has to choose.

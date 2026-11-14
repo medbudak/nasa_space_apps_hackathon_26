@@ -32,6 +32,10 @@
       <button class="btn ghost" data-align="panel">align: panel</button>
       <button class="btn ghost" data-align="antenna">align: antenna</button>
       <button class="btn ghost" data-align="photo">align: photo</button>
+      <button class="btn ghost" data-qte="catch">qte: catch</button>
+      <button class="btn ghost" data-qte="pendulum">stopwatch: pendulum</button>
+      <button class="btn ghost" data-qte="drop">stopwatch: drop</button>
+      <button class="btn ghost" data-qte="sound">stopwatch: sound</button>
       <button class="btn ghost" data-unknown>unknown template</button>
     </div>
     <div class="dev-log" data-log>bus log:</div>
@@ -45,7 +49,7 @@
     import { mountDecisionCards } from '../decisionCard.js';
     import { mountMinigames } from '../../minigames/index.js';
     import { createBus } from './stub_bus.js';
-    import { sampleEngineFreeze, sampleNoReturn, withChoose, sampleConverters, sampleAligns } from './stub_samples.js';
+    import { sampleEngineFreeze, sampleNoReturn, withChoose, sampleConverters, sampleAligns, sampleQtes } from './stub_samples.js';
 
     const texts = await (await fetch('./ui_texts.json')).json();
     let lang = 'tr';
@@ -79,6 +83,9 @@
     }));
     document.querySelectorAll('[data-align]').forEach((b) => b.addEventListener('click', () => {
       bus.emit('minigame:open', { template: 'align', config: sampleAligns[b.dataset.align], onDone: (r) => log('onDone', r) });
+    }));
+    document.querySelectorAll('[data-qte]').forEach((b) => b.addEventListener('click', () => {
+      bus.emit('minigame:open', { template: 'qte', config: sampleQtes[b.dataset.qte], onDone: (r) => log('onDone', r) });
     }));
     document.querySelector('[data-unknown]').addEventListener('click', () =>
       bus.emit('minigame:open', { template: 'nope', config: {}, onDone: (r) => log('onDone', r) }));
