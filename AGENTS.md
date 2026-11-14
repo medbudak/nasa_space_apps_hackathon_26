@@ -47,7 +47,7 @@ Ajanlar ve geliştiriciler kod yazarken aşağıdaki 5 temel sözleşmeye sadık
 
 Projeyi adım adım inşa ederken ajan şu sırayı izler:
 
-1. **Varlık Hazırlığı:** Kök dizindeki mevcut 32 adet 16-bit Pixel Art PNG görselini `sol_14_red_horizon_t_m_g_rseller_i_in_ai_prompt_k_t_phanesi.md` içindeki standart `assets/` klasör yapısına (`backgrounds/`, `sprites/`, `structures/`, `screens/`, `vfx/`, `ending/`) kopyalar/eşler ve beyaz (`#FFFFFF`) arka planlı sprite'ları Canvas üzerinde şeffaf (chroma-key / alpha) işleyecek yardımcı modülü kurar.
+1. **Varlık Hazırlığı:** Kök dizindeki mevcut 32 adet 16-bit Pixel Art PNG görselini `docs/design/ai-image-prompts.md` içindeki standart `assets/` klasör yapısına (`backgrounds/`, `sprites/`, `structures/`, `screens/`, `vfx/`, `ending/`) kopyalar/eşler ve beyaz (`#FFFFFF`) arka planlı sprite'ları Canvas üzerinde şeffaf (chroma-key / alpha) işleyecek yardımcı modülü kurar.
 2. **Veri ve Çekirdek Katmanı (`K1` + `K5`):** `data/nasa_data.json`, `content/story.json`, `src/core/engineering.js`, `src/core/state.js` ve birim testlerini (`tests/engineering.test.js`) oluşturur ve `node --test` ile doğrular.
 3. **Simülasyon ve Bilim Sistemleri (`K2` + `K6`):** `src/core/sim.js`, `src/core/events.js`, `src/systems/forensics.js` ve `src/systems/experiments.js` modüllerini yazar.
 4. **Görsel Motor, UI ve Mini-Oyunlar (`K3` + `K4`):** `Sol 0` tasarım ekranlarını, yüzey Canvas sahnesini, HUD panellerini (Downlink, Güç Yükü, Dönüşsüzlük çentiği), 4 mini-oyunu, Karne ekranını ve UFO Stinger final sahnesini bağlar.
