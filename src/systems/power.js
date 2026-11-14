@@ -11,6 +11,9 @@
 // State, in K1's state.power (D-003):
 //   order[]      load ids, top first
 //   off{}        id -> true while that load is shed
+//   held{}       id -> game time T (sol + solFraction) until which the player keeps it off
+//                (a crisis card choice, e.g. "switch the greenhouse off for the storm");
+//                automatic restore never turns a held load back on early
 //   experimentW  extra draw set by K6 while an experiment runs
 //
 // For K3's power panel: getPowerStatus(state, ctx) and setOrder(state, order).
@@ -32,8 +35,31 @@ const INSTRUMENT_LOAD = Object.freeze({
 });
 
 export function initPower(state) {
-  Object.assign(state.power, { order: [...LOAD_IDS], off: {}, experimentW: 0 });
+  Object.assign(state.power, { order: [...LOAD_IDS], off: {}, held: {}, experimentW: 0 });
   return state;
+}
+
+const nowT = (state) => state.time.sol + state.time.solFraction;
+
+/** True while the player keeps this load switched off (see holdLoad). */
+export function isHeld(state, id) {
+  const until = state.power.held?.[id];
+  return typeof until === 'number' && nowT(state) < until;
+}
+
+/** Keep a load switched off until game time T (sol + solFraction). Pinned loads cannot be held. */
+export function holdLoad(state, id, untilT) {
+  if (!LOAD_IDS.includes(id) || PINNED.has(id)) return false;
+  state.power.held ??= {};
+  state.power.held[id] = untilT;
+  return true;
+}
+
+/** Daytime draw in W that the chosen instruments put on one load (0 if none is installed). */
+export function instrumentWatts(state, data, loadId) {
+  return designRows(state, data).instruments
+    .filter((inst) => INSTRUMENT_LOAD[inst.id] === loadId)
+    .reduce((sum, inst) => sum + rowVal(inst, 'powerW', { optional: true }), 0);
 }
 
 function sunUp(state, { data, eng }, site) {
@@ -64,12 +90,10 @@ export function computeLoads(state, ctx) {
   }
   watts.experiments += state.power.experimentW;
 
-  return state.power.order.map((id) => ({
-    id,
-    watts: watts[id],
-    on: !state.power.off[id],
-    pinned: PINNED.has(id),
-  }));
+  return state.power.order.map((id) => {
+    const held = isHeld(state, id);
+    return { id, watts: watts[id], on: !state.power.off[id] && !held, pinned: PINNED.has(id), held };
+  });
 }
 
 export function sumOn(loads) {
@@ -108,7 +132,7 @@ export function updateShedding(state, ctx) {
   } else {
     const restoreAt = val(ctx.data.rules.powerRestoreFraction, 'rules.powerRestoreFraction') * p.batteryCapacityWh;
     if (p.batteryWh >= restoreAt) {
-      const next = loads.find((l) => !l.on);
+      const next = loads.find((l) => !l.on && !l.held); // a held load stays off until its time
       if (next) {
         next.on = true;
         delete p.off[next.id];
@@ -120,9 +144,9 @@ export function updateShedding(state, ctx) {
   p.deficitW = p.batteryWh <= 0 ? Math.max(0, p.loadW - gen) : 0;
 }
 
-/** True unless the load is currently shed. */
+/** True unless the load is currently shed or held off. */
 export function isOn(state, id) {
-  return !state.power.off[id];
+  return !state.power.off[id] && !isHeld(state, id);
 }
 
 /**

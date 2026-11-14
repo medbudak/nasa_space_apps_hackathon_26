@@ -42,6 +42,17 @@ export function newState(design = {}, d = data) {
   return s;
 }
 
+// Crises on a fixed schedule (events.js). A test that jumps the clock forward counts them as
+// already lived through, as they would be in a real run.
+const SCHEDULED = ['stormWarning', 'storm', 'dustDevil', 'conjunction'];
+
+/** Jump the clock to a sol and time of sol, marking the scheduled crises before it as done. */
+export function jumpTo(s, sol, solFraction = s.time.solFraction) {
+  s.time.sol = sol;
+  s.time.solFraction = solFraction;
+  for (const id of SCHEDULED) s.events.fired[id] ??= { sol: 0, solFraction: 0, skipped: true };
+}
+
 /** Game hours -> real seconds at the data's time scale. */
 export function realSeconds(hours, d = data) {
   return (hours / d.time.solHours.value) * d.time.solRealSeconds.value;

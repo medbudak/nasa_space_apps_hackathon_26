@@ -7,7 +7,7 @@ import { checkEvents, resolveDecision } from '../src/systems/events.js';
 import {
   antennaConfig, finaleDone, finaleDue, finalePaused, startFinale, updateFinale,
 } from '../src/systems/finale.js';
-import { data, eng, fakeBus, newState } from './helpers/k2_env.mjs';
+import { data, eng, fakeBus, jumpTo, newState } from './helpers/k2_env.mjs';
 
 const lastSol = data.rules.totalSols.value;
 const dawn = data.time.startSolFraction.value;
@@ -41,7 +41,7 @@ function run(s, ctx, { maxSteps = 4000, minigame = { success: true, score: 100 }
 
 /** Put the run on the evening of the sol before departure. */
 function eveOfDeparture(s, ctx) {
-  s.time.sol = lastSol - 1;
+  jumpTo(s, lastSol - 1);
   s.time.solFraction = 0.8;
   step(s, 0.001, ctx);
 }
@@ -53,10 +53,10 @@ function sendScience(s, reports, experiments) {
 
 test('the departure sequence starts on the morning of the last sol, not before', () => {
   const { s, ctx } = setup();
-  s.time.sol = lastSol - 1;
+  jumpTo(s, lastSol - 1);
   s.time.solFraction = 0.9;
   assert.equal(finaleDue(s, ctx), false);
-  s.time.sol = lastSol;
+  jumpTo(s, lastSol);
   s.time.solFraction = dawn - 0.01;
   assert.equal(finaleDue(s, ctx), false, 'before dawn');
   s.time.solFraction = dawn;
@@ -124,7 +124,7 @@ test('waiting at a cold site: the day never gets warm enough, the crew stays on 
 
 test('a spare kit fixes the antenna without the mini-game', () => {
   const { s, bus, ctx } = setup({ spareKitsId: 'k1' });
-  s.time.sol = lastSol;
+  jumpTo(s, lastSol);
   s.time.solFraction = dawn;
   s.events.flags.mavHeated = true;
   startFinale(s);
@@ -137,7 +137,7 @@ test('a spare kit fixes the antenna without the mini-game', () => {
 
 test('without a kit the align mini-game opens; failing it costs points but the MAV still flies', () => {
   const { s, bus, ctx } = setup({ spareKitsId: 'k0' });
-  s.time.sol = lastSol;
+  jumpTo(s, lastSol);
   s.time.solFraction = dawn;
   s.events.flags.mavHeated = true;
   startFinale(s);

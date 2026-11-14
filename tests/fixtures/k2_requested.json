@@ -8,6 +8,25 @@
       "launchPoints": { "value": 100, "unit": "points", "simplified": true, "note": "the MAV lifts off: safe return (survival)", "src": "PLACEHOLDER", "verified": false },
       "missedLaunchPoints": { "value": -100, "unit": "points", "simplified": true, "note": "launch window closed with the MAV too cold (lostSystems)", "src": "PLACEHOLDER", "verified": false }
     },
+    "events": {
+      "storm": {
+        "sol": { "value": 4, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "atSolFraction": { "value": 0.4, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "durationSols": { "value": 1.5, "unit": "sol", "simplified": true, "note": "game value; real global storms last weeks (Opportunity 2018)", "src": "PLACEHOLDER", "verified": false },
+        "dustLoss": { "value": 0.8, "unit": "", "simplified": true, "note": "design doc v2 crisis card 'panel output down 80%'", "src": "PLACEHOLDER", "verified": false },
+        "residualDust": { "value": 0.3, "unit": "", "simplified": true, "note": "dust left on the panels after the storm, until a dust devil; game value", "src": "PLACEHOLDER", "verified": false },
+        "warnSols": { "value": 1, "unit": "sol", "simplified": true, "note": "design doc v2: MEDA warns 1 sol early", "src": "PLACEHOLDER", "verified": false }
+      },
+      "dustDevil": {
+        "sol": { "value": 8, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "atSolFraction": { "value": 0.55, "unit": "sol", "simplified": true, "note": "game schedule (dust devils form in the afternoon)", "src": "PLACEHOLDER", "verified": false }
+      },
+      "conjunction": {
+        "sol": { "value": 10, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "atSolFraction": { "value": 0, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "durationSols": { "value": 2, "unit": "sol", "simplified": true, "note": "design doc v2: 2 sols; the real blackout lasts about two weeks", "src": "PLACEHOLDER", "verified": false }
+      }
+    },
     "minigames": {
       "antennaAlign": {
         "beamWidthDeg": { "value": 12, "unit": "deg", "simplified": true, "note": "K3 draft (stub_samples alignRows): simplified beam, wide enough to find by ear", "src": "PLACEHOLDER", "verified": false },

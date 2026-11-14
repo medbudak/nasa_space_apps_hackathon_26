@@ -3,7 +3,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createState } from '../src/core/state.js';
-import { data, DEFAULT_DESIGN, fakeBus } from './helpers/k2_env.mjs';
+import { data, DEFAULT_DESIGN, fakeBus, jumpTo } from './helpers/k2_env.mjs';
 
 // --- a tiny fake browser: only what surface.js touches -------------------------------------
 let now = 0;
@@ -111,7 +111,7 @@ test('a frame that arrives "before" the last one does not run time backwards', a
 test('the loop pauses while a decision card is open and goes on after the choice', async () => {
   const { surface, state, bus } = await enterScene();
   // The engine card comes the night before departure: start the sol before, it freezes after midnight.
-  state.time.sol = data.events.engineFreeze.earliestSol.value - 1;
+  jumpTo(state, data.events.engineFreeze.earliestSol.value - 1);
   for (let i = 0; i < 4000 && !state.events.pending; i++) tick(100);
   assert.ok(state.events.pending, 'no card opened');
   assert.equal(state.events.pending.eventId, 'engineFreeze');

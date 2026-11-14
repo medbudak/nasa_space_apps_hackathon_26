@@ -26,7 +26,7 @@ import {
   createSurvivalState, step, startEva, endEva, setEvaPosition, walkSpeedMs, realSecondsToHours,
   gameSecondsPerRealSecond,
 } from '../systems/survival.js';
-import { createEventState, checkEvents, reopenPending, resolveDecision } from '../systems/events.js';
+import { createEventState, checkEvents, reopenPending, resolveDecision, commsBlackout } from '../systems/events.js';
 import { getPowerStatus, setOrder } from '../systems/power.js';
 import { finaleDue, startFinale, updateFinale, finalePaused, finaleDone } from '../systems/finale.js';
 import { val, withRequested } from '../systems/simData.js';
@@ -128,8 +128,9 @@ function frame(now) {
     walk(dt);
     step(state, dt, ctx);
     const toT = state.time.sol + state.time.solFraction;
-    // Relay passes due in this step send the downlink queue (K3's M1 logic).
-    if (s.passes.length) runDuePasses(state, s.passes, fromT, toT, ctx.bus);
+    // Relay passes due in this step send the downlink queue (K3's M1 logic); nothing goes out
+    // during a solar conjunction.
+    if (s.passes.length && !commsBlackout(state)) runDuePasses(state, s.passes, fromT, toT, ctx.bus);
     s.telemetry.sample(state);
     if (finaleDue(state, ctx)) startFinale(state); // morning of the last sol: departure sequence
     checkEvents(state, ctx);

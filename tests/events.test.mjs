@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { step, isNight } from '../src/systems/survival.js';
 import { checkEvents, resolveDecision } from '../src/systems/events.js';
-import { data, eng, fakeBus, newState } from './helpers/k2_env.mjs';
+import { data, eng, fakeBus, jumpTo, newState } from './helpers/k2_env.mjs';
 
 const cfg = data.events.engineFreeze;
 
@@ -11,7 +11,7 @@ function setup() {
   const bus = fakeBus();
   const s = newState();
   // The engine freezes on the departure morning (events.engineFreeze.earliestSol), so start there.
-  s.time.sol = cfg.earliestSol.value;
+  jumpTo(s, cfg.earliestSol.value);
   return { s, bus, ctx: { data, eng, bus } };
 }
 
