@@ -29,14 +29,14 @@ test('mission success thresholds follow D-006', () => {
 test('three different designs give three different explanations', () => {
   // (a) cheap and light: small battery, the greenhouse froze.
   newGame(1);
-  getState().design.power.battery_kWh = 20;
-  addScore('survival', -120, 'consequence.greenhouseFroze', 'design.power.battery_kWh');
+  getState().design.batteryId = 'b20';
+  addScore('survival', -120, 'consequence.greenhouseFroze', 'design.batteryId');
   addScore('forensics', 100, 'consequence.correctDiagnosis', 'decision.wreckOpportunity');
   const cheap = buildReport(getState(), data);
 
   // (b) balanced: weather station warned of the storm.
   newGame(2);
-  addScore('survival', 80, 'consequence.stormPrepared', 'design.instruments');
+  addScore('survival', 80, 'consequence.stormPrepared', 'design.instrumentIds');
   const balanced = buildReport(getState(), data);
 
   // (c) heavy, many instruments: data budget ran out before the reports went home.
@@ -47,8 +47,8 @@ test('three different designs give three different explanations', () => {
 
   const firstCause = (r) => r.topCauses[0].cause;
   assert.deepEqual([firstCause(cheap), firstCause(balanced), firstCause(heavy)], [
-    'design.power.battery_kWh',
-    'design.instruments',
+    'design.batteryId',
+    'design.instrumentIds',
     'decision.dataFull',
   ]);
   assert.equal(cheap.topCauses[0].points, -120, 'biggest effect comes first');
@@ -66,18 +66,15 @@ test('entries without a cause are grouped by reason', () => {
 });
 
 test('mass-margin bonus is added once and only with enough margin', () => {
-  const rocketId = data.rockets[0].id;
-  const fakeData = { ...data, rockets: [{ id: rocketId, capacityToMars_kg: 1000 }] };
-  const bonus = data.tuning.massMarginBonus.value;
+  const bonus = data.rules.massMarginBonus.value;
 
   const state = newGame(5);
-  state.design.rocketId = rocketId;
-  state.design.totalMass_kg = 950; // 5% margin: no bonus
-  scoreMassMargin(state, fakeData);
+  state.designSummary = { capacity: 1000, mass: 950 }; // 5% margin: no bonus
+  scoreMassMargin(state, data);
   assert.equal(state.score.total, 0);
 
-  state.design.totalMass_kg = 850; // 15% margin
-  scoreMassMargin(state, fakeData);
-  scoreMassMargin(state, fakeData);
+  state.designSummary = { capacity: 1000, mass: 850 }; // 15% margin
+  scoreMassMargin(state, data);
+  scoreMassMargin(state, data);
   assert.equal(state.score.total, bonus);
 });

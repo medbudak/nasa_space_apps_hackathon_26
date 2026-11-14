@@ -6,7 +6,7 @@ import { massMargin } from '../core/engineering.js';
 
 const TOP_CAUSES = 5;
 
-const tune = (data, key) => data.tuning[key].value;
+const rule = (data, key) => data.rules[key].value;
 
 function countSent(records) {
   return Object.values(records).filter((r) => r.sent).length;
@@ -17,10 +17,10 @@ export function missionSuccess(state, data) {
   const reports = countSent(state.forensics);
   const experiments = countSent(state.experiments);
   const full =
-    reports >= tune(data, 'fullSuccessReports') &&
-    experiments >= tune(data, 'fullSuccessExperiments') &&
+    reports >= rule(data, 'fullSuccessReports') &&
+    experiments >= rule(data, 'fullSuccessExperiments') &&
     state.outcome === 'hero';
-  const minimum = reports >= tune(data, 'minimumSuccessReports') && experiments >= tune(data, 'minimumSuccessExperiments');
+  const minimum = reports >= rule(data, 'minimumSuccessReports') && experiments >= rule(data, 'minimumSuccessExperiments');
   return { level: full ? 'full' : minimum ? 'minimum' : 'none', reports, experiments };
 }
 
@@ -57,14 +57,14 @@ export function buildReport(state, data) {
   };
 }
 
-/** Adds the mass-margin bonus once, when the design left enough launch capacity unused. */
+/** Adds the mass-margin bonus once, when the launched design left enough capacity unused. */
 export function scoreMassMargin(state, data) {
   if (state.score.entries.some((e) => e.category === 'massMargin')) return;
-  const rocket = data.rockets.find((r) => r.id === state.design.rocketId);
-  if (!rocket?.capacityToMars_kg) return;
-  const margin = massMargin(rocket.capacityToMars_kg, state.design.totalMass_kg);
-  if (margin >= tune(data, 'massMarginBonusThreshold')) {
-    addScore('massMargin', tune(data, 'massMarginBonus'), 'consequence.massMarginKept', 'design.totalMass_kg');
+  const summary = state.designSummary;
+  if (!summary?.capacity) return;
+  const marginPct = massMargin(summary.capacity, summary.mass) * 100;
+  if (marginPct >= rule(data, 'massMarginBonusPct')) {
+    addScore('massMargin', rule(data, 'massMarginBonus'), 'consequence.massMarginKept', 'design.rocketId');
   }
 }
 
@@ -143,8 +143,8 @@ export default {
         table(
           ['', t('ending.stat.mass'), t('ending.stat.sols')],
           [
-            [t('ending.you'), state.design.totalMass_kg, report.stats.solsSurvived],
-            ...report.comparison.map((m) => [m.name, m.mass_kg, m.solsOperated]),
+            [t('ending.you'), state.designSummary?.mass ?? '-', report.stats.solsSurvived],
+            ...report.comparison.map((m) => [m.realName, m.massKg?.value ?? '-', m.solsOperated?.value ?? '-']),
           ],
         ),
       );

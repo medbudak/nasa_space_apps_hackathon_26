@@ -1,40 +1,35 @@
 // The one gameState (D-003). K1 owns the schema: ask before adding a field.
-// Systems change values; nobody replaces whole sub-objects, so references held elsewhere stay valid.
+// Systems change values. Once a sub-object exists, nobody replaces it, so references held elsewhere stay valid.
 
-const SAVE_KEY = 'sol14.save.v1';
+const SAVE_KEY = 'sol14.save.v2';
 
 export const SCORE_CATEGORIES = Object.freeze(['forensics', 'experiments', 'survival', 'massMargin', 'lostSystems']);
 
 export function createState(seed = Math.floor(Math.random() * 2 ** 32)) {
   return {
-    version: 1,
+    version: 2,
     seed,
     scene: 'title',
-    sol: 0,
-    timeOfSol: 0, // 0..1 within the current sol
+    // Sol 0 choices, written by K3's design screen. Every id is a row id in nasa_data.json.
     design: {
-      objective: null, // 'forensics' | 'experiments' | 'balanced'
+      objectiveId: null,
       rocketId: null,
       trajectoryId: null,
-      landingSiteId: null,
-      power: { solarArea_m2: 0, rtg: false, battery_kWh: 0 },
-      insulation: null, // 'thin' | 'thick'
-      instruments: [], // instrument ids from nasa_data.json, at most tuning.maxInstruments
-      comms: null, // 'relay' | 'relayDte'
-      spareKits: 0,
-      totalMass_kg: 0,
-      totalCost_musd: 0,
+      siteId: null,
+      powerId: null,
+      batteryId: null,
+      insulationId: null,
+      instrumentIds: [], // at most rules.maxInstruments
+      commsId: null,
+      spareKitsId: null,
     },
-    resources: {
-      fuel_kms: 0, // Δv left for the return, km/s
-      oxygen_kg: 0,
-      energy_kWh: 0,
-      water_kg: 0,
-      food_kg: 0,
-      heat: 100, // body heat / joint condition, 0..100
-      sanity: 100, // 0..100
-      radiation_mSv: 0, // cumulative dose
-    },
+    designSummary: null, // evaluateDesign() result at launch: { cost, mass, capacity, nightNeedKWh, ... }
+    // Surface simulation, filled by K2 at landing (createSurvivalState / createEventState):
+    time: null, // { sol, solFraction }
+    power: null, // { batteryWh, batteryCapacityWh, generationW, loadW, deficitW, dust }
+    env: null, // { outsideC, insideC }
+    life: null, // { o2Kg, radiationMSv, ... }
+    events: null, // { fired, pending, flags }
     inventory: { scrap: 0, ice: 0, fertilizer: 0, rhu: 0, roverParts: [] },
     decisionLog: [], // { sol, eventId, choice, effects: [...] }
     dataBudget: { perSol: 0, used: 0, queue: [] }, // queue items: { type, id, mbit, points }
@@ -42,7 +37,7 @@ export function createState(seed = Math.floor(Math.random() * 2 ** 32)) {
     experiments: {}, // experimentId -> { hypothesis: null, measured: null, success: false, sent: false }
     flags: { anomalyPhotos: 0, cameraTier: 'hand' }, // cameraTier: 'hand' | 'hires'
     score: { total: 0, entries: [] }, // entries: { sol, category, points, reason, cause }
-    stats: { energyUsed_kWh: 0, oxygenProduced_kg: 0, dataSent_Mbit: 0, solsSurvived: 0 }, // for the report card
+    stats: { energyUsedKWh: 0, oxygenProducedKg: 0, dataSentMbit: 0, solsSurvived: 0 }, // for the report card
     lostSystems: [],
     outcome: null, // set by K2's final sequence: 'hero' | 'colonist' | 'explorer' | 'lost'
   };
@@ -59,9 +54,11 @@ export function newGame(seed) {
   return state;
 }
 
+const currentSol = () => state.time?.sol ?? 0;
+
 /** Append a crisis choice to the decision log. The report card reads these entries. */
 export function logDecision({ eventId, choice, effects = [] }) {
-  const entry = { sol: state.sol, eventId, choice, effects };
+  const entry = { sol: currentSol(), eventId, choice, effects };
   state.decisionLog.push(entry);
   return entry;
 }
@@ -70,13 +67,13 @@ export function logDecision({ eventId, choice, effects = [] }) {
  * The only way to change the score, so the report card can explain every point.
  * reason: story.json key for what happened, e.g. 'consequence.greenhouseFroze'.
  * cause (optional): the choice that led to it, so the report card can link them:
- *   a design field, e.g. 'design.power.battery_kWh', or a crisis choice, 'decision.<eventId>'.
+ *   a design field, e.g. 'design.batteryId', or a crisis choice, 'decision.<eventId>'.
  */
 export function addScore(category, points, reason, cause = null) {
   if (!SCORE_CATEGORIES.includes(category)) {
     console.warn(`[state] unknown score category "${category}". Use one of: ${SCORE_CATEGORIES.join(', ')}`);
   }
-  state.score.entries.push({ sol: state.sol, category, points, reason, cause });
+  state.score.entries.push({ sol: currentSol(), category, points, reason, cause });
   state.score.total += points;
 }
 

@@ -8,8 +8,9 @@
 
 import { bus } from './core/bus.js';
 import { loadNasaData, getData } from './core/nasaData.js';
-import { loadStory, t } from './core/i18n.js';
+import { loadStory, t, getLang } from './core/i18n.js';
 import { getState, newGame, load, save } from './core/state.js';
+import { evaluateDesign } from './core/engineering.js';
 
 const SCENES = {
   design: { path: './scenes/design.js', owner: 'K3', next: 'surface' },
@@ -62,13 +63,43 @@ function placeholderScene(name, info, err) {
   };
 }
 
+// K3's Sol 0 screen exports mountDesign() instead of a default scene; this adapts it.
+function designScene(mountDesign) {
+  let mounted = null;
+  return {
+    enter({ state, data, t, goTo, ui }) {
+      mounted = mountDesign(ui, {
+        data,
+        t,
+        evaluate: evaluateDesign,
+        design: state.design,
+        locale: getLang() === 'tr' ? 'tr-TR' : 'en-US',
+        onChange: (design) => {
+          Object.assign(state.design, design);
+          save();
+        },
+        onLaunch: (design, summary) => {
+          Object.assign(state.design, design);
+          state.designSummary = summary;
+          goTo('surface');
+        },
+      });
+    },
+    exit() {
+      mounted?.destroy?.();
+    },
+  };
+}
+
 async function loadScene(name) {
   if (name === 'title') return titleScene;
   const info = SCENES[name];
   if (!info) throw new Error(`unknown scene "${name}"`);
   try {
     const mod = await import(info.path);
-    return mod.default;
+    if (mod.default) return mod.default;
+    if (mod.mountDesign) return designScene(mod.mountDesign);
+    throw new Error(`${info.path} has no default export`);
   } catch (err) {
     return placeholderScene(name, info, err);
   }

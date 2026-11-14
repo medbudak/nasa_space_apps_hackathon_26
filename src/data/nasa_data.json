@@ -1,93 +1,1374 @@
 {
-  "_readme": "Every real-world number in the game. Owner: K1. Scalar entries are {value, unit, src, verified}; table rows carry src and verified. src PLACEHOLDER = still needs a real source (none may remain at content lock). simplified: true = changed for gameplay, also listed in REFERENCES.md. Balance is tuned only in 'tuning'.",
-
+  "_readme": "Every real-world number in the game. Owner: K1. Each number is an entry {value, unit, src, verified}. src is the URL the value was read from; \"game: ...\" marks a game rule or design option; \"PLACEHOLDER\" means not researched yet, and then value must be null: no estimates. note says how the source states it.",
   "constants": {
-    "g0": { "value": 9.80665, "unit": "m/s^2", "src": "https://physics.nist.gov/cgi-bin/cuu/Value?gn", "verified": true },
-    "speedOfLight": { "value": 299792.458, "unit": "km/s", "src": "https://physics.nist.gov/cgi-bin/cuu/Value?c", "verified": true }
+    "g0": {
+      "value": 9.80665,
+      "unit": "m/s^2",
+      "src": "https://physics.nist.gov/cgi-bin/cuu/Value?gn",
+      "verified": true
+    },
+    "speedOfLightKms": {
+      "value": 299792.458,
+      "unit": "km/s",
+      "src": "https://physics.nist.gov/cgi-bin/cuu/Value?c",
+      "verified": true
+    }
   },
-
   "mars": {
-    "gravity": { "value": 3.73, "unit": "m/s^2", "note": "mean surface gravity", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "solarIrradiance": { "value": 586.2, "unit": "W/m^2", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "solLength": { "value": 24.6597, "unit": "h", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "surfacePressure": { "value": 636, "unit": "Pa", "note": "6.36 mb at mean radius, varies 400-870 Pa with season", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "co2Fraction": { "value": 0.951, "unit": "", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "meanTemperature": { "value": -59, "unit": "C", "note": "~214 K", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "diurnalMinTemperature": { "value": -89, "unit": "C", "note": "Viking 1 Lander site", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "diurnalMaxTemperature": { "value": -31, "unit": "C", "note": "Viking 1 Lander site", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "minDistanceFromEarth": { "value": 54600000, "unit": "km", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "maxDistanceFromEarth": { "value": 401400000, "unit": "km", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
-    "synodicPeriod": { "value": 779.94, "unit": "days", "note": "launch windows repeat about every 26 months", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true }
+    "gravity": {
+      "value": 3.73,
+      "unit": "m/s^2",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true,
+      "note": "mean surface gravity; 3.71 in older documents is out of date"
+    },
+    "solarIrradianceWm2": {
+      "value": 586.2,
+      "unit": "W/m^2",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true
+    },
+    "solHours": {
+      "value": 24.6597,
+      "unit": "h",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true,
+      "note": "length of day"
+    },
+    "surfacePressurePa": {
+      "value": 636,
+      "unit": "Pa",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true,
+      "note": "6.36 mb at mean radius, varies 4.0 to 8.7 mb with season"
+    },
+    "co2Fraction": {
+      "value": 0.951,
+      "unit": "",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true
+    },
+    "meanTempC": {
+      "value": -59,
+      "unit": "C",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true,
+      "note": "~214 K"
+    },
+    "minDistanceFromEarthKm": {
+      "value": 54600000,
+      "unit": "km",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true
+    },
+    "maxDistanceFromEarthKm": {
+      "value": 401400000,
+      "unit": "km",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true
+    },
+    "synodicPeriodDays": {
+      "value": 779.94,
+      "unit": "days",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true,
+      "note": "launch windows about every 26 months"
+    }
   },
-
-  "power": {
-    "panelEfficiency": { "value": 0.3, "unit": "", "note": "from task card; check against NASA SST State of the Art, Power chapter", "src": "PLACEHOLDER", "verified": false },
-    "rtgOutput": { "value": 110, "unit": "W", "note": "MMRTG; from design doc v2", "src": "PLACEHOLDER", "verified": false },
-    "rtgMass": { "value": 45, "unit": "kg", "note": "MMRTG; from design doc v2", "src": "PLACEHOLDER", "verified": false }
+  "time": {
+    "solRealSeconds": {
+      "value": 120,
+      "unit": "s",
+      "src": "game: D-001, 1 sol is about 2 minutes of play",
+      "verified": true,
+      "simplified": true
+    },
+    "solHours": {
+      "value": 24.6597,
+      "unit": "h",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true,
+      "note": "same as mars.solHours, kept here for K2"
+    },
+    "startSolFraction": {
+      "value": 0.25,
+      "unit": "sol",
+      "src": "game: landing at local 06:00",
+      "verified": true,
+      "simplified": true
+    }
   },
-
-  "rockets": [
-    { "id": "rocketA", "name": "Rocket A (to be chosen)", "capacityToMars_kg": 0, "cost_musd": 0, "src": "PLACEHOLDER", "verified": false },
-    { "id": "rocketB", "name": "Rocket B (to be chosen)", "capacityToMars_kg": 0, "cost_musd": 0, "src": "PLACEHOLDER", "verified": false },
-    { "id": "rocketC", "name": "Rocket C (to be chosen)", "capacityToMars_kg": 0, "cost_musd": 0, "src": "PLACEHOLDER", "verified": false }
+  "life": {
+    "crew": {
+      "value": 1,
+      "unit": "people",
+      "src": "game: design doc: one astronaut",
+      "verified": true,
+      "simplified": true
+    },
+    "o2KgPerCrewPerDay": {
+      "value": 0.895,
+      "unit": "kg/CM-d",
+      "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
+      "verified": true,
+      "note": "BVAD Rev 2 Table 3-31 \"Oxygen Consumed kg/CM-d 0.895\"; per Earth day"
+    },
+    "evaO2KgPerHour": {
+      "value": 0.086,
+      "unit": "kg/CM-h",
+      "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
+      "verified": true,
+      "note": "BVAD Rev 2 Table 4-70"
+    },
+    "drinkingWaterKgPerCrewPerDay": {
+      "value": 2,
+      "unit": "kg/CM-d",
+      "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
+      "verified": true,
+      "note": "\"2.00 kg for drinking water\""
+    },
+    "foodKgPerCrewPerDay": {
+      "value": 0.8,
+      "unit": "kg/CM-d",
+      "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
+      "verified": true,
+      "note": "\"Food Solids; Mass (without packaging) kg/CM-d 0.800\""
+    },
+    "o2StartKg": {
+      "value": null,
+      "unit": "kg",
+      "src": "PLACEHOLDER",
+      "verified": false,
+      "todo": "starting O2 reserve: team sets the planned days, then o2KgPerCrewPerDay × days"
+    }
+  },
+  "thermal": {
+    "habitatTargetC": {
+      "value": 22.85,
+      "unit": "C",
+      "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
+      "verified": true,
+      "note": "BVAD Rev 2 Table 4-1 nominal cabin temperature 296 K; NASA-STD-3001 comfort zone 20–25 °C"
+    }
+  },
+  "radiation": {
+    "cruiseMSvPerDay": {
+      "value": 1.8,
+      "unit": "mSv/day",
+      "src": "https://www.jpl.nasa.gov/news/data-from-nasa-rovers-voyage-to-mars-aids-planning/",
+      "verified": true,
+      "note": "\"an average of 1.8 milliSieverts of GCR per day on its journey to Mars\" (Curiosity RAD)"
+    },
+    "surfaceMSvPerDay": {
+      "value": 0.67,
+      "unit": "mSv/day",
+      "src": "https://www.nasa.gov/news-release/nasa-rover-results-include-first-age-measurement-on-mars-and-help-for-human-exploration/",
+      "verified": true,
+      "note": "Gale Crater average, Aug 2012 to Jun 2013 (Curiosity RAD)"
+    }
+  },
+  "telecom": {
+    "uhfRelayMbps": {
+      "value": 2,
+      "unit": "Mbit/s",
+      "src": "https://science.nasa.gov/mission/mars-2020-perseverance/rover-components/",
+      "verified": true,
+      "note": "\"Up to 2 megabits per second on the rover-to-orbiter relay link\" (Perseverance)"
+    },
+    "dteBps34m": {
+      "value": 160,
+      "unit": "bit/s",
+      "src": "https://science.nasa.gov/mission/mars-2020-perseverance/rover-components/",
+      "verified": true,
+      "note": "Perseverance X-band direct-to-Earth to a 34 m DSN antenna; 800 bit/s to 70 m"
+    },
+    "mroMbitPerPass": {
+      "value": 221.2,
+      "unit": "Mbit",
+      "src": "https://discovery.larc.nasa.gov/PDF_FILES/21_Proposers_Guide_To_Mars_Orbiters_-_Discovery_2019_AO_-_Rev_190411b.pdf",
+      "verified": true,
+      "note": "average return-link volume per MRO session for Curiosity, Table 2-1"
+    }
+  },
+  "ascent": {
+    "toLowOrbitKms": {
+      "value": 4.15,
+      "unit": "km/s",
+      "src": "https://ntrs.nasa.gov/api/citations/20140011316/downloads/20140011316.pdf",
+      "verified": true,
+      "note": "\"into low Mars orbit, with the required total ΔV = 4150 m/sec\" (NASA/TM-2013-216620)"
+    }
+  },
+  "rules": {
+    "maxInstruments": {
+      "value": 5,
+      "unit": "",
+      "src": "game: D-001",
+      "verified": true,
+      "simplified": true
+    },
+    "massMarginBonusPct": {
+      "value": 10,
+      "unit": "%",
+      "src": "game: design doc v2, NASA-style margin rule",
+      "verified": true,
+      "simplified": true
+    },
+    "massMarginBonus": {
+      "value": 50,
+      "unit": "points",
+      "src": "game: K1 balance, tune in the balance session",
+      "verified": true,
+      "simplified": true
+    },
+    "noReturnSafetyFactor": {
+      "value": 1.2,
+      "unit": "",
+      "src": "game: design doc v2, point-of-no-return formula",
+      "verified": true,
+      "simplified": true
+    },
+    "totalSols": {
+      "value": 14,
+      "unit": "sols",
+      "src": "game: D-001",
+      "verified": true,
+      "simplified": true
+    },
+    "demoSols": {
+      "value": 5,
+      "unit": "sols",
+      "src": "game: D-005, ?demo mode",
+      "verified": true,
+      "simplified": true
+    },
+    "forensicsCorrect": {
+      "value": 100,
+      "unit": "points",
+      "src": "game: D-006",
+      "verified": true,
+      "simplified": true
+    },
+    "forensicsWrongAllClues": {
+      "value": 50,
+      "unit": "points",
+      "src": "game: D-006",
+      "verified": true,
+      "simplified": true
+    },
+    "forensicsCluesMissing": {
+      "value": 20,
+      "unit": "points",
+      "src": "game: D-006",
+      "verified": true,
+      "simplified": true
+    },
+    "experimentTolerance": {
+      "value": 0.1,
+      "unit": "",
+      "src": "game: D-006, within ±10%",
+      "verified": true,
+      "simplified": true
+    },
+    "minimumSuccessReports": {
+      "value": 2,
+      "unit": "",
+      "src": "game: D-006",
+      "verified": true,
+      "simplified": true
+    },
+    "minimumSuccessExperiments": {
+      "value": 2,
+      "unit": "",
+      "src": "game: D-006",
+      "verified": true,
+      "simplified": true
+    },
+    "fullSuccessReports": {
+      "value": 4,
+      "unit": "",
+      "src": "game: D-006",
+      "verified": true,
+      "simplified": true
+    },
+    "fullSuccessExperiments": {
+      "value": 4,
+      "unit": "",
+      "src": "game: D-006",
+      "verified": true,
+      "simplified": true
+    },
+    "instrumentsAtNight": {
+      "value": false,
+      "unit": "",
+      "src": "game: instruments are switched off at night",
+      "verified": true,
+      "simplified": true
+    },
+    "habitatPowerW": {
+      "value": 12000,
+      "unit": "W",
+      "src": "https://www.nasa.gov/pdf/373667main_NASA-SP-2009-566-ADD.pdf",
+      "verified": true,
+      "note": "DRA 5.0 Addendum: \"Estimated power requirement for the habitat is 12 kWe during both day and night\", habitat for a crew of four"
+    },
+    "budgetMUSD": {
+      "value": null,
+      "unit": "M$",
+      "src": "PLACEHOLDER",
+      "verified": false,
+      "todo": "team decision; reference: Mars 2020 \"$2.4 billion to build and launch\" (https://www.jpl.nasa.gov/news/press_kits/mars_2020/launch/quick_facts/), InSight $813.8M"
+    },
+    "baseMassKg": {
+      "value": null,
+      "unit": "kg",
+      "src": "PLACEHOLDER",
+      "verified": false,
+      "todo": "team decision: DRA 5.0 pre-deploys the habitat and ascent vehicle on separate 40 t landers; see dra5 entries"
+    },
+    "dra5HabitatKg": {
+      "value": 21500,
+      "unit": "kg",
+      "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
+      "verified": true,
+      "note": "\"The Commuter habitat approach is approximately 21.5 t using 12.1 kWe\""
+    },
+    "dra5AscentVehicleKg": {
+      "value": 21500,
+      "unit": "kg",
+      "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
+      "verified": true,
+      "note": "\"total ascent stage mass of approximately 21.5 t, including the necessary LCH4 brought from Earth\""
+    },
+    "dra5LanderPayloadKg": {
+      "value": 40000,
+      "unit": "kg",
+      "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
+      "verified": true,
+      "note": "\"reference 40-t useful payload on the surface of Mars\" per lander"
+    }
+  },
+  "objectives": [
+    {
+      "id": "forensic",
+      "scoreMultiplier": {
+        "value": 1.5,
+        "unit": "",
+        "src": "game: K3 design screen, forensic-weighted objective",
+        "verified": true,
+        "simplified": true
+      }
+    },
+    {
+      "id": "science",
+      "scoreMultiplier": {
+        "value": 1.5,
+        "unit": "",
+        "src": "game: K3 design screen, experiment-weighted objective",
+        "verified": true,
+        "simplified": true
+      }
+    },
+    {
+      "id": "balanced",
+      "scoreMultiplier": {
+        "value": 1.2,
+        "unit": "",
+        "src": "game: K3 design screen, balanced objective",
+        "verified": true,
+        "simplified": true
+      }
+    }
   ],
-
+  "launchVehicles": [
+    {
+      "id": "atlas5",
+      "realName": "Atlas V 541",
+      "capacityKg": {
+        "value": 4050,
+        "unit": "kg",
+        "src": "https://www.nasa.gov/wp-content/uploads/2024/01/mars-2020-final-eis.pdf",
+        "verified": true,
+        "note": "mass actually sent to Mars: Mars 2020 flight system \"up to 4,050 kilograms\" (pre-launch estimate), launched at C3 14.49 km²/s² (https://www.ulalaunch.com/docs/default-source/launch-booklets/mars2020_mobrochure_200717.pdf)"
+      },
+      "costMUSD": {
+        "value": 243,
+        "unit": "M$",
+        "src": "https://www.nasa.gov/news-release/nasa-awards-launch-services-contract-for-mars-2020-rover-mission/",
+        "verified": true,
+        "note": "\"approximately $243 million\" total cost for NASA to launch Mars 2020, incl. processing and tracking"
+      }
+    },
+    {
+      "id": "falconHeavy",
+      "realName": "Falcon Heavy",
+      "capacityKg": {
+        "value": 16800,
+        "unit": "kg",
+        "src": "https://public.ksc.nasa.gov/lspeducation/spacex/",
+        "verified": true,
+        "note": "NASA LSP: \"up to 37,040 lbs (16,800 kg) to Mars\"; the Mars 2020 EIS gives 13,200 kg"
+      },
+      "costMUSD": {
+        "value": 178,
+        "unit": "M$",
+        "src": "https://www.nasa.gov/news-release/nasa-awards-launch-services-contract-for-europa-clipper-mission/",
+        "verified": true,
+        "note": "Europa Clipper launch services contract, \"approximately $178 million\""
+      }
+    },
+    {
+      "id": "sls",
+      "realName": "SLS Block 2 Cargo",
+      "capacityKg": {
+        "value": 36287,
+        "unit": "kg",
+        "src": "https://www.nasa.gov/wp-content/uploads/2022/03/sls_reference_guide_2022_web.pdf",
+        "verified": true,
+        "note": "\"more than 80,000 lbs. to Mars\" (Block 2 cargo), lower bound"
+      },
+      "costMUSD": {
+        "value": 2200,
+        "unit": "M$",
+        "src": "https://oig.nasa.gov/wp-content/uploads/2024/02/IG-22-003.pdf",
+        "verified": true,
+        "note": "\"the single-use SLS will cost $2.2 billion to produce\" (NASA OIG IG-22-003)"
+      }
+    }
+  ],
   "trajectories": [
-    { "id": "hohmann", "transit_days": 240, "deltaV_kms": 0, "cruiseDose_mSv": 0, "note": "~8 months, from design doc v2", "src": "PLACEHOLDER", "verified": false },
-    { "id": "fast", "transit_days": 180, "deltaV_kms": 0, "cruiseDose_mSv": 0, "note": "~6 months, from design doc v2", "src": "PLACEHOLDER", "verified": false }
+    {
+      "id": "hohmann",
+      "realName": "Minimum energy, 2026 window",
+      "transitDays": {
+        "value": 288,
+        "unit": "days",
+        "src": "https://trajbrowser.arc.nasa.gov/traj_browser.php",
+        "verified": true,
+        "note": "NASA Ames Trajectory Browser, minimum-Δv rendezvous 2026-10-23 → 2027-08-07"
+      },
+      "deltaVKms": {
+        "value": 4.44,
+        "unit": "km/s",
+        "src": "https://trajbrowser.arc.nasa.gov/traj_browser.php",
+        "verified": true,
+        "note": "injection 3.622 km/s from 200 km LEO + arrival 0.814 km/s (to Mars escape speed)"
+      },
+      "launchDate": {
+        "value": "2026-10-23",
+        "unit": "date",
+        "src": "https://trajbrowser.arc.nasa.gov/traj_browser.php",
+        "verified": true
+      },
+      "massKg": {
+        "value": 0,
+        "unit": "kg",
+        "src": "game: baseline trajectory",
+        "verified": true,
+        "simplified": true
+      },
+      "costMUSD": {
+        "value": 0,
+        "unit": "M$",
+        "src": "game: baseline trajectory",
+        "verified": true,
+        "simplified": true
+      }
+    },
+    {
+      "id": "fast",
+      "realName": "Fast transfer, 2026 window",
+      "transitDays": {
+        "value": 176,
+        "unit": "days",
+        "src": "https://trajbrowser.arc.nasa.gov/traj_browser.php",
+        "verified": true,
+        "note": "NASA Ames Trajectory Browser, 176-day rendezvous in the 2026 window"
+      },
+      "deltaVKms": {
+        "value": 7.12,
+        "unit": "km/s",
+        "src": "https://trajbrowser.arc.nasa.gov/traj_browser.php",
+        "verified": true,
+        "note": "injection 4.391 km/s + arrival 2.730 km/s"
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "extra propellant: rocket equation with Δv for both transfers (Trajectory Browser)"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "cost of the extra propellant/stage, official source"
+      }
+    }
   ],
-
   "landingSites": [
-    { "id": "meridiani", "name": "Meridiani Planum", "latitude_deg": -2, "solarFactor": 1, "nightMin_C": 0, "iceAbundance": 0, "src": "PLACEHOLDER", "verified": false },
-    { "id": "jezero", "name": "Jezero Crater", "latitude_deg": 18.4, "solarFactor": 1, "nightMin_C": 0, "iceAbundance": 0, "src": "PLACEHOLDER", "verified": false },
-    { "id": "arcadia", "name": "Arcadia Planitia", "latitude_deg": 40, "solarFactor": 1, "nightMin_C": 0, "iceAbundance": 0, "src": "PLACEHOLDER", "verified": false }
+    {
+      "id": "meridiani",
+      "realName": "Meridiani Planum (Opportunity)",
+      "latitudeDeg": {
+        "value": -1.9483,
+        "unit": "deg",
+        "src": "https://science.nasa.gov/mission/mer-opportunity/",
+        "verified": true,
+        "note": "\"1.9483 degrees south latitude\""
+      },
+      "nightMinC": {
+        "value": -70,
+        "unit": "C",
+        "src": "https://science.nasa.gov/resource/steady-temperatures-at-mars-gale-crater/",
+        "verified": true,
+        "note": "equatorial proxy: Gale Crater (4.6°S), Curiosity REMS typical \"lows at about minus 94 Fahrenheit (minus 70 Celsius)\""
+      },
+      "dayMaxC": {
+        "value": 0,
+        "unit": "C",
+        "src": "https://science.nasa.gov/resource/steady-temperatures-at-mars-gale-crater/",
+        "verified": true,
+        "note": "equatorial proxy: Gale Crater typical \"daily highs at about 32 degrees Fahrenheit (0 degrees Celsius)\""
+      },
+      "iceDepthM": {
+        "value": null,
+        "unit": "m",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "depth to water ice near the equator (SWIM map)"
+      }
+    },
+    {
+      "id": "jezero",
+      "realName": "Jezero Crater (Perseverance)",
+      "latitudeDeg": {
+        "value": 18.44,
+        "unit": "deg",
+        "src": "https://www.giss.nasa.gov/tools/mars24/help/landers.html",
+        "verified": true,
+        "note": "\"77.45°E 18.44°N\""
+      },
+      "nightMinC": {
+        "value": -83,
+        "unit": "C",
+        "src": "https://science.nasa.gov/blog/daily-records-of-atmospheric-temperature-with-perseverance/",
+        "verified": true,
+        "note": "MEDA: air temperature typically \"between –83 Celsius and -23 Celsius\""
+      },
+      "dayMaxC": {
+        "value": -23,
+        "unit": "C",
+        "src": "https://science.nasa.gov/blog/daily-records-of-atmospheric-temperature-with-perseverance/",
+        "verified": true,
+        "note": "MEDA: air temperature typically \"between –83 Celsius and -23 Celsius\""
+      },
+      "iceDepthM": {
+        "value": null,
+        "unit": "m",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "depth to water ice at Jezero (SWIM map)"
+      }
+    },
+    {
+      "id": "arcadia",
+      "realName": "Arcadia Planitia",
+      "latitudeDeg": {
+        "value": 41,
+        "unit": "deg",
+        "src": "https://www.esa.int/ESA_Multimedia/Images/2025/06/Arcadia_Planitia_as_seen_by_ESA_s_Mars_Express",
+        "verified": true,
+        "note": "ESA image \"centred at about 41°N\"; region spans roughly 25–55°N"
+      },
+      "nightMinC": {
+        "value": -79,
+        "unit": "C",
+        "src": "https://science.nasa.gov/photojournal/sixty-one-martian-days-of-weather-monitoring",
+        "verified": true,
+        "note": "high-latitude proxy: Phoenix (68°N) summer \"average daily low has been minus 79 degrees C\""
+      },
+      "dayMaxC": {
+        "value": -30,
+        "unit": "C",
+        "src": "https://science.nasa.gov/photojournal/sixty-one-martian-days-of-weather-monitoring",
+        "verified": true,
+        "note": "high-latitude proxy: Phoenix (68°N) summer \"average daily high has been minus 30 degrees C\""
+      },
+      "iceDepthM": {
+        "value": 0.3,
+        "unit": "m",
+        "src": "https://www.jpl.nasa.gov/news/nasas-treasure-map-for-water-ice-on-mars/",
+        "verified": true,
+        "note": "\"water ice less than one foot (30 centimeters) below the surface\", upper bound"
+      }
+    }
   ],
-
+  "powerSources": [
+    {
+      "id": "solar",
+      "panelEfficiency": {
+        "value": 0.3,
+        "unit": "",
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "\"nominal efficiency of 30% and a high of 34%\" (3- to 5-junction cells)"
+      },
+      "panelAreaM2": {
+        "value": null,
+        "unit": "m²",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "team decides the panel-area option; then mass from SST SoA specific power"
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "array mass from SST SoA specific power (W/kg)"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      },
+      "continuousW": {
+        "value": 0,
+        "unit": "W",
+        "src": "game: solar panels give no power at night",
+        "verified": true,
+        "simplified": true
+      }
+    },
+    {
+      "id": "solarRtg",
+      "panelEfficiency": {
+        "value": 0.3,
+        "unit": "",
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "\"nominal efficiency of 30%\""
+      },
+      "panelAreaM2": {
+        "value": null,
+        "unit": "m²",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "same panel option as solar"
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "panel mass + MMRTG 45 kg"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "solar panel cost, official source"
+      },
+      "rtgCostMUSD": {
+        "value": 77,
+        "unit": "M$",
+        "src": "https://www.gao.gov/assets/690/688254.pdf",
+        "verified": true,
+        "note": "GAO-17-673: \"one MMRTG ... would cost $77 million\""
+      },
+      "continuousW": {
+        "value": 110,
+        "unit": "W",
+        "src": "https://science.nasa.gov/wp-content/uploads/2024/02/mmrtg-factsheet-updated-5-18-20-1.pdf",
+        "verified": true,
+        "note": "MMRTG \"Beginning of Life Power (Watts) 110\""
+      },
+      "rtgMassKg": {
+        "value": 45,
+        "unit": "kg",
+        "src": "https://science.nasa.gov/wp-content/uploads/2024/02/mmrtg-factsheet-updated-5-18-20-1.pdf",
+        "verified": true,
+        "note": "\"weighs about 94 pounds (45 kilograms)\""
+      }
+    }
+  ],
+  "batteries": [
+    {
+      "id": "b20",
+      "capacityKWh": {
+        "value": 20,
+        "unit": "kWh",
+        "src": "game: design doc v2 battery option",
+        "verified": true,
+        "simplified": true
+      },
+      "massKg": {
+        "value": 133.3,
+        "unit": "kg",
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "20 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "b40",
+      "capacityKWh": {
+        "value": 40,
+        "unit": "kWh",
+        "src": "game: design doc v2 battery option",
+        "verified": true,
+        "simplified": true
+      },
+      "massKg": {
+        "value": 266.7,
+        "unit": "kg",
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "40 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "b60",
+      "capacityKWh": {
+        "value": 60,
+        "unit": "kWh",
+        "src": "game: design doc v2 battery option",
+        "verified": true,
+        "simplified": true
+      },
+      "massKg": {
+        "value": 400,
+        "unit": "kg",
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "60 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    }
+  ],
+  "insulation": [
+    {
+      "id": "thin",
+      "heatingFactor": {
+        "value": 1,
+        "unit": "",
+        "src": "game: design doc v2, baseline insulation",
+        "verified": true,
+        "simplified": true
+      },
+      "conductanceWK": {
+        "value": null,
+        "unit": "W/K",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "habitat heat loss from a NASA habitat thermal study; note DRA 5.0: Mars air \"inhibit[s] vacuum-dependent thermal management schemes\" like MLI"
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "insulation areal density × habitat area"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "thick",
+      "heatingFactor": {
+        "value": 0.5,
+        "unit": "",
+        "src": "game: design doc v2: thick insulation halves night heating",
+        "verified": true,
+        "simplified": true
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "insulation areal density × habitat area"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    }
+  ],
   "instruments": [
-    { "id": "cameraHires", "realCounterpart": "Mastcam-Z", "mass_kg": 4, "power_W": 17, "data_Mbit": 20, "dataPer": "photo", "unlocks": "fullPhotoScore", "src": "PLACEHOLDER", "verified": false },
-    { "id": "weather", "realCounterpart": "MEDA", "mass_kg": 5.5, "power_W": 17, "data_Mbit": 1, "dataPer": "sol", "unlocks": "stormWarning", "src": "PLACEHOLDER", "verified": false },
-    { "id": "seismometer", "realCounterpart": "SEIS (InSight)", "mass_kg": 30, "power_W": 8, "data_Mbit": 5, "dataPer": "sol", "unlocks": "quakeWarning", "src": "PLACEHOLDER", "verified": false },
-    { "id": "radiation", "realCounterpart": "RAD (Curiosity)", "mass_kg": 1.6, "power_W": 4, "data_Mbit": 1, "dataPer": "sol", "unlocks": "speWarning", "src": "PLACEHOLDER", "verified": false },
-    { "id": "radar", "realCounterpart": "RIMFAX", "mass_kg": 3, "power_W": 10, "data_Mbit": 10, "dataPer": "scan", "unlocks": "iceMap", "src": "PLACEHOLDER", "verified": false },
-    { "id": "spectrometer", "realCounterpart": "SuperCam / PIXL", "mass_kg": 11, "power_W": 18, "data_Mbit": 8, "dataPer": "measurement", "unlocks": "soilAndDustAnalysis", "src": "PLACEHOLDER", "verified": false },
-    { "id": "moxie", "realCounterpart": "MOXIE", "mass_kg": 17, "power_W": 300, "data_Mbit": 0, "dataPer": "none", "unlocks": "oxygenProduction", "src": "PLACEHOLDER", "verified": false },
-    { "id": "plantChamber", "realCounterpart": "Veggie-like chamber", "mass_kg": 8, "power_W": 100, "data_Mbit": 2, "dataPer": "sol", "unlocks": "seedExperiments", "simplified": true, "note": "game value, no flight equivalent", "src": "PLACEHOLDER", "verified": false },
-    { "id": "drone", "realCounterpart": "Ingenuity", "mass_kg": 1.8, "power_W": 0, "data_Mbit": 15, "dataPer": "flight", "unlocks": "droneScout", "note": "charges from its own solar panel, so it draws no habitat power", "src": "PLACEHOLDER", "verified": false }
+    {
+      "id": "camera",
+      "realName": "Mastcam-Z",
+      "massKg": {
+        "value": 4,
+        "unit": "kg",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"about 4 kilograms\""
+      },
+      "powerW": {
+        "value": 17.4,
+        "unit": "W",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"Approximately 17.4 watts\""
+      },
+      "mbitPerUse": {
+        "value": 148,
+        "unit": "Mbit",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"Approximately 148 megabits per sol, average\""
+      },
+      "usePer": "sol",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "meda",
+      "realName": "MEDA",
+      "massKg": {
+        "value": 5.5,
+        "unit": "kg",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"5.5 kilograms for all components\""
+      },
+      "powerW": {
+        "value": 17,
+        "unit": "W",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"Up to 17 watts\", upper bound"
+      },
+      "mbitPerUse": {
+        "value": null,
+        "unit": "Mbit",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "page says \"Approximately 11 megabytes\" without a time unit; confirm per sol"
+      },
+      "usePer": "sol",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "seis",
+      "realName": "SEIS (InSight)",
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "SEIS mass not on NASA pages; 30 kg in the design doc is unsourced. Check CNES/IPGP SEIS papers"
+      },
+      "powerW": {
+        "value": 8.5,
+        "unit": "W",
+        "src": "https://science.nasa.gov/mission/insight/science-instruments/",
+        "verified": true,
+        "note": "\"Up to 8.5 watts\", upper bound"
+      },
+      "mbitPerUse": {
+        "value": 38,
+        "unit": "Mbit",
+        "src": "https://science.nasa.gov/mission/insight/science-instruments/",
+        "verified": true,
+        "note": "\"38 megabits per day\""
+      },
+      "usePer": "sol",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "rad",
+      "realName": "RAD (Curiosity)",
+      "massKg": {
+        "value": 1.7,
+        "unit": "kg",
+        "src": "https://mars.nasa.gov/internal_resources/786",
+        "verified": true,
+        "note": "\"The 3.8-pound (1.7-kilogram) RAD instrument\""
+      },
+      "powerW": {
+        "value": 4.1,
+        "unit": "W",
+        "src": "https://srag.jsc.nasa.gov/Publications/Workshop_2006-04/RAD_RAFKIN_2006.pdf",
+        "verified": true,
+        "note": "\"Power (obs) = 4.1 W\", 2006 pre-flight estimate"
+      },
+      "mbitPerUse": {
+        "value": 1,
+        "unit": "Mbit",
+        "src": "https://srag.jsc.nasa.gov/Publications/Workshop_2006-04/RAD_RAFKIN_2006.pdf",
+        "verified": true,
+        "note": "\"Telemetry = 1 Mbit/sol\", 2006 pre-flight estimate"
+      },
+      "usePer": "sol",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "rimfax",
+      "realName": "RIMFAX",
+      "massKg": {
+        "value": 3,
+        "unit": "kg",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"Less than 3 kilograms\", upper bound"
+      },
+      "powerW": {
+        "value": 10,
+        "unit": "W",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"5 to 10 watts\", upper bound"
+      },
+      "mbitPerUse": {
+        "value": 0.08,
+        "unit": "Mbit",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"5 to 10 kilobytes per sounding location\", upper bound"
+      },
+      "usePer": "sounding",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "spectrometer",
+      "realName": "SuperCam",
+      "massKg": {
+        "value": 10.4,
+        "unit": "kg",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "mast unit 5.6 kg + body unit 4.8 kg"
+      },
+      "powerW": {
+        "value": 17.9,
+        "unit": "W",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"17.9 watts\""
+      },
+      "mbitPerUse": {
+        "value": 15.5,
+        "unit": "Mbit",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"15.5 megabits per experiment\""
+      },
+      "usePer": "experiment",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "moxie",
+      "realName": "MOXIE",
+      "massKg": {
+        "value": 17.1,
+        "unit": "kg",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"17.1 kilograms\""
+      },
+      "powerW": {
+        "value": 300,
+        "unit": "W",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/",
+        "verified": true,
+        "note": "\"300 watts\""
+      },
+      "o2GramsPerHour": {
+        "value": 12,
+        "unit": "g/h",
+        "src": "https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/",
+        "verified": true,
+        "note": "best run on Mars: \"produce 12 grams of oxygen an hour\"; design goal was 6 g/h"
+      },
+      "mbitPerUse": {
+        "value": 0,
+        "unit": "Mbit",
+        "src": "game: no science data sent",
+        "verified": true,
+        "simplified": true
+      },
+      "usePer": "none",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "plantChamber",
+      "realName": "Veggie (ISS)",
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "Veggie mass not found on an official page"
+      },
+      "powerW": {
+        "value": 70,
+        "unit": "W",
+        "src": "https://www.nasa.gov/wp-content/uploads/2019/04/veggie_fact_sheet_508.pdf",
+        "verified": true,
+        "note": "\"about 70 watts for the lights, fans and control electronics\""
+      },
+      "mbitPerUse": {
+        "value": null,
+        "unit": "Mbit",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "data per sol: team decides or source"
+      },
+      "usePer": "sol",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "drone",
+      "realName": "Ingenuity",
+      "massKg": {
+        "value": 1.8,
+        "unit": "kg",
+        "src": "https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/",
+        "verified": true,
+        "note": "\"1.8 kilograms\""
+      },
+      "powerW": {
+        "value": null,
+        "unit": "W",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "habitat draw: confirm Ingenuity recharges from its own solar panel"
+      },
+      "mbitPerUse": {
+        "value": null,
+        "unit": "Mbit",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "data per flight from an official source"
+      },
+      "usePer": "flight",
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    }
   ],
-
+  "comms": [
+    {
+      "id": "relay",
+      "mbitPerSol": {
+        "value": 500,
+        "unit": "Mbit/sol",
+        "src": "https://discovery.larc.nasa.gov/PDF_FILES/21_Proposers_Guide_To_Mars_Orbiters_-_Discovery_2019_AO_-_Rev_190411b.pdf",
+        "verified": true,
+        "note": "Curiosity relay return \"well over 500 Mb/sol, based on an average of 3 to 4 relay contacts each sol\", lower bound"
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "UHF relay radio mass (Electra-Lite), official source"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    },
+    {
+      "id": "relayX",
+      "mbitPerSol": {
+        "value": null,
+        "unit": "Mbit/sol",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "relay + X-band DTE: 500 Mb/sol + DTE at 160 bit/s × daily DSN pass length"
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "X-band radio + high-gain antenna mass, official source"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
+    }
+  ],
+  "spareKits": [
+    {
+      "id": "k0",
+      "massKg": {
+        "value": 0,
+        "unit": "kg",
+        "src": "game: no spare kit",
+        "verified": true,
+        "simplified": true
+      },
+      "costMUSD": {
+        "value": 0,
+        "unit": "M$",
+        "src": "game: no spare kit",
+        "verified": true,
+        "simplified": true
+      }
+    },
+    {
+      "id": "k1",
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "spare parts kit mass, source or team decision"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "source or team decision"
+      }
+    },
+    {
+      "id": "k2",
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "spare parts kit mass, source or team decision"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "source or team decision"
+      }
+    }
+  ],
   "wrecks": [
-    { "id": "opportunity", "name": "Opportunity", "lastContact": "2018-06", "category": ["power"], "cause": "Planet-encircling dust storm (tau ~10.8) starved the solar panels.", "salvage": "rhu", "src": "PLACEHOLDER", "verified": false },
-    { "id": "spirit", "name": "Spirit", "lastContact": "2010-03", "category": ["mechanical", "thermal"], "cause": "Stuck in soft soil at Troy; could not tilt its panels to the winter Sun and was lost to the cold.", "salvage": "rhu", "src": "PLACEHOLDER", "verified": false },
-    { "id": "phoenix", "name": "Phoenix", "lastContact": "2008-11", "category": ["thermal"], "cause": "Polar winter; the weight of CO2 ice broke a solar panel.", "salvage": "roboticArm", "src": "PLACEHOLDER", "verified": false },
-    { "id": "insight", "name": "InSight", "lastContact": "2022-12", "category": ["power"], "cause": "Dust covered the solar panels until power ran out.", "salvage": "seis", "src": "PLACEHOLDER", "verified": false },
-    { "id": "beagle2", "name": "Beagle 2 (ESA/UK, bonus)", "lastContact": "never", "category": ["comms", "mechanical"], "cause": "Found by MRO in 2015: some panels did not deploy and blocked the antenna.", "salvage": "antenna", "src": "PLACEHOLDER", "verified": false }
-  ],
-
-  "comms": {
-    "relayPassesPerSol": { "value": 2, "unit": "passes", "note": "MRO and MAVEN, from design doc v2", "src": "PLACEHOLDER", "verified": false },
-    "relayMbitPerPass": { "value": 0, "unit": "Mbit", "src": "PLACEHOLDER", "verified": false },
-    "dteRate": { "value": 0, "unit": "kbit/s", "note": "direct-to-Earth X-band", "src": "PLACEHOLDER", "verified": false }
-  },
-
-  "return": {
-    "returnDeltaV": { "value": 4.4, "unit": "km/s", "note": "return threshold from the task card", "src": "PLACEHOLDER", "verified": false }
-  },
-
-  "tuning": {
-    "solDuration": { "value": 120, "unit": "s", "simplified": true, "src": "game: DECISIONS.md D-001 (1 sol = about 2 minutes)", "verified": true },
-    "totalSols": { "value": 14, "unit": "sols", "simplified": true, "src": "game: DECISIONS.md D-001", "verified": true },
-    "demoSols": { "value": 5, "unit": "sols", "simplified": true, "src": "game: DECISIONS.md D-005 (?demo mode)", "verified": true },
-    "maxInstruments": { "value": 5, "unit": "", "src": "game: DECISIONS.md D-001", "verified": true },
-    "noReturnSafetyFactor": { "value": 1.2, "unit": "", "src": "game: design doc v2, point-of-no-return formula", "verified": true },
-    "massMarginBonusThreshold": { "value": 0.1, "unit": "", "src": "game: design doc v2 (NASA-style margin rule)", "verified": true },
-    "massMarginBonus": { "value": 50, "unit": "points", "src": "game: K1 balance, tune in the balance session", "verified": true },
-    "forensicsCorrect": { "value": 100, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
-    "forensicsWrongAllClues": { "value": 50, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
-    "forensicsCluesMissing": { "value": 20, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
-    "experimentTolerance": { "value": 0.1, "unit": "", "src": "game: DECISIONS.md D-006 (within ±10%)", "verified": true },
-    "minimumSuccessReports": { "value": 2, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true },
-    "minimumSuccessExperiments": { "value": 2, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true },
-    "fullSuccessReports": { "value": 4, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true },
-    "fullSuccessExperiments": { "value": 4, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true }
-  }
+    {
+      "id": "opportunity",
+      "realName": "Opportunity",
+      "categories": [
+        "power"
+      ],
+      "salvage": "rhu",
+      "lastContact": {
+        "value": "2018-06-10",
+        "unit": "date",
+        "src": "https://www.nasa.gov/news-release/nasas-record-setting-opportunity-rover-mission-on-mars-comes-to-end/",
+        "verified": true,
+        "note": "\"final communication was received June 10\""
+      },
+      "missionEnded": {
+        "value": "2019-02-13",
+        "unit": "date",
+        "src": "https://www.nasa.gov/news-release/nasas-record-setting-opportunity-rover-mission-on-mars-comes-to-end/",
+        "verified": true
+      },
+      "cause": {
+        "value": "A severe Mars-wide dust storm blanketed its location and starved the solar panels.",
+        "unit": "text",
+        "src": "https://www.nasa.gov/news-release/nasas-record-setting-opportunity-rover-mission-on-mars-comes-to-end/",
+        "verified": true
+      },
+      "peakTau": {
+        "value": 10.8,
+        "unit": "",
+        "src": "https://www.jpl.nasa.gov/news/opportunity-hunkers-down-during-dust-storm/",
+        "verified": true,
+        "note": "\"an estimated tau of 10.8\""
+      }
+    },
+    {
+      "id": "spirit",
+      "realName": "Spirit",
+      "categories": [
+        "mechanical",
+        "thermal"
+      ],
+      "salvage": "rhu",
+      "lastContact": {
+        "value": "2010-03-22",
+        "unit": "date",
+        "src": "https://science.nasa.gov/mission/mer-spirit/",
+        "verified": true
+      },
+      "missionEnded": {
+        "value": "2011-05-25",
+        "unit": "date",
+        "src": "https://science.nasa.gov/mission/mer-spirit/",
+        "verified": true
+      },
+      "cause": {
+        "value": "Stuck in soft soil at \"Troy\"; the most probable cause of the loss was excessive cold that made its survival heaters ineffective.",
+        "unit": "text",
+        "src": "https://science.nasa.gov/mission/mer-spirit/",
+        "verified": true,
+        "note": "Troy: https://www.jpl.nasa.gov/news/nasa-to-begin-attempts-to-free-sand-trapped-mars-rover/"
+      }
+    },
+    {
+      "id": "phoenix",
+      "realName": "Phoenix",
+      "categories": [
+        "thermal"
+      ],
+      "salvage": "roboticArm",
+      "lastContact": {
+        "value": "2008-11-02",
+        "unit": "date",
+        "src": "https://www.jpl.nasa.gov/news/mars-phoenix-lander-finishes-successful-work-on-red-planet/",
+        "verified": true
+      },
+      "cause": {
+        "value": "Seasonal decline in sunshine left too little light for the solar arrays; orbital images suggest a panel probably collapsed under winter ice.",
+        "unit": "text",
+        "src": "https://science.nasa.gov/photojournal/image-from-mars-orbit-indicates-solar-panels-on-phoenix-lander-may-have-collapsed/",
+        "verified": true,
+        "note": "panel collapse is inferred (\"scientists believe\"), not confirmed"
+      }
+    },
+    {
+      "id": "insight",
+      "realName": "InSight",
+      "categories": [
+        "power"
+      ],
+      "salvage": "seis",
+      "lastContact": {
+        "value": "2022-12-15",
+        "unit": "date",
+        "src": "https://www.nasa.gov/press-release/nasa-retires-insight-mars-lander-mission-after-years-of-science",
+        "verified": true
+      },
+      "missionEnded": {
+        "value": "2022-12-21",
+        "unit": "date",
+        "src": "https://www.nasa.gov/press-release/nasa-retires-insight-mars-lander-mission-after-years-of-science",
+        "verified": true
+      },
+      "cause": {
+        "value": "Dust accumulating on the solar panels gradually reduced its energy.",
+        "unit": "text",
+        "src": "https://www.nasa.gov/press-release/nasa-retires-insight-mars-lander-mission-after-years-of-science",
+        "verified": true
+      }
+    },
+    {
+      "id": "beagle2",
+      "realName": "Beagle 2 (ESA/UK, bonus)",
+      "categories": [
+        "comms",
+        "mechanical"
+      ],
+      "salvage": "antenna",
+      "lastContact": {
+        "value": "never",
+        "unit": "date",
+        "src": "https://www.esa.int/Science_Exploration/Space_Science/Mars_Express/UK_and_ESA_announce_Beagle_2_inquiry",
+        "verified": true,
+        "note": "declared lost 2004-02-06"
+      },
+      "cause": {
+        "value": "Found in 2015: only one to three of its four solar panels opened, and full deployment was needed to expose the radio antenna.",
+        "unit": "text",
+        "src": "https://www.esa.int/Science_Exploration/Space_Science/Mars_Express/Beagle-2_lander_found_on_Mars",
+        "verified": true
+      }
+    }
+  ]
 }

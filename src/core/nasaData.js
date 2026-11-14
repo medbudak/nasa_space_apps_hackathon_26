@@ -1,10 +1,10 @@
 // Loads src/data/nasa_data.json and hands out its values.
 // Every real-world number in the game comes through here, so each one keeps its source.
 //
-// Two shapes live in the file:
-//   scalar entry: { "value": 3.73, "unit": "m/s^2", "src": "<url>", "verified": true }
-//   table row:    { "id": "moxie", ...fields, "src": "<url>", "verified": false }
-// "src": "PLACEHOLDER" marks a number that still needs a real source. None may remain at content lock.
+// Every number is an entry: { "value": 3.73, "unit": "m/s^2", "src": "<url>", "verified": true }.
+// Tables are arrays of rows like { "id": "moxie", "realName": "MOXIE", "massKg": {entry}, ... }.
+// src "game: ..." marks a game rule. src "PLACEHOLDER" means not researched yet: its value must be
+// null (no estimates), and none may remain at content lock.
 
 export const PLACEHOLDER = 'PLACEHOLDER';
 
@@ -32,6 +32,11 @@ export function value(path) {
   return entry.value;
 }
 
+/** Number of an entry inside a row, e.g. num(row('instruments', 'moxie'), 'massKg'). Missing or unresearched → 0. */
+export function num(rowObj, field) {
+  return rowObj?.[field]?.value ?? 0;
+}
+
 /** All rows of a table, e.g. rows('instruments'). */
 export function rows(table) {
   const list = getData()[table];
@@ -46,12 +51,15 @@ export function row(table, id) {
   return found;
 }
 
-// Walks every scalar entry and table row, calling visit(item, path).
+// Walks every entry (an object with a "value" key), calling visit(entry, path).
+// Plain numbers outside an entry are reported as entries without a source.
 function walk(node, path, visit) {
   if (Array.isArray(node)) {
-    node.forEach((item, i) => {
-      visit(item, `${path}[${item?.id ?? i}]`);
-    });
+    node.forEach((item, i) => walk(item, `${path}[${item?.id ?? i}]`, visit));
+    return;
+  }
+  if (typeof node === 'number') {
+    visit({ value: node }, path);
     return;
   }
   if (node && typeof node === 'object') {
@@ -65,21 +73,30 @@ function walk(node, path, visit) {
   }
 }
 
-/** Entries or rows missing a src string or a verified boolean. Must be empty. */
+/** Entries missing a src string or a verified boolean, and bare numbers. Must be empty. */
 export function findUnsourced(json) {
   const problems = [];
   walk(json, '', (item, path) => {
-    if (typeof item?.src !== 'string' || !item.src) problems.push(`${path}: missing src`);
-    if (typeof item?.verified !== 'boolean') problems.push(`${path}: missing verified`);
+    if (typeof item.src !== 'string' || !item.src) problems.push(`${path}: missing src`);
+    if (typeof item.verified !== 'boolean') problems.push(`${path}: missing verified`);
   });
   return problems;
+}
+
+/** PLACEHOLDER entries that carry a number anyway. Must be empty: no estimates in the game. */
+export function findEstimates(json) {
+  const found = [];
+  walk(json, '', (item, path) => {
+    if (item.src === PLACEHOLDER && item.value !== null) found.push(path);
+  });
+  return found;
 }
 
 /** Paths whose src is still PLACEHOLDER. */
 export function findPlaceholders(json) {
   const found = [];
   walk(json, '', (item, path) => {
-    if (item?.src === PLACEHOLDER) found.push(path);
+    if (item.src === PLACEHOLDER) found.push(path);
   });
   return found;
 }
@@ -88,7 +105,7 @@ export function findPlaceholders(json) {
 export function findUnverified(json) {
   const found = [];
   walk(json, '', (item, path) => {
-    if (item?.verified === false && item.src !== PLACEHOLDER) found.push(path);
+    if (item.verified === false && item.src !== PLACEHOLDER) found.push(path);
   });
   return found;
 }
