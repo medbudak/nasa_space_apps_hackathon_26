@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOL 14 · decision cards + mini-games (dev page)</title>
+  <link rel="stylesheet" href="../../../css/style.css">
+  <style>
+    /* dev page layout only */
+    .dev-main { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .dev-main h1 { font-size: 20px; }
+    .dev-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 18px; }
+    .dev-log { background: var(--night-2); border: 1px solid var(--night-3); border-radius: 10px; padding: 12px;
+      font: 13px/1.5 var(--mono); white-space: pre-wrap; max-height: 45vh; overflow: auto; }
+  </style>
+</head>
+<body>
+  <!-- DEV PAGE (owner: K3). Open with: python -m http.server 8000  ->  http://localhost:8000/src/ui/dev/play.html
+       Uses a stub bus and sample payloads until K1's core and K2's events exist. Not part of the game build. -->
+  <main class="dev-main">
+    <h1>DEV · decision cards + mini-games</h1>
+    <div class="dev-row">
+      <button class="btn" data-card>decision:open (engineFreeze)</button>
+      <button class="btn" data-card2>2 cards in a row</button>
+    </div>
+    <div class="dev-row">
+      <button class="btn ghost" data-conv="ice">converter: ice → water</button>
+      <button class="btn ghost" data-conv="electrolysis">converter: water → O₂ + H₂</button>
+      <button class="btn ghost" data-conv="soil">converter: regolith → soil</button>
+      <button class="btn ghost" data-unknown>unknown template</button>
+    </div>
+    <div class="dev-log" data-log>bus log:</div>
+  </main>
+  <div class="dev-bar">
+    <span>DEV</span>
+    <button data-lang="tr" class="on">TR</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <script type="module">
+    import { mountDecisionCards } from '../decisionCard.js';
+    import { mountMinigames } from '../../minigames/index.js';
+    import { createBus } from './stub_bus.js';
+    import { sampleEngineFreeze, withChoose, sampleConverters } from './stub_samples.js';
+
+    const texts = await (await fetch('./ui_texts.json')).json();
+    let lang = 'tr';
+    const t = (key) => (texts[key] ? texts[key][lang] : key);
+    const locale = () => (lang === 'tr' ? 'tr-TR' : 'en-US');
+
+    const logEl = document.querySelector('[data-log]');
+    const log = (name, payload) => {
+      const p = { ...payload };
+      if (typeof p.onDone === 'function') p.onDone = '[fn]';
+      logEl.textContent += `\n→ ${name} ${JSON.stringify(p)}`;
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+    const bus = createBus({ log });
+    mountDecisionCards(document.body, { bus, t, locale });
+    mountMinigames(document.body, { bus, t, locale });
+
+    document.querySelector('[data-card]').addEventListener('click', () => bus.emit('decision:open', withChoose(sampleEngineFreeze, bus)));
+    document.querySelector('[data-card2]').addEventListener('click', () => {
+      bus.emit('decision:open', withChoose(sampleEngineFreeze, bus));
+      bus.emit('decision:open', withChoose({ ...sampleEngineFreeze, sol: 4 }, bus));
+    });
+    document.querySelectorAll('[data-conv]').forEach((b) => b.addEventListener('click', () => {
+      bus.emit('minigame:open', {
+        template: 'converter', config: sampleConverters[b.dataset.conv],
+        onDone: (r) => log('onDone', r),
+      });
+    }));
+    document.querySelector('[data-unknown]').addEventListener('click', () =>
+      bus.emit('minigame:open', { template: 'align', config: {}, onDone: (r) => log('onDone', r) }));
+
+    document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-lang]').forEach((x) => x.classList.toggle('on', x === b));
+    }));
+  </script>
+</body>
+</html>
