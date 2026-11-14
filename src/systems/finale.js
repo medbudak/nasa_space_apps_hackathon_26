@@ -11,7 +11,7 @@
 //                the launch window closes at sunset, and still too cold means the crew stays.
 //   3. launch    The MAV lifts off.
 //
-// Outcome (team choice, reported by Sude; to be recorded in DECISIONS.md):
+// Outcome (DECISIONS.md D-010: it follows the player's choices, never chance):
 //   lost      the crew died (survival.checkLoss)
 //   colonist  alive, but the MAV did not launch before the window closed
 //   explorer  launched, minimum success (D-006) not reached

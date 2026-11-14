@@ -64,6 +64,7 @@ const warnedScore = new Set();
  * Write a score entry into the state passed in, in the shape of K1's addScore() (D-003):
  * { sol, category, points, reason, cause }. reason is a story.json key; cause is the choice
  * behind it ('design.<field>' or 'decision.<eventId>'), so the report card can link them.
+ * Entries are written when things happen (DECISIONS.md D-010).
  * The points come from nasa_data.json (D-009); a missing entry writes nothing (and warns once),
  * so an unset game value never stops the game.
  */
