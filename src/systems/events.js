@@ -28,7 +28,7 @@
 // Text is never written here: the keys are in K5's content/story.json.
 // Numbers come from nasa_data.json (events.<eventId>, life, rules, ...).
 
-import { val, rowVal, designRows, recordScore } from './simData.js';
+import { val, rowVal, designRows, recordScore, missionSols, scheduledSol, scheduledSpan } from './simData.js';
 import { spendTime, isNight } from './survival.js';
 import { holdLoad, instrumentWatts } from './power.js';
 import { createRng } from '../core/rng.js';
@@ -78,9 +78,9 @@ const nowT = (state) => state.time.sol + state.time.solFraction;
  * sol (so a long wait cannot skip it). An event with no schedule in nasa_data.json yet never
  * comes, instead of stopping the game.
  */
-function due(state, cfg, path) {
+function due(state, cfg, path, ctx) {
   if (!cfg) return false;
-  const sol = val(cfg.sol, `${path}.sol`);
+  const sol = scheduledSol(ctx, val(cfg.sol, `${path}.sol`));
   const at = val(cfg.atSolFraction, `${path}.atSolFraction`);
   return state.time.sol > sol || (state.time.sol === sol && state.time.solFraction >= at);
 }
@@ -307,10 +307,10 @@ export function applyEffect(state, effect, ctx) {
 // one load off for the whole storm. With MEDA (weather station) the card comes warnSols early,
 // so the battery is saved before the storm; without it the storm arrives unannounced.
 
-function stormWindow(state, data) {
-  const cfg = data.events.storm;
-  const start = val(cfg.sol, 'events.storm.sol') + val(cfg.atSolFraction, 'events.storm.atSolFraction');
-  const end = start + val(cfg.durationSols, 'events.storm.durationSols');
+function stormWindow(state, ctx) {
+  const cfg = ctx.data.events.storm;
+  const start = scheduledSol(ctx, val(cfg.sol, 'events.storm.sol')) + val(cfg.atSolFraction, 'events.storm.atSolFraction');
+  const end = start + scheduledSpan(ctx, val(cfg.durationSols, 'events.storm.durationSols'));
   return { start, end: state.events.active?.storm?.untilT ?? end };
 }
 
@@ -325,7 +325,7 @@ function stormAdvice(state, ctx) {
 
 function stormCard(state, ctx, { warning }) {
   const { data } = ctx;
-  const { start, end } = stormWindow(state, data);
+  const { start, end } = stormWindow(state, ctx);
   const untilT = Math.max(end, nowT(state));
   const hold = (id, load) => {
     const savedW = instrumentWatts(state, data, load);
@@ -343,7 +343,7 @@ function stormCard(state, ctx, { warning }) {
     vars: {
       dustLossPct: Math.round(val(data.events.storm.dustLoss, 'events.storm.dustLoss') * 100),
       inHours: Math.max(0, Math.round((start - nowT(state)) * val(data.mars.solHours, 'mars.solHours'))),
-      lastsSols: val(data.events.storm.durationSols, 'events.storm.durationSols'),
+      lastsSols: Math.round(scheduledSpan(ctx, val(data.events.storm.durationSols, 'events.storm.durationSols')) * 10) / 10,
     },
     options: [
       hold('holdGreenhouse', 'greenhouse'),
@@ -360,9 +360,9 @@ function stormCard(state, ctx, { warning }) {
 // shelterFactor. With RAD the card comes warnHours before; without it the player only notices
 // after unnoticedHours of dose already taken (design doc: "dose hidden, shelter too late").
 
-function speStart(data) {
-  const cfg = data.events.spe;
-  return val(cfg.sol, 'events.spe.sol') + val(cfg.atSolFraction, 'events.spe.atSolFraction');
+function speStart(ctx) {
+  const cfg = ctx.data.events.spe;
+  return scheduledSol(ctx, val(cfg.sol, 'events.spe.sol')) + val(cfg.atSolFraction, 'events.spe.atSolFraction');
 }
 
 function speCard(state, ctx, { warning }) {
@@ -441,9 +441,9 @@ function quakeResult(state, ctx, result) {
 /** What to do when a crisis mini-game reports back (K3's onDone result). */
 const MINIGAME_RESULTS = { quake: quakeResult };
 
-function quakeStart(data) {
-  const q = data.events.quake;
-  return val(q.sol, 'events.quake.sol') + val(q.atSolFraction, 'events.quake.atSolFraction');
+function quakeStart(ctx) {
+  const q = ctx.data.events.quake;
+  return scheduledSol(ctx, val(q.sol, 'events.quake.sol')) + val(q.atSolFraction, 'events.quake.atSolFraction');
 }
 
 // ---------------------------------------------------------------------------
@@ -542,7 +542,7 @@ export const EVENTS = [
     trigger: (state, ctx) => {
       const cfg = ctx.data.events.engineFreeze;
       return (
-        state.time.sol >= val(cfg.earliestSol, 'events.engineFreeze.earliestSol') &&
+        state.time.sol >= scheduledSol(ctx, val(cfg.earliestSol, 'events.engineFreeze.earliestSol')) &&
         isNight(state, ctx) &&
         state.env.outsideC <= val(cfg.triggerBelowC, 'events.engineFreeze.triggerBelowC')
       );
@@ -614,8 +614,8 @@ export const EVENTS = [
     advise: (state, ctx) => stormAdvice(state, ctx),
     trigger: (state, ctx) => {
       if (!hasInstrument(state, 'meda') || !ctx.data.events?.storm) return false;
-      const { start } = stormWindow(state, ctx.data);
-      const warn = val(ctx.data.events.storm.warnSols, 'events.storm.warnSols');
+      const { start } = stormWindow(state, ctx);
+      const warn = scheduledSpan(ctx, val(ctx.data.events.storm.warnSols, 'events.storm.warnSols'));
       return nowT(state) >= start - warn && nowT(state) < start;
     },
     decision: (state, ctx) => stormCard(state, ctx, { warning: true }),
@@ -624,12 +624,12 @@ export const EVENTS = [
   {
     id: 'storm',
     advise: (state, ctx) => stormAdvice(state, ctx),
-    trigger: (state, ctx) => due(state, ctx.data.events?.storm, 'events.storm'),
+    trigger: (state, ctx) => due(state, ctx.data.events?.storm, 'events.storm', ctx),
     effect: (state, ctx) => {
       const cfg = ctx.data.events.storm;
       const dustLoss = val(cfg.dustLoss, 'events.storm.dustLoss');
       state.power.dust = Math.max(state.power.dust, dustLoss);
-      state.events.active.storm = { untilT: nowT(state) + val(cfg.durationSols, 'events.storm.durationSols') };
+      state.events.active.storm = { untilT: nowT(state) + scheduledSpan(ctx, val(cfg.durationSols, 'events.storm.durationSols')) };
       ctx.bus?.emit('storm', { intensity: dustLoss }); // K4 draws it
     },
     // Announced by MEDA: the choice was made on the warning card, so the storm just logs.
@@ -646,11 +646,11 @@ export const EVENTS = [
     // Solar conjunction: the Sun sits between Earth and Mars, no data can be sent for a while.
     // Predictable (JPL Horizons), so it needs no warning instrument and no choice.
     id: 'conjunction',
-    trigger: (state, ctx) => due(state, ctx.data.events?.conjunction, 'events.conjunction'),
+    trigger: (state, ctx) => due(state, ctx.data.events?.conjunction, 'events.conjunction', ctx),
     effect: (state, ctx) => {
       const cfg = ctx.data.events.conjunction;
       state.events.active.conjunction = {
-        untilT: nowT(state) + val(cfg.durationSols, 'events.conjunction.durationSols'),
+        untilT: nowT(state) + scheduledSpan(ctx, val(cfg.durationSols, 'events.conjunction.durationSols')),
         perSol: state.dataBudget.perSol,
       };
       state.dataBudget.perSol = 0;
@@ -664,7 +664,7 @@ export const EVENTS = [
     advise: () => 'shelter',
     trigger: (state, ctx) => {
       if (!hasInstrument(state, 'rad') || !ctx.data.events?.spe) return false;
-      const start = speStart(ctx.data);
+      const start = speStart(ctx);
       const warn = val(ctx.data.events.spe.warnHours, 'events.spe.warnHours') / val(ctx.data.mars.solHours, 'mars.solHours');
       return nowT(state) >= start - warn && nowT(state) < start;
     },
@@ -674,7 +674,7 @@ export const EVENTS = [
   {
     id: 'spe',
     advise: () => 'shelter',
-    trigger: (state, ctx) => due(state, ctx.data.events?.spe, 'events.spe'),
+    trigger: (state, ctx) => due(state, ctx.data.events?.spe, 'events.spe', ctx),
     effect: (state, ctx) => {
       const { data } = ctx;
       const cfg = data.events.spe;
@@ -701,7 +701,7 @@ export const EVENTS = [
     advise: () => 'secure',
     trigger: (state, ctx) => {
       if (!hasInstrument(state, 'seis') || !ctx.data.events?.quake) return false;
-      const start = quakeStart(ctx.data);
+      const start = quakeStart(ctx);
       const warn = val(ctx.data.events.quake.warnHours, 'events.quake.warnHours') / val(ctx.data.mars.solHours, 'mars.solHours');
       return nowT(state) >= start - warn && nowT(state) < start;
     },
@@ -727,7 +727,7 @@ export const EVENTS = [
 
   {
     id: 'quake',
-    trigger: (state, ctx) => due(state, ctx.data.events?.quake, 'events.quake'),
+    trigger: (state, ctx) => due(state, ctx.data.events?.quake, 'events.quake', ctx),
     effect: (state, ctx) => {
       ctx.bus?.emit('quake', { duration: val(ctx.data.events.quake.shakeSeconds, 'events.quake.shakeSeconds') }); // K4
     },
@@ -748,12 +748,12 @@ export const EVENTS = [
     // for the rest of the mission.
     id: 'radiator',
     advise: () => 'cleanRadiator',
-    trigger: (state, ctx) => due(state, ctx.data.events?.radiator, 'events.radiator'),
+    trigger: (state, ctx) => due(state, ctx.data.events?.radiator, 'events.radiator', ctx),
     decision: (state, ctx) => {
       const { data } = ctx;
       const hours = val(data.events.radiator.cleanEvaHours, 'events.radiator.cleanEvaHours');
       const o2 = val(data.life.evaO2KgPerHour, 'life.evaO2KgPerHour') * hours;
-      const untilT = val(data.rules.totalSols, 'rules.totalSols') + 2; // past the departure
+      const untilT = missionSols(ctx) + 2; // past the departure
       const hold = (load) => ({ type: 'hold', load, untilT, estimate: { savedW: instrumentWatts(state, data, load) } });
       return {
         titleKey: 'event.radiator.title',
@@ -782,7 +782,7 @@ export const EVENTS = [
     // Only once there is dust to clean.
     id: 'dustDevil',
     trigger: (state, ctx) =>
-      state.power.dust > 0 && !state.events.active.storm && due(state, ctx.data.events?.dustDevil, 'events.dustDevil'),
+      state.power.dust > 0 && !state.events.active.storm && due(state, ctx.data.events?.dustDevil, 'events.dustDevil', ctx),
     effect: (state) => {
       const cleaned = state.power.dust;
       state.power.dust = 0;

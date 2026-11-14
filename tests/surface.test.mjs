@@ -3,7 +3,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createState } from '../src/core/state.js';
-import { data, DEFAULT_DESIGN, fakeBus, jumpTo } from './helpers/k2_env.mjs';
+import { data, DEFAULT_DESIGN, eng, fakeBus, jumpTo } from './helpers/k2_env.mjs';
 
 // --- a tiny fake browser: only what surface.js touches -------------------------------------
 let now = 0;
@@ -70,6 +70,54 @@ test('hudOptions gives K3\'s HUD the telemetry, the relay passes and the power h
     surface.exit();
   }
   assert.deepEqual(surface.hudOptions(), {}, 'after exit there is nothing to hand over');
+});
+
+test('a jump on Mars goes about 2.6 times higher than the same jump on Earth, and lasts longer', async () => {
+  const { marsJumpHeightM, marsJumpAirTimeS } = await import('../src/scenes/surface.js');
+  const hEarth = data.life.jumpHeightEarthM.value;
+  const ratio = marsJumpHeightM(data) / hEarth;
+  assert.ok(Math.abs(ratio - data.constants.g0.value / data.mars.gravity.value) < 1e-9);
+  assert.ok(ratio > 2.5 && ratio < 2.7, `ratio ${ratio}`);
+  const earthAir = 2 * eng.fallTime(hEarth, data.constants.g0.value);
+  assert.ok(marsJumpAirTimeS(data, eng) > 2.5 * earthAir, 'a Mars jump should hang in the air much longer');
+});
+
+test('Space jumps: the astronaut leaves the ground, lands after the air time, and nothing else changes', async () => {
+  const { default: surface, marsJumpAirTimeS } = await import('../src/scenes/surface.js');
+  // A canvas that records where the astronaut box is drawn (Node has no images, so the
+  // fallback box is drawn: 0.8 m wide).
+  const rects = [];
+  const recCanvas = {
+    width: 960,
+    height: 540,
+    getContext: () => new Proxy({}, {
+      get: (o, k) => (k === 'fillRect' ? (x, y, w, h) => rects.push({ y, w, h }) : (k in o ? o[k] : () => {})),
+      set: (o, k, v) => ((o[k] = v), true),
+    }),
+  };
+  const state = createState(1);
+  Object.assign(state.design, DEFAULT_DESIGN);
+  await surface.enter({ state, data, bus: fakeBus(), t: (k) => k, goTo: () => {}, canvas: recCanvas, ui: fakeEl() });
+  const boxW = 0.8 * (960 / 200);
+  const astronautTop = () => rects.filter((r) => Math.abs(r.w - boxW) < 1e-9).at(-1)?.y;
+  try {
+    state.time.solFraction = 0.5;
+    tick(16);
+    press('e'); // outside, where the astronaut is drawn as a box
+    tick(16);
+    const standing = astronautTop();
+    const o2 = state.life.eva.suitO2Kg;
+    press(' ');
+    const air = marsJumpAirTimeS(data, eng) * 1000;
+    tick(air / 2); // the top of the jump
+    assert.ok(astronautTop() < standing - 1, 'the astronaut did not leave the ground');
+    tick(air / 2 + 50); // landed
+    tick(16);
+    assert.equal(astronautTop(), standing, 'the astronaut did not land');
+    assert.ok(state.life.eva.suitO2Kg <= o2, 'a jump must not give anything back');
+  } finally {
+    surface.exit();
+  }
 });
 
 /** A bus with on/off/emit like K1's core/bus.js, that also records what was emitted. */

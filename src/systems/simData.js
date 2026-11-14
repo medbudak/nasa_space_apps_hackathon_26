@@ -25,6 +25,33 @@ export function rowVal(row, field, { optional = false } = {}) {
   throw new Error(`K2 needs nasa_data.json "${row?.id}.${field}" (missing or null)`);
 }
 
+// ---------------------------------------------------------------------------
+// Mission length and the crisis schedule. The schedule in nasa_data.json is written for the full
+// mission (rules.totalSols). The ?demo quick mission (D-005 M9, ctx.demo) lasts rules.demoSols:
+// scheduled sols and spans in sols are scaled onto it, so every crisis and the departure still
+// happen, in the same order. Spans in hours are kept.
+
+/** Sols in this mission: rules.totalSols, or rules.demoSols in the ?demo quick mission. */
+export function missionSols(ctx) {
+  return ctx.demo
+    ? val(ctx.data.rules.demoSols, 'rules.demoSols')
+    : val(ctx.data.rules.totalSols, 'rules.totalSols');
+}
+
+function scheduleRatio(ctx) {
+  return (missionSols(ctx) - 1) / (val(ctx.data.rules.totalSols, 'rules.totalSols') - 1);
+}
+
+/** A sol of the full-mission schedule, on this mission (sol 1 stays 1, the last sol stays the last). */
+export function scheduledSol(ctx, sol) {
+  return ctx.demo ? 1 + Math.round((sol - 1) * scheduleRatio(ctx)) : sol;
+}
+
+/** A span in sols of the full-mission schedule, on this mission. */
+export function scheduledSpan(ctx, sols) {
+  return ctx.demo ? sols * scheduleRatio(ctx) : sols;
+}
+
 const isEntry = (o) => o && typeof o === 'object' && 'value' in o;
 
 function addMissing(target, extra) {

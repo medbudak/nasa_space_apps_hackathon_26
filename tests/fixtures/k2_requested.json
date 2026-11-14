@@ -482,6 +482,16 @@
           "verified": false
         }
       }
+    },
+    "life": {
+      "jumpHeightEarthM": {
+        "value": 0.5,
+        "unit": "m",
+        "simplified": true,
+        "note": "a standing vertical jump on Earth; sets the take-off speed of the jump drawn on Mars (display only, changes no resource)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      }
     }
   },
   "fill": {

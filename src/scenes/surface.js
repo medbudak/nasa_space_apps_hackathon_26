@@ -15,6 +15,8 @@
 //   ?devData=k2  fill values still missing in nasa_data.json with K2's TEST values
 //                (tests/fixtures/k2_requested.json). Shown on screen. Never for a real run.
 //   ?debug=1     text panel with the simulation numbers, and buttons to answer decision cards.
+//   ?demo        quick mission for judges and the live demo (D-005 M9): rules.demoSols sols, every
+//                crisis and the departure still come, on a schedule scaled onto it.
 //
 // Time (D-008): inside, 1 sol is about 2 minutes; outside, 1 real second = 1 game minute, so a
 // 900 m walk takes about 15 s on screen. Walking uses the real suit speed in game time, so the
@@ -44,13 +46,15 @@ const DOOR_RADIUS_M = 3; // how close to the habitat door E works
 const params = new URLSearchParams(location.search);
 const DEV_DATA = params.get('devData') === 'k2';
 const DEBUG = params.get('debug') === '1';
+// ?demo: the quick mission (D-005 M9) lasts rules.demoSols, with the crisis schedule scaled onto it.
+const DEMO = params.has('demo');
 
 let scene = null; // everything the running scene needs, cleared on exit
 
 export default {
   async enter({ state, data, bus, t, goTo, canvas, ui }) {
     const runData = DEV_DATA ? await loadDevData(data) : data;
-    const ctx = { data: runData, eng: engineering, bus };
+    const ctx = { data: runData, eng: engineering, bus, demo: DEMO };
 
     try {
       if (DEV_DATA) fillDevDesign(state, runData);
@@ -69,6 +73,7 @@ export default {
     const onKeyDown = (e) => {
       keys.add(e.key);
       if (e.key === 'e' || e.key === 'E') toggleEva(state, runData);
+      if (e.key === ' ') startJump(state, ctx);
     };
     const onKeyUp = (e) => keys.delete(e.key);
     window.addEventListener('keydown', onKeyDown);
@@ -161,7 +166,7 @@ function frame(now) {
   if (s.debugEl) updateDebugPanel();
 
   // finale.js decides when the run ends (launch, or the window closing at sunset). Waiting a
-  // sol on the engine card can legitimately carry the run past rules.totalSols.
+  // sol on the engine card can legitimately carry the run past the mission length.
   if (state.life.loss || finaleDone(state)) {
     finish();
     return;
@@ -290,7 +295,7 @@ function drawInside() {
     g.fillStyle = 'rgba(120, 170, 255, 0.25)';
     g.fillRect(0, 0, W, H);
   }
-  drawSprite(g, SPRITES.idle, W * 0.5, H * 0.9, scene.facing < 0);
+  drawSprite(g, SPRITES.idle, W * 0.5, H * 0.9 - jumpOffsetPx(SPRITES.idle), scene.facing < 0);
   if (!state.events.pending) hint(scene.t('surface.hint.exit'), W / 2, H * 0.97);
 }
 
@@ -359,9 +364,10 @@ function drawOutside() {
   const eva = state.life.eva;
   const moving = ['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D'].some((k) => scene.keys.has(k));
   const sprite = eva.jointsFrozen ? SPRITES.frozen : moving ? SPRITES.walk : SPRITES.idle;
-  if (!drawSprite(g, sprite, toScreen(astronautX), groundY, scene.facing < 0)) {
+  const feetY = groundY - jumpOffsetPx(sprite); // off the ground while jumping
+  if (!drawSprite(g, sprite, toScreen(astronautX), feetY, scene.facing < 0)) {
     g.fillStyle = eva.jointsFrozen ? '#9fd3ff' : '#f2e8e4';
-    g.fillRect(toScreen(astronautX) - 0.4 * pxPerM, groundY - 1.8 * pxPerM, 0.8 * pxPerM, 1.8 * pxPerM);
+    g.fillRect(toScreen(astronautX) - 0.4 * pxPerM, feetY - 1.8 * pxPerM, 0.8 * pxPerM, 1.8 * pxPerM);
   }
 
   // K4's effects: blowing dust in a storm, frost on the visor when the suit joints freeze.
@@ -378,6 +384,49 @@ function drawOutside() {
   if (Math.abs(astronautX) <= DOOR_RADIUS_M && !state.events.pending) {
     hint(scene.t('surface.hint.enter'), W / 2, groundY - SPRITES.walk.h - 16);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Jumping in Mars gravity (Space). Display only: it changes no resource.
+// With the same take-off speed as a jump of life.jumpHeightEarthM on Earth, the jump on Mars goes
+// g0 / g ≈ 2.6 times higher and lasts longer: the same g the pendulum and drop experiments
+// measure (K6). The air time comes from engineering.fallTime; the height ratio is the one line
+// of kinematics here (could move to engineering.js). It plays in real seconds, like K3's QTE fall,
+// because at the game clock's speed a jump would be over before it could be seen.
+
+const ASTRONAUT_HEIGHT_M = 1.8; // drawing scale only: metres the sprite's height stands for
+
+/** Height of a jump on Mars, in m: same take-off speed as the Earth jump (h_mars = h_earth · g0 / g). */
+export function marsJumpHeightM(data) {
+  const g = val(data.mars.gravity, 'mars.gravity');
+  const g0 = val(data.constants.g0, 'constants.g0');
+  return val(data.life.jumpHeightEarthM, 'life.jumpHeightEarthM') * (g0 / g);
+}
+
+/** Air time of that jump in s: up and down, each a free fall from the top (engineering.fallTime). */
+export function marsJumpAirTimeS(data, eng) {
+  return 2 * eng.fallTime(marsJumpHeightM(data), val(data.mars.gravity, 'mars.gravity'));
+}
+
+function startJump(state, ctx) {
+  if (!scene || scene.jump || state.events.pending || minigameOpen(state) || finalePaused(state)) return;
+  if (!ctx.data.life?.jumpHeightEarthM) return; // no jump until the data is there
+  if (state.life.eva.jointsFrozen) return; // frozen joints: no jumping
+  scene.jump = { start: performance.now(), airS: marsJumpAirTimeS(ctx.data, ctx.eng), heightM: marsJumpHeightM(ctx.data) };
+}
+
+/** How far above the ground to draw the astronaut now, in px of the sprite's scale. */
+function jumpOffsetPx(sprite) {
+  const j = scene?.jump;
+  if (!j) return 0;
+  const t = (performance.now() - j.start) / 1000;
+  if (t >= j.airS) {
+    scene.jump = null;
+    return 0;
+  }
+  const half = j.airS / 2;
+  const share = 1 - ((t - half) / half) ** 2; // 0 at take-off and landing, 1 at the top
+  return share * j.heightM * (sprite.h / ASTRONAUT_HEIGHT_M);
 }
 
 // ---------------------------------------------------------------------------
@@ -434,7 +483,8 @@ function showMessage(ui, text, detail) {
 
 function addDevNote(ui, t) {
   const el = document.createElement('div');
-  el.style.cssText = 'position:absolute;top:8px;right:8px;padding:4px 8px;background:#b4232a;color:#fff;font:12px monospace;';
+  // Bottom corners, so neither covers K3's HUD bars at the top.
+  el.style.cssText = 'position:absolute;bottom:8px;right:8px;padding:4px 8px;background:#b4232a;color:#fff;font:12px monospace;';
   el.textContent = t('surface.dev.testData');
   ui.append(el);
   return el;
@@ -442,7 +492,7 @@ function addDevNote(ui, t) {
 
 function addDebugPanel(ui) {
   const el = document.createElement('pre');
-  el.style.cssText = 'position:absolute;top:8px;left:8px;margin:0;padding:8px;background:rgba(0,0,0,.65);color:#d6f5d6;font:12px/1.35 monospace;max-width:46%;white-space:pre-wrap;';
+  el.style.cssText = 'position:absolute;bottom:8px;left:8px;margin:0;padding:8px;background:rgba(0,0,0,.65);color:#d6f5d6;font:12px/1.35 monospace;max-width:46%;white-space:pre-wrap;';
   ui.append(el);
   el.addEventListener('click', (e) => {
     const id = e.target?.dataset?.choice;

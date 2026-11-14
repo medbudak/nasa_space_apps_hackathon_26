@@ -1,6 +1,6 @@
 // finale.js — K2: the last sol's departure sequence and the mission outcome.
 //
-// On the morning of the last sol (rules.totalSols, at time.startSolFraction):
+// On the morning of the last sol (rules.totalSols, or rules.demoSols in ?demo; at time.startSolFraction):
 //   1. antenna   The antenna is knocked out of alignment. A spare kit fixes it at once;
 //                otherwise the player re-points it in K3's align mini-game. Failing costs points
 //                (lostSystems) but does not stop the launch.
@@ -20,16 +20,17 @@
 // State: state.events.finale = { step, antennaOk, kitsUsed } (K2's own sub-object).
 // Numbers come from nasa_data.json; points through recordScore (D-009).
 
-import { val, rowVal, designRows, recordScore } from './simData.js';
+import { val, rowVal, designRows, recordScore, missionSols } from './simData.js';
 import { isNight } from './survival.js';
 import { missionSuccess } from '../scenes/ending.js';
 import { createRng } from '../core/rng.js';
 
 /** True from the morning of the last sol until the sequence has started. */
-export function finaleDue(state, { data }) {
+export function finaleDue(state, ctx) {
+  const { data } = ctx;
   if (state.events.finale || state.life.loss) return false;
   return (
-    state.time.sol >= val(data.rules.totalSols, 'rules.totalSols') &&
+    state.time.sol >= missionSols(ctx) &&
     state.time.solFraction >= val(data.time.startSolFraction, 'time.startSolFraction')
   );
 }
