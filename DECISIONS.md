@@ -57,7 +57,7 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Affects: whole game
 
 ### D-002: Tech stack and hosting
-- Status: Proposed
+- Status: Superseded by D-011
 - Date: 2026-11-14
 - Agreed by: (pending)
 - Decision: Vanilla JavaScript + HTML5 Canvas, no framework, hosted on GitHub Pages. Runs locally with `python -m http.server 8000` (`python3` on macOS/Linux). Tests run with `node --test` (Node 22+ rejects a folder argument, so no `tests/`). Seeded RNG so the same seed gives the same run. Progress is saved to `localStorage` so a page reload continues the run.
@@ -65,7 +65,7 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Affects: repo structure, deploy
 
 ### D-003: Shared contracts
-- Status: Proposed
+- Status: Superseded by D-011
 - Date: 2026-11-14
 - Agreed by: (pending)
 - Decision: K1 publishes these names before the vertical slice, and everyone builds against them:
@@ -83,7 +83,7 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Affects: all code
 
 ### D-004: Roles and file ownership
-- Status: Proposed
+- Status: Superseded by D-011
 - Date: 2026-11-14
 - Agreed by: (pending)
 - Decision: Only the owner edits a role's files. If you need a change in someone else's file, ask the owner or ask for a bus event.
@@ -137,3 +137,13 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Decision: Real-world numbers are researched first; when no official value is published, K1 sets a game value and labels it in `nasa_data.json` with `src: "game: K1 decision D-009 ..."` and `simplified: true`. Set this way: costs without a public unit price (budget 500 M$), panel area 250 m², battery options 150/200/300 kWh, O2 reserve 15.4 kg (14 sols of BVAD use + 20%), habitat cooling time 10/20 h, base mass 0 (DRA 5.0 pre-deploys habitat and ascent vehicle), insulation and spare-kit masses, fast-transfer propellant, some instrument data volumes, X-band hardware mass, engine-heating energy. Every such value is listed under "Simplified values" in REFERENCES.md. No estimate is ever presented as a measured value.
 - Why: The game needs a number to run, the team rule forbids passing estimates off as real data, and the judges score Validity.
 - Affects: `src/data/nasa_data.json`, REFERENCES.md, project page
+
+### D-011: The v3 game ("new") replaces the earlier code
+- Status: Proposed (applied to `main` on K1's instruction; team to confirm)
+- Date: 2026-11-14
+- Agreed by: (pending; K1 decided)
+- Decision: The complete v3.0.0 game from the `new` folder (2D pixel-art side-scroller, classic `<script>` + `window.SOL14`, `tools/build.js` data and asset build, 45 tests) is the source of truth for game design and behaviour and replaces the earlier code on `main`. Everything in the folder is kept in the repo, including `_legacy/`, the original root PNGs, PDFs and menu reference images. Roles, file ownership and module contracts now follow `AGENTS.md`; architecture follows `CLAUDE.md` ("Real architecture") and `ARCHITECTURE.md`. Unmerged team work built on the earlier code (K2, K3, K4 branches) is not merged; the team continues on v3.
+- Follow-up: v3 numbers that conflict with their stated sources are labelled honestly under D-009 (fixed where gameplay allows, otherwise marked as game values) without changing game balance.
+- Supersedes: D-002, D-003, D-004. D-001, D-005, D-006 and D-007 still describe the goals; where v3 differs (e.g. 20/40/60 kWh batteries, scoring details, EVA timing in D-008), v3 wins.
+- Why: K1 chose the v3 game as the stronger, complete version to submit.
+- Affects: everyone; all game code, data, assets and docs

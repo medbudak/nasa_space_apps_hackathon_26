@@ -1,142 +1,98 @@
-// src/systems/experiments.js
-import config from '../data/experiments_config.json' with { type: 'json' };
-import { getState, logDecision } from '../core/state.js';
-import { gravityFromPendulum } from '../core/engineering.js';
+/**
+ * SOL 14: RED HORIZON — Ana Görev 2: 0.38g Laboratuvarı, 6 Bilimsel Deney (K6)
+ * Döngü: Hipotez -> Ortam (habitat / yüzey) -> Kontrol grubu (+%50) -> Mini-oyun ölçümü
+ *        -> Sonuç kartı + hayatta kalma ödülü -> Downlink (M1)
+ */
+(function (S) {
+  'use strict';
+  const D = () => S.DATA;
+  const X = {};
 
-export function initExperimentsState() {
-  const state = getState();
-  if (!state.experiments) {
-    state.experiments = {
-      completed: {},
-      activeBonuses: []
+  X.list = () => D().experimentsCfg.experiments.slice().sort((a, b) => a.order - b.order);
+  X.get = (id) => D().experimentsCfg.experiments.find((e) => e.id === id);
+
+  /** null = çalıştırılabilir; aksi halde engel anahtarı. 'warn' = düşük verimle çalışır */
+  X.availability = function (s, id) {
+    const e = X.get(id);
+    if (!e.requiredInstrument || S.Sim.has(s, e.requiredInstrument)) return { ok: true };
+    if (id === 'moxie_night' || id === 'sound_speed') return { ok: false, reasonKey: 'exp.blocked_' + e.requiredInstrument };
+    return { ok: true, warnKey: 'exp.warn_missing', instrument: e.requiredInstrument };
+  };
+
+  X.cost = function (e, control) {
+    const cfg = D().experimentsCfg;
+    return {
+      minutes: e.minutes + (control ? cfg.controlGroupExtraMinutes : 0),
+      kwh: e.energyKwh + (control ? cfg.controlGroupExtraKwh : 0)
     };
-  }
-}
+  };
 
-/**
- * Deney 1: Sarkaç ile Yerçekimi Ölçümü
- */
-export function evaluatePendulumExperiment({ lengthM, tenSwingsDurationSec, hasControlGroup = false }) {
-  initExperimentsState();
-  const periodT = tenSwingsDurationSec / 10;
-  const measuredG = gravityFromPendulum(lengthM, periodT);
-  const actualG = config.marsGravity;
+  /**
+   * Deneyi çalıştırır. setup: { hypothesis, env, control }, minigame: { success, score }
+   */
+  X.run = function (s, id, setup, minigame) {
+    const e = X.get(id);
+    const av = X.availability(s, id);
+    if (!av.ok) return { ok: false, errKey: av.reasonKey };
+    const rec = s.experiments[id];
+    const cost = X.cost(e, setup.control);
+    if (s.res.energyKwh < cost.kwh) return { ok: false, errKey: 'action.err_no_energy' };
 
-  const errorRatio = Math.abs(measuredG - actualG) / actualG;
-  const success = errorRatio <= config.toleranceRatio;
-  const points = success ? (hasControlGroup ? 90 : 60) : 15;
+    s.res.energyKwh = Math.max(0, s.res.energyKwh - cost.kwh);
+    S.Sim.advance(s, cost.minutes);
 
-  return finalizeExperiment('pendulum', {
-    success,
-    measuredValue: Number(measuredG.toFixed(2)),
-    expectedValue: actualG,
-    unit: 'm/s²',
-    points,
-    mbit: 5
-  });
-}
+    const hypOk = setup.hypothesis === e.correctHypothesis;
+    const envOk = setup.env === e.preferredEnv;
+    const instOk = !e.requiredInstrument || S.Sim.has(s, e.requiredInstrument);
+    const mgScore = minigame ? Math.max(0.5, minigame.score) : 1;
+    let factor = (hypOk ? 1 : 0.45) * (envOk ? 1 : 0.75) * (instOk ? 1 : 0.5) * mgScore;
+    if (e.bonusInstrument && S.Sim.has(s, e.bonusInstrument)) factor *= 1.1;
+    const mult = setup.control ? D().scoring.controlGroupBonusMultiplier : 1;
+    const score = Math.round(e.basePoints * factor * mult);
+    // Tohum deneyi Veggie odası olmadan dış ortamda başarısız olur (bilimsel kural #5)
+    const success = hypOk && envOk && instOk && (!minigame || minigame.success);
 
-/**
- * Deney 2: Serbest Düşüş (2 metreden bırakma -> g = 2h / t^2)
- */
-export function evaluateFreeFallExperiment({ dropTimeSec, hasControlGroup = false }) {
-  initExperimentsState();
-  const h = config.experiments.freefall.dropHeightM;
-  const measuredG = dropTimeSec > 0 ? (2 * h) / (dropTimeSec * dropTimeSec) : 0;
-  const actualG = config.marsGravity;
+    Object.assign(rec, {
+      done: true,
+      hypothesis: setup.hypothesis,
+      env: setup.env,
+      control: setup.control,
+      success,
+      score,
+      queued: true
+    });
 
-  const errorRatio = Math.abs(measuredG - actualG) / actualG;
-  const success = errorRatio <= config.toleranceRatio;
-  const points = success ? (hasControlGroup ? 90 : 60) : 15;
+    let rewardKey = null;
+    if (success && e.reward) {
+      Object.assign(s.rewards, e.reward);
+      if (e.reward.greenhouseYield) {
+        s.greenhouse.yieldPct = 100 + D().habitat.greenhouse.germinationYieldBonusPct;
+      }
+      rewardKey = 'exp.' + id + '.reward';
+    }
 
-  return finalizeExperiment('freefall', {
-    success,
-    measuredValue: Number(measuredG.toFixed(2)),
-    expectedValue: actualG,
-    unit: 'm/s²',
-    points,
-    mbit: 5
-  });
-}
+    S.Sim.queuePacket(s, {
+      kind: 'experiment',
+      refId: id,
+      titleKey: 'exp.' + id + '.name',
+      sizeMbit: e.dataMbit,
+      points: score
+    });
 
-/**
- * Deney 3: Tohum Çimlenmesi (Grup A: Dünya, B: Yıkanmamış Regolit, C: Yıkanmış + Gübreli)
- */
-export function evaluateSeedExperiment({ soilGroup, environment }) {
-  initExperimentsState();
-  const state = getState();
-  const instruments = state.design?.instrumentIds || [];
-  const hasVeggie = instruments.includes('plantChamber');
-  const success = hasVeggie && environment === 'indoor' && soilGroup === 'C';
-  const points = success ? 100 : 20;
-
-  return finalizeExperiment('seed_germination', {
-    success,
-    measuredValue: success ? '88% Çimlenme' : '0% (Perklorat/Donma)',
-    expectedValue: '85-95% Çimlenme',
-    unit: '%',
-    points,
-    mbit: 8
-  });
-}
-
-/**
- * Deney 4-5-6: Suyun Kaynaması, Ses Hızı ve MOXIE Verimi
- */
-export function evaluateLabExperiment(expId, { hypothesisChoice, measuredValue, hasControlGroup = false }) {
-  initExperimentsState();
-  const spec = config.experiments[expId];
-  if (!spec) return { ok: false };
-
-  let success = false;
-  if (expId === 'water_boiling') {
-    success = hypothesisChoice === 'boils_and_freezes';
-  } else if (expId === 'speed_of_sound') {
-    const err = Math.abs(measuredValue - spec.expectedMarsSpeedMs) / spec.expectedMarsSpeedMs;
-    success = err <= config.toleranceRatio;
-  } else if (expId === 'moxie_efficiency') {
-    success = hypothesisChoice === 'higher_at_night_dense_air';
-  }
-
-  const basePts = success ? 80 : 20;
-  const points = hasControlGroup ? Math.round(basePts * 1.5) : basePts;
-
-  return finalizeExperiment(expId, {
-    success,
-    measuredValue,
-    expectedValue: spec.expectedMarsSpeedMs || spec.triplePointPressureKpa || '6-12 g/saat',
-    unit: '',
-    points,
-    mbit: 6
-  });
-}
-
-function finalizeExperiment(expId, result) {
-  const state = getState();
-  const spec = config.experiments[expId];
-  state.experiments.completed[expId] = result;
-
-  if (result.success && spec.unlockBonus && !state.experiments.activeBonuses.includes(spec.unlockBonus)) {
-    state.experiments.activeBonuses.push(spec.unlockBonus);
-  }
-
-  if (!state.dataBudget) state.dataBudget = { queue: [] };
-  state.dataBudget.queue.push({
-    type: 'experiment',
-    id: `exp_${expId}`,
-    expId,
-    mbit: result.mbit,
-    points: result.points
-  });
-
-  if (typeof logDecision === 'function') {
-    logDecision(
-      state.time?.sol ?? 0,
-      `experiment:${expId}`,
-      result.success ? 'success' : 'failed',
-      `Ölçülen: ${result.measuredValue} ${result.unit} (+${result.points} puan)`
+    S.logDecision(
+      {
+        category: 'science',
+        titleKey: 'exp.' + id + '.name',
+        choiceKey: hypOk ? (setup.control ? 'log.exp.confirmed_ctrl' : 'log.exp.confirmed') : (setup.control ? 'log.exp.refuted_ctrl' : 'log.exp.refuted'),
+        resultKey: rewardKey || 'exp.' + id + '.result',
+        vars: {},
+        score
+      },
+      s
     );
-  }
+    S.bus.emit('audio:play', success ? 'success' : 'fail');
+    return { ok: true, success, score, hypOk, envOk, instOk, rewardKey, marsValue: e.marsValue, earthValue: e.earthValue, unit: e.unit };
+  };
 
-  return { ok: true, result };
-}
+  S.Experiments = X;
+})((window.SOL14 = window.SOL14 || {}));

@@ -1,0 +1,582 @@
+// Auto-synced from data/nasa_data.json
+export default {
+  "meta": {
+    "project": "SOL 14: RED HORIZON",
+    "version": "2.0.0",
+    "verifiedBy": "K1 & K5",
+    "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+  },
+  "constants": {
+    "marsGravityMs2": {
+      "value": 3.71,
+      "unit": "m/s^2",
+      "earthValue": 9.80665,
+      "ratioToEarth": 0.378,
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    "solarIrradianceMarsWm2": {
+      "mean": 590,
+      "perihelion": 715,
+      "aphelion": 492,
+      "earthMean": 1361,
+      "unit": "W/m^2",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    "surfacePressureKpa": {
+      "value": 0.636,
+      "earthValue": 101.325,
+      "triplePointWaterKpa": 0.61165,
+      "co2FractionPct": 95.32,
+      "unit": "kPa",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    "temperatureC": {
+      "globalMean": -63,
+      "equatorDayMax": 20,
+      "equatorNightMin": -80,
+      "midLatNightMin": -95,
+      "diurnalSwingMin": 70,
+      "diurnalSwingMax": 100,
+      "suitCriticalMin": -15,
+      "unit": "°C",
+      "src": "https://mars.nasa.gov/all-about-mars/facts/"
+    },
+    "speedOfLightKms": {
+      "value": 299792.458,
+      "unit": "km/s",
+      "src": "https://ssd.jpl.nasa.gov/horizons/"
+    },
+    "speedOfSoundMarsMs": {
+      "lowFreq": 240,
+      "highFreq": 250,
+      "earthValue": 343,
+      "unit": "m/s",
+      "src": "https://mars.nasa.gov/news/9158/nasa-perseverance-microphone-captures-sounds-of-mars/"
+    },
+    "radiation": {
+      "surfaceDailyMsv": 0.67,
+      "transitDailyMsv": 1.84,
+      "spePeakPerHourMsv": 15.0,
+      "missionLimitMsv": 150.0,
+      "unit": "mSv",
+      "src": "https://mars.nasa.gov/msl/spacecraft/instruments/rad/"
+    },
+    "solDurationHours": {
+      "value": 24.6597,
+      "formatted": "24h 39m 35s",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    "synodicPeriodMonths": {
+      "value": 26,
+      "missedWindowCostM": 140,
+      "src": "https://trajbrowser.arc.nasa.gov/"
+    },
+    "humanLifeSupport": {
+      "o2KgPerSol": 0.84,
+      "waterLitersPerSol": 4.5,
+      "evaNormalSpeedMPerMin": 45,
+      "evaFrozenSpeedFactor": 0.4,
+      "evaBaseO2PctPer100m": 2.4,
+      "pointOfNoReturnSafetyFactor": 1.2,
+      "src": "https://www.nasa.gov/hrp/"
+    }
+  },
+  "horizonsDistanceTable": {
+    "src": "https://ssd.jpl.nasa.gov/horizons/",
+    "bySol": [
+      { "sol": 1, "distanceMillionKm": 195.4, "oneWayLightSec": 652 },
+      { "sol": 2, "distanceMillionKm": 198.1, "oneWayLightSec": 661 },
+      { "sol": 3, "distanceMillionKm": 201.0, "oneWayLightSec": 670 },
+      { "sol": 4, "distanceMillionKm": 204.2, "oneWayLightSec": 681 },
+      { "sol": 5, "distanceMillionKm": 207.8, "oneWayLightSec": 693 },
+      { "sol": 6, "distanceMillionKm": 211.5, "oneWayLightSec": 705 },
+      { "sol": 7, "distanceMillionKm": 215.4, "oneWayLightSec": 718 },
+      { "sol": 8, "distanceMillionKm": 219.6, "oneWayLightSec": 732 },
+      { "sol": 9, "distanceMillionKm": 224.0, "oneWayLightSec": 747 },
+      { "sol": 10, "distanceMillionKm": 228.5, "oneWayLightSec": 762 },
+      { "sol": 11, "distanceMillionKm": 233.2, "oneWayLightSec": 778 },
+      { "sol": 12, "distanceMillionKm": 238.1, "oneWayLightSec": 794 },
+      { "sol": 13, "distanceMillionKm": 248.4, "oneWayLightSec": 828, "conjunctionWarning": true },
+      { "sol": 14, "distanceMillionKm": 258.4, "oneWayLightSec": 862, "solarConjunction": true }
+    ]
+  },
+  "objectives": [
+    {
+      "id": "forensics",
+      "forensicsMultiplier": 1.35,
+      "experimentsMultiplier": 0.85,
+      "minSuccess": { "forensicsSent": 3, "experimentsSent": 1 },
+      "fullSuccess": { "forensicsSent": 4, "experimentsSent": 3 },
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/"
+    },
+    {
+      "id": "experiments",
+      "forensicsMultiplier": 0.85,
+      "experimentsMultiplier": 1.35,
+      "minSuccess": { "forensicsSent": 1, "experimentsSent": 3 },
+      "fullSuccess": { "forensicsSent": 3, "experimentsSent": 5 },
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/"
+    },
+    {
+      "id": "balanced",
+      "forensicsMultiplier": 1.1,
+      "experimentsMultiplier": 1.1,
+      "minSuccess": { "forensicsSent": 2, "experimentsSent": 2 },
+      "fullSuccess": { "forensicsSent": 4, "experimentsSent": 4 },
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/"
+    }
+  ],
+  "rockets": [
+    {
+      "id": "atlas_v_551",
+      "name": "Atlas V 551 / Medium Lift",
+      "payloadMarsKg": 1150,
+      "costM": 260,
+      "ispSec": 348,
+      "baseWetMassKg": 5800,
+      "baseDryMassKg": 1450,
+      "src": "https://elvperf.ksc.nasa.gov/"
+    },
+    {
+      "id": "vulcan_centaur",
+      "name": "Vulcan Centaur / Heavy Lift",
+      "payloadMarsKg": 1450,
+      "costM": 340,
+      "ispSec": 365,
+      "baseWetMassKg": 7400,
+      "baseDryMassKg": 1750,
+      "src": "https://elvperf.ksc.nasa.gov/"
+    },
+    {
+      "id": "sls_block1b",
+      "name": "Falcon Heavy / SLS Deep Space",
+      "payloadMarsKg": 1800,
+      "costM": 460,
+      "ispSec": 380,
+      "baseWetMassKg": 9600,
+      "baseDryMassKg": 2150,
+      "src": "https://elvperf.ksc.nasa.gov/"
+    }
+  ],
+  "orbits": [
+    {
+      "id": "hohmann",
+      "transitMonths": 8.2,
+      "deltaVRequiredMs": 3950,
+      "payloadPenaltyKg": 0,
+      "costPenaltyM": 0,
+      "transitRadiationMsv": 28,
+      "initialSuppliesBonusPct": 0,
+      "src": "https://trajbrowser.arc.nasa.gov/"
+    },
+    {
+      "id": "fast_transfer",
+      "transitMonths": 5.8,
+      "deltaVRequiredMs": 5120,
+      "payloadPenaltyKg": 180,
+      "costPenaltyM": 75,
+      "transitRadiationMsv": 14,
+      "initialSuppliesBonusPct": 15,
+      "src": "https://trajbrowser.arc.nasa.gov/"
+    }
+  ],
+  "landingSites": [
+    {
+      "id": "meridiani",
+      "coords": "2.0°S, 354.5°E",
+      "cosZ": 0.94,
+      "dayTempC": 18,
+      "nightTempC": -76,
+      "iceAccessibility": 0.35,
+      "wreckDistanceMultiplier": 1.05,
+      "bgAsset": "assets/backgrounds/bg_meridiani_day.png",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2003-032A"
+    },
+    {
+      "id": "jezero",
+      "coords": "18.38°N, 77.58°E",
+      "cosZ": 0.85,
+      "dayTempC": 8,
+      "nightTempC": -82,
+      "iceAccessibility": 0.65,
+      "wreckDistanceMultiplier": 0.85,
+      "bgAsset": "assets/backgrounds/bg_jezero_day.png",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2020-052A"
+    },
+    {
+      "id": "arcadia",
+      "coords": "39.2°N, 188.0°E",
+      "cosZ": 0.68,
+      "dayTempC": -12,
+      "nightTempC": -94,
+      "iceAccessibility": 1.0,
+      "wreckDistanceMultiplier": 1.15,
+      "bgAsset": "assets/backgrounds/bg_arcadia_day.png",
+      "src": "https://mars.nasa.gov/resources/22460/subsurface-water-ice-map-of-mars/"
+    }
+  ],
+  "habitatOptions": {
+    "baseHabitat": {
+      "massKg": 760,
+      "costM": 210,
+      "basePowerConsW": 220,
+      "solarAreaM2": 22,
+      "solarEfficiency": 0.28,
+      "src": "https://www.nasa.gov/smallsat-institute/sst-soa/"
+    },
+    "powerSource": {
+      "solar_only": {
+        "massKg": 65,
+        "costM": 45,
+        "rtgContinuousW": 0,
+        "rtgThermalBonusC": 0,
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/"
+      },
+      "solar_rtg": {
+        "massKg": 110,
+        "costM": 135,
+        "rtgContinuousW": 110,
+        "rtgThermalBonusC": 6,
+        "src": "https://mars.nasa.gov/msl/spacecraft/rover/power/"
+      }
+    },
+    "batteries": [
+      { "kwh": 20, "massKg": 85, "costM": 40, "src": "https://www.nasa.gov/smallsat-institute/sst-soa/" },
+      { "kwh": 40, "massKg": 155, "costM": 80, "src": "https://www.nasa.gov/smallsat-institute/sst-soa/" },
+      { "kwh": 60, "massKg": 225, "costM": 125, "src": "https://www.nasa.gov/smallsat-institute/sst-soa/" }
+    ],
+    "insulation": {
+      "thin": {
+        "massKg": 35,
+        "costM": 25,
+        "nightHeatingPowerW": 240,
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/"
+      },
+      "thick": {
+        "massKg": 95,
+        "costM": 65,
+        "nightHeatingPowerW": 120,
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/"
+      }
+    },
+    "commSystems": {
+      "relay_only": {
+        "massKg": 18,
+        "costM": 30,
+        "dataPerSolMbit": 45,
+        "redundant": false,
+        "src": "https://eyes.nasa.gov/apps/dsn-now/"
+      },
+      "relay_xband": {
+        "massKg": 52,
+        "costM": 85,
+        "dataPerSolMbit": 80,
+        "redundant": true,
+        "src": "https://eyes.nasa.gov/apps/dsn-now/"
+      }
+    },
+    "repairKit": {
+      "massKgPerKit": 22,
+      "costMPerKit": 30,
+      "maxKits": 2,
+      "src": "https://www.nasa.gov/hrp/"
+    }
+  },
+  "instruments": [
+    {
+      "id": "mastcam_z",
+      "realName": "Mastcam-Z (High-Res Stereo Camera + Mic)",
+      "massKg": 4.0,
+      "powerW": 17,
+      "costM": 38,
+      "dataMbit": 20,
+      "dataMode": "per_photo",
+      "unlocks": ["full_photo_score", "ufo_clear_80", "exp_sound_speed"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=2020-052A-01"
+    },
+    {
+      "id": "meda",
+      "realName": "MEDA (Mars Environmental Dynamics Analyzer)",
+      "massKg": 5.5,
+      "powerW": 17,
+      "costM": 34,
+      "dataMbit": 1,
+      "dataMode": "per_sol",
+      "unlocks": ["storm_early_warning", "cold_early_warning", "exp_water_boiling"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=2020-052A-02"
+    },
+    {
+      "id": "seis",
+      "realName": "SEIS (Seismic Experiment for Interior Structure)",
+      "massKg": 30.0,
+      "powerW": 8,
+      "costM": 48,
+      "dataMbit": 5,
+      "dataMode": "per_sol",
+      "unlocks": ["quake_early_warning"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=2018-042A-01"
+    },
+    {
+      "id": "rad",
+      "realName": "RAD (Radiation Assessment Detector)",
+      "massKg": 1.6,
+      "powerW": 4,
+      "costM": 28,
+      "dataMbit": 1,
+      "dataMode": "per_sol",
+      "unlocks": ["spe_early_warning", "radiation_hud_visible"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=2011-070A-07"
+    },
+    {
+      "id": "rimfax",
+      "realName": "RIMFAX (Radar Imager for Mars Subsurface)",
+      "massKg": 3.0,
+      "powerW": 10,
+      "costM": 36,
+      "dataMbit": 10,
+      "dataMode": "per_scan",
+      "unlocks": ["subsurface_ice_map"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=2020-052A-04"
+    },
+    {
+      "id": "supercam",
+      "realName": "SuperCam / PIXL (Laser & X-Ray Spectrometer)",
+      "massKg": 11.0,
+      "powerW": 18,
+      "costM": 52,
+      "dataMbit": 8,
+      "dataMode": "per_scan",
+      "unlocks": ["perchlorate_detection", "forensic_dust_thickness"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=2020-052A-06"
+    },
+    {
+      "id": "moxie",
+      "realName": "MOXIE (Mars Oxygen ISRU Experiment)",
+      "massKg": 17.0,
+      "powerW": 300,
+      "costM": 68,
+      "dataMbit": 2,
+      "dataMode": "per_sol",
+      "unlocks": ["co2_to_o2_isru", "exp_moxie_efficiency"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/experiment/display.action?id=2020-052A-07"
+    },
+    {
+      "id": "veggie",
+      "realName": "Veggie / Pressurized Plant Growth Chamber",
+      "massKg": 8.0,
+      "powerW": 100,
+      "costM": 44,
+      "dataMbit": 2,
+      "dataMode": "per_sol",
+      "unlocks": ["exp_seed_germination", "greenhouse_sanity_boost"],
+      "src": "https://www.nasa.gov/mission_pages/station/research/experiments/explorer/Investigation.html?#id=1156"
+    },
+    {
+      "id": "ingenuity",
+      "realName": "Ingenuity (Coaxial Mars Reconnaissance Helicopter)",
+      "massKg": 1.8,
+      "powerW": 12,
+      "costM": 42,
+      "dataMbit": 15,
+      "dataMode": "per_flight",
+      "unlocks": ["drone_wreck_scout", "safe_rover_path"],
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2020-052B"
+    }
+  ],
+  "forensicsCases": [
+    {
+      "id": "opportunity",
+      "name": "MER-B Opportunity",
+      "agency": "NASA / JPL",
+      "lastContact": "2018-06-10 (Sol 5111)",
+      "realCoords": "Meridiani Planum (2.05°S, 354.47°E)",
+      "distanceMeters": 420,
+      "correctCategory": "power_dust",
+      "acceptedSecondary": "power_dust",
+      "reportDataMbit": 18,
+      "salvageReward": { "rhuUnits": 8, "powerThermalBonusW": 8 },
+      "telemetryData": { "solarTau": 10.8, "panelWatt": 22, "coreTempC": -41 },
+      "sprite": "assets/sprites/rover_opportunity.png",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2003-032A"
+    },
+    {
+      "id": "spirit",
+      "name": "MER-A Spirit",
+      "agency": "NASA / JPL",
+      "lastContact": "2010-03-22 (Sol 2210)",
+      "realCoords": "Gusev Crater / Troy (14.57°S, 175.47°E)",
+      "distanceMeters": 680,
+      "correctCategory": "mechanical",
+      "acceptedSecondary": "thermal",
+      "reportDataMbit": 18,
+      "salvageReward": { "rhuUnits": 8, "wheelPart": true },
+      "telemetryData": { "wheelSlipPct": 98, "tiltDeg": -11.5, "heaterTempC": -55 },
+      "sprite": "assets/sprites/rover_spirit.png",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2003-027A"
+    },
+    {
+      "id": "phoenix",
+      "name": "Phoenix Mars Lander",
+      "agency": "NASA / UArizona",
+      "lastContact": "2008-11-02 (Sol 157)",
+      "realCoords": "Vastitas Borealis / Green Valley (68.22°N, 234.25°E)",
+      "distanceMeters": 860,
+      "correctCategory": "thermal",
+      "acceptedSecondary": "mechanical",
+      "reportDataMbit": 20,
+      "salvageReward": { "roboticArmPart": true },
+      "telemetryData": { "co2IceLoadKg": 140, "panelBusV": 0.0, "ambientTempC": -96 },
+      "sprite": "assets/sprites/lander_phoenix.png",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-034A"
+    },
+    {
+      "id": "insight",
+      "name": "InSight Mars Lander",
+      "agency": "NASA / JPL",
+      "lastContact": "2022-12-15 (Sol 1440)",
+      "realCoords": "Elysium Planitia (4.50°N, 135.62°E)",
+      "distanceMeters": 540,
+      "correctCategory": "power_dust",
+      "acceptedSecondary": "power_dust",
+      "reportDataMbit": 18,
+      "salvageReward": { "seisUnlocked": true },
+      "telemetryData": { "arrayDustCoveragePct": 92, "whPerSol": 285, "maxQuakeMag": 4.7 },
+      "sprite": "assets/sprites/lander_insight.png",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2018-042A"
+    },
+    {
+      "id": "beagle2",
+      "name": "Beagle 2 Lander (Bonus)",
+      "agency": "ESA / UK Open Univ.",
+      "lastContact": "2003-12-25 (Found 2015 by MRO HiRISE)",
+      "realCoords": "Isidis Planitia (11.53°N, 90.43°E)",
+      "distanceMeters": 1050,
+      "correctCategory": "comms",
+      "acceptedSecondary": "mechanical",
+      "reportDataMbit": 22,
+      "salvageReward": { "spareAntenna": true },
+      "telemetryData": { "petalsDeployed": "2 of 4", "uhfAntennaBlocked": true, "rfOutputDb": 0 },
+      "sprite": "assets/sprites/lander_beagle2.png",
+      "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2003-022C"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "pendulum_gravity",
+      "order": 1,
+      "tutorial": true,
+      "requiredInstrument": null,
+      "preferredEnv": "habitat",
+      "energyCostKwh": 1.5,
+      "dataMbit": 10,
+      "basePoints": 80,
+      "correctHypothesis": "slower_163",
+      "expectedMarsValue": 3.26,
+      "expectedEarthValue": 2.01,
+      "unit": "s (T for L=1m)",
+      "minigameType": "qte",
+      "bonusId": " calibrated_jump_physics",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    {
+      "id": "free_fall_jump",
+      "order": 2,
+      "tutorial": true,
+      "requiredInstrument": null,
+      "preferredEnv": "surface",
+      "energyCostKwh": 1.5,
+      "dataMbit": 10,
+      "basePoints": 80,
+      "correctHypothesis": "fall_104s",
+      "expectedMarsValue": 1.04,
+      "expectedEarthValue": 0.64,
+      "unit": "s (h=2m drop)",
+      "minigameType": "qte",
+      "bonusId": "eva_jump_efficiency",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    {
+      "id": "seed_germination",
+      "order": 3,
+      "tutorial": false,
+      "requiredInstrument": "veggie",
+      "secondaryInstrument": "supercam",
+      "preferredEnv": "habitat",
+      "energyCostKwh": 4.0,
+      "dataMbit": 16,
+      "basePoints": 120,
+      "correctHypothesis": "washed_pressurized_only",
+      "expectedMarsValue": 84,
+      "expectedEarthValue": 95,
+      "unit": "% germination (washed regolith)",
+      "minigameType": "converter",
+      "bonusId": "greenhouse_yield_30",
+      "src": "https://mars.nasa.gov/news/8442/nasa-curiosity-mars-rover-finds-nitrogen-on-red-planet/"
+    },
+    {
+      "id": "water_boiling",
+      "order": 4,
+      "tutorial": false,
+      "requiredInstrument": "meda",
+      "preferredEnv": "surface",
+      "energyCostKwh": 2.5,
+      "dataMbit": 14,
+      "basePoints": 110,
+      "correctHypothesis": "boil_and_freeze_triple",
+      "expectedMarsValue": 0.61,
+      "expectedEarthValue": 101.3,
+      "unit": "kPa (Triple Point Sublimation)",
+      "minigameType": "align",
+      "bonusId": "closed_loop_water_save",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    {
+      "id": "sound_speed",
+      "order": 5,
+      "tutorial": false,
+      "requiredInstrument": "mastcam_z",
+      "preferredEnv": "surface",
+      "energyCostKwh": 2.0,
+      "dataMbit": 14,
+      "basePoints": 110,
+      "correctHypothesis": "slower_240ms",
+      "expectedMarsValue": 240,
+      "expectedEarthValue": 343,
+      "unit": "m/s (50m acoustic delay ~0.208s)",
+      "minigameType": "align",
+      "bonusId": "acoustic_fault_detection",
+      "src": "https://mars.nasa.gov/news/9158/nasa-perseverance-microphone-captures-sounds-of-mars/"
+    },
+    {
+      "id": "moxie_efficiency",
+      "order": 6,
+      "tutorial": false,
+      "requiredInstrument": "moxie",
+      "preferredEnv": "surface",
+      "energyCostKwh": 5.0,
+      "dataMbit": 16,
+      "basePoints": 120,
+      "correctHypothesis": "denser_cold_air_variation",
+      "expectedMarsValue": 9.8,
+      "expectedEarthValue": 6.0,
+      "unit": "g O2 / hour",
+      "minigameType": "converter",
+      "bonusId": "moxie_optimal_schedule",
+      "src": "https://mars.nasa.gov/mars2020/spacecraft/instruments/moxie/"
+    }
+  ],
+  "scoring": {
+    "forensicCorrectPoints": 100,
+    "forensicWrongWith3CluesPoints": 50,
+    "forensicIncompleteCluesPoints": 20,
+    "forensicUnsentPoints": 0,
+    "controlGroupBonusMultiplier": 1.5,
+    "massMarginBonusThresholdPct": 10.0,
+    "massMarginBonusPoints": 120,
+    "survivalPerSolPoints": 25,
+    "safeReturnBonusPoints": 200,
+    "lostSystemPenaltyPoints": 120,
+    "src": "https://www.spaceappschallenge.org/"
+  }
+}
+;
