@@ -7,6 +7,11 @@ Running log of everything external the project uses. The submission form asks fo
 | Resource | URL | Used for |
 |---|---|---|
 | NASA Mars Fact Sheet (NSSDCA) | https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html | Mars gravity, solar irradiance, sol length, pressure, CO2 share, temperatures, Earth-Mars distance, synodic period (`src/data/nasa_data.json` → `mars`) |
+| science.nasa.gov | https://science.nasa.gov/wp-content/uploads/2023/04/Mellon_Water_PPS_May2011___TAGGED.pdf | nasa_data.json: landingSites |
+| iopscience.iop.org | https://iopscience.iop.org/article/10.3847/PSJ/ad9b24 | nasa_data.json: landingSites |
+| link.springer.com | https://link.springer.com/content/pdf/10.1007/s11214-018-0574-6.pdf | nasa_data.json: instruments |
+| assets.science.nasa.gov | https://assets.science.nasa.gov/content/dam/science/psd/mars/downloadable_items/4/4/44739_MarsHelicopterIngenuity_FactSheet.pdf | nasa_data.json: instruments |
+| descanso.jpl.nasa.gov | https://descanso.jpl.nasa.gov/monograph/series13/DeepCommo_Chapter7--141030.pdf | nasa_data.json: comms |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/what-sounds-captured-by-nasas-perseverance-rover-reveal-about-mars/ | nasa_data.json: science |
 | nist.gov | https://www.nist.gov/si-redefinition/kelvin/kelvin-present-realization | nasa_data.json: science |
 | ntrs.nasa.gov | https://ntrs.nasa.gov/citations/20120016793 | nasa_data.json: science |
