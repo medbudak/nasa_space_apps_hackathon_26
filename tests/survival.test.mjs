@@ -1,34 +1,10 @@
 // K2 tests for src/systems/survival.js. Run with: node --test tests/
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import {
-  createSurvivalState, step, spendEnergy, spendO2, spendTime, val,
-} from '../src/systems/survival.js';
+import { step, spendEnergy, spendO2, spendTime, val } from '../src/systems/survival.js';
+import { data, eng, newState } from './helpers/k2_env.mjs';
 
-const data = JSON.parse(readFileSync(new URL('./fixtures/survival_data.json', import.meta.url)));
-
-// Test doubles for K1's engineering.js. Rough shapes only, so the simulation can be
-// exercised before the real formulas land. Replace with the real module when K1 publishes it.
-const eng = {
-  // Sun up from 06:00 to 18:00 local (solFraction 0.25..0.75), peak at noon.
-  sunCos: (f) => (f >= 0.25 && f <= 0.75 ? Math.sin(Math.PI * (f - 0.25) / 0.5) : 0),
-  solarPower: ({ irradiance, area, efficiency, cosZ, dust }) => irradiance * area * efficiency * cosZ * (1 - dust),
-  // Coldest just before dawn, warmest early afternoon.
-  surfaceTemp: ({ minC, maxC, solFraction }) =>
-    (minC + maxC) / 2 - ((maxC - minC) / 2) * Math.cos(2 * Math.PI * (solFraction - 0.1)),
-  heatingPower: ({ insideC, outsideC, insulation }) =>
-    Math.max(0, insideC - outsideC) * (insulation === 'thick' ? 10 : 20),
-};
 const ctx = { data, eng };
-
-const design = { site: 'meridiani', panelAreaM2: 100, panelEfficiency: 0.25, batteryKWh: 40, insulation: 'thin' };
-
-function newState(overrides = {}) {
-  const s = createSurvivalState({ ...design, ...overrides }, data);
-  s.design = { ...design, ...overrides };
-  return s;
-}
 
 /** Run one full sol in 0.5 s real-time steps, sampling at every step. */
 function runOneSol(state) {

@@ -24,5 +24,15 @@
     "crew": { "value": 1, "unit": "people", "src": "PLACEHOLDER", "verified": false, "todo": "game design: one astronaut" },
     "o2KgPerCrewPerSol": { "value": 0.84, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "NASA Baseline Values and Assumptions Document (BVAD), O2 per crew member per day" },
     "o2StartKg": { "value": 10, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "game design: starting O2 reserve" }
+  },
+  "events": {
+    "engineFreeze": {
+      "earliestSol": { "value": 1, "unit": "sol", "src": "PLACEHOLDER", "verified": false, "todo": "game design: first sol the card may appear" },
+      "triggerBelowC": { "value": -70, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "outside temperature that freezes the engine; game design, flag as simplified" },
+      "batteryHeatWh": { "value": 3000, "unit": "Wh", "src": "PLACEHOLDER", "verified": false, "todo": "energy to warm the engine from the battery; game design, flag as simplified" },
+      "manualO2Kg": { "value": 0.3, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "extra O2 for a short EVA; derive from BVAD EVA O2 use" },
+      "manualRadiationMSv": { "value": 0.05, "unit": "mSv", "src": "PLACEHOLDER", "verified": false, "todo": "extra dose for a short EVA; derive from Curiosity RAD surface dose (~0.7 mSv/sol)" },
+      "waitSols": { "value": 1, "unit": "sol", "src": "PLACEHOLDER", "verified": false, "todo": "design doc card: miss the window, wait 1 sol" }
+    }
   }
 }
