@@ -26,7 +26,21 @@
   ],
 
   "habitat": {
-    "target_C": { "value": 20, "unit": "C", "requested": "K2", "note": "habitat set point; game design, simplified", "src": "PLACEHOLDER", "verified": false }
+    "target_C": { "value": 20, "unit": "C", "requested": "K2", "note": "habitat set point; K1 has thermal.habitatTargetC = 22.85", "src": "PLACEHOLDER", "verified": false },
+    "coolingTime_h": { "value": 6, "unit": "h", "requested": "K2", "simplified": true, "note": "time constant for the habitat to cool toward outside with heating off; game value", "src": "PLACEHOLDER", "verified": false }
+  },
+
+  "body": {
+    "coldBelow_C": { "value": 5, "unit": "C", "requested": "K2", "simplified": true, "note": "habitat air temperature counted as dangerous cold for the astronaut; game value", "src": "PLACEHOLDER", "verified": false }
+  },
+
+  "radiation": {
+    "surfaceMSvPerDay": { "value": 0.67, "unit": "mSv/day", "src": "https://www.nasa.gov/news-release/nasa-rover-results-include-first-age-measurement-on-mars-and-help-for-human-exploration/", "verified": true, "note": "copied from K1's radiation.surfaceMSvPerDay (Curiosity RAD, Gale Crater)" }
+  },
+
+  "loss": {
+    "coldHours": { "value": 2, "unit": "h", "src": "game: DECISIONS.md D-006 (body temperature below the threshold for 2 game-hours)", "verified": true },
+    "radiationLimit_mSv": { "value": 600, "unit": "mSv", "requested": "K2", "note": "mission dose limit; NASA-STD-3001 career limit is a candidate source, K1 to check", "src": "PLACEHOLDER", "verified": false }
   },
 
   "life": {

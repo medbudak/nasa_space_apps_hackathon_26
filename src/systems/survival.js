@@ -18,11 +18,14 @@
 //   eng.heatingPower_W({ inside_C, outside_C, insulation })  -> heater draw, W
 // and for the point of no return (M4), K1's existing formula:
 //   eng.oxygenToReturn({ distanceM, speedMs, o2KgPerSec, safetyFactor }) -> kg
+// and one more requested from K1, for the habitat cooling down when its heating is shed:
+//   eng.habitatTemp_C({ inside_C, outside_C, dtHours, coolingTime_h }) -> new inside °C
+//     (Newton's law of cooling: inside moves toward outside with time constant coolingTime_h)
 //
 // No gameplay numbers are written in this file.
 
 import { val, landingSite } from './simData.js';
-import { initPower, computeLoads, sumOn, updateShedding } from './power.js';
+import { initPower, computeLoads, sumOn, updateShedding, isOn } from './power.js';
 
 export { val, landingSite };
 
@@ -56,6 +59,11 @@ export function initSurvival(state, data) {
       nearWreck: false, // set by surface.js: a wreck with RHUs is close enough to shelter at
       cardShown: false, // the no-return card opens at most once per EVA
     },
+    body: {
+      cold: false, // the astronaut is in dangerous cold right now
+      coldHours: 0, // game hours of cold in a row; resets when warm
+    },
+    loss: null, // set once by checkLoss(): { reasonKey, sol, timeOfSol, values }
   };
   initPower(state);
   return state;
@@ -76,13 +84,18 @@ export function solToHours(solAmount, data) {
  * Changes state.sol, state.timeOfSol, state.resources and state.sim.
  */
 export function step(state, realDt, ctx) {
+  if (state.sim.loss) return state; // the mission is over: nothing moves any more
   const dSol = realSecondsToSol(realDt, ctx.data);
   const dtHours = solToHours(dSol, ctx.data);
   advanceTime(state, dSol);
   updateEnvironment(state, ctx);
   updatePower(state, dtHours, ctx);
+  updateHabitatTemp(state, dtHours, ctx);
+  updateRadiation(state, dtHours, ctx.data);
   updateLife(state, dSol, ctx.data);
   updateEva(state, dtHours, ctx);
+  updateBody(state, dtHours, ctx.data);
+  checkLoss(state, ctx);
   return state;
 }
 
@@ -128,10 +141,78 @@ function updatePower(state, dtHours, ctx) {
   updateShedding(state, ctx);
 }
 
+// With its heating on, the habitat holds its set point (simplified: it snaps back as soon as
+// heating returns). With heating shed, it cools toward the outside temperature.
+function updateHabitatTemp(state, dtHours, { data, eng }) {
+  const sim = state.sim;
+  if (isOn(state, 'heating')) {
+    sim.inside_C = val(data.habitat.target_C);
+    return;
+  }
+  sim.inside_C = eng.habitatTemp_C({
+    inside_C: sim.inside_C,
+    outside_C: sim.outside_C,
+    dtHours,
+    coolingTime_h: val(data.habitat.coolingTime_h),
+  });
+}
+
+// Surface dose accumulates all the time (inside and outside; simplified, no habitat shielding).
+// The source value is per Earth day (24 h).
+function updateRadiation(state, dtHours, data) {
+  state.resources.radiation_mSv += (val(data.radiation.surfaceMSvPerDay) * dtHours) / 24;
+}
+
 function updateLife(state, dSol, data) {
   if (state.sim.eva.outside) return; // outside, the astronaut breathes from the suit
   const use = val(data.life.oxygenPerCrewPerSol_kg) * val(data.life.crew) * dSol;
   state.resources.oxygen_kg = Math.max(0, state.resources.oxygen_kg - use);
+}
+
+// Body cold (simplified): inside, the habitat air is below the danger line;
+// outside, the suit joints are frozen. Counts game hours of cold in a row.
+function updateBody(state, dtHours, data) {
+  const { sim } = state;
+  sim.body.cold = sim.eva.outside
+    ? sim.eva.jointsFrozen
+    : sim.inside_C <= val(data.body.coldBelow_C);
+  sim.body.coldHours = sim.body.cold ? sim.body.coldHours + dtHours : 0;
+}
+
+// ---------------------------------------------------------------------------
+// Loss conditions (D-006). The report card is still shown after a loss.
+
+/**
+ * Check the loss conditions once; on the first one met, record it in state.sim.loss,
+ * set state.outcome = 'lost', and return it. Returns null while the mission goes on.
+ * Order matters only when two happen in the same step: the first listed is reported.
+ * Called by step(); surface.js reads state.sim.loss and moves to the ending scene.
+ */
+export function checkLoss(state, { data }) {
+  const { sim, resources } = state;
+  if (sim.loss) return sim.loss;
+
+  let reasonKey = null;
+  let values = {};
+  if (sim.eva.outside && sim.eva.suitO2Kg <= 0) {
+    reasonKey = 'loss.suitOxygen';
+    values = { distanceM: Math.round(sim.eva.distanceM) };
+  } else if (!sim.eva.outside && resources.oxygen_kg <= 0) {
+    reasonKey = 'loss.oxygen';
+  } else if (sim.body.coldHours >= val(data.loss.coldHours)) {
+    reasonKey = 'loss.cold';
+    values = { coldHours: val(data.loss.coldHours), inside_C: Math.round(sim.inside_C) };
+  } else if (resources.radiation_mSv > val(data.loss.radiationLimit_mSv)) {
+    reasonKey = 'loss.radiation';
+    values = { dose_mSv: Math.round(resources.radiation_mSv), limit_mSv: val(data.loss.radiationLimit_mSv) };
+  } else if (typeof sim.sanity === 'number' && sim.sanity <= 0) {
+    reasonKey = 'loss.sanity'; // sim.sanity is created by sanity.js (not written yet)
+  }
+  if (!reasonKey) return null;
+
+  sim.loss = { reasonKey, sol: state.sol, timeOfSol: state.timeOfSol, values };
+  state.outcome = 'lost';
+  return sim.loss;
 }
 
 // ---------------------------------------------------------------------------

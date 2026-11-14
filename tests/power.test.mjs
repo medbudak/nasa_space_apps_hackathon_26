@@ -74,18 +74,23 @@ test('setOrder rejects a list that moves life support or misses a load', () => {
 });
 
 test('shed loads come back after the battery refills, and do not flicker overnight', () => {
-  const { s, bus, ctx } = setup({ battery_kWh: 5 });
+  // This test is about restoring loads, not about freezing: a habitat that cools very slowly
+  // keeps the astronaut alive through a night with the heating shed.
+  const slowCooling = { ...data, habitat: { ...data.habitat, coolingTime_h: { value: 1e9 } } };
+  const { s, bus } = setup({ battery_kWh: 5 });
+  const ctx = { data: slowCooling, eng, bus };
   runUntilShed(s, ctx, bus);
   const shedSol = s.sol;
   // Rest of the night: loads must stay off until the battery passes the restore threshold.
-  while (s.timeOfSol > 0.5 || s.timeOfSol < 0.25) {
+  for (let i = 0; i < 1000 && (s.timeOfSol > 0.5 || s.timeOfSol < 0.25); i++) {
     step(s, 0.5, ctx);
     if (s.resources.energy_kWh < val(data.tuning.powerRestoreFraction) * 5) {
       assert.ok(!isOn(s, 'comms'), 'comms came back before the battery recovered');
     }
   }
   // Next day: run to noon, everything should be back on.
-  while (s.sol === shedSol || s.timeOfSol < 0.5) step(s, 0.5, ctx);
+  for (let i = 0; i < 1000 && (s.sol === shedSol || s.timeOfSol < 0.5); i++) step(s, 0.5, ctx);
+  assert.equal(s.sim.loss, null);
   for (const id of LOAD_IDS) assert.ok(isOn(s, id), `${id} still off at noon`);
 });
 

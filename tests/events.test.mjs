@@ -63,9 +63,10 @@ test('manual heating costs O2 and radiation', () => {
   const { s, ctx } = setup();
   runUntilCard(s, ctx);
   const o2 = s.resources.oxygen_kg;
+  const dose = s.resources.radiation_mSv; // surface dose so far
   resolveDecision(s, 'manualHeat', ctx);
   assert.ok(Math.abs(o2 - s.resources.oxygen_kg - val(cfg.manualOxygen_kg)) < 1e-9);
-  assert.equal(s.resources.radiation_mSv, val(cfg.manualRadiation_mSv));
+  assert.ok(Math.abs(s.resources.radiation_mSv - dose - val(cfg.manualRadiation_mSv)) < 1e-9);
 });
 
 test('waiting moves the clock forward one sol and uses a sol of O2', () => {

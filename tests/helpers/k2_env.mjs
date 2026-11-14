@@ -20,6 +20,9 @@ export const eng = {
   // Requested: heater draw grows with the inside/outside gap; thick insulation halves it.
   heatingPower_W: ({ inside_C, outside_C, insulation }) =>
     Math.max(0, inside_C - outside_C) * (insulation === 'thick' ? 10 : 20),
+  // Requested: Newton's law of cooling toward the outside temperature.
+  habitatTemp_C: ({ inside_C, outside_C, dtHours, coolingTime_h }) =>
+    outside_C + (inside_C - outside_C) * Math.exp(-dtHours / coolingTime_h),
   // Same as K1's oxygenToReturn in src/core/engineering.js (enes branch).
   oxygenToReturn: ({ distanceM, speedMs, o2KgPerSec, safetyFactor }) =>
     speedMs <= 0 ? Infinity : (distanceM / speedMs) * o2KgPerSec * safetyFactor,
