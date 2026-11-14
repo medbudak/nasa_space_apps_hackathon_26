@@ -41,9 +41,10 @@ export function createState(seed = Math.floor(Math.random() * 2 ** 32)) {
     forensics: {}, // wreckId -> { clues: [], diagnosis: null, sent: false, points: 0 }
     experiments: {}, // experimentId -> { hypothesis: null, measured: null, success: false, sent: false }
     flags: { anomalyPhotos: 0, cameraTier: 'hand' }, // cameraTier: 'hand' | 'hires'
-    score: { total: 0, entries: [] }, // entries: { sol, category, points, reason }
+    score: { total: 0, entries: [] }, // entries: { sol, category, points, reason, cause }
+    stats: { energyUsed_kWh: 0, oxygenProduced_kg: 0, dataSent_Mbit: 0, solsSurvived: 0 }, // for the report card
     lostSystems: [],
-    outcome: null, // set by the ending: 'hero' | 'colonist' | 'explorer' | 'lost'
+    outcome: null, // set by K2's final sequence: 'hero' | 'colonist' | 'explorer' | 'lost'
   };
 }
 
@@ -65,12 +66,17 @@ export function logDecision({ eventId, choice, effects = [] }) {
   return entry;
 }
 
-/** The only way to change the score, so the report card can explain every point. */
-export function addScore(category, points, reason) {
+/**
+ * The only way to change the score, so the report card can explain every point.
+ * reason: story.json key for what happened, e.g. 'consequence.greenhouseFroze'.
+ * cause (optional): the choice that led to it, so the report card can link them:
+ *   a design field, e.g. 'design.power.battery_kWh', or a crisis choice, 'decision.<eventId>'.
+ */
+export function addScore(category, points, reason, cause = null) {
   if (!SCORE_CATEGORIES.includes(category)) {
     console.warn(`[state] unknown score category "${category}". Use one of: ${SCORE_CATEGORIES.join(', ')}`);
   }
-  state.score.entries.push({ sol: state.sol, category, points, reason });
+  state.score.entries.push({ sol: state.sol, category, points, reason, cause });
   state.score.total += points;
 }
 

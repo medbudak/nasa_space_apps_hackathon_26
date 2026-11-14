@@ -80,6 +80,7 @@
     "maxInstruments": { "value": 5, "unit": "", "src": "game: DECISIONS.md D-001", "verified": true },
     "noReturnSafetyFactor": { "value": 1.2, "unit": "", "src": "game: design doc v2, point-of-no-return formula", "verified": true },
     "massMarginBonusThreshold": { "value": 0.1, "unit": "", "src": "game: design doc v2 (NASA-style margin rule)", "verified": true },
+    "massMarginBonus": { "value": 50, "unit": "points", "src": "game: K1 balance, tune in the balance session", "verified": true },
     "forensicsCorrect": { "value": 100, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
     "forensicsWrongAllClues": { "value": 50, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
     "forensicsCluesMissing": { "value": 20, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
