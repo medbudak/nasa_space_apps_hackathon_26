@@ -1,0 +1,92 @@
+{
+  "_readme": "Every real-world number in the game. Owner: K1. Scalar entries are {value, unit, src, verified}; table rows carry src and verified. src PLACEHOLDER = still needs a real source (none may remain at content lock). simplified: true = changed for gameplay, also listed in REFERENCES.md. Balance is tuned only in 'tuning'.",
+
+  "constants": {
+    "g0": { "value": 9.80665, "unit": "m/s^2", "src": "https://physics.nist.gov/cgi-bin/cuu/Value?gn", "verified": true },
+    "speedOfLight": { "value": 299792.458, "unit": "km/s", "src": "https://physics.nist.gov/cgi-bin/cuu/Value?c", "verified": true }
+  },
+
+  "mars": {
+    "gravity": { "value": 3.73, "unit": "m/s^2", "note": "mean surface gravity", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "solarIrradiance": { "value": 586.2, "unit": "W/m^2", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "solLength": { "value": 24.6597, "unit": "h", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "surfacePressure": { "value": 636, "unit": "Pa", "note": "6.36 mb at mean radius, varies 400-870 Pa with season", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "co2Fraction": { "value": 0.951, "unit": "", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "meanTemperature": { "value": -59, "unit": "C", "note": "~214 K", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "diurnalMinTemperature": { "value": -89, "unit": "C", "note": "Viking 1 Lander site", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "diurnalMaxTemperature": { "value": -31, "unit": "C", "note": "Viking 1 Lander site", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "minDistanceFromEarth": { "value": 54600000, "unit": "km", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "maxDistanceFromEarth": { "value": 401400000, "unit": "km", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "synodicPeriod": { "value": 779.94, "unit": "days", "note": "launch windows repeat about every 26 months", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true }
+  },
+
+  "power": {
+    "panelEfficiency": { "value": 0.3, "unit": "", "note": "from task card; check against NASA SST State of the Art, Power chapter", "src": "PLACEHOLDER", "verified": false },
+    "rtgOutput": { "value": 110, "unit": "W", "note": "MMRTG; from design doc v2", "src": "PLACEHOLDER", "verified": false },
+    "rtgMass": { "value": 45, "unit": "kg", "note": "MMRTG; from design doc v2", "src": "PLACEHOLDER", "verified": false }
+  },
+
+  "rockets": [
+    { "id": "rocketA", "name": "Rocket A (to be chosen)", "capacityToMars_kg": 0, "cost_musd": 0, "src": "PLACEHOLDER", "verified": false },
+    { "id": "rocketB", "name": "Rocket B (to be chosen)", "capacityToMars_kg": 0, "cost_musd": 0, "src": "PLACEHOLDER", "verified": false },
+    { "id": "rocketC", "name": "Rocket C (to be chosen)", "capacityToMars_kg": 0, "cost_musd": 0, "src": "PLACEHOLDER", "verified": false }
+  ],
+
+  "trajectories": [
+    { "id": "hohmann", "transit_days": 240, "deltaV_kms": 0, "cruiseDose_mSv": 0, "note": "~8 months, from design doc v2", "src": "PLACEHOLDER", "verified": false },
+    { "id": "fast", "transit_days": 180, "deltaV_kms": 0, "cruiseDose_mSv": 0, "note": "~6 months, from design doc v2", "src": "PLACEHOLDER", "verified": false }
+  ],
+
+  "landingSites": [
+    { "id": "meridiani", "name": "Meridiani Planum", "latitude_deg": -2, "solarFactor": 1, "nightMin_C": 0, "iceAbundance": 0, "src": "PLACEHOLDER", "verified": false },
+    { "id": "jezero", "name": "Jezero Crater", "latitude_deg": 18.4, "solarFactor": 1, "nightMin_C": 0, "iceAbundance": 0, "src": "PLACEHOLDER", "verified": false },
+    { "id": "arcadia", "name": "Arcadia Planitia", "latitude_deg": 40, "solarFactor": 1, "nightMin_C": 0, "iceAbundance": 0, "src": "PLACEHOLDER", "verified": false }
+  ],
+
+  "instruments": [
+    { "id": "cameraHires", "realCounterpart": "Mastcam-Z", "mass_kg": 4, "power_W": 17, "data_Mbit": 20, "dataPer": "photo", "unlocks": "fullPhotoScore", "src": "PLACEHOLDER", "verified": false },
+    { "id": "weather", "realCounterpart": "MEDA", "mass_kg": 5.5, "power_W": 17, "data_Mbit": 1, "dataPer": "sol", "unlocks": "stormWarning", "src": "PLACEHOLDER", "verified": false },
+    { "id": "seismometer", "realCounterpart": "SEIS (InSight)", "mass_kg": 30, "power_W": 8, "data_Mbit": 5, "dataPer": "sol", "unlocks": "quakeWarning", "src": "PLACEHOLDER", "verified": false },
+    { "id": "radiation", "realCounterpart": "RAD (Curiosity)", "mass_kg": 1.6, "power_W": 4, "data_Mbit": 1, "dataPer": "sol", "unlocks": "speWarning", "src": "PLACEHOLDER", "verified": false },
+    { "id": "radar", "realCounterpart": "RIMFAX", "mass_kg": 3, "power_W": 10, "data_Mbit": 10, "dataPer": "scan", "unlocks": "iceMap", "src": "PLACEHOLDER", "verified": false },
+    { "id": "spectrometer", "realCounterpart": "SuperCam / PIXL", "mass_kg": 11, "power_W": 18, "data_Mbit": 8, "dataPer": "measurement", "unlocks": "soilAndDustAnalysis", "src": "PLACEHOLDER", "verified": false },
+    { "id": "moxie", "realCounterpart": "MOXIE", "mass_kg": 17, "power_W": 300, "data_Mbit": 0, "dataPer": "none", "unlocks": "oxygenProduction", "src": "PLACEHOLDER", "verified": false },
+    { "id": "plantChamber", "realCounterpart": "Veggie-like chamber", "mass_kg": 8, "power_W": 100, "data_Mbit": 2, "dataPer": "sol", "unlocks": "seedExperiments", "simplified": true, "note": "game value, no flight equivalent", "src": "PLACEHOLDER", "verified": false },
+    { "id": "drone", "realCounterpart": "Ingenuity", "mass_kg": 1.8, "power_W": 0, "data_Mbit": 15, "dataPer": "flight", "unlocks": "droneScout", "note": "charges from its own solar panel, so it draws no habitat power", "src": "PLACEHOLDER", "verified": false }
+  ],
+
+  "wrecks": [
+    { "id": "opportunity", "name": "Opportunity", "lastContact": "2018-06", "category": ["power"], "cause": "Planet-encircling dust storm (tau ~10.8) starved the solar panels.", "salvage": "rhu", "src": "PLACEHOLDER", "verified": false },
+    { "id": "spirit", "name": "Spirit", "lastContact": "2010-03", "category": ["mechanical", "thermal"], "cause": "Stuck in soft soil at Troy; could not tilt its panels to the winter Sun and was lost to the cold.", "salvage": "rhu", "src": "PLACEHOLDER", "verified": false },
+    { "id": "phoenix", "name": "Phoenix", "lastContact": "2008-11", "category": ["thermal"], "cause": "Polar winter; the weight of CO2 ice broke a solar panel.", "salvage": "roboticArm", "src": "PLACEHOLDER", "verified": false },
+    { "id": "insight", "name": "InSight", "lastContact": "2022-12", "category": ["power"], "cause": "Dust covered the solar panels until power ran out.", "salvage": "seis", "src": "PLACEHOLDER", "verified": false },
+    { "id": "beagle2", "name": "Beagle 2 (ESA/UK, bonus)", "lastContact": "never", "category": ["comms", "mechanical"], "cause": "Found by MRO in 2015: some panels did not deploy and blocked the antenna.", "salvage": "antenna", "src": "PLACEHOLDER", "verified": false }
+  ],
+
+  "comms": {
+    "relayPassesPerSol": { "value": 2, "unit": "passes", "note": "MRO and MAVEN, from design doc v2", "src": "PLACEHOLDER", "verified": false },
+    "relayMbitPerPass": { "value": 0, "unit": "Mbit", "src": "PLACEHOLDER", "verified": false },
+    "dteRate": { "value": 0, "unit": "kbit/s", "note": "direct-to-Earth X-band", "src": "PLACEHOLDER", "verified": false }
+  },
+
+  "return": {
+    "returnDeltaV": { "value": 4.4, "unit": "km/s", "note": "return threshold from the task card", "src": "PLACEHOLDER", "verified": false }
+  },
+
+  "tuning": {
+    "solDuration": { "value": 120, "unit": "s", "simplified": true, "src": "game: DECISIONS.md D-001 (1 sol = about 2 minutes)", "verified": true },
+    "totalSols": { "value": 14, "unit": "sols", "simplified": true, "src": "game: DECISIONS.md D-001", "verified": true },
+    "demoSols": { "value": 5, "unit": "sols", "simplified": true, "src": "game: DECISIONS.md D-005 (?demo mode)", "verified": true },
+    "maxInstruments": { "value": 5, "unit": "", "src": "game: DECISIONS.md D-001", "verified": true },
+    "noReturnSafetyFactor": { "value": 1.2, "unit": "", "src": "game: design doc v2, point-of-no-return formula", "verified": true },
+    "massMarginBonusThreshold": { "value": 0.1, "unit": "", "src": "game: design doc v2 (NASA-style margin rule)", "verified": true },
+    "forensicsCorrect": { "value": 100, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
+    "forensicsWrongAllClues": { "value": 50, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
+    "forensicsCluesMissing": { "value": 20, "unit": "points", "src": "game: DECISIONS.md D-006", "verified": true },
+    "experimentTolerance": { "value": 0.1, "unit": "", "src": "game: DECISIONS.md D-006 (within ±10%)", "verified": true },
+    "minimumSuccessReports": { "value": 2, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true },
+    "minimumSuccessExperiments": { "value": 2, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true },
+    "fullSuccessReports": { "value": 4, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true },
+    "fullSuccessExperiments": { "value": 4, "unit": "", "src": "game: DECISIONS.md D-006", "verified": true }
+  }
+}
