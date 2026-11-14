@@ -140,6 +140,34 @@
       "src": "PLACEHOLDER",
       "verified": false,
       "todo": "starting O2 reserve: team sets the planned days, then o2KgPerCrewPerDay × days"
+    },
+    "suitO2Kg": {
+      "value": 0.77,
+      "unit": "kg",
+      "src": "https://ntrs.nasa.gov/api/citations/20170009505/downloads/20170009505.pdf",
+      "verified": true,
+      "note": "Advanced EMU: \"The POV stores ~1.7 lbm of usable oxygen\" (1.7 lb = 0.77 kg)"
+    },
+    "evaMaxHours": {
+      "value": 8,
+      "unit": "h",
+      "src": "https://www.nasa.gov/wp-content/uploads/2017/02/eva-exp-0042_xeva_system_con_ops_rev_b_final_dtd_10192020_ref_doc.pdf",
+      "verified": true,
+      "note": "xEVA: \"Support EVAs of up to 8 hours ... with an additional 1 hour of secondary/backup O2\""
+    },
+    "walkSpeedMs": {
+      "value": 0.556,
+      "unit": "m/s",
+      "src": "https://www.nasa.gov/wp-content/uploads/2017/02/eva-exp-0042_xeva_system_con_ops_rev_b_final_dtd_10192020_ref_doc.pdf",
+      "verified": true,
+      "note": "xEVA planning: \"Traverses assume an ~2 km/hr walking pace\" (2 km/h = 0.556 m/s)"
+    },
+    "jointFreezeSpeedFactor": {
+      "value": 0.4,
+      "unit": "",
+      "src": "game: design doc v2 crisis card: frozen joints cut speed to 40%",
+      "verified": true,
+      "simplified": true
     }
   },
   "thermal": {
@@ -149,6 +177,13 @@
       "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
       "verified": true,
       "note": "BVAD Rev 2 Table 4-1 nominal cabin temperature 296 K; NASA-STD-3001 comfort zone 20–25 °C"
+    },
+    "actuatorMinC": {
+      "value": -55,
+      "unit": "C",
+      "src": "https://ntrs.nasa.gov/citations/20150008865",
+      "verified": true,
+      "note": "Curiosity: \"Warm-up heaters are required to bring the actuators up to temperature (above -55 C)\"; used in game as the joint-stiffening limit (simplified)"
     }
   },
   "radiation": {
@@ -197,6 +232,20 @@
       "src": "https://ntrs.nasa.gov/api/citations/20140011316/downloads/20140011316.pdf",
       "verified": true,
       "note": "\"into low Mars orbit, with the required total ΔV = 4150 m/sec\" (NASA/TM-2013-216620)"
+    },
+    "mavMinOperatingC": {
+      "value": -20,
+      "unit": "C",
+      "src": "https://ntrs.nasa.gov/api/citations/20210022133/downloads/MAV_SRC_IEEE_2022.pdf",
+      "verified": true,
+      "note": "MSR Mars Ascent Vehicle: \"operational AFT of -20°C\""
+    },
+    "mavMinStorageC": {
+      "value": -40,
+      "unit": "C",
+      "src": "https://ntrs.nasa.gov/api/citations/20210022133/downloads/MAV_SRC_IEEE_2022.pdf",
+      "verified": true,
+      "note": "MSR Mars Ascent Vehicle: \"non-operational AFT of -40°C\""
     }
   },
   "rules": {
@@ -353,6 +402,38 @@
       "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
       "verified": true,
       "note": "\"reference 40-t useful payload on the surface of Mars\" per lander"
+    }
+  },
+  "events": {
+    "engineFreeze": {
+      "earliestSol": {
+        "value": 14,
+        "unit": "sol",
+        "src": "game: design doc v2: the engine freezes on the Sol 14 departure morning",
+        "verified": true,
+        "simplified": true
+      },
+      "waitSols": {
+        "value": 1,
+        "unit": "sol",
+        "src": "game: design doc v2 crisis card: miss the window, wait 1 sol",
+        "verified": true,
+        "simplified": true
+      },
+      "manualEvaHours": {
+        "value": 1,
+        "unit": "h",
+        "src": "game: short EVA to heat the engine by hand, game rule",
+        "verified": true,
+        "simplified": true
+      },
+      "batteryHeatKWh": {
+        "value": null,
+        "unit": "kWh",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "energy to warm the ascent engine from the battery, official source"
+      }
     }
   },
   "objectives": [
@@ -650,6 +731,20 @@
         "src": "game: solar panels give no power at night",
         "verified": true,
         "simplified": true
+      },
+      "dustLossPerSol": {
+        "value": 0.0028,
+        "unit": "",
+        "src": "https://ntrs.nasa.gov/api/citations/20040191326/downloads/20040191326.pdf",
+        "verified": true,
+        "note": "Pathfinder: \"0.28% per sol during the initial 30 sols\"; MER long-term rate \"about half this value\""
+      },
+      "dustDevilGain": {
+        "value": 0.143,
+        "unit": "",
+        "src": "https://www.jpl.nasa.gov/news/spirit-gets-energy-boost-from-cleaner-solar-panels/",
+        "verified": true,
+        "note": "Spirit cleaning event: \"to about 240 watt-hours from 210 watt-hours\" per sol (240/210 - 1)"
       }
     },
     {
@@ -706,27 +801,34 @@
     },
     {
       "id": "fission",
-      "realName": "Fission Surface Power",
+      "realName": "Fission Surface Power (40 kWe)",
       "continuousW": {
-        "value": null,
+        "value": 40000,
         "unit": "W",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "electrical output of NASA Kilopower / Fission Surface Power unit"
+        "src": "https://ntrs.nasa.gov/api/citations/20100033102/downloads/20100033102.pdf",
+        "verified": true,
+        "note": "NASA Fission Surface Power reference design, 40 kWe"
       },
       "massKg": {
-        "value": null,
+        "value": 5820,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "unit mass from NASA Kilopower / FSP sources"
+        "src": "https://ntrs.nasa.gov/api/citations/20100033102/downloads/20100033102.pdf",
+        "verified": true,
+        "note": "\"total system mass without margin is 5820 kg\""
       },
       "costMUSD": {
-        "value": null,
+        "value": 215,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "https://ntrs.nasa.gov/api/citations/20100033102/downloads/20100033102.pdf",
+        "verified": true,
+        "note": "\"$1.4 billion with follow-on systems costing about $215 million each\" (2010 estimate; first unit includes development)"
+      },
+      "panelAreaM2": {
+        "value": 0,
+        "unit": "m²",
+        "src": "game: no solar panels with this option",
+        "verified": true,
+        "simplified": true
       }
     }
   ],
@@ -1177,12 +1279,26 @@
         "verified": true,
         "note": "Curiosity relay return \"well over 500 Mb/sol, based on an average of 3 to 4 relay contacts each sol\", lower bound"
       },
+      "standbyW": {
+        "value": 21,
+        "unit": "W",
+        "src": "https://descanso.jpl.nasa.gov/DPSummary/Descanso14_MSL_Telecom.pdf",
+        "verified": true,
+        "note": "Electra-Lite on Curiosity: \"draw about 21 watts in standby mode and about 69 W when transmitting\""
+      },
+      "transmitW": {
+        "value": 69,
+        "unit": "W",
+        "src": "https://descanso.jpl.nasa.gov/DPSummary/Descanso14_MSL_Telecom.pdf",
+        "verified": true,
+        "note": "Electra-Lite on Curiosity, transmitting"
+      },
       "massKg": {
-        "value": null,
+        "value": 3,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "UHF relay radio mass (Electra-Lite), official source"
+        "src": "https://discovery.larc.nasa.gov/PDF_FILES/30Electra-Lite_Description.pdf",
+        "verified": true,
+        "note": "Electra-Lite radio 3000 g (radio only, no antenna)"
       },
       "costMUSD": {
         "value": null,
@@ -1200,6 +1316,27 @@
         "src": "PLACEHOLDER",
         "verified": false,
         "todo": "relay + X-band DTE: 500 Mb/sol + DTE at 160 bit/s × daily DSN pass length"
+      },
+      "standbyW": {
+        "value": 21,
+        "unit": "W",
+        "src": "https://descanso.jpl.nasa.gov/DPSummary/Descanso14_MSL_Telecom.pdf",
+        "verified": true,
+        "note": "Electra-Lite standby, as relay"
+      },
+      "transmitW": {
+        "value": 69,
+        "unit": "W",
+        "src": "https://descanso.jpl.nasa.gov/DPSummary/Descanso14_MSL_Telecom.pdf",
+        "verified": true,
+        "note": "Electra-Lite transmitting, as relay"
+      },
+      "xbandTransmitW": {
+        "value": 77.1,
+        "unit": "W",
+        "src": "https://descanso.jpl.nasa.gov/DPSummary/Descanso14_MSL_Telecom.pdf",
+        "verified": true,
+        "note": "Curiosity X-band transponder 14.2 W + 15 W amplifier 62.9 W while transmitting (table values)"
       },
       "massKg": {
         "value": null,
