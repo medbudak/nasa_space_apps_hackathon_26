@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { advanceHours } from '../src/systems/survival.js';
-import { onDownlinkSent, FALSE_ALARMS } from '../src/systems/sanity.js';
+import { onDownlinkSent, resolveAlarm, FALSE_ALARMS } from '../src/systems/sanity.js';
 import { holdLoad } from '../src/systems/power.js';
 import { data, eng, fakeBus, newState } from './helpers/k2_env.mjs';
 
@@ -78,6 +78,26 @@ test('low sanity brings false alarms on the hallucination event, and they end', 
   assert.ok(a.intensity > 0 && a.intensity <= 1);
   assert.ok(bus.emitted.some((e) => e.name === 'hallucination' && e.payload.kind === 'end' && e.payload.alpha === 0));
   assert.ok(s.decisionLog.some((d) => d.eventId === 'falseAlarm'));
+});
+
+test('answering a false alarm (K3 onAlarmResolve): seeing through it helps, believing it hurts', () => {
+  const { s, ctx } = setup();
+  s.life.sanity = 30;
+  resolveAlarm(s, ctx, { id: 'a1', stat: 'o2', fake: true, answer: 'fake', verified: true, correct: true });
+  assert.equal(s.life.sanity, 30 + sanity.alarmSeenThroughGain.value);
+  resolveAlarm(s, ctx, { id: 'a2', stat: 'o2', fake: true, answer: 'real', verified: false, correct: false });
+  assert.equal(s.life.sanity, 30 + sanity.alarmSeenThroughGain.value - sanity.alarmBelievedLoss.value);
+  const answers = s.decisionLog.filter((d) => d.eventId === 'falseAlarm');
+  assert.deepEqual(answers.map((d) => d.choice), ['fake', 'real']);
+  assert.equal(answers[0].effects[0].verified, true);
+});
+
+test('answering a real alarm changes no sanity, but is logged', () => {
+  const { s, ctx } = setup();
+  s.life.sanity = 30;
+  resolveAlarm(s, ctx, { id: 'r1', stat: 'o2', fake: false, answer: 'real', verified: true, correct: true });
+  assert.equal(s.life.sanity, 30);
+  assert.ok(s.decisionLog.some((d) => d.eventId === 'alarm' && d.choice === 'real'));
 });
 
 test('no false alarms while sanity is above the line', () => {

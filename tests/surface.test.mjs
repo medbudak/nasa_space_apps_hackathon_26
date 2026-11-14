@@ -72,6 +72,50 @@ test('hudOptions gives K3\'s HUD the telemetry, the relay passes and the power h
   assert.deepEqual(surface.hudOptions(), {}, 'after exit there is nothing to hand over');
 });
 
+/** A bus with on/off/emit like K1's core/bus.js, that also records what was emitted. */
+function wiredBus() {
+  const handlers = new Map();
+  const emitted = [];
+  return {
+    emitted,
+    on(name, fn) { (handlers.get(name) ?? handlers.set(name, new Set()).get(name)).add(fn); return () => this.off(name, fn); },
+    off(name, fn) { handlers.get(name)?.delete(fn); },
+    emit(name, payload) { emitted.push({ name, payload }); for (const fn of handlers.get(name) ?? []) fn(payload); },
+  };
+}
+
+test('packets sent on downlink:queue land in the queue while the scene runs, and not after it', async () => {
+  const { default: surface } = await import('../src/scenes/surface.js');
+  const state = createState(1);
+  Object.assign(state.design, DEFAULT_DESIGN);
+  const bus = wiredBus();
+  await surface.enter({ state, data, bus, t: (k) => k, goTo: () => {}, canvas: fakeCanvas, ui: fakeEl() });
+  try {
+    bus.emit('downlink:queue', { type: 'family', id: 'f1', mbit: 5, points: 0 });
+    assert.deepEqual(state.dataBudget.queue.map((p) => p.id), ['f1']);
+  } finally {
+    surface.exit();
+  }
+  bus.emit('downlink:queue', { type: 'photo', id: 'p2', mbit: 5, points: 0 });
+  assert.deepEqual(state.dataBudget.queue.map((p) => p.id), ['f1'], 'still listening after exit');
+});
+
+test('a family message reaching Earth lifts sanity through the scene', async () => {
+  const { default: surface } = await import('../src/scenes/surface.js');
+  const state = createState(1);
+  Object.assign(state.design, DEFAULT_DESIGN);
+  const bus = wiredBus();
+  await surface.enter({ state, data, bus, t: (k) => k, goTo: () => {}, canvas: fakeCanvas, ui: fakeEl() });
+  try {
+    state.life.sanity = 30;
+    bus.emit('downlink:sent', { type: 'family', id: 'f1', sol: 1, passId: 'mro' });
+    assert.equal(state.life.sanity, 30 + data.sanity.familyMessageGain.value);
+    assert.equal(typeof surface.hudOptions().onAlarmResolve, 'function');
+  } finally {
+    surface.exit();
+  }
+});
+
 test('a relay pass in the data sends the queued packet when its time comes', async () => {
   const withPass = structuredClone(data);
   withPass.relayPasses = [{ id: 'mro', name: 'MRO', atSolFraction: { value: 0.3 }, mbit: { value: 100 } }];

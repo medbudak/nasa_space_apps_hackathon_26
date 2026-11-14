@@ -44,7 +44,9 @@ export function newState(design = {}, d = data) {
 
 // Crises on a fixed schedule (events.js). A test that jumps the clock forward counts them as
 // already lived through, as they would be in a real run.
-const SCHEDULED = ['stormWarning', 'storm', 'dustDevil', 'conjunction'];
+const SCHEDULED = [
+  'stormWarning', 'storm', 'speWarning', 'spe', 'dustDevil', 'conjunction', 'quakeWarning', 'quake', 'radiator',
+];
 
 /** Jump the clock to a sol and time of sol, marking the scheduled crises before it as done. */
 export function jumpTo(s, sol, solFraction = s.time.solFraction) {

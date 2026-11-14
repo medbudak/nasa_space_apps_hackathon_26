@@ -7,7 +7,8 @@
       "antennaLostPoints": { "value": -50, "unit": "points", "simplified": true, "note": "last-sol antenna not re-aligned (lostSystems)", "src": "PLACEHOLDER", "verified": false },
       "launchPoints": { "value": 100, "unit": "points", "simplified": true, "note": "the MAV lifts off: safe return (survival)", "src": "PLACEHOLDER", "verified": false },
       "missedLaunchPoints": { "value": -100, "unit": "points", "simplified": true, "note": "launch window closed with the MAV too cold (lostSystems)", "src": "PLACEHOLDER", "verified": false },
-      "greenhouseLostPoints": { "value": -120, "unit": "points", "simplified": true, "note": "plants froze (lostSystems); design doc example 'greenhouse froze -> -120'", "src": "PLACEHOLDER", "verified": false }
+      "greenhouseLostPoints": { "value": -120, "unit": "points", "simplified": true, "note": "plants froze (lostSystems); design doc example 'greenhouse froze -> -120'", "src": "PLACEHOLDER", "verified": false },
+      "quakeDamagePoints": { "value": -60, "unit": "points", "simplified": true, "note": "equipment broken in a quake (lostSystems)", "src": "PLACEHOLDER", "verified": false }
     },
     "sanity": {
       "start": { "value": 100, "unit": "%", "simplified": true, "note": "full at landing", "src": "PLACEHOLDER", "verified": false },
@@ -18,7 +19,9 @@
       "familyMessageGain": { "value": 15, "unit": "%", "simplified": true, "note": "a family message from Earth", "src": "PLACEHOLDER", "verified": false },
       "falseAlarmBelow": { "value": 40, "unit": "%", "simplified": true, "note": "false alarms start below this", "src": "PLACEHOLDER", "verified": false },
       "falseAlarmPerHour": { "value": 0.15, "unit": "1/h", "simplified": true, "note": "chance of a false alarm per game hour below the line", "src": "PLACEHOLDER", "verified": false },
-      "falseAlarmHours": { "value": 0.5, "unit": "h", "simplified": true, "note": "how long a false alarm stays on screen", "src": "PLACEHOLDER", "verified": false }
+      "falseAlarmHours": { "value": 0.5, "unit": "h", "simplified": true, "note": "how long a false alarm stays on screen", "src": "PLACEHOLDER", "verified": false },
+      "alarmSeenThroughGain": { "value": 3, "unit": "%", "simplified": true, "note": "the player calls a false alarm false (checked against the instruments)", "src": "PLACEHOLDER", "verified": false },
+      "alarmBelievedLoss": { "value": 5, "unit": "%", "simplified": true, "note": "an emergency procedure run for a false alarm", "src": "PLACEHOLDER", "verified": false }
     },
     "greenhouse": {
       "frostC": { "value": 0, "unit": "C", "simplified": true, "note": "plants freeze below 0 C", "src": "PLACEHOLDER", "verified": false },
@@ -37,6 +40,33 @@
       "dustDevil": {
         "sol": { "value": 8, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
         "atSolFraction": { "value": 0.55, "unit": "sol", "simplified": true, "note": "game schedule (dust devils form in the afternoon)", "src": "PLACEHOLDER", "verified": false }
+      },
+      "spe": {
+        "sol": { "value": 6, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "atSolFraction": { "value": 0.45, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "durationHours": { "value": 6, "unit": "h", "simplified": true, "note": "design doc: dose rises for hours", "src": "PLACEHOLDER", "verified": false },
+        "extraMSvPerHour": { "value": 0.05, "unit": "mSv/h", "simplified": true, "note": "extra surface dose rate during the event; check Curiosity RAD SPE measurements (e.g. September 2017)", "src": "PLACEHOLDER", "verified": false },
+        "shelterFactor": { "value": 0.5, "unit": "", "simplified": true, "note": "share of the extra dose left behind the water tanks", "src": "PLACEHOLDER", "verified": false },
+        "warnHours": { "value": 2, "unit": "h", "simplified": true, "note": "RAD warning lead time", "src": "PLACEHOLDER", "verified": false },
+        "unnoticedHours": { "value": 2, "unit": "h", "simplified": true, "note": "without RAD, hours of dose taken before the crew notices", "src": "PLACEHOLDER", "verified": false }
+      },
+      "quake": {
+        "sol": { "value": 11, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "atSolFraction": { "value": 0.3, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "shelfHeightM": { "value": 1.8, "unit": "m", "simplified": true, "note": "height the tool falls from", "src": "PLACEHOLDER", "verified": false },
+        "rounds": { "value": 3, "unit": "", "simplified": true, "note": "K3 QTE sample", "src": "PLACEHOLDER", "verified": false },
+        "needed": { "value": 2, "unit": "", "simplified": true, "note": "K3 QTE sample", "src": "PLACEHOLDER", "verified": false },
+        "catchWindow": { "value": 0.15, "unit": "", "simplified": true, "note": "K3 QTE sample", "src": "PLACEHOLDER", "verified": false },
+        "minDelaySeconds": { "value": 0.8, "unit": "s", "simplified": true, "note": "pause before a drop (rolled)", "src": "PLACEHOLDER", "verified": false },
+        "maxDelaySeconds": { "value": 2, "unit": "s", "simplified": true, "note": "pause before a drop (rolled)", "src": "PLACEHOLDER", "verified": false },
+        "shakeSeconds": { "value": 1.5, "unit": "s", "simplified": true, "note": "screen shake length for K4", "src": "PLACEHOLDER", "verified": false },
+        "warnHours": { "value": 0.1, "unit": "h", "simplified": true, "note": "SEIS warning; about 30 real seconds inside (design doc '30 s')", "src": "PLACEHOLDER", "verified": false },
+        "secureHours": { "value": 0.5, "unit": "h", "simplified": true, "note": "time to strap the shelves down", "src": "PLACEHOLDER", "verified": false }
+      },
+      "radiator": {
+        "sol": { "value": 12, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
+        "atSolFraction": { "value": 0.6, "unit": "sol", "simplified": true, "note": "game schedule (afternoon, the warmest time)", "src": "PLACEHOLDER", "verified": false },
+        "cleanEvaHours": { "value": 2, "unit": "h", "simplified": true, "note": "EVA to clean the radiator", "src": "PLACEHOLDER", "verified": false }
       },
       "conjunction": {
         "sol": { "value": 10, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },

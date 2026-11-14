@@ -90,6 +90,30 @@ function setSanity(state, value) {
 }
 
 /**
+ * The player answered an alarm on K3's alarm band (hud.js onAlarmResolve):
+ *   { id, stat, fake, answer: 'fake' | 'real', verified, correct }
+ * Seeing through a false alarm steadies the astronaut (sanity.alarmSeenThroughGain); running an
+ * emergency procedure for a false alarm costs nerves (sanity.alarmBelievedLoss). Real alarms are
+ * only logged here. Every answer goes in the decision log, with whether the reading was checked.
+ */
+export function resolveAlarm(state, ctx, result) {
+  const { data } = ctx;
+  if (!result) return;
+  if (enabled(data) && typeof state.life.sanity === 'number' && result.fake) {
+    const delta = result.correct
+      ? val(data.sanity.alarmSeenThroughGain, 'sanity.alarmSeenThroughGain')
+      : -val(data.sanity.alarmBelievedLoss, 'sanity.alarmBelievedLoss');
+    setSanity(state, state.life.sanity + delta);
+  }
+  state.decisionLog.push({
+    sol: state.time.sol,
+    eventId: result.fake ? 'falseAlarm' : 'alarm',
+    choice: result.answer ?? null,
+    effects: [{ type: 'estimate', correct: Boolean(result.correct), verified: Boolean(result.verified) }],
+  });
+}
+
+/**
  * A packet reached Earth (K3's downlink:sent). A family message coming back lifts sanity.
  * surface.js forwards downlink:sent here.
  */

@@ -279,6 +279,19 @@ function updateHabitatTemp(state, dtHours, { data, eng }) {
 // The source value is per Earth day (24 h).
 function updateRadiation(state, dtHours, data) {
   state.life.radiationMSv += (val(data.radiation.surfaceMSvPerDay, 'radiation.surfaceMSvPerDay') * dtHours) / 24;
+  state.life.radiationMSv += speDoseRate(state, data) * dtHours;
+}
+
+/**
+ * Extra dose rate in mSv per game hour from a solar particle event going on (events.js 'spe').
+ * In the shelter behind the water tanks it is cut by events.spe.shelterFactor; outside on an EVA
+ * there is no shelter.
+ */
+export function speDoseRate(state, data) {
+  if (!state.events?.active?.spe) return 0;
+  const rate = val(data.events.spe.extraMSvPerHour, 'events.spe.extraMSvPerHour');
+  const sheltered = state.events.flags.speShelter && !state.life.eva.outside;
+  return sheltered ? rate * val(data.events.spe.shelterFactor, 'events.spe.shelterFactor') : rate;
 }
 
 // Habitat O2 use. The source value is per crew member per Earth day (24 h).

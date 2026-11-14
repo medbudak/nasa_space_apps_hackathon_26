@@ -32,15 +32,22 @@ function setup(design = {}) {
 }
 
 /**
- * Run until game time `untilT`. Cards: answered with `choose(card)` (an option id, or null to stop
- * at the first card). Small steps in game hours, so the test does not depend on the real-time rate.
+ * Run until game time `untilT`, the way surface.js does: time stands still while a card or a
+ * mini-game is open. Cards are answered with `choose(card)` (an option id, or null to stop at
+ * the first card); mini-games with `minigame`. Small steps in game hours, so the test does not
+ * depend on the real-time rate.
  */
-function runTo(s, ctx, untilT, choose = () => null) {
+function runTo(s, ctx, untilT, choose = () => null, minigame = { success: true, score: 100 }) {
   for (let i = 0; i < 20000 && T(s) < untilT && !s.life.loss; i++) {
     if (s.events.pending) {
       const id = choose(s.events.pending);
       if (!id) return s.events.pending;
       resolveDecision(s, id, ctx);
+      continue;
+    }
+    if (s.events.minigame) {
+      const open = ctx.bus.emitted.findLast((e) => e.name === 'minigame:open');
+      open.payload.onDone(minigame);
       continue;
     }
     advanceHours(s, 0.25, ctx);
@@ -156,12 +163,158 @@ test('a crisis with no schedule in the data yet never fires and does not stop th
   for (const id of ['stormWarning', 'storm', 'dustDevil', 'conjunction']) assert.equal(ids.has(id), false, id);
 });
 
+// ---- solar particle event (RAD) -------------------------------------------------------------
+
+const spe = data.events.spe;
+const speStartT = spe.sol.value + spe.atSolFraction.value;
+const speLen = spe.durationHours.value / solHours;
+
+/** Extra dose from the SPE only: total dose minus the normal surface dose over the same time. */
+function speDose(s, ctx, untilT, choose) {
+  const before = s.life.radiationMSv;
+  const t0 = T(s);
+  runTo(s, ctx, untilT, choose);
+  const normal = (data.radiation.surfaceMSvPerDay.value * (T(s) - t0) * solHours) / 24;
+  return s.life.radiationMSv - before - normal;
+}
+
+test('SPE with RAD: a warning before it, and the shelter halves the extra dose', () => {
+  const { s, ctx } = setup({ instrumentIds: ['rad'] });
+  const card = runTo(s, ctx, speStartT, (p) => (p.eventId === 'speWarning' ? null : firstAvailable(p)));
+  assert.equal(card.eventId, 'speWarning');
+  assert.ok(T(s) < speStartT, 'the warning should come before the event');
+  resolveDecision(s, 'shelter', ctx);
+  const dose = speDose(s, ctx, speStartT + speLen + 0.02, firstAvailable);
+  const expected = spe.extraMSvPerHour.value * spe.durationHours.value * spe.shelterFactor.value;
+  assert.ok(Math.abs(dose - expected) < expected * 0.1, `dose ${dose}, expected about ${expected}`);
+  assert.ok(s.decisionLog.some((d) => d.eventId === 'spe' && d.choice === null), 'the event itself is logged');
+  assert.ok(s.decisionLog.some((d) => d.eventId === 'speEnd'));
+});
+
+test('SPE without RAD: the first hours of dose are taken before the crew even knows', () => {
+  const { s, ctx } = setup();
+  runTo(s, ctx, speStartT - 0.01, firstAvailable);
+  const before = s.life.radiationMSv;
+  const card = runTo(s, ctx, speStartT + speLen);
+  assert.equal(card.eventId, 'spe');
+  const unnoticed = spe.extraMSvPerHour.value * spe.unnoticedHours.value;
+  assert.ok(s.life.radiationMSv - before >= unnoticed - 1e-9, 'the unnoticed dose was not applied');
+  assert.equal(card.card.vars.takenMSv, Math.round(unnoticed * 100) / 100);
+});
+
+test('SPE: keeping on working takes the full extra dose', () => {
+  const sheltered = setup({ instrumentIds: ['rad'] });
+  const working = setup({ instrumentIds: ['rad'] });
+  const a = speDose(sheltered.s, sheltered.ctx, speStartT + speLen + 0.02, (p) => (p.eventId === 'speWarning' ? 'shelter' : firstAvailable(p)));
+  const b = speDose(working.s, working.ctx, speStartT + speLen + 0.02, (p) => (p.eventId === 'speWarning' ? 'keepWorking' : firstAvailable(p)));
+  assert.ok(b > a * 1.5, `working ${b} vs sheltered ${a}`);
+});
+
+// ---- quake (SEIS) -------------------------------------------------------------------------
+
+const quake = data.events.quake;
+const quakeT = quake.sol.value + quake.atSolFraction.value;
+
+test('quake without SEIS: no warning, the shake and the catch mini-game in Mars gravity', () => {
+  const { s, bus, ctx } = setup();
+  runTo(s, ctx, quakeT - 0.01, firstAvailable);
+  for (let i = 0; i < 400 && !s.events.minigame; i++) {
+    advanceHours(s, 0.05, ctx);
+    checkEvents(s, ctx);
+  }
+  assert.ok(s.events.minigame, 'no mini-game opened');
+  assert.ok(!s.decisionLog.some((d) => d.eventId === 'quakeWarning'));
+  assert.ok(bus.emitted.some((e) => e.name === 'quake' && e.payload.duration === quake.shakeSeconds.value), 'K4 got no shake');
+  const cfg = bus.emitted.findLast((e) => e.name === 'minigame:open').payload;
+  assert.equal(cfg.template, 'qte');
+  assert.equal(cfg.config.mode, 'catch');
+  const marsFall = Math.sqrt((2 * quake.shelfHeightM.value) / data.mars.gravity.value);
+  assert.ok(Math.abs(cfg.config.eventSeconds - marsFall) < 1e-9);
+  assert.ok(cfg.config.eventSeconds > cfg.config.compareSeconds, 'a fall on Mars is slower than on Earth');
+  assert.equal(cfg.config.delaysSeconds.length, quake.rounds.value);
+});
+
+test('a missed catch breaks equipment; without SEIS it is blamed on the instrument choice', () => {
+  const { s, ctx } = setup();
+  runTo(s, ctx, quakeT + 0.05, firstAvailable, { success: false, score: 0 });
+  const hit = s.score.entries.find((e) => e.reason === 'consequence.quakeDamage');
+  assert.equal(hit.category, 'lostSystems');
+  assert.equal(hit.cause, 'design.instrumentIds');
+  assert.equal(hit.points, data.rules.quakeDamagePoints.value);
+});
+
+test('a caught tool costs nothing', () => {
+  const { s, ctx } = setup();
+  runTo(s, ctx, quakeT + 0.05, firstAvailable, { success: true, score: 100 });
+  assert.ok(!s.score.entries.some((e) => e.reason === 'consequence.quakeDamage'));
+  assert.ok(s.decisionLog.some((d) => d.eventId === 'quake'));
+});
+
+test('quake with SEIS: strapping the shelves down in time means no mini-game and no damage', () => {
+  const { s, bus, ctx } = setup({ instrumentIds: ['seis'] });
+  const card = runTo(s, ctx, quakeT + 0.05, (p) => (p.eventId === 'quakeWarning' ? null : firstAvailable(p)));
+  assert.equal(card.eventId, 'quakeWarning');
+  resolveDecision(s, 'secure', ctx);
+  runTo(s, ctx, quakeT + 0.05, firstAvailable, { success: false, score: 0 });
+  assert.ok(!bus.emitted.some((e) => e.name === 'minigame:open'));
+  assert.ok(!s.score.entries.some((e) => e.reason === 'consequence.quakeDamage'));
+});
+
+test('quake with SEIS ignored: the mini-game comes, and a miss is blamed on that choice', () => {
+  const { s, ctx } = setup({ instrumentIds: ['seis'] });
+  runTo(s, ctx, quakeT + 0.05, (p) => (p.eventId === 'quakeWarning' ? 'ignore' : firstAvailable(p)), { success: false, score: 0 });
+  assert.equal(s.score.entries.find((e) => e.reason === 'consequence.quakeDamage').cause, 'decision.quakeWarning');
+});
+
+test('a crisis mini-game open at a reload counts as not done, so the run does not hang', async () => {
+  const { reopenPending } = await import('../src/systems/events.js');
+  const { s, ctx } = setup();
+  runTo(s, ctx, quakeT - 0.01, firstAvailable);
+  for (let i = 0; i < 400 && !s.events.minigame; i++) {
+    advanceHours(s, 0.05, ctx);
+    checkEvents(s, ctx);
+  }
+  const reloaded = JSON.parse(JSON.stringify(s)); // as after a save and a page reload
+  reopenPending(reloaded, { data, eng, bus: fakeBus() });
+  assert.equal(reloaded.events.minigame, null);
+  assert.ok(reloaded.score.entries.some((e) => e.reason === 'consequence.quakeDamage'));
+});
+
+// ---- radiator failure -----------------------------------------------------------------------
+
+const radiator = data.events.radiator;
+const radiatorT = radiator.sol.value + radiator.atSolFraction.value;
+
+test('radiator: cleaning it costs EVA O2 and time', () => {
+  const { s, ctx } = setup();
+  const card = runTo(s, ctx, radiatorT + 0.05, (p) => (p.eventId === 'radiator' ? null : firstAvailable(p)));
+  assert.equal(card.eventId, 'radiator');
+  const o2 = s.life.o2Kg;
+  const t0 = T(s);
+  resolveDecision(s, 'cleanRadiator', ctx);
+  const hours = radiator.cleanEvaHours.value;
+  assert.ok(Math.abs((T(s) - t0) * solHours - hours) < 0.01);
+  const evaO2 = data.life.evaO2KgPerHour.value * hours;
+  assert.ok(o2 - s.life.o2Kg >= evaO2 - 1e-6, 'the EVA O2 was not charged');
+});
+
+test('radiator: running with less heat keeps MOXIE and the experiments off to the end', () => {
+  const { s, ctx } = setup({ instrumentIds: ['moxie', 'meda'] });
+  runTo(s, ctx, radiatorT + 0.05, (p) => (p.eventId === 'radiator' ? 'reduceLoad' : firstAvailable(p)));
+  runTo(s, ctx, data.rules.totalSols.value + 0.9, firstAvailable);
+  assert.equal(isHeld(s, 'moxie'), true);
+  assert.equal(isHeld(s, 'experiments'), true);
+});
+
 test('over a run every scheduled crisis shows up in the decision log (report card timeline)', () => {
-  const { s, ctx } = setup({ instrumentIds: ['meda'] });
+  const { s, ctx } = setup({ instrumentIds: ['meda', 'rad', 'seis'] });
   runTo(s, ctx, data.rules.totalSols.value - 1, firstAvailable);
   assert.equal(s.life.loss, null, `died: ${s.life.loss?.reasonKey}`);
   const ids = new Set(s.decisionLog.map((d) => d.eventId));
-  for (const id of ['stormWarning', 'storm', 'stormEnd', 'dustDevil', 'conjunction', 'conjunctionEnd']) {
+  for (const id of [
+    'stormWarning', 'storm', 'stormEnd', 'speWarning', 'spe', 'speEnd', 'dustDevil',
+    'conjunction', 'conjunctionEnd', 'quakeWarning', 'quake', 'radiator',
+  ]) {
     assert.ok(ids.has(id), `${id} missing from the log`);
   }
   // Rough check that game time was really spent (and the loop did not stall).

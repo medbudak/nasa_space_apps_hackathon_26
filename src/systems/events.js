@@ -28,18 +28,47 @@
 // Text is never written here: the keys are in K5's content/story.json.
 // Numbers come from nasa_data.json (events.<eventId>, life, rules, ...).
 
-import { val, rowVal, designRows } from './simData.js';
+import { val, rowVal, designRows, recordScore } from './simData.js';
 import { spendTime, isNight } from './survival.js';
 import { holdLoad, instrumentWatts } from './power.js';
+import { createRng } from '../core/rng.js';
 
 /**
  * Create state.events. Call after createSurvivalState().
- *   active{}  crises still going on: { storm: { untilT }, conjunction: { untilT, perSol } }
- *   finale    see finale.js
+ *   active{}   crises still going on: { storm: { untilT }, conjunction: { untilT, perSol },
+ *              spe: { untilT } } (the SPE dose itself: survival.updateRadiation)
+ *   minigame   { eventId } while a crisis mini-game is open (the simulation waits)
+ *   finale     see finale.js
  */
 export function createEventState(state) {
-  state.events = { fired: {}, pending: null, flags: {}, active: {}, finale: null };
+  state.events = { fired: {}, pending: null, flags: {}, active: {}, minigame: null, finale: null };
   return state;
+}
+
+/** True while a crisis mini-game is open: the surface loop stands still. */
+export function minigameOpen(state) {
+  return Boolean(state.events?.minigame);
+}
+
+/**
+ * Open a K3 mini-game for a crisis (D-003 minigame:open). The simulation waits until onDone;
+ * the result goes to MINIGAME_RESULTS[eventId]. Without a bus (tests) nothing opens.
+ */
+function openMinigame(state, ctx, eventId, template, config) {
+  if (!ctx.bus) return false;
+  state.events.minigame = { eventId };
+  ctx.bus.emit('minigame:open', {
+    template,
+    config,
+    onDone: (result) => finishMinigame(state, ctx, eventId, result),
+  });
+  return true;
+}
+
+function finishMinigame(state, ctx, eventId, result) {
+  if (state.events.minigame?.eventId !== eventId) return;
+  state.events.minigame = null;
+  MINIGAME_RESULTS[eventId]?.(state, ctx, result ?? { success: false, score: 0 });
 }
 
 const nowT = (state) => state.time.sol + state.time.solFraction;
@@ -82,7 +111,13 @@ function endExpired(state, ctx) {
     delete active.conjunction;
     logEvent(state, 'conjunctionEnd');
   }
+  if (active.spe && T >= active.spe.untilT) {
+    delete active.spe;
+    state.events.flags.speShelter = false;
+    logEvent(state, 'speEnd');
+  }
 }
+
 
 /** True while no data can reach Earth (solar conjunction): relay passes send nothing. */
 export function commsBlackout(state) {
@@ -96,7 +131,7 @@ export function commsBlackout(state) {
  */
 export function checkEvents(state, ctx) {
   const ev = state.events;
-  if (ev.pending || state.life.loss) return null;
+  if (ev.pending || ev.minigame || state.life.loss) return null;
   endExpired(state, ctx);
 
   for (const event of ctx.events ?? EVENTS) {
@@ -122,6 +157,9 @@ export function checkEvents(state, ctx) {
  * but the UI and the choose() function are gone). Returns true if a card was reopened.
  */
 export function reopenPending(state, ctx) {
+  // A crisis mini-game open at the reload cannot be resumed: it counts as not done, so the run
+  // does not wait forever.
+  if (state.events?.minigame) finishMinigame(state, ctx, state.events.minigame.eventId, { success: false, score: 0 });
   const pending = state.events?.pending;
   if (!pending) return false;
   ctx.bus?.emit('decision:open', cardPayload(state, pending.eventId, pending.card, ctx));
@@ -244,9 +282,100 @@ function stormCard(state, ctx, { warning }) {
 }
 
 // ---------------------------------------------------------------------------
+// Solar particle event (SPE). For durationHours the surface dose rate rises by extraMSvPerHour
+// (survival.updateRadiation adds speDoseRate). The shelter behind the water tanks cuts it by
+// shelterFactor. With RAD the card comes warnHours before; without it the player only notices
+// after unnoticedHours of dose already taken (design doc: "dose hidden, shelter too late").
+
+function speStart(data) {
+  const cfg = data.events.spe;
+  return val(cfg.sol, 'events.spe.sol') + val(cfg.atSolFraction, 'events.spe.atSolFraction');
+}
+
+function speCard(state, ctx, { warning }) {
+  const { data } = ctx;
+  const cfg = data.events.spe;
+  const rate = val(cfg.extraMSvPerHour, 'events.spe.extraMSvPerHour');
+  const unnoticed = warning ? 0 : val(cfg.unnoticedHours, 'events.spe.unnoticedHours');
+  const hoursLeft = val(cfg.durationHours, 'events.spe.durationHours') - unnoticed;
+  const factor = val(cfg.shelterFactor, 'events.spe.shelterFactor');
+  return {
+    titleKey: warning ? 'event.speWarning.title' : 'event.spe.title',
+    bodyKey: warning ? 'event.speWarning.body' : 'event.spe.body',
+    vars: { hours: Math.round(hoursLeft), takenMSv: round2(rate * unnoticed) },
+    options: [
+      {
+        id: 'shelter',
+        labelKey: 'event.spe.option.shelter',
+        effects: [
+          { type: 'flag', key: 'speShelter', value: true },
+          { type: 'estimate', radiationMSv: round2(rate * hoursLeft * factor) },
+        ],
+      },
+      {
+        id: 'keepWorking',
+        labelKey: 'event.spe.option.keepWorking',
+        effects: [{ type: 'estimate', radiationMSv: round2(rate * hoursLeft) }],
+      },
+    ],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Quake (marsquake or a nearby impact; InSight's largest was about M4.7). Shelves shake and a
+// tool falls: K3's QTE "catch" mini-game, timed with the real fall in Mars gravity
+// (engineering.fallTime) next to the same fall on Earth. With SEIS a warning comes first and
+// the shelves can be strapped down. A missed catch damages equipment (a lost system).
+
+function quakeConfig(state, ctx) {
+  const { data, eng } = ctx;
+  const q = data.events.quake;
+  const height = val(q.shelfHeightM, 'events.quake.shelfHeightM');
+  const rounds = val(q.rounds, 'events.quake.rounds');
+  const minDelay = val(q.minDelaySeconds, 'events.quake.minDelaySeconds');
+  const maxDelay = val(q.maxDelaySeconds, 'events.quake.maxDelaySeconds');
+  const rng = createRng((state.seed ^ 0x5e15) >>> 0); // the same seed gives the same quake
+  return {
+    mode: 'catch',
+    titleKey: 'event.quake.qte.title',
+    introKey: 'event.quake.qte.intro',
+    eventSeconds: eng.fallTime(height, val(data.mars.gravity, 'mars.gravity')),
+    compareSeconds: eng.fallTime(height, val(data.constants.g0, 'constants.g0')),
+    catchWindow: val(q.catchWindow, 'events.quake.catchWindow'),
+    rounds,
+    needed: val(q.needed, 'events.quake.needed'),
+    delaysSeconds: Array.from({ length: rounds }, () => rng.between(minDelay, maxDelay)),
+  };
+}
+
+function quakeResult(state, ctx, result) {
+  if (result.success) {
+    logEvent(state, 'quake', [{ type: 'estimate', caught: true }]);
+    return;
+  }
+  // Without SEIS the shake came unannounced; with it, the warning was ignored.
+  const cause = hasInstrument(state, 'seis') ? 'decision.quakeWarning' : 'design.instrumentIds';
+  recordScore(state, {
+    category: 'lostSystems',
+    pointsEntry: ctx.data.rules.quakeDamagePoints,
+    path: 'rules.quakeDamagePoints',
+    reason: 'consequence.quakeDamage',
+    cause,
+  });
+  logEvent(state, 'quake', [{ type: 'estimate', caught: false, cause }]);
+}
+
+/** What to do when a crisis mini-game reports back (K3's onDone result). */
+const MINIGAME_RESULTS = { quake: quakeResult };
+
+function quakeStart(data) {
+  const q = data.events.quake;
+  return val(q.sol, 'events.quake.sol') + val(q.atSolFraction, 'events.quake.atSolFraction');
+}
+
+// ---------------------------------------------------------------------------
 // Event catalogue, in priority order: when two events trigger in the same step,
 // the earlier one opens its card first (life-threatening ones on top).
-// Still to come: quake (SEIS), solar particle event (RAD), radiator failure.
 
 export const EVENTS = [
   {
@@ -446,6 +575,121 @@ export const EVENTS = [
       };
       state.dataBudget.perSol = 0;
       logEvent(state, 'conjunction', [{ type: 'estimate', dataMbit: 0 }]);
+    },
+  },
+
+  {
+    // RAD sees the solar particle event coming.
+    id: 'speWarning',
+    trigger: (state, ctx) => {
+      if (!hasInstrument(state, 'rad') || !ctx.data.events?.spe) return false;
+      const start = speStart(ctx.data);
+      const warn = val(ctx.data.events.spe.warnHours, 'events.spe.warnHours') / val(ctx.data.mars.solHours, 'mars.solHours');
+      return nowT(state) >= start - warn && nowT(state) < start;
+    },
+    decision: (state, ctx) => speCard(state, ctx, { warning: true }),
+  },
+
+  {
+    id: 'spe',
+    trigger: (state, ctx) => due(state, ctx.data.events?.spe, 'events.spe'),
+    effect: (state, ctx) => {
+      const { data } = ctx;
+      const cfg = data.events.spe;
+      const solHours = val(data.mars.solHours, 'mars.solHours');
+      const warned = Boolean(state.events.fired.speWarning);
+      // Without RAD the dose of the first hours is already taken when the crew notices.
+      const unnoticed = warned ? 0 : val(cfg.unnoticedHours, 'events.spe.unnoticedHours');
+      state.life.radiationMSv += val(cfg.extraMSvPerHour, 'events.spe.extraMSvPerHour') * unnoticed;
+      const hoursLeft = val(cfg.durationHours, 'events.spe.durationHours') - unnoticed;
+      state.events.active.spe = { untilT: nowT(state) + hoursLeft / solHours };
+    },
+    decision: (state, ctx) => {
+      if (state.events.fired.speWarning) {
+        logEvent(state, 'spe', [{ type: 'estimate', sheltered: Boolean(state.events.flags.speShelter) }]);
+        return null;
+      }
+      return speCard(state, ctx, { warning: false });
+    },
+  },
+
+  {
+    // SEIS feels the first tremor: a moment to strap the shelves down.
+    id: 'quakeWarning',
+    trigger: (state, ctx) => {
+      if (!hasInstrument(state, 'seis') || !ctx.data.events?.quake) return false;
+      const start = quakeStart(ctx.data);
+      const warn = val(ctx.data.events.quake.warnHours, 'events.quake.warnHours') / val(ctx.data.mars.solHours, 'mars.solHours');
+      return nowT(state) >= start - warn && nowT(state) < start;
+    },
+    decision: (state, ctx) => {
+      const hours = val(ctx.data.events.quake.secureHours, 'events.quake.secureHours');
+      return {
+        titleKey: 'event.quakeWarning.title',
+        bodyKey: 'event.quakeWarning.body',
+        options: [
+          {
+            id: 'secure',
+            labelKey: 'event.quakeWarning.option.secure',
+            effects: [
+              { type: 'wait', hours, sols: hours / val(ctx.data.mars.solHours, 'mars.solHours') },
+              { type: 'flag', key: 'quakeSecured', value: true },
+            ],
+          },
+          { id: 'ignore', labelKey: 'event.quakeWarning.option.ignore', effects: [] },
+        ],
+      };
+    },
+  },
+
+  {
+    id: 'quake',
+    trigger: (state, ctx) => due(state, ctx.data.events?.quake, 'events.quake'),
+    effect: (state, ctx) => {
+      ctx.bus?.emit('quake', { duration: val(ctx.data.events.quake.shakeSeconds, 'events.quake.shakeSeconds') }); // K4
+    },
+    decision: (state, ctx) => {
+      if (state.events.flags.quakeSecured) {
+        logEvent(state, 'quake', [{ type: 'estimate', secured: true }]);
+      } else if (!openMinigame(state, ctx, 'quake', 'qte', quakeConfig(state, ctx))) {
+        logEvent(state, 'quake', [{ type: 'estimate', played: false }]);
+      }
+      return null;
+    },
+  },
+
+  {
+    // Heat rejection failure (design doc: Mars has no "hot weather"; the real problem is that
+    // thin air carries little heat away, so a clogged radiator overheats the electronics).
+    // Clean it on an EVA (O2 and time), or run with less heat: MOXIE and the experiments off
+    // for the rest of the mission.
+    id: 'radiator',
+    trigger: (state, ctx) => due(state, ctx.data.events?.radiator, 'events.radiator'),
+    decision: (state, ctx) => {
+      const { data } = ctx;
+      const hours = val(data.events.radiator.cleanEvaHours, 'events.radiator.cleanEvaHours');
+      const o2 = val(data.life.evaO2KgPerHour, 'life.evaO2KgPerHour') * hours;
+      const untilT = val(data.rules.totalSols, 'rules.totalSols') + 2; // past the departure
+      const hold = (load) => ({ type: 'hold', load, untilT, estimate: { savedW: instrumentWatts(state, data, load) } });
+      return {
+        titleKey: 'event.radiator.title',
+        bodyKey: 'event.radiator.body',
+        options: [
+          {
+            id: 'cleanRadiator',
+            labelKey: 'event.radiator.option.clean',
+            effects: [
+              { type: 'resource', stat: 'o2Kg', delta: -round2(o2) },
+              { type: 'wait', hours, sols: hours / val(data.mars.solHours, 'mars.solHours') },
+            ],
+          },
+          {
+            id: 'reduceLoad',
+            labelKey: 'event.radiator.option.reduceLoad',
+            effects: [hold('moxie'), hold('experiments')],
+          },
+        ],
+      };
     },
   },
 

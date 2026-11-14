@@ -26,13 +26,15 @@ import {
   createSurvivalState, step, startEva, endEva, setEvaPosition, walkSpeedMs, realSecondsToHours,
   gameSecondsPerRealSecond,
 } from '../systems/survival.js';
-import { createEventState, checkEvents, reopenPending, resolveDecision, commsBlackout } from '../systems/events.js';
+import {
+  createEventState, checkEvents, reopenPending, resolveDecision, commsBlackout, minigameOpen,
+} from '../systems/events.js';
 import { getPowerStatus, setOrder } from '../systems/power.js';
 import { finaleDue, startFinale, updateFinale, finalePaused, finaleDone } from '../systems/finale.js';
-import { onDownlinkSent } from '../systems/sanity.js';
+import { onDownlinkSent, resolveAlarm } from '../systems/sanity.js';
 import { val, withRequested } from '../systems/simData.js';
 import { createTelemetry } from '../ui/telemetry.js';
-import { runDuePasses } from '../ui/downlink.js';
+import { runDuePasses, connectDownlink } from '../ui/downlink.js';
 
 // Engine settings (not gameplay values): frame cap after a tab switch, view and door size.
 const MAX_FRAME_SEC = 0.25;
@@ -85,6 +87,10 @@ export default {
       devNote: DEV_DATA ? addDevNote(ui, t) : null,
     };
 
+    // Packets (photos, reports, experiment results, family messages) join the downlink queue
+    // through K3's connectDownlink; every packet is made during the surface run, so it is wired
+    // here, once, and removed on exit (main.js must not call it too: packets would queue twice).
+    scene.offQueue = bus?.on ? connectDownlink(bus, () => state) : null;
     // A packet that reached Earth: a family message lifts sanity (sanity.js).
     scene.onSent = (packet) => onDownlinkSent(state, ctx, packet);
     bus?.on?.('downlink:sent', scene.onSent);
@@ -105,6 +111,8 @@ export default {
       telemetry,
       downlink: { passes, lightDelaySec: null }, // light-delay table: requested from K1
       power: { getStatus: () => getPowerStatus(state, ctx), setOrder: (ids) => setOrder(state, ids) },
+      // The player's answer on K3's alarm band: sanity +/- for a false alarm (sanity.js).
+      onAlarmResolve: (result) => resolveAlarm(state, ctx, result),
     };
   },
 
@@ -112,6 +120,7 @@ export default {
     if (!scene) return;
     cancelAnimationFrame(scene.raf);
     scene.ctx.bus?.off?.('downlink:sent', scene.onSent);
+    scene.offQueue?.();
     window.removeEventListener('keydown', scene.onKeyDown);
     window.removeEventListener('keyup', scene.onKeyUp);
     scene = null;
@@ -127,8 +136,8 @@ function frame(now) {
   const dt = Math.min(Math.max((now - s.last) / 1000, 0), MAX_FRAME_SEC);
   s.last = now;
 
-  // Stand still while a decision card is open or the player is in a finale mini-game.
-  const paused = Boolean(state.events.pending) || finalePaused(state);
+  // Stand still while a decision card is open or the player is in a mini-game.
+  const paused = Boolean(state.events.pending) || finalePaused(state) || minigameOpen(state);
   if (!paused) {
     const fromT = state.time.sol + state.time.solFraction;
     walk(dt);
