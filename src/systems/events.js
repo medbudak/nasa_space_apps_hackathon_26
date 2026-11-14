@@ -27,12 +27,12 @@
 // Text is never written here: the keys are in K5's content/story.json.
 // Numbers come from nasa_data.json (events.<eventId>, life, rules, ...).
 
-import { val } from './simData.js';
+import { val, rowVal, designRows } from './simData.js';
 import { spendTime, isNight } from './survival.js';
 
 /** Create state.events. Call after createSurvivalState(). */
 export function createEventState(state) {
-  state.events = { fired: {}, pending: null, flags: {} };
+  state.events = { fired: {}, pending: null, flags: {}, finale: null }; // finale: see finale.js
   return state;
 }
 
@@ -223,6 +223,10 @@ export const EVENTS = [
 
   {
     // Design doc, operations card 2: "Engine froze overnight, morning departure window".
+    // The ascent vehicle's engine, before the departure (K1 set earliestSol to the last sol).
+    // A and B heat it, so the MAV can fire at dawn (flag mavHeated, read by finale.js).
+    // C waits: the MAV then fires only once the day warms it to ascent.mavMinOperatingC, before
+    // sunset; where the day never gets that warm (the landing site, design.siteId), the crew stays.
     id: 'engineFreeze',
     trigger: (state, ctx) => {
       const cfg = ctx.data.events.engineFreeze;
@@ -242,18 +246,29 @@ export const EVENTS = [
       // O2 for the wait: per crew member per Earth day, over the length of the wait in hours.
       const o2PerHour = (val(data.life.o2KgPerCrewPerDay, 'life.o2KgPerCrewPerDay') / 24) * val(data.life.crew, 'life.crew');
       const waitHours = waitSols * val(data.mars.solHours, 'mars.solHours');
+      const heatWh = val(cfg.batteryHeatKWh, 'events.engineFreeze.batteryHeatKWh') * 1000;
+      const { site } = designRows(state, data);
       return {
         titleKey: 'event.engineFreeze.title',
         bodyKey: 'event.engineFreeze.body',
+        // For the text: how cold it is, how warm the engine must be, and how warm the day gets here.
+        vars: {
+          outsideC: Math.round(state.env.outsideC),
+          neededC: val(data.ascent.mavMinOperatingC, 'ascent.mavMinOperatingC'),
+          dayMaxC: rowVal(site, 'dayMaxC'),
+        },
         options: [
           {
             // A: heat with the battery; the greenhouse heater is cut tonight.
             id: 'batteryHeat',
             labelKey: 'event.engineFreeze.option.batteryHeat',
+            disabled: state.power.batteryWh < heatWh,
+            disabledKey: 'event.engineFreeze.option.batteryHeat.disabled',
             effects: [
-              { type: 'resource', stat: 'batteryWh', delta: -val(cfg.batteryHeatKWh, 'events.engineFreeze.batteryHeatKWh') * 1000 },
+              { type: 'resource', stat: 'batteryWh', delta: -heatWh },
               { type: 'flag', key: 'greenhouseHeatingCut', value: true },
               { type: 'flag', key: 'engineFrozen', value: false },
+              { type: 'flag', key: 'mavHeated', value: true },
             ],
           },
           {
@@ -264,6 +279,7 @@ export const EVENTS = [
               { type: 'resource', stat: 'o2Kg', delta: -val(cfg.manualO2Kg, 'events.engineFreeze.manualO2Kg') },
               { type: 'resource', stat: 'radiationMSv', delta: val(cfg.manualRadiationMSv, 'events.engineFreeze.manualRadiationMSv') },
               { type: 'flag', key: 'engineFrozen', value: false },
+              { type: 'flag', key: 'mavHeated', value: true },
             ],
           },
           {

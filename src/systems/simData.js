@@ -58,6 +58,28 @@ export function withRequested(data, requested) {
   return out;
 }
 
+const warnedScore = new Set();
+
+/**
+ * Write a score entry into the state passed in, in the shape of K1's addScore() (D-003):
+ * { sol, category, points, reason, cause }. reason is a story.json key; cause is the choice
+ * behind it ('design.<field>' or 'decision.<eventId>'), so the report card can link them.
+ * The points come from nasa_data.json (D-009); a missing entry writes nothing (and warns once),
+ * so an unset game value never stops the game.
+ */
+export function recordScore(state, { category, pointsEntry, path, reason, cause = null, sol = state.time?.sol ?? 0 }) {
+  const points = pointsEntry?.value;
+  if (typeof points !== 'number') {
+    if (!warnedScore.has(path)) console.warn(`[K2] no points in nasa_data.json "${path}": "${reason}" not scored`);
+    warnedScore.add(path);
+    return null;
+  }
+  const entry = { sol, category, points, reason, cause };
+  state.score.entries.push(entry);
+  state.score.total += points;
+  return entry;
+}
+
 /** The data rows behind the Sol 0 choices in state.design (ids, D-003). */
 export function designRows(state, data) {
   const d = state.design;
@@ -69,6 +91,7 @@ export function designRows(state, data) {
     // heatingPower uses the thin layer's conductance times the chosen layer's factor (as evaluateDesign does)
     thinInsulation: rowOf(data, 'insulation', 'thin'),
     comms: d.commsId ? rowOf(data, 'comms', d.commsId) : null,
+    spareKits: d.spareKitsId ? rowOf(data, 'spareKits', d.spareKitsId) : null,
     instruments: (d.instrumentIds ?? []).map((id) => rowOf(data, 'instruments', id)),
   };
 }

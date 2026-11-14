@@ -18,7 +18,7 @@
 //
 // No gameplay numbers are written in this file: they all come from nasa_data.json.
 
-import { val, rowVal, designRows } from './simData.js';
+import { val, rowVal, designRows, recordScore } from './simData.js';
 import { initPower, computeLoads, sumOn, updateShedding, isOn } from './power.js';
 
 /**
@@ -109,7 +109,19 @@ export function step(state, realDt, ctx) {
  */
 export function advanceHours(state, dtHours, ctx) {
   if (state.life.loss || !(dtHours > 0)) return state;
+  const solBefore = state.time.sol;
   advanceTime(state, dtHours / val(ctx.data.mars.solHours, 'mars.solHours'));
+  // Every sol lived through scores survival points (scored as it happens, so the report card
+  // can show when; amount from nasa_data.json, D-009).
+  for (let sol = solBefore; sol < state.time.sol; sol++) {
+    recordScore(state, {
+      category: 'survival',
+      pointsEntry: ctx.data.rules.survivalPointsPerSol,
+      path: 'rules.survivalPointsPerSol',
+      reason: 'consequence.solSurvived',
+      sol,
+    });
+  }
   updateEnvironment(state, ctx);
   updatePower(state, dtHours, ctx);
   updateHabitatTemp(state, dtHours, ctx);

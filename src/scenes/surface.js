@@ -28,6 +28,7 @@ import {
 } from '../systems/survival.js';
 import { createEventState, checkEvents, reopenPending, resolveDecision } from '../systems/events.js';
 import { getPowerStatus, setOrder } from '../systems/power.js';
+import { finaleDue, startFinale, updateFinale, finalePaused, finaleDone } from '../systems/finale.js';
 import { val, withRequested } from '../systems/simData.js';
 import { createTelemetry } from '../ui/telemetry.js';
 import { runDuePasses } from '../ui/downlink.js';
@@ -120,7 +121,8 @@ function frame(now) {
   const dt = Math.min(Math.max((now - s.last) / 1000, 0), MAX_FRAME_SEC);
   s.last = now;
 
-  const paused = Boolean(state.events.pending);
+  // Stand still while a decision card is open or the player is in a finale mini-game.
+  const paused = Boolean(state.events.pending) || finalePaused(state);
   if (!paused) {
     const fromT = state.time.sol + state.time.solFraction;
     walk(dt);
@@ -129,7 +131,9 @@ function frame(now) {
     // Relay passes due in this step send the downlink queue (K3's M1 logic).
     if (s.passes.length) runDuePasses(state, s.passes, fromT, toT, ctx.bus);
     s.telemetry.sample(state);
+    if (finaleDue(state, ctx)) startFinale(state); // morning of the last sol: departure sequence
     checkEvents(state, ctx);
+    updateFinale(state, ctx);
     if (state.time.sol !== s.lastSol) {
       s.lastSol = state.time.sol;
       state.dataBudget.used = 0; // "used this sol" starts again with each new sol
@@ -140,15 +144,17 @@ function frame(now) {
   draw();
   if (s.debugEl) updateDebugPanel();
 
-  if (state.life.loss || state.time.sol > val(ctx.data.rules.totalSols, 'rules.totalSols')) {
+  // finale.js decides when the run ends (launch, or the window closing at sunset). Waiting a
+  // sol on the engine card can legitimately carry the run past rules.totalSols.
+  if (state.life.loss || finaleDone(state)) {
     finish();
     return;
   }
   s.raf = requestAnimationFrame(frame);
 }
 
-// The run is over: a loss (state.outcome = 'lost') or the last sol has passed.
-// The Sol 14 departure sequence that sets a winning outcome comes later (S21–24).
+// The run is over: a loss (state.outcome = 'lost') or the finale set the outcome
+// (hero / explorer / colonist, see finale.js).
 function finish() {
   const { goTo } = scene;
   save();
