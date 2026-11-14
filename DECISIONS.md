@@ -122,6 +122,14 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Why: The submission guide limits the demo to a 30-second video or 7 slides and requires English. A video shows the trade-offs moving, which slides can't.
 - Affects: K1, K2, K4, K5
 
+### D-008: Game time runs slower during an EVA
+- Status: Accepted
+- Date: 2026-11-14
+- Agreed by: team (reported by Sude, K2)
+- Decision: Inside the habitat, 1 sol stays about 2 minutes of real time (D-001). While the astronaut is outside, game time runs slower: 1 real second = 1 game minute (`time.evaGameSecondsPerRealSecond` = 60 in `nasa_data.json`, tuned there, flagged simplified). Every system (Sun, temperature, battery, O2) keeps running on the one game clock; only its rate against real time changes. Walking speed and suit O2 use stay real-world values in game time. Actions measured in game hours (experiments, waits on cards) cost the same inside or outside. The game and the project page say that time is compressed.
+- Why: At the inside rate a 900 m walk lasts about 1 real second, so the point of no return (M4) never comes into play. Rejected: making the map distances kilometres long (still about 1 s on screen, and it changes the map), and leaving it as it is (M4 and the "can I still make it back?" scene would not work).
+- Affects: K2 (`survival.js`, `surface.js`), K1 (`nasa_data.json`, session length, `?demo`), K3 (HUD can show the slower clock)
+
 ### D-009: Game values where no source exists
 - Status: Proposed
 - Date: 2026-11-14

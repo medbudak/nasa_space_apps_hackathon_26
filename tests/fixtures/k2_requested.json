@@ -1,0 +1,52 @@
+{
+  "_readme": "K2's request list for K1, and the overlay K2's tests put on top of the real src/data/nasa_data.json. 'add' holds entries nasa_data.json does not have yet; 'fill' holds row fields that are still null there. Every value here is a TEST value with src PLACEHOLDER, not a researched figure: do not copy the numbers into nasa_data.json. When K1 adds an entry for real, delete it here.",
+
+  "add": {
+    "time": {
+      "evaGameSecondsPerRealSecond": { "value": 60, "unit": "game s per real s", "simplified": true, "note": "D-008: while outside, 1 real second = 1 game minute (inside it is about 740)", "src": "game: DECISIONS.md D-008", "verified": true }
+    },
+    "thermal": {
+      "habitatCoolingHours": { "value": 6, "unit": "h", "simplified": true, "note": "time constant for the habitat to cool toward outside with heating off; game value", "src": "PLACEHOLDER", "verified": false },
+      "bodyColdBelowC": { "value": 5, "unit": "C", "simplified": true, "note": "habitat air temperature counted as dangerous cold; game value", "src": "PLACEHOLDER", "verified": false }
+    },
+    "rules": {
+      "coldLossHours": { "value": 2, "unit": "h", "note": "D-006: body temperature below the threshold for 2 game-hours", "src": "game: DECISIONS.md D-006", "verified": true },
+      "radiationLimitMSv": { "value": 600, "unit": "mSv", "note": "mission dose limit; NASA-STD-3001 career limit is a candidate source", "src": "PLACEHOLDER", "verified": false }
+    },
+    "eva": {
+      "suitO2Kg": { "value": 0.5, "unit": "kg", "note": "usable O2 in the suit at EVA start; find an EMU/xEMU figure", "src": "PLACEHOLDER", "verified": false },
+      "walkSpeedMs": { "value": 1, "unit": "m/s", "note": "suited walking speed; find an Apollo/analog EVA figure", "src": "PLACEHOLDER", "verified": false },
+      "jointFreezeBelowC": { "value": -60, "unit": "C", "simplified": true, "note": "outside temperature at which suit joints stiffen; game value", "src": "PLACEHOLDER", "verified": false },
+      "jointFreezeSpeedFactor": { "value": 0.4, "unit": "", "simplified": true, "note": "design doc v2 crisis card 'speed 40%'", "src": "PLACEHOLDER", "verified": false }
+    },
+    "events": {
+      "noReturn": {
+        "suitHeaterKWh": { "value": 0.5, "unit": "kWh", "simplified": true, "note": "habitat energy to recharge the suit after its heater ran; game value", "src": "PLACEHOLDER", "verified": false },
+        "shelterHours": { "value": 1, "unit": "h", "simplified": true, "note": "time to thaw joints with a wreck's RHU heat; game value", "src": "PLACEHOLDER", "verified": false }
+      },
+      "engineFreeze": {
+        "earliestSol": { "value": 2, "unit": "sol", "note": "first sol the card may appear; game value. The run lands at sunrise, the coldest moment in K1's surfaceTemp, so 1 would open the card at landing", "src": "PLACEHOLDER", "verified": false },
+        "triggerBelowC": { "value": -60, "unit": "C", "simplified": true, "note": "outside temperature that freezes the engine; game value", "src": "PLACEHOLDER", "verified": false },
+        "batteryHeatKWh": { "value": 20, "unit": "kWh", "simplified": true, "note": "energy to warm the engine from the battery; game value", "src": "PLACEHOLDER", "verified": false },
+        "manualO2Kg": { "value": 0.1, "unit": "kg", "note": "O2 for a short EVA; derive from life.evaO2KgPerHour x EVA hours", "src": "PLACEHOLDER", "verified": false },
+        "manualRadiationMSv": { "value": 0.05, "unit": "mSv", "simplified": true, "note": "extra dose for the EVA; game value", "src": "PLACEHOLDER", "verified": false },
+        "waitSols": { "value": 1, "unit": "sol", "note": "design doc v2 card: miss the window, wait 1 sol", "src": "game: design doc v2", "verified": true }
+      }
+    }
+  },
+
+  "fill": {
+    "life": {
+      "o2StartKg": { "value": 20, "unit": "kg", "src": "PLACEHOLDER", "verified": false }
+    },
+    "rows": {
+      "powerSources": {
+        "solar": { "panelAreaM2": { "value": 400, "unit": "m^2", "src": "PLACEHOLDER", "verified": false } },
+        "solarRtg": { "panelAreaM2": { "value": 400, "unit": "m^2", "src": "PLACEHOLDER", "verified": false } }
+      },
+      "insulation": {
+        "thin": { "conductanceWK": { "value": 100, "unit": "W/K", "src": "PLACEHOLDER", "verified": false } }
+      }
+    }
+  }
+}
