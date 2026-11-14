@@ -7,6 +7,7 @@ Running log of everything external the project uses. The submission form asks fo
 | Resource | URL | Used for |
 |---|---|---|
 | NASA Mars Fact Sheet (NSSDCA) | https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html | Mars gravity, solar irradiance, sol length, pressure, CO2 share, temperatures, Earth-Mars distance, synodic period (`src/data/nasa_data.json` → `mars`) |
+| nasa.gov | https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf | nasa_data.json: thermal |
 | ntrs.nasa.gov | https://ntrs.nasa.gov/api/citations/20170009505/downloads/20170009505.pdf | nasa_data.json: life |
 | nasa.gov | https://www.nasa.gov/wp-content/uploads/2017/02/eva-exp-0042_xeva_system_con_ops_rev_b_final_dtd_10192020_ref_doc.pdf | nasa_data.json: life |
 | ntrs.nasa.gov | https://ntrs.nasa.gov/citations/20150008865 | nasa_data.json: thermal |
@@ -87,3 +88,11 @@ Real-world values that were changed or rounded for gameplay.
 | Value | Real figure and source | Value in game | Why |
 |---|---|---|---|
 | Length of a sol | 24.6597 h (NASA Mars Fact Sheet) | about 2 minutes of play | A full 14-sol run fits in half an hour |
+| `life.o2StartKg` | K1 decision: 14 sols of BVAD O2 (0.895 kg/day × 14 × 24.6597/24 = 12.9 kg) + 20% reserve | 15.4 kg | Not published for this case; set by K1 for gameplay |
+| `powerSources[solar].panelAreaM2` | K1 decision: ~17% above the ~214 m² a 12 kWe habitat needs at the equator on a clear sol | 250 m² | Not published for this case; set by K1 for gameplay |
+| `powerSources[solarRtg].panelAreaM2` | K1 decision: ~17% above the ~214 m² a 12 kWe habitat needs at the equator on a clear sol | 250 m² | Not published for this case; set by K1 for gameplay |
+| `batteries[b150].capacityKWh` | K1 decision: options sized around the ~147 kWh night need of the DRA 5.0 habitat | 150 kWh | Not published for this case; set by K1 for gameplay |
+| `batteries[b200].capacityKWh` | K1 decision: options sized around the ~147 kWh night need of the DRA 5.0 habitat | 200 kWh | Not published for this case; set by K1 for gameplay |
+| `batteries[b300].capacityKWh` | K1 decision: options sized around the ~147 kWh night need of the DRA 5.0 habitat | 300 kWh | Not published for this case; set by K1 for gameplay |
+| `insulation[thin].coolingTimeH` | K1 decision: heating is part of the 12 kWe habitat load; with power cut the habitat cools toward outside air with this time constant (simplified) | 10 h | Not published for this case; set by K1 for gameplay |
+| `insulation[thick].coolingTimeH` | K1 decision: thick insulation doubles the cooling time (design doc v2: thick halves heat loss) (simplified) | 20 h | Not published for this case; set by K1 for gameplay |
