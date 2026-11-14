@@ -1,0 +1,28 @@
+{
+  "_note": "K2 test fixture. Every value is PLACEHOLDER until K1 adds the real row to src/data/nasa_data.json with a source. The 'todo' field says where K1 should verify it.",
+  "time": {
+    "solRealSeconds": { "value": 120, "unit": "s", "src": "PLACEHOLDER", "verified": false, "todo": "D-001 game design: 1 sol ≈ 2 min real time (simplified)" },
+    "solHours": { "value": 24.66, "unit": "h", "src": "PLACEHOLDER", "verified": false, "todo": "NASA Mars Fact Sheet, length of day" },
+    "startSolFraction": { "value": 0.25, "unit": "sol", "src": "PLACEHOLDER", "verified": false, "todo": "game design: start at local 06:00" }
+  },
+  "sites": {
+    "meridiani": {
+      "nightMinC": { "value": -80, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "equatorial night minimum (design doc says ~-80 °C); verify against Opportunity/Curiosity REMS data" },
+      "dayMaxC": { "value": 20, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "daytime maximum ~+20 °C; verify" }
+    }
+  },
+  "solar": {
+    "irradianceWm2": { "value": 586, "unit": "W/m²", "src": "PLACEHOLDER", "verified": false, "todo": "NASA Mars Fact Sheet, solar irradiance" }
+  },
+  "power": {
+    "lifeSupportW": { "value": 1000, "unit": "W", "src": "PLACEHOLDER", "verified": false, "todo": "habitat life-support base load; needs a source or a 'simplified' flag" }
+  },
+  "thermal": {
+    "habitatTargetC": { "value": 20, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "habitat set point; game design" }
+  },
+  "life": {
+    "crew": { "value": 1, "unit": "people", "src": "PLACEHOLDER", "verified": false, "todo": "game design: one astronaut" },
+    "o2KgPerCrewPerSol": { "value": 0.84, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "NASA Baseline Values and Assumptions Document (BVAD), O2 per crew member per day" },
+    "o2StartKg": { "value": 10, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "game design: starting O2 reserve" }
+  }
+}
