@@ -40,15 +40,19 @@ function k1State() {
       landingSiteId: null,
       power: { solarArea_m2: 0, rtg: false, battery_kWh: 0 },
       insulation: null,
+      instruments: [],
     },
     resources: { oxygen_kg: 0, energy_kWh: 0, radiation_mSv: 0 },
     decisionLog: [],
   };
 }
 
-export function newState({ landingSiteId = 'meridiani', solarArea_m2 = 100, battery_kWh = 40, insulation = 'thin' } = {}) {
+export function newState({
+  landingSiteId = 'meridiani', solarArea_m2 = 100, battery_kWh = 40, insulation = 'thin', instruments = [],
+} = {}) {
   const s = k1State();
   s.design.landingSiteId = landingSiteId;
+  s.design.instruments = instruments;
   s.design.power.solarArea_m2 = solarArea_m2;
   s.design.power.battery_kWh = battery_kWh;
   s.design.insulation = insulation;

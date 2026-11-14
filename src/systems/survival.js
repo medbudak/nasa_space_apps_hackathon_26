@@ -19,18 +19,10 @@
 //
 // No gameplay numbers are written in this file.
 
-/** The number in a nasa_data.json scalar entry ({ value, src, ... }). */
-export function val(entry) {
-  if (entry && typeof entry === 'object' && 'value' in entry) return entry.value;
-  throw new Error(`survival: missing data entry (${JSON.stringify(entry)})`);
-}
+import { val, landingSite } from './simData.js';
+import { initPower, computeLoads, sumOn, updateShedding } from './power.js';
 
-/** One row of a nasa_data.json table by id, e.g. landingSite(data, 'meridiani'). */
-export function landingSite(data, id) {
-  const site = data.landingSites.find((r) => r.id === id);
-  if (!site) throw new Error(`survival: no landing site "${id}" in nasa_data.json`);
-  return site;
-}
+export { val, landingSite };
 
 /**
  * Prepare the surface run after Sol 0: start the clock, fill the battery and O2,
@@ -49,7 +41,9 @@ export function initSurvival(state, data) {
     outside_C: 0,
     inside_C: val(data.habitat.target_C),
     events: null, // filled by events.js
+    power: null, // filled by power.js
   };
+  initPower(state);
   return state;
 }
 
@@ -93,7 +87,8 @@ function updateEnvironment(state, { data, eng }) {
   });
 }
 
-function updatePower(state, dtHours, { data, eng }) {
+function updatePower(state, dtHours, ctx) {
+  const { data, eng } = ctx;
   const sim = state.sim;
   const res = state.resources;
   const power = state.design.power;
@@ -106,22 +101,15 @@ function updatePower(state, dtHours, { data, eng }) {
     dustLoss: sim.dustLoss,
   });
 
-  const heater_W = eng.heatingPower_W({
-    inside_C: sim.inside_C,
-    outside_C: sim.outside_C,
-    insulation: state.design.insulation,
-  });
-  sim.load_W = val(data.power.lifeSupport_W) + heater_W;
+  // Only loads that are switched on draw power (power.js decides which).
+  sim.load_W = sumOn(computeLoads(state, ctx));
 
   // Battery bookkeeping: surplus charges, shortfall drains, clamp to [0, capacity].
   const next = res.energy_kWh + ((sim.generation_W - sim.load_W) * dtHours) / 1000;
-  if (next < 0) {
-    res.energy_kWh = 0;
-    sim.deficit_W = sim.load_W - sim.generation_W; // power.js (M3) sheds loads from this
-  } else {
-    res.energy_kWh = Math.min(next, power.battery_kWh);
-    sim.deficit_W = 0;
-  }
+  res.energy_kWh = Math.min(Math.max(next, 0), power.battery_kWh);
+
+  // Shed or restore loads for the next step; sets sim.load_W and sim.deficit_W.
+  updateShedding(state, ctx);
 }
 
 function updateLife(state, dSol, data) {

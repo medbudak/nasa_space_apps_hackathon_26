@@ -19,7 +19,8 @@
 // Text is never written here: titleKey / bodyKey / labelKey are keys in K5's story.json.
 // Numbers come from ctx.data.events.<eventId>.
 
-import { val, spendTime } from './survival.js';
+import { val } from './simData.js';
+import { spendTime } from './survival.js';
 
 /** Create the event-engine state under state.sim. Call after initSurvival(). */
 export function initEvents(state) {

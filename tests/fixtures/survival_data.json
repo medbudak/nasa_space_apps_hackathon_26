@@ -8,8 +8,18 @@
 
   "power": {
     "panelEfficiency": { "value": 0.3, "unit": "", "src": "PLACEHOLDER", "verified": false },
-    "lifeSupport_W": { "value": 1000, "unit": "W", "requested": "K2", "note": "habitat life-support base load; needs a source or simplified: true", "src": "PLACEHOLDER", "verified": false }
+    "lifeSupport_W": { "value": 1000, "unit": "W", "requested": "K2", "note": "habitat life-support base load; needs a source or simplified: true", "src": "PLACEHOLDER", "verified": false },
+    "comms_W": { "value": 100, "unit": "W", "requested": "K2", "note": "habitat radio (UHF relay) draw; needs a source or simplified: true", "src": "PLACEHOLDER", "verified": false }
   },
+
+  "instruments": [
+    { "id": "weather", "realCounterpart": "MEDA", "mass_kg": 5.5, "power_W": 17, "data_Mbit": 1, "dataPer": "sol", "unlocks": "stormWarning", "src": "PLACEHOLDER", "verified": false },
+    { "id": "seismometer", "realCounterpart": "SEIS (InSight)", "mass_kg": 30, "power_W": 8, "data_Mbit": 5, "dataPer": "sol", "unlocks": "quakeWarning", "src": "PLACEHOLDER", "verified": false },
+    { "id": "radiation", "realCounterpart": "RAD (Curiosity)", "mass_kg": 1.6, "power_W": 4, "data_Mbit": 1, "dataPer": "sol", "unlocks": "speWarning", "src": "PLACEHOLDER", "verified": false },
+    { "id": "moxie", "realCounterpart": "MOXIE", "mass_kg": 17, "power_W": 300, "data_Mbit": 0, "dataPer": "none", "unlocks": "oxygenProduction", "src": "PLACEHOLDER", "verified": false },
+    { "id": "plantChamber", "realCounterpart": "Veggie-like chamber", "mass_kg": 8, "power_W": 100, "data_Mbit": 2, "dataPer": "sol", "unlocks": "seedExperiments", "simplified": true, "note": "game value, no flight equivalent", "src": "PLACEHOLDER", "verified": false },
+    { "id": "cameraHires", "realCounterpart": "Mastcam-Z", "mass_kg": 4, "power_W": 17, "data_Mbit": 20, "dataPer": "photo", "unlocks": "fullPhotoScore", "src": "PLACEHOLDER", "verified": false }
+  ],
 
   "landingSites": [
     { "id": "meridiani", "name": "Meridiani Planum", "nightMin_C": -80, "dayMax_C": 20, "requested": "K2", "note": "design doc: equatorial night ~-80 °C, day max ~+20 °C; verify against REMS/MEDA data", "src": "PLACEHOLDER", "verified": false }
@@ -38,6 +48,7 @@
 
   "tuning": {
     "solDuration": { "value": 120, "unit": "s", "simplified": true, "src": "game: DECISIONS.md D-001 (1 sol = about 2 minutes)", "verified": true },
-    "startTimeOfSol": { "value": 0.25, "unit": "sol", "requested": "K2", "simplified": true, "note": "surface run starts at local 06:00", "src": "PLACEHOLDER", "verified": false }
+    "startTimeOfSol": { "value": 0.25, "unit": "sol", "requested": "K2", "simplified": true, "note": "surface run starts at local 06:00", "src": "PLACEHOLDER", "verified": false },
+    "powerRestoreFraction": { "value": 0.2, "unit": "", "requested": "K2", "simplified": true, "note": "shed loads come back once the battery is this full; game balance", "src": "PLACEHOLDER", "verified": false }
   }
 }
