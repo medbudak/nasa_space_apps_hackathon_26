@@ -390,11 +390,11 @@
       "simplified": true
     },
     "baseMassKg": {
-      "value": null,
+      "value": 0,
       "unit": "kg",
-      "src": "PLACEHOLDER",
-      "verified": false,
-      "todo": "team decision: DRA 5.0 pre-deploys the habitat and ascent vehicle on separate 40 t landers; see dra5 entries"
+      "src": "game: K1 decision D-009: not published, game value: DRA 5.0 pre-deploys the habitat and ascent vehicle on separate 40 t landers, so the player designs one lander payload",
+      "verified": true,
+      "simplified": true
     },
     "dra5HabitatKg": {
       "value": 21500,
@@ -530,11 +530,11 @@
         "simplified": true
       },
       "batteryHeatKWh": {
-        "value": null,
+        "value": 3,
         "unit": "kWh",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "energy to warm the ascent engine from the battery, official source"
+        "src": "game: K1 decision D-009: not published, game value (K2 proposal)",
+        "verified": true,
+        "simplified": true
       }
     }
   },
@@ -683,11 +683,11 @@
         "note": "injection 4.391 km/s + arrival 2.730 km/s"
       },
       "massKg": {
-        "value": null,
+        "value": 2200,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "extra propellant: rocket equation with Δv for both transfers (Trajectory Browser)"
+        "src": "game: K1 decision D-009: not published, game value (K3 proposal): extra propellant for the faster transfer",
+        "verified": true,
+        "simplified": true
       },
       "costMUSD": {
         "value": 60,
@@ -1033,11 +1033,11 @@
         "simplified": true
       },
       "massKg": {
-        "value": null,
+        "value": 100,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "insulation areal density × habitat area"
+        "src": "game: K1 decision D-009: not published, game value (K3 proposal)",
+        "verified": true,
+        "simplified": true
       },
       "costMUSD": {
         "value": 5,
@@ -1057,11 +1057,11 @@
         "simplified": true
       },
       "massKg": {
-        "value": null,
+        "value": 450,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "insulation areal density × habitat area"
+        "src": "game: K1 decision D-009: not published, game value (K3 proposal)",
+        "verified": true,
+        "simplified": true
       },
       "costMUSD": {
         "value": 15,
@@ -1124,11 +1124,11 @@
         "note": "\"Up to 17 watts\", upper bound"
       },
       "mbitPerUse": {
-        "value": null,
+        "value": 1,
         "unit": "Mbit",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "page says \"Approximately 11 megabytes\" without a time unit; confirm per sol"
+        "src": "game: K1 decision D-009: not published, game value (design doc v2): NASA gives \"Approximately 11 megabytes\" without a time unit",
+        "verified": true,
+        "simplified": true
       },
       "usePer": "sol",
       "costMUSD": {
@@ -1329,11 +1329,11 @@
         "note": "\"about 70 watts for the lights, fans and control electronics\""
       },
       "mbitPerUse": {
-        "value": null,
+        "value": 2,
         "unit": "Mbit",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "data per sol: team decides or source"
+        "src": "game: K1 decision D-009: not published, game value (design doc v2)",
+        "verified": true,
+        "simplified": true
       },
       "usePer": "sol",
       "costMUSD": {
@@ -1362,11 +1362,11 @@
         "note": "draws nothing from the habitat: \"Solar-powered and recharges on its own\""
       },
       "mbitPerUse": {
-        "value": null,
+        "value": 15,
         "unit": "Mbit",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "data per flight from an official source"
+        "src": "game: K1 decision D-009: not published, game value (design doc v2)",
+        "verified": true,
+        "simplified": true
       },
       "usePer": "flight",
       "costMUSD": {
@@ -1448,11 +1448,11 @@
         "note": "Curiosity X-band transponder 14.2 W + 15 W amplifier 62.9 W while transmitting (table values)"
       },
       "massKg": {
-        "value": null,
+        "value": 25,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "X-band radio + high-gain antenna mass, official source"
+        "src": "game: K1 decision D-009: not published, game value: X-band radio and high-gain antenna on top of the 3 kg relay radio",
+        "verified": true,
+        "simplified": true
       },
       "costMUSD": {
         "value": 35,
@@ -1484,11 +1484,11 @@
     {
       "id": "k1",
       "massKg": {
-        "value": null,
+        "value": 150,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "spare parts kit mass, source or team decision"
+        "src": "game: K1 decision D-009: not published, game value (K3 proposal)",
+        "verified": true,
+        "simplified": true
       },
       "costMUSD": {
         "value": 10,
@@ -1501,11 +1501,11 @@
     {
       "id": "k2",
       "massKg": {
-        "value": null,
+        "value": 300,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "spare parts kit mass, source or team decision"
+        "src": "game: K1 decision D-009: not published, game value (K3 proposal)",
+        "verified": true,
+        "simplified": true
       },
       "costMUSD": {
         "value": 20,

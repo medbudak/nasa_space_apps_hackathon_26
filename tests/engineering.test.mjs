@@ -116,7 +116,9 @@ test('evaluateDesign sums the chosen rows and flags unresearched values', () => 
   assert.ok(s.mass >= 45 + 1333.3, 'RTG and battery mass are counted');
   assert.ok(s.nightNeedKWh > 0);
   assert.equal(s.coolingTimeH, 20);
-  assert.ok(s.unresearched.includes('rules.baseMassKg'), 'base mass is still unresearched');
+  assert.deepEqual(s.unresearched, []);
+  const withVeggie = eng.evaluateDesign({ ...design, instrumentIds: ['plantChamber'] }, data);
+  assert.ok(withVeggie.unresearched.includes('plantChamber.massKg'), 'Veggie mass is still unresearched');
 });
 
 test('landing site changes the solar balance: 250 m² is enough at the equator, not at 41°N', () => {
