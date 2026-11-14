@@ -1,0 +1,21 @@
+﻿{
+  "gridSize": 48,
+  "astronaut": {
+    "idle": { "file": "assets/sprites/astronaut_idle.png", "frames": 2, "w": 48, "h": 64, "fps": 2 },
+    "walk": { "file": "assets/sprites/astronaut_walk.png", "frames": 4, "w": 48, "h": 64, "fps": 8 },
+    "frozen": { "file": "assets/sprites/astronaut_frozen.png", "frames": 4, "w": 48, "h": 64, "fps": 4 },
+    "jump": { "file": "assets/sprites/astronaut_jump.png", "frames": 2, "w": 48, "h": 64, "fps": 4 }
+  },
+  "structures": {
+    "habitat_ext": { "file": "assets/structures/habitat_main.png", "w": 192, "h": 144 },
+    "greenhouse": { "file": "assets/structures/greenhouse_ok.png", "w": 144, "h": 96 },
+    "mav": { "file": "assets/structures/mav_rocket.png", "w": 96, "h": 192 }
+  },
+  "wrecks": {
+    "opportunity": { "file": "assets/sprites/rover_opportunity.png", "w": 96, "h": 64 },
+    "spirit": { "file": "assets/sprites/rover_spirit.png", "w": 96, "h": 64 },
+    "phoenix": { "file": "assets/sprites/lander_phoenix.png", "w": 96, "h": 64 },
+    "insight": { "file": "assets/sprites/lander_insight.png", "w": 96, "h": 64 },
+    "beagle2": { "file": "assets/sprites/lander_beagle2.png", "w": 48, "h": 48 }
+  }
+}
