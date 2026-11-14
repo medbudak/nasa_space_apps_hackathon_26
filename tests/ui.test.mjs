@@ -174,3 +174,28 @@ test('the pendulum sample times 10 swings of T = 2π√(L/g)', () => {
   assert.ok(near(c.eventSeconds * c.cycles, 10 * 2 * Math.PI * Math.sqrt(1 / 3.73), 1e-9));
   for (const [k, row] of Object.entries(qteRows)) assert.ok(row.src, `${k} has no src`);
 });
+
+// ---- wiring ----
+import { tryConnect, wiringScore } from '../src/minigames/wiring.js';
+import { sampleWiring } from '../src/ui/dev/stub_samples.js';
+
+test('a cable end connects only to its own device; a wrong pair is a short circuit', () => {
+  const st = { connected: [], mistakes: 0 };
+  assert.deepEqual(tryConnect(st, 'uhf', 'uhf'), { ok: true });
+  assert.deepEqual(tryConnect(st, 'uhf', 'xband'), { ok: false, reason: 'short' });
+  st.connected.push('uhf');
+  assert.equal(tryConnect(st, 'uhf', 'uhf').reason, 'used');
+});
+
+test('mistakes and time lower the wiring score', () => {
+  const c = sampleWiring;
+  assert.ok(wiringScore(0, 5, c) > wiringScore(1, 5, c));
+  assert.ok(wiringScore(0, 5, c) > wiringScore(0, 35, c));
+  assert.ok(wiringScore(9, 40, c) >= 10);
+});
+
+test('the sample box has every device on the right exactly once, shuffled', () => {
+  const ids = sampleWiring.pairs.map((p) => p.id);
+  assert.deepEqual([...sampleWiring.rightOrder].sort(), [...ids].sort());
+  assert.notDeepEqual(sampleWiring.rightOrder, ids);
+});

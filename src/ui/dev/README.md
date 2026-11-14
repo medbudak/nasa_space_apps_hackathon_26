@@ -71,6 +71,11 @@ QTE (`template: 'qte'`), two modes; config format at the top of `src/minigames/q
   trials are averaged and compared with the expected time within `tolerance`. The caller passes the event time
   (`pendulumPeriod`, `fallTime`, distance / speed of sound). `detail.measuredSeconds` goes back to K6, who turns it into g or a speed.
 
+Wiring (`template: 'wiring'`): reconnect a junction box; pick a cable end on the left, then its device on the right. A wrong pair is
+a short circuit (one mistake, with a hint that explains the right match). Config at the top of `src/minigames/wiring.js`; sample
+`sampleWiring` (comms box: UHF antenna → Electra-Lite radio, X-band antenna → SDST transponder, 28 V line → power distribution,
+data bus → flight computer). K5: please check the hardware wording. Callers shuffle `rightOrder` with the seeded RNG.
+
 `onDone` result: `{ success, score, timeUsed, detail }`. `timeUsed` is real seconds. `detail` is template-specific
 (converter: `{input, outputs, energyWh, gameMinutes}`); it is an addition to the D-003 shape. Esc closes a mini-game
 with `success: false`. Decision cards cannot be closed with Esc; the player has to choose.
