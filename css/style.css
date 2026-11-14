@@ -104,6 +104,8 @@ button { font: inherit; color: inherit; }
   background: var(--night-3); font: 12px/1.6 var(--mono); color: var(--ink);
 }
 .chip i { font-style: normal; opacity: .8; }
+.chip.unknown { background: transparent; border: 1px dashed var(--warn); color: var(--warn); }
+.design-title .flag { display: inline-block; margin-top: 6px; }
 .card-desc { color: var(--ink-dim); font-size: 13.5px; }
 .card-gain, .card-loss { font-size: 12.5px; }
 .card-gain b { color: var(--ok); }

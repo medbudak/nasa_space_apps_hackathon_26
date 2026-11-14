@@ -26,14 +26,14 @@
     const t = (key) => (texts[key] ? texts[key][lang] : key);
 
     let saved = null;
-    try { saved = JSON.parse(localStorage.getItem('sol14.dev.design.v2') || 'null'); } catch { saved = null; }
+    try { saved = JSON.parse(localStorage.getItem('sol14.dev.design') || 'null'); } catch { saved = null; }
 
     let screen;
     function mount() {
       screen?.destroy();
       screen = mountDesign(document.getElementById('app'), {
         data: stubData, t, evaluate: evaluateDesign, design: saved, locale: lang === 'tr' ? 'tr-TR' : 'en-US',
-        onChange: (d) => { saved = d; try { localStorage.setItem('sol14.dev.design.v2', JSON.stringify(d)); } catch {} },
+        onChange: (d) => { saved = d; try { localStorage.setItem('sol14.dev.design', JSON.stringify(d)); } catch {} },
         onLaunch: (d, summary) => { console.log('[design] launch', d, summary); alert('Launch!\n' + JSON.stringify(d, null, 2)); },
       });
     }
@@ -44,7 +44,7 @@
       mount();
     }));
     document.querySelector('[data-reset]').addEventListener('click', () => {
-      saved = null; try { localStorage.removeItem('sol14.dev.design.v2'); } catch {}
+      saved = null; try { localStorage.removeItem('sol14.dev.design'); } catch {}
       mount();
     });
     mount();
