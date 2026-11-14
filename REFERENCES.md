@@ -111,3 +111,37 @@ Real-world values that were changed or rounded for gameplay.
 | `batteries[b300].capacityKWh` | K1 decision: options sized around the ~147 kWh night need of the DRA 5.0 habitat | 300 kWh | Not published for this case; set by K1 for gameplay |
 | `insulation[thin].coolingTimeH` | K1 decision: heating is part of the 12 kWe habitat load; with power cut the habitat cools toward outside air with this time constant (simplified) | 10 h | Not published for this case; set by K1 for gameplay |
 | `insulation[thick].coolingTimeH` | K1 decision: thick insulation doubles the cooling time (design doc v2: thick halves heat loss) (simplified) | 20 h | Not published for this case; set by K1 for gameplay |
+| `rules.massMarginBonus` | K1 balance, tune in the balance session | 50 points | Not published for this case; set by K1 for gameplay |
+| `rules.budgetMUSD` | K1 balance: a solar design fits, a fission design must drop instruments; reference costs Mars 2020 $2.4B, InSight $813.8M | 500 M$ | Not published for this case; set by K1 for gameplay |
+| `rules.baseMassKg` | K1 decision D-009: not published, game value: DRA 5.0 pre-deploys the habitat and ascent vehicle on separate 40 t landers, so the player designs one lander payload | 0 kg | Not published for this case; set by K1 for gameplay |
+| `events.engineFreeze.batteryHeatKWh` | K1 decision D-009: not published, game value (K2 proposal) | 3 kWh | Not published for this case; set by K1 for gameplay |
+| `trajectories[fast].massKg` | K1 decision D-009: not published, game value (K3 proposal): extra propellant for the faster transfer | 2200 kg | Not published for this case; set by K1 for gameplay |
+| `trajectories[fast].costMUSD` | K1 balance: extra propellant and stage | 60 M$ | Not published for this case; set by K1 for gameplay |
+| `powerSources[solar].costMUSD` | K1 balance (no public unit cost) | 60 M$ | Not published for this case; set by K1 for gameplay |
+| `powerSources[solarRtg].costMUSD` | K1 balance: panels only; the RTG cost is rtgCostMUSD | 60 M$ | Not published for this case; set by K1 for gameplay |
+| `batteries[b150].costMUSD` | K1 balance (no public unit cost) | 30 M$ | Not published for this case; set by K1 for gameplay |
+| `batteries[b200].costMUSD` | K1 balance (no public unit cost) | 40 M$ | Not published for this case; set by K1 for gameplay |
+| `batteries[b300].costMUSD` | K1 balance (no public unit cost) | 60 M$ | Not published for this case; set by K1 for gameplay |
+| `insulation[thin].massKg` | K1 decision D-009: not published, game value (K3 proposal) | 100 kg | Not published for this case; set by K1 for gameplay |
+| `insulation[thin].costMUSD` | K1 balance (no public unit cost) | 5 M$ | Not published for this case; set by K1 for gameplay |
+| `insulation[thick].massKg` | K1 decision D-009: not published, game value (K3 proposal) | 450 kg | Not published for this case; set by K1 for gameplay |
+| `insulation[thick].costMUSD` | K1 balance (no public unit cost) | 15 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[camera].costMUSD` | K1 balance (instrument costs are not published per unit) | 20 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[meda].mbitPerUse` | K1 decision D-009: not published, game value (design doc v2): NASA gives "Approximately 11 megabytes" without a time unit | 1 Mbit | Not published for this case; set by K1 for gameplay |
+| `instruments[meda].costMUSD` | K1 balance (instrument costs are not published per unit) | 10 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[seis].costMUSD` | K1 balance (instrument costs are not published per unit) | 30 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[rad].costMUSD` | K1 balance (instrument costs are not published per unit) | 5 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[rimfax].costMUSD` | K1 balance (instrument costs are not published per unit) | 10 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[spectrometer].costMUSD` | K1 balance (instrument costs are not published per unit) | 25 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[moxie].costMUSD` | K1 balance (instrument costs are not published per unit) | 35 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[plantChamber].mbitPerUse` | K1 decision D-009: not published, game value (design doc v2) | 2 Mbit | Not published for this case; set by K1 for gameplay |
+| `instruments[plantChamber].costMUSD` | K1 balance (instrument costs are not published per unit) | 15 M$ | Not published for this case; set by K1 for gameplay |
+| `instruments[drone].mbitPerUse` | K1 decision D-009: not published, game value (design doc v2) | 15 Mbit | Not published for this case; set by K1 for gameplay |
+| `instruments[drone].costMUSD` | K1 balance (instrument costs are not published per unit) | 40 M$ | Not published for this case; set by K1 for gameplay |
+| `comms[relay].costMUSD` | K1 balance (no public unit cost) | 10 M$ | Not published for this case; set by K1 for gameplay |
+| `comms[relayX].massKg` | K1 decision D-009: not published, game value: X-band radio and high-gain antenna on top of the 3 kg relay radio | 25 kg | Not published for this case; set by K1 for gameplay |
+| `comms[relayX].costMUSD` | K1 balance (no public unit cost) | 35 M$ | Not published for this case; set by K1 for gameplay |
+| `spareKits[k1].massKg` | K1 decision D-009: not published, game value (K3 proposal) | 150 kg | Not published for this case; set by K1 for gameplay |
+| `spareKits[k1].costMUSD` | K1 balance | 10 M$ | Not published for this case; set by K1 for gameplay |
+| `spareKits[k2].massKg` | K1 decision D-009: not published, game value (K3 proposal) | 300 kg | Not published for this case; set by K1 for gameplay |
+| `spareKits[k2].costMUSD` | K1 balance | 20 M$ | Not published for this case; set by K1 for gameplay |

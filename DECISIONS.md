@@ -121,3 +121,11 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Decision: The Project Demo is a 30-second video with English subtitles, made by K5 with K4: 0–5 s team and challenge · 5–12 s Sol 0 with the mass bar turning red · 12–20 s storm, decision card and wreck diagnosis · 20–25 s report card · 25–30 s UFO scene. K5 also writes the English project page (Summary · How it addresses the challenge · NASA data used · Engineering trade-offs · Scientific corrections · Team · AI disclosure, plus a note that the UFO scene is fiction) and 7 English slides. K1 submits on the portal and opens every link in a private window first. At the local event, K2 plays the live demo with `?demo` and K5 presents from a Turkish script.
 - Why: The submission guide limits the demo to a 30-second video or 7 slides and requires English. A video shows the trade-offs moving, which slides can't.
 - Affects: K1, K2, K4, K5
+
+### D-009: Game values where no source exists
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending; K1 decided)
+- Decision: Real-world numbers are researched first; when no official value is published, K1 sets a game value and labels it in `nasa_data.json` with `src: "game: K1 decision D-009 ..."` and `simplified: true`. Set this way: costs without a public unit price (budget 500 M$), panel area 250 m², battery options 150/200/300 kWh, O2 reserve 15.4 kg (14 sols of BVAD use + 20%), habitat cooling time 10/20 h, base mass 0 (DRA 5.0 pre-deploys habitat and ascent vehicle), insulation and spare-kit masses, fast-transfer propellant, some instrument data volumes, X-band hardware mass, engine-heating energy. Every such value is listed under "Simplified values" in REFERENCES.md. No estimate is ever presented as a measured value.
+- Why: The game needs a number to run, the team rule forbids passing estimates off as real data, and the judges score Validity.
+- Affects: `src/data/nasa_data.json`, REFERENCES.md, project page
