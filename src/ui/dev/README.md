@@ -1,11 +1,11 @@
 # K3 dev page — Sol 0 mission design
 
-A standalone page for building the Sol 0 screens before K1's core files exist. Not part of the game build.
+A standalone page for building the Sol 0 screens with stub data in K1's nasa_data.json format. Not part of the game build.
 
 Run from the repo root:
 
 ```
-python3 -m http.server 8000
+python -m http.server 8000
 ```
 
 Open http://localhost:8000/src/ui/dev/design.html. TR/EN and reset are in the dev box at the bottom right.
@@ -14,15 +14,18 @@ Tests: `node --test` from the repo root. Note: `node --test tests/` (with a dire
 
 ## Hand-offs (D-003 names)
 
+`src/scenes/design.js` is a scene for K1's `main.js` (`export default { enter, exit }`). It writes the picks into
+K1's `gameState.design` (src/core/state.js) and adds `totalMass_kg` / `totalCost_musd` at launch, then calls `goTo('surface')`.
+Picks map to state like this: battery option → `power.battery_kWh`, power option → `power.rtg` + `power.solarArea_m2`,
+kit option → `spareKits` (a count), comms option → `comms` (`relay` | `relayDte`).
+
 | Who | What | Placeholder here |
 |---|---|---|
-| K1 | `src/data/nasa_data.json` with the groups and fields in `stub_data.js` (every number `{value, src, verified}`) | `stub_data.js` (all `src: "PLACEHOLDER"`) |
-| K1 | `evaluateDesign(design, data)` in `src/core/engineering.js`, same return shape | `stub_evaluate.js` |
-| K1 | `main.js` calls `mountDesign(root, {data, t, evaluate, design, onChange, onLaunch})` and stores the result in `gameState.design` | `design.html` |
+| K1 | In `nasa_data.json`, in K1's own format: the new tables `powerOptions`, `batteries`, `insulation`, `commsOptions`, `spareKits`; the new scalars `mission.budget_musd`, `mission.baseMass_kg`, `mission.nightLifeSupport_W`, `mission.instrumentNightDuty`; and the new fields `cost_musd` (rockets, trajectories, instruments), `mass_kg` (trajectories), `heatingNight_W` (landing sites). Real rocket values. Everything marked NEW in `stub_data.js`. | `stub_data.js` (all `src: "PLACEHOLDER"`) |
+| K1 | `evaluateDesign(design, data)` in `src/core/engineering.js`, same return shape. Until it exists, the scene falls back to the stub and logs a warning. | `stub_evaluate.js` |
 | K5 | Copy the keys in `design_texts.json` into `content/story.json` and review them | `design_texts.json` |
 
-`gameState.design` written by this screen:
-`{ objectiveId, rocketId, trajectoryId, siteId, powerId, batteryId, insulationId, instrumentIds[], commsId, spareKitsId }`
+A table missing from `nasa_data.json` shows "No option data yet" in its group, so gaps are visible.
 
 # K3 dev page — decision cards + mini-games
 

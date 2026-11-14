@@ -36,7 +36,11 @@ button { font: inherit; color: inherit; }
 .btn.launch { background: var(--ok); color: #0c1a10; font-size: 16px; }
 
 /* ---------- Sol 0 design screen ---------- */
-.design { display: grid; grid-template-rows: auto auto 1fr auto; height: 100vh; max-width: 1280px; margin: 0 auto; }
+/* Fills its parent: #ui (the 16:9 game box from index.html) in the game, #app on the dev page. */
+.design {
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; height: 100%; max-width: 1280px; margin: 0 auto;
+  background: var(--night); color: var(--ink); font: 15px/1.45 var(--font);
+}
 
 .design-head {
   display: grid; grid-template-columns: minmax(220px, 1fr) 3fr; gap: 24px; align-items: center;
