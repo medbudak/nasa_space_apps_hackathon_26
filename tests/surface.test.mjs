@@ -75,6 +75,7 @@ test('a frame that arrives "before" the last one does not run time backwards', a
 
 test('the loop pauses while a decision card is open and goes on after the choice', async () => {
   const { surface, state, bus } = await enterScene();
+  state.time.sol = data.events.engineFreeze.earliestSol.value; // the engine card belongs to the departure sol
   for (let i = 0; i < 4000 && !state.events.pending; i++) tick(100);
   assert.ok(state.events.pending, 'no card opened');
   const frozenAt = state.time.solFraction;
@@ -122,11 +123,11 @@ test('D-008: outside, time runs slower, so a 900 m walk takes about 15 real seco
       ms += 100;
     }
     release('ArrowRight');
-    const expectedSec = 900 / data.eva.walkSpeedMs.value / data.time.evaGameSecondsPerRealSecond.value;
+    const expectedSec = 900 / data.life.walkSpeedMs.value / data.time.evaGameSecondsPerRealSecond.value;
     assert.ok(Math.abs(ms / 1000 - expectedSec) <= 0.2, `walk took ${ms / 1000} s, expected about ${expectedSec} s`);
     // The one game clock moved by the walk's game time (15 game minutes), not by a 2-minute-sol rate.
     const gameMinutes = (state.time.solFraction - t0) * data.mars.solHours.value * 60;
-    assert.ok(Math.abs(gameMinutes - 900 / data.eva.walkSpeedMs.value / 60) < 0.5, `clock moved ${gameMinutes} game min`);
+    assert.ok(Math.abs(gameMinutes - 900 / data.life.walkSpeedMs.value / 60) < 0.5, `clock moved ${gameMinutes} game min`);
   } finally {
     surface.exit();
   }

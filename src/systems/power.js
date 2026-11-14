@@ -46,15 +46,12 @@ export function computeLoads(state, ctx) {
   const d = designRows(state, data);
   const watts = Object.fromEntries(LOAD_IDS.map((id) => [id, 0]));
 
+  // DRA 5.0's 12 kWe habitat figure already includes thermal control (K1 decision), so heating
+  // draws nothing extra. Shedding it, or running out of power, lets the habitat cool (survival.js).
   watts.lifeSupport = val(data.rules.habitatPowerW, 'rules.habitatPowerW');
-  watts.heating = eng.heatingPower({
-    insideC: state.env.insideC,
-    outsideC: state.env.outsideC,
-    conductanceWK: rowVal(d.thinInsulation, 'conductanceWK'),
-    factor: rowVal(d.insulation, 'heatingFactor'),
-  });
-  // The comms row has no power figure yet: reads as 0 until K1 adds one.
-  watts.comms = rowVal(d.comms, 'powerW', { optional: true });
+  watts.heating = 0;
+  // The relay radio is always listening: Electra-Lite standby draw.
+  watts.comms = rowVal(d.comms, 'standbyW', { optional: true });
 
   // Same rule as the Sol 0 estimate (evaluateDesign): instruments run at night only if
   // rules.instrumentsAtNight is set, so the night the player lives matches the night the design screen promised.

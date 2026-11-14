@@ -69,12 +69,21 @@ test('an empty battery at night sheds from the bottom of the list and never shed
   assert.equal(s.power.deficitW, data.rules.habitatPowerW.value);
 });
 
+/** An empty battery after sunset: the loads cannot be covered and shedding starts. */
+function emptyAtNight(s) {
+  s.time.solFraction = 0.8;
+  s.power.batteryWh = 0;
+}
+
 test('the player order decides what goes first', () => {
-  // Heating is the only big night load besides life support; put it last and it goes first.
+  // Midday in a total dust-out: instruments are running, the panels give nothing, the battery is empty.
   const { s, bus, ctx } = setup({ batteryId: 'b150', insulationId: 'thin' });
-  assert.ok(setOrder(s, ['lifeSupport', 'greenhouse', 'moxie', 'experiments', 'comms', 'heating']));
+  assert.ok(setOrder(s, ['lifeSupport', 'heating', 'greenhouse', 'experiments', 'comms', 'moxie']));
+  s.time.solFraction = 0.5;
+  s.power.batteryWh = 0;
+  s.power.dust = 1;
   runUntilShed(s, ctx, bus);
-  assert.equal(sheds(bus)[0].shed[0], 'heating');
+  assert.equal(sheds(bus)[0].shed[0], 'moxie');
 });
 
 test('setOrder rejects a list that moves life support or misses a load, and keeps the same array', () => {
@@ -93,14 +102,17 @@ test('shed loads come back after the battery refills, and do not flicker overnig
   // This test is about restoring loads, not about freezing: a habitat that cools very slowly
   // keeps the astronaut alive through a night with the heating shed.
   const slowCooling = structuredClone(data);
-  slowCooling.thermal.habitatCoolingHours.value = 1e9;
+  slowCooling.insulation.find((r) => r.id === 'thin').coolingTimeH.value = 1e9;
   const { s, bus, ctx } = setup({ batteryId: 'b150', insulationId: 'thin' }, slowCooling);
+  emptyAtNight(s);
   runUntilShed(s, ctx, bus);
   const shedSol = s.time.sol;
   const restoreAt = data.rules.powerRestoreFraction.value * s.power.batteryCapacityWh;
   for (let i = 0; i < 1000 && (s.time.solFraction > 0.5 || s.time.solFraction < 0.25); i++) {
     step(s, 0.5, ctx);
-    if (s.power.batteryWh < restoreAt) assert.ok(!isOn(s, 'heating'), 'heating came back before the battery recovered');
+    if (s.power.batteryWh < restoreAt) {
+      for (const id of sheds(bus)[0].shed) assert.ok(!isOn(s, id), `${id} came back before the battery recovered`);
+    }
   }
   for (let i = 0; i < 1000 && (s.time.sol === shedSol || s.time.solFraction < 0.6); i++) step(s, 0.5, ctx);
   assert.equal(s.life.loss, null);

@@ -48,27 +48,34 @@ test('running out of suit O2 outside ends the mission, even with a full habitat 
   assert.ok(s.life.o2Kg > 0);
 });
 
-test('with heating shed the habitat cools toward the outside air', () => {
-  const s = newState({ batteryId: 'b150', insulationId: 'thin' });
-  for (let i = 0; i < 2000 && !s.power.off.heating; i++) step(s, 0.5, ctx);
-  assert.equal(s.power.off.heating, true, 'heating was never shed');
+// Heating is part of the habitat load (D-009), so the habitat cools when that load goes unpowered.
+function powerlessNight(design) {
+  const s = newState(design);
+  s.time.solFraction = 0.8; // after sunset
+  s.power.batteryWh = 0;
+  return s;
+}
+
+test('without power the habitat cools toward the outside air', () => {
+  const s = powerlessNight({ insulationId: 'thin' });
+  step(s, 0.5, ctx); // the deficit shows up
   const before = s.env.insideC;
   step(s, realSeconds(0.5), ctx);
   assert.ok(s.env.insideC < before, 'habitat did not cool');
   assert.ok(s.env.insideC > s.env.outsideC, 'habitat cooled past the outside air');
 });
 
-test('a small battery that loses its heating at night freezes the astronaut', () => {
-  const s = newState({ batteryId: 'b150', insulationId: 'thin' });
-  runHours(s, solHours);
-  assert.ok(s.life.loss, 'astronaut survived a night with no heating');
+test('a habitat left without power at night freezes the astronaut', () => {
+  const s = powerlessNight({ insulationId: 'thin' });
+  runHours(s, 6);
+  assert.ok(s.life.loss, 'astronaut survived a night with no power');
   assert.equal(s.life.loss.reasonKey, 'loss.cold');
-  assert.ok(s.env.insideC <= data.thermal.bodyColdBelowC.value);
+  assert.ok(s.env.insideC <= data.thermal.cabinMinC.value);
 });
 
 test('cold hours reset when the astronaut warms up', () => {
   const s = newState();
-  s.life.body.coldHours = data.rules.coldLossHours.value - 0.1;
+  s.life.body.coldHours = data.loss.coldHours.value - 0.1;
   step(s, 0.5, ctx); // heating on: habitat at its set point, not cold
   assert.equal(s.life.body.cold, false);
   assert.equal(s.life.body.coldHours, 0);
@@ -86,7 +93,7 @@ test('frozen suit joints count as cold outside', () => {
 
 test('a dose over the mission limit ends the mission', () => {
   const s = newState();
-  s.life.radiationMSv = data.rules.radiationLimitMSv.value + 1;
+  s.life.radiationMSv = data.loss.radiationLimitMSv.value + 1;
   step(s, 0.5, ctx);
   assert.equal(s.life.loss.reasonKey, 'loss.radiation');
 });

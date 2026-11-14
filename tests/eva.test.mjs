@@ -10,8 +10,8 @@ import { data, eng, fakeBus, newState, realSeconds } from './helpers/k2_env.mjs'
 
 const o2PerHour = data.life.evaO2KgPerHour.value;
 const safety = data.rules.noReturnSafetyFactor.value;
-const walk = data.eva.walkSpeedMs.value;
-const freeze = data.eva.jointFreezeSpeedFactor.value;
+const walk = data.life.walkSpeedMs.value;
+const freeze = data.life.jointFreezeSpeedFactor.value;
 const TINY = 0.001; // real seconds: refreshes the EVA numbers without moving the clock much
 const NOON = 0.5;
 const PRE_DAWN = 0.24; // coldest time in K1's surfaceTemp model is sunrise
@@ -96,7 +96,7 @@ test('deep cold freezes the joints: speed drops and the notch moves up', () => {
   step(s, TINY, ctx);
   assert.equal(s.life.eva.jointsFrozen, false);
   at(s, ctx, PRE_DAWN);
-  assert.ok(s.env.outsideC <= data.eva.jointFreezeBelowC.value);
+  assert.ok(s.env.outsideC <= data.thermal.actuatorMinC.value);
   assert.equal(s.life.eva.jointsFrozen, true);
   assert.equal(s.life.eva.speedFactor, freeze);
   assert.ok(Math.abs(s.life.eva.requiredO2Kg - need(900, freeze)) < 1e-9);

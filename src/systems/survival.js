@@ -165,11 +165,12 @@ function updatePower(state, dtHours, ctx) {
 
 let warnedNoHabitatTemp = false;
 
-// With its heating on, the habitat holds its set point (simplified: it snaps back as soon as
-// heating returns). With heating shed, it cools toward the outside temperature.
+// While the habitat is fully powered and its heating is on, it holds its set point (simplified:
+// it snaps back as soon as power returns). With heating shed, or loads left unpowered
+// (deficitW > 0), it cools toward the outside temperature with the insulation's time constant.
 function updateHabitatTemp(state, dtHours, { data, eng }) {
   const env = state.env;
-  if (isOn(state, 'heating')) {
+  if (isOn(state, 'heating') && !(state.power.deficitW > 0)) {
     env.insideC = val(data.thermal.habitatTargetC, 'thermal.habitatTargetC');
     return;
   }
@@ -182,7 +183,7 @@ function updateHabitatTemp(state, dtHours, { data, eng }) {
     insideC: env.insideC,
     outsideC: env.outsideC,
     dtHours,
-    coolingHours: val(data.thermal.habitatCoolingHours, 'thermal.habitatCoolingHours'),
+    coolingTimeH: rowVal(designRows(state, data).insulation, 'coolingTimeH'),
   });
 }
 
@@ -206,7 +207,7 @@ function updateBody(state, dtHours, data) {
   const { eva, body } = state.life;
   body.cold = eva.outside
     ? eva.jointsFrozen
-    : state.env.insideC <= val(data.thermal.bodyColdBelowC, 'thermal.bodyColdBelowC');
+    : state.env.insideC <= val(data.thermal.cabinMinC, 'thermal.cabinMinC');
   body.coldHours = body.cold ? body.coldHours + dtHours : 0;
 }
 
@@ -228,7 +229,7 @@ export function startEva(state, data) {
   Object.assign(state.life.eva, {
     outside: true,
     distanceM: 0,
-    suitO2Kg: val(data.eva.suitO2Kg, 'eva.suitO2Kg'),
+    suitO2Kg: val(data.life.suitO2Kg, 'life.suitO2Kg'),
     jointsFrozen: false,
     thawed: false,
     speedFactor: 1,
@@ -252,7 +253,7 @@ export function setEvaPosition(state, { distanceM, nearWreck = false }) {
 
 /** Current walking speed in m/s (normal speed × freeze factor). */
 export function walkSpeedMs(state, data) {
-  return val(data.eva.walkSpeedMs, 'eva.walkSpeedMs') * state.life.eva.speedFactor;
+  return val(data.life.walkSpeedMs, 'life.walkSpeedMs') * state.life.eva.speedFactor;
 }
 
 function updateEva(state, dtHours, { data, eng }) {
@@ -262,9 +263,9 @@ function updateEva(state, dtHours, { data, eng }) {
   const o2PerHour = val(data.life.evaO2KgPerHour, 'life.evaO2KgPerHour');
   eva.suitO2Kg = Math.max(0, eva.suitO2Kg - o2PerHour * dtHours);
 
-  if (!eva.jointsFrozen && !eva.thawed && state.env.outsideC <= val(data.eva.jointFreezeBelowC, 'eva.jointFreezeBelowC')) {
+  if (!eva.jointsFrozen && !eva.thawed && state.env.outsideC <= val(data.thermal.actuatorMinC, 'thermal.actuatorMinC')) {
     eva.jointsFrozen = true;
-    eva.speedFactor = val(data.eva.jointFreezeSpeedFactor, 'eva.jointFreezeSpeedFactor');
+    eva.speedFactor = val(data.life.jointFreezeSpeedFactor, 'life.jointFreezeSpeedFactor');
   }
 
   eva.requiredO2Kg = eng.oxygenToReturn({
@@ -296,12 +297,12 @@ export function checkLoss(state, { data }) {
     values = { distanceM: Math.round(life.eva.distanceM) };
   } else if (!life.eva.outside && life.o2Kg <= 0) {
     reasonKey = 'loss.oxygen';
-  } else if (life.body.coldHours >= val(data.rules.coldLossHours, 'rules.coldLossHours')) {
+  } else if (life.body.coldHours >= val(data.loss.coldHours, 'loss.coldHours')) {
     reasonKey = 'loss.cold';
-    values = { coldHours: val(data.rules.coldLossHours, 'rules.coldLossHours'), insideC: Math.round(state.env.insideC) };
-  } else if (life.radiationMSv > val(data.rules.radiationLimitMSv, 'rules.radiationLimitMSv')) {
+    values = { coldHours: val(data.loss.coldHours, 'loss.coldHours'), insideC: Math.round(state.env.insideC) };
+  } else if (life.radiationMSv > val(data.loss.radiationLimitMSv, 'loss.radiationLimitMSv')) {
     reasonKey = 'loss.radiation';
-    values = { doseMSv: Math.round(life.radiationMSv), limitMSv: val(data.rules.radiationLimitMSv, 'rules.radiationLimitMSv') };
+    values = { doseMSv: Math.round(life.radiationMSv), limitMSv: val(data.loss.radiationLimitMSv, 'loss.radiationLimitMSv') };
   } else if (typeof life.sanity === 'number' && life.sanity <= 0) {
     reasonKey = 'loss.sanity'; // life.sanity is created by sanity.js (not written yet)
   }

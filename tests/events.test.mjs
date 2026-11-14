@@ -9,7 +9,10 @@ const cfg = data.events.engineFreeze;
 
 function setup() {
   const bus = fakeBus();
-  return { s: newState(), bus, ctx: { data, eng, bus } };
+  const s = newState();
+  // The engine freezes on the departure morning (events.engineFreeze.earliestSol), so start there.
+  s.time.sol = cfg.earliestSol.value;
+  return { s, bus, ctx: { data, eng, bus } };
 }
 
 /** Step the simulation (0.5 s at a time) until a card opens. */

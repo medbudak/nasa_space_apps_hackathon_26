@@ -89,12 +89,15 @@ test('a small battery runs empty at night and reports a deficit', () => {
   assert.ok(s.power.batteryWh >= 0);
 });
 
-test('thick insulation needs less night heating than thin', () => {
+test('thick insulation keeps an unpowered habitat warm for longer', () => {
   const thin = newState({ insulationId: 'thin' });
   const thick = newState({ insulationId: 'thick' });
-  runOneSol(thin);
-  runOneSol(thick);
-  assert.ok(thick.power.batteryWh > thin.power.batteryWh);
+  for (const s of [thin, thick]) {
+    s.time.solFraction = 0.8; // after sunset
+    s.power.batteryWh = 0;
+    for (let i = 0; i < Math.ceil(realSeconds(2) / STEP); i++) step(s, STEP, ctx);
+  }
+  assert.ok(thick.env.insideC > thin.env.insideC, `thick ${thick.env.insideC} vs thin ${thin.env.insideC}`);
 });
 
 test('habitat O2 is used at the BVAD rate per Earth day', () => {
