@@ -1,38 +1,43 @@
 {
-  "_note": "K2 test fixture. Every value is PLACEHOLDER until K1 adds the real row to src/data/nasa_data.json with a source. The 'todo' field says where K1 should verify it.",
-  "time": {
-    "solRealSeconds": { "value": 120, "unit": "s", "src": "PLACEHOLDER", "verified": false, "todo": "D-001 game design: 1 sol ≈ 2 min real time (simplified)" },
-    "solHours": { "value": 24.66, "unit": "h", "src": "PLACEHOLDER", "verified": false, "todo": "NASA Mars Fact Sheet, length of day" },
-    "startSolFraction": { "value": 0.25, "unit": "sol", "src": "PLACEHOLDER", "verified": false, "todo": "game design: start at local 06:00" }
+  "_readme": "K2 test fixture shaped like K1's src/data/nasa_data.json (enes branch). Entries without 'requested' are copied from K1's file with K1's source. Entries with \"requested\": \"K2\" do not exist in K1's file yet: they are PLACEHOLDER and are K2's request list for K1. The landing-site temperatures are also requests (K1's row has nightMin_C 0 and no dayMax_C).",
+
+  "mars": {
+    "solarIrradiance": { "value": 586.2, "unit": "W/m^2", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true },
+    "solLength": { "value": 24.6597, "unit": "h", "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "verified": true }
   },
-  "sites": {
-    "meridiani": {
-      "nightMinC": { "value": -80, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "equatorial night minimum (design doc says ~-80 °C); verify against Opportunity/Curiosity REMS data" },
-      "dayMaxC": { "value": 20, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "daytime maximum ~+20 °C; verify" }
-    }
-  },
-  "solar": {
-    "irradianceWm2": { "value": 586, "unit": "W/m²", "src": "PLACEHOLDER", "verified": false, "todo": "NASA Mars Fact Sheet, solar irradiance" }
-  },
+
   "power": {
-    "lifeSupportW": { "value": 1000, "unit": "W", "src": "PLACEHOLDER", "verified": false, "todo": "habitat life-support base load; needs a source or a 'simplified' flag" }
+    "panelEfficiency": { "value": 0.3, "unit": "", "src": "PLACEHOLDER", "verified": false },
+    "lifeSupport_W": { "value": 1000, "unit": "W", "requested": "K2", "note": "habitat life-support base load; needs a source or simplified: true", "src": "PLACEHOLDER", "verified": false }
   },
-  "thermal": {
-    "habitatTargetC": { "value": 20, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "habitat set point; game design" }
+
+  "landingSites": [
+    { "id": "meridiani", "name": "Meridiani Planum", "nightMin_C": -80, "dayMax_C": 20, "requested": "K2", "note": "design doc: equatorial night ~-80 °C, day max ~+20 °C; verify against REMS/MEDA data", "src": "PLACEHOLDER", "verified": false }
+  ],
+
+  "habitat": {
+    "target_C": { "value": 20, "unit": "C", "requested": "K2", "note": "habitat set point; game design, simplified", "src": "PLACEHOLDER", "verified": false }
   },
+
   "life": {
-    "crew": { "value": 1, "unit": "people", "src": "PLACEHOLDER", "verified": false, "todo": "game design: one astronaut" },
-    "o2KgPerCrewPerSol": { "value": 0.84, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "NASA Baseline Values and Assumptions Document (BVAD), O2 per crew member per day" },
-    "o2StartKg": { "value": 10, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "game design: starting O2 reserve" }
+    "crew": { "value": 1, "unit": "people", "requested": "K2", "note": "game design: one astronaut", "src": "PLACEHOLDER", "verified": false },
+    "oxygenPerCrewPerSol_kg": { "value": 0.84, "unit": "kg", "requested": "K2", "note": "NASA BVAD, O2 per crew member per day", "src": "PLACEHOLDER", "verified": false },
+    "oxygenStart_kg": { "value": 10, "unit": "kg", "requested": "K2", "note": "game design: starting O2 reserve", "src": "PLACEHOLDER", "verified": false }
   },
+
   "events": {
     "engineFreeze": {
-      "earliestSol": { "value": 1, "unit": "sol", "src": "PLACEHOLDER", "verified": false, "todo": "game design: first sol the card may appear" },
-      "triggerBelowC": { "value": -70, "unit": "°C", "src": "PLACEHOLDER", "verified": false, "todo": "outside temperature that freezes the engine; game design, flag as simplified" },
-      "batteryHeatWh": { "value": 3000, "unit": "Wh", "src": "PLACEHOLDER", "verified": false, "todo": "energy to warm the engine from the battery; game design, flag as simplified" },
-      "manualO2Kg": { "value": 0.3, "unit": "kg", "src": "PLACEHOLDER", "verified": false, "todo": "extra O2 for a short EVA; derive from BVAD EVA O2 use" },
-      "manualRadiationMSv": { "value": 0.05, "unit": "mSv", "src": "PLACEHOLDER", "verified": false, "todo": "extra dose for a short EVA; derive from Curiosity RAD surface dose (~0.7 mSv/sol)" },
-      "waitSols": { "value": 1, "unit": "sol", "src": "PLACEHOLDER", "verified": false, "todo": "design doc card: miss the window, wait 1 sol" }
+      "earliestSol": { "value": 1, "unit": "sol", "requested": "K2", "note": "game design", "src": "PLACEHOLDER", "verified": false },
+      "triggerBelow_C": { "value": -70, "unit": "C", "requested": "K2", "note": "temperature that freezes the engine; game design, simplified", "src": "PLACEHOLDER", "verified": false },
+      "batteryHeat_kWh": { "value": 3, "unit": "kWh", "requested": "K2", "note": "energy to warm the engine; game design, simplified", "src": "PLACEHOLDER", "verified": false },
+      "manualOxygen_kg": { "value": 0.3, "unit": "kg", "requested": "K2", "note": "extra O2 for a short EVA; derive from BVAD EVA O2 use", "src": "PLACEHOLDER", "verified": false },
+      "manualRadiation_mSv": { "value": 0.05, "unit": "mSv", "requested": "K2", "note": "extra dose for a short EVA; derive from Curiosity RAD surface dose (~0.7 mSv/sol)", "src": "PLACEHOLDER", "verified": false },
+      "waitSols": { "value": 1, "unit": "sol", "requested": "K2", "note": "design doc card: miss the window, wait 1 sol", "src": "PLACEHOLDER", "verified": false }
     }
+  },
+
+  "tuning": {
+    "solDuration": { "value": 120, "unit": "s", "simplified": true, "src": "game: DECISIONS.md D-001 (1 sol = about 2 minutes)", "verified": true },
+    "startTimeOfSol": { "value": 0.25, "unit": "sol", "requested": "K2", "simplified": true, "note": "surface run starts at local 06:00", "src": "PLACEHOLDER", "verified": false }
   }
 }
