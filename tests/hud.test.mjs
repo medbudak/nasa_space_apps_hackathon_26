@@ -68,3 +68,13 @@ test('the EVA bar puts the no-return notch at the O2 needed to walk back', () =>
   s.life.eva.noReturn = true;
   assert.equal(evaBar(s, 0.8).noReturn, true);
 });
+
+// ---- alarms ----
+import { judge } from '../src/ui/alarms.js';
+
+test('a false alarm is answered right only with "fake", a real one only with "real"', () => {
+  assert.equal(judge({ fake: true }, 'fake'), true);
+  assert.equal(judge({ fake: true }, 'real'), false);
+  assert.equal(judge({ fake: false }, 'real'), true);
+  assert.equal(judge({ fake: false }, 'fake'), false);
+});

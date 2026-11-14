@@ -134,3 +134,14 @@ mountLangSwitch(document.body, { t, getLang, setLang, onChange: () => goTo(getSt
 
 Re-entering the scene redraws it in the new language; Sol 0 keeps the player's picks and the step they were on.
 Texts: `lang.label`, `lang.tr`, `lang.en` in `ui_texts.json` (each language is named in its own language).
+
+# Alarms (real and false)
+
+In `hud.html`: "fake O₂ alarm" and "real energy alarm". Both look the same; "Check telemetry" opens the Telemetry tab and shows
+the real reading, then the player answers "false alarm" or "it's real".
+
+| Who | What |
+|---|---|
+| K2 (sanity.js) | A false alarm rides on the existing D-003 effect event: `bus.emit('hallucination', { alpha, alarm: { id, stat, value, unit } })`. K4's vignette keeps reading `alpha`; the HUD reads `alarm`. No new event name. `stat`: `o2`, `energy`, `heat`, `radiation`. |
+| K2 | A real alarm: `hud.alarm({ id, stat, value, unit })`. |
+| K2 | `onAlarmResolve({ id, stat, fake, answer, verified, correct })` in `mountHud` options: K2 decides the consequence (sanity, wasted resources). |

@@ -8,7 +8,9 @@
 //     downlink: { passes, lightDelaySec },         // see ./downlink.js
 //     power: { getStatus, setOrder },              // K2 power.js, see ./powerPanel.js
 //     refreshMs: 500,
+//     onAlarmResolve: (r) => { ... },              // K2: consequence of a (fake) alarm answer, see ./alarms.js
 //   });
+//   hud.alarm({ id, stat: 'o2', value: 8, unit: '%', real: true });   // a real alarm; fake ones come via `hallucination`
 //   hud.openTab('telemetry');                      // e.g. from an alarm: "check it on telemetry"
 //
 // Bars read gameState (K1 schema + K2 sub-objects) and limits from nasa_data.json. A limit that is not
@@ -17,6 +19,7 @@
 import { mountTelemetry } from './telemetry.js';
 import { mountDownlink } from './downlink.js';
 import { mountPowerPanel } from './powerPanel.js';
+import { mountAlarms } from './alarms.js';
 
 // Display thresholds for bar colour only (share of the bar left). They change no game rule.
 const WARN = 0.3;
@@ -179,16 +182,31 @@ export function mountHud(el, opts) {
     });
   });
 
+  // Alarms: "check telemetry" opens the Telemetry tab and shows the real reading from the same bars.
+  const alarms = mountAlarms(el, {
+    bus, t, locale,
+    onVerify: () => { if (tab !== 'telemetry') openTab('telemetry'); },
+    onResolve: opts.onAlarmResolve,
+    readStat: (stat) => {
+      const b = hudBars(state, data).find((x) => x.id === stat);
+      if (!b || b.value == null) return null;
+      const note = b.note ? Object.entries(b.note.vars).reduce((s2, [k, v]) => s2.replace(`{${k}}`, typeof v === 'number' ? fmt(v, Number.isInteger(v) ? 0 : 1) : v), t(b.note.key)) : '';
+      return { value: b.value, unit: b.unit, note };
+    },
+  });
+
   renderBars();
   if (opts.refreshMs) timer = setInterval(renderBars, opts.refreshMs);
 
   return {
-    refresh: () => { renderBars(); panel?.refresh?.(); }, // e.g. after a language switch
+    refresh: () => { renderBars(); panel?.refresh?.(); alarms.refresh(); }, // e.g. after a language switch
+    alarm: (a) => alarms.show({ real: true, ...a }),
     openTab: (id) => { if (tab !== id) openTab(id); },
     closeTabs: () => { if (tab) openTab(tab); },
     destroy() {
       clearInterval(timer);
       panel?.destroy();
+      alarms.destroy();
       el.innerHTML = '';
       el.classList.remove('hud');
     },

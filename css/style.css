@@ -381,6 +381,17 @@ button { font: inherit; color: inherit; }
   font: 700 14px var(--font); color: var(--ink-dim); }
 .lang-switch button[aria-pressed="true"] { background: var(--mars); color: #fff; }
 
+/* ---------- alarms (real and false look the same) ---------- */
+.alarm-layer { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); z-index: 25; width: min(560px, calc(100vw - 32px)); }
+.alarm { background: #3a1416; border: 2px solid var(--bad); border-radius: 12px; padding: 14px 18px; box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  animation: alarm-pulse 1s ease-in-out infinite alternate; }
+.alarm h2 { margin: 0 0 6px; font-size: 22px; color: var(--bad-text); letter-spacing: .04em; }
+.alarm p { margin: 0 0 10px; }
+.alarm-reading { background: var(--night); border-radius: 8px; padding: 6px 10px; font-size: 15px; }
+.alarm-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+@keyframes alarm-pulse { from { border-color: var(--bad); } to { border-color: #ffb0a8; } }
+@media (prefers-reduced-motion: reduce) { .alarm { animation: none; } }
+
 /* ---------- dev page only ---------- */
 .dev-bar {
   position: fixed; bottom: 76px; right: 16px; display: flex; gap: 6px; z-index: 5;
