@@ -211,3 +211,15 @@ export const sampleQtes = {
     delaysSeconds: [1.4, 1.0, 1.7],
   },
 };
+
+// ---- wiring -----------------------------------------------------------------------
+// Comms junction box. Electra-Lite (UHF relay radio) and the SDST (Small Deep Space Transponder, X-band) are the
+// radios on NASA's Mars rovers; K5 checks the wording. `rightOrder` would be shuffled with the seeded RNG.
+const pair = (id) => ({ id, leftKey: `wiring.comms.${id}.left`, rightKey: `wiring.comms.${id}.right`, hintKey: `wiring.comms.${id}.hint` });
+export const sampleWiring = {
+  titleKey: 'wiring.comms.title', introKey: 'wiring.comms.intro',
+  pairs: ['uhf', 'xband', 'power', 'data'].map(pair),
+  rightOrder: ['xband', 'data', 'uhf', 'power'],
+  maxMistakes: 2,
+  timeLimitSeconds: 40,
+};

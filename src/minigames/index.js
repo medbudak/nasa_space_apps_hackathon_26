@@ -19,8 +19,9 @@
 import { converter } from './converter.js';
 import { align } from './align.js';
 import { qte } from './qte.js';
+import { wiring } from './wiring.js';
 
-const TEMPLATES = { converter, align, qte };
+const TEMPLATES = { converter, align, qte, wiring };
 
 export function registerTemplate(name, template) {
   TEMPLATES[name] = template;
