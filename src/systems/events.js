@@ -14,7 +14,8 @@
 //
 // Effect types:
 //   { type: 'resource', stat: 'energy_kWh' | 'oxygen_kg' | 'radiation_mSv', delta }  // state.resources
-//   { type: 'wait', sols | hours, estimate: {...} }  // runs the simulation forward
+//   { type: 'wait', sols, hours?, estimate: {...} }  // runs the simulation forward; sols is
+//                                                     // always set (for display), hours wins if given
 //   { type: 'flag', key, value }                      // state.sim.events.flags
 //   { type: 'eva', set: { speedFactor, jointsFrozen } } // changes the EVA state
 //   { type: 'estimate', ...numbers }                  // shown on the card only, applies nothing
@@ -51,15 +52,29 @@ export function checkEvents(state, ctx) {
     if (event.decision) {
       const card = event.decision(state, ctx);
       ev.pending = { eventId: event.id, sol: state.sol, card };
-      ctx.bus?.emit('decision:open', {
-        eventId: event.id,
-        ...card,
-        choose: (choiceId) => resolveDecision(state, choiceId, ctx),
-      });
+      ctx.bus?.emit('decision:open', cardPayload(state, event.id, card, ctx));
       return event.id;
     }
   }
   return null;
+}
+
+/**
+ * What the UI receives with decision:open.
+ * Disabled options are left out of `options` so a UI that cannot grey them out never offers
+ * a choice that would be refused; they are listed in `unavailable` for a UI that can show why.
+ */
+function cardPayload(state, eventId, card, ctx) {
+  return {
+    eventId,
+    sol: state.sol,
+    ...card,
+    options: card.options.filter((o) => !o.disabled),
+    unavailable: card.options
+      .filter((o) => o.disabled)
+      .map(({ id, labelKey, disabledKey }) => ({ id, labelKey, disabledKey })),
+    choose: (choiceId) => resolveDecision(state, choiceId, ctx),
+  };
 }
 
 /** Apply the chosen option of the open card, log it, and close the card. Returns the log entry. */
@@ -182,7 +197,12 @@ export const EVENTS = [
             disabled: !eva.nearWreck,
             disabledKey: 'event.noReturn.option.shelterWreck.disabled',
             effects: [
-              { type: 'wait', hours: shelterHours, estimate: { suitO2Kg: -round2(o2PerHour * shelterHours) } },
+              {
+                type: 'wait',
+                hours: shelterHours,
+                sols: shelterHours / val(data.mars.solLength),
+                estimate: { suitO2Kg: -round2(o2PerHour * shelterHours) },
+              },
               { type: 'eva', set: { speedFactor: 1, jointsFrozen: false, thawed: true } },
             ],
           },

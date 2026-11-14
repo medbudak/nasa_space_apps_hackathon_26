@@ -146,6 +146,27 @@ test('sheltering at a wreck needs a wreck nearby, and costs suit O2 while waitin
   assert.equal(near.s.sim.eva.thawed, true);
 });
 
+test('the UI only receives options it may choose; the rest are listed as unavailable', () => {
+  const { s, bus, ctx } = setup();
+  frozenFarOut(s, ctx, { suitFractionOfNeed: 0.5, nearWreck: false }); // slow walk and shelter both impossible
+  checkEvents(s, ctx);
+  const payload = bus.emitted.find((e) => e.name === 'decision:open').payload;
+  assert.deepEqual(payload.options.map((o) => o.id), ['suitHeater']);
+  assert.deepEqual(payload.unavailable.map((o) => o.id), ['slowWalk', 'shelterWreck']);
+  assert.ok(payload.unavailable.every((o) => o.disabledKey));
+  assert.equal(payload.sol, s.sol);
+});
+
+test('an hours-long wait also says how many sols it is, for display', () => {
+  const { s, ctx } = setup();
+  frozenFarOut(s, ctx, { suitFractionOfNeed: 0.9, nearWreck: true });
+  checkEvents(s, ctx);
+  const wait = s.sim.events.pending.card.options
+    .find((o) => o.id === 'shelterWreck').effects.find((e) => e.type === 'wait');
+  const hours = val(data.events.noReturn.shelterHours);
+  assert.ok(Math.abs(wait.sols - hours / val(data.mars.solLength)) < 1e-12);
+});
+
 test('a new EVA resets the card and the thaw', () => {
   const { s, ctx } = setup();
   frozenFarOut(s, ctx, { suitFractionOfNeed: 0.9 });
