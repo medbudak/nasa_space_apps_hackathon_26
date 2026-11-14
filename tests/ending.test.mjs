@@ -29,7 +29,7 @@ test('mission success thresholds follow D-006', () => {
 test('three different designs give three different explanations', () => {
   // (a) cheap and light: small battery, the greenhouse froze.
   newGame(1);
-  getState().design.batteryId = 'b20';
+  getState().design.batteryId = 'b150';
   addScore('survival', -120, 'consequence.greenhouseFroze', 'design.batteryId');
   addScore('forensics', 100, 'consequence.correctDiagnosis', 'decision.wreckOpportunity');
   const cheap = buildReport(getState(), data);

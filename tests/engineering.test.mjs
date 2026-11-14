@@ -104,15 +104,15 @@ test('night energy: only the hours without Sun count', () => {
 test('evaluateDesign sums the chosen rows and flags unresearched values', () => {
   const design = {
     objectiveId: 'balanced', rocketId: 'sls', trajectoryId: 'hohmann', siteId: 'jezero',
-    powerId: 'solarRtg', batteryId: 'b40', insulationId: 'thick',
+    powerId: 'solarRtg', batteryId: 'b200', insulationId: 'thick',
     instrumentIds: ['camera', 'moxie'], commsId: 'relay', spareKitsId: 'k0',
   };
   const s = eng.evaluateDesign(design, data);
   assert.equal(s.capacity, data.launchVehicles.find((r) => r.id === 'sls').capacityKg.value);
   close(s.instrumentDayW, 17.4 + 300);
-  assert.equal(s.batteryKWh, 40);
+  assert.equal(s.batteryKWh, 200);
   assert.equal(s.transitDays, 288);
-  assert.ok(s.mass >= 45 + 266.7, 'RTG and battery mass are counted');
+  assert.ok(s.mass >= 45 + 1333.3, 'RTG and battery mass are counted');
   assert.ok(s.nightNeedKWh > 0);
   assert.ok(s.unresearched.includes('rules.baseMassKg'), 'base mass is still unresearched');
 });

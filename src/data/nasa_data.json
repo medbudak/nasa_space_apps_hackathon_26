@@ -305,6 +305,13 @@
       "verified": true,
       "simplified": true
     },
+    "powerRestoreFraction": {
+      "value": 0.2,
+      "unit": "",
+      "src": "game: K2 load shedding (M3): shed loads come back above this battery fraction",
+      "verified": true,
+      "simplified": true
+    },
     "habitatPowerW": {
       "value": 12000,
       "unit": "W",
@@ -696,24 +703,49 @@
         "verified": true,
         "note": "\"weighs about 94 pounds (45 kilograms)\""
       }
+    },
+    {
+      "id": "fission",
+      "realName": "Fission Surface Power",
+      "continuousW": {
+        "value": null,
+        "unit": "W",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "electrical output of NASA Kilopower / Fission Surface Power unit"
+      },
+      "massKg": {
+        "value": null,
+        "unit": "kg",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "unit mass from NASA Kilopower / FSP sources"
+      },
+      "costMUSD": {
+        "value": null,
+        "unit": "M$",
+        "src": "PLACEHOLDER",
+        "verified": false,
+        "todo": "official cost source"
+      }
     }
   ],
   "batteries": [
     {
-      "id": "b20",
+      "id": "b150",
       "capacityKWh": {
-        "value": 20,
+        "value": 150,
         "unit": "kWh",
-        "src": "game: design doc v2 battery option",
+        "src": "game: K1 decision: options sized around the ~147 kWh night need of the DRA 5.0 habitat",
         "verified": true,
         "simplified": true
       },
       "massKg": {
-        "value": 133.3,
+        "value": 1000,
         "unit": "kg",
         "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
         "verified": true,
-        "note": "20 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
+        "note": "150 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
       },
       "costMUSD": {
         "value": null,
@@ -724,20 +756,20 @@
       }
     },
     {
-      "id": "b40",
+      "id": "b200",
       "capacityKWh": {
-        "value": 40,
+        "value": 200,
         "unit": "kWh",
-        "src": "game: design doc v2 battery option",
+        "src": "game: K1 decision: options sized around the ~147 kWh night need of the DRA 5.0 habitat",
         "verified": true,
         "simplified": true
       },
       "massKg": {
-        "value": 266.7,
+        "value": 1333.3,
         "unit": "kg",
         "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
         "verified": true,
-        "note": "40 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
+        "note": "200 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
       },
       "costMUSD": {
         "value": null,
@@ -748,20 +780,20 @@
       }
     },
     {
-      "id": "b60",
+      "id": "b300",
       "capacityKWh": {
-        "value": 60,
+        "value": 300,
         "unit": "kWh",
-        "src": "game: design doc v2 battery option",
+        "src": "game: K1 decision: options sized around the ~147 kWh night need of the DRA 5.0 habitat",
         "verified": true,
         "simplified": true
       },
       "massKg": {
-        "value": 400,
+        "value": 2000,
         "unit": "kg",
         "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
         "verified": true,
-        "note": "60 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
+        "note": "300 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
       },
       "costMUSD": {
         "value": null,

@@ -26,7 +26,7 @@ export function createState(seed = Math.floor(Math.random() * 2 ** 32)) {
     designSummary: null, // evaluateDesign() result at launch: { cost, mass, capacity, nightNeedKWh, ... }
     // Surface simulation, filled by K2 at landing (createSurvivalState / createEventState):
     time: null, // { sol, solFraction }
-    power: null, // { batteryWh, batteryCapacityWh, generationW, loadW, deficitW, dust }
+    power: null, // { batteryWh, batteryCapacityWh, generationW, loadW, deficitW, dust, order[], off{}, experimentW }
     env: null, // { outsideC, insideC }
     life: null, // { o2Kg, radiationMSv, ... }
     events: null, // { fired, pending, flags }
