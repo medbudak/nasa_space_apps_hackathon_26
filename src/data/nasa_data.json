@@ -418,6 +418,78 @@
       "note": "\"reference 40-t useful payload on the surface of Mars\" per lander"
     }
   },
+  "science": {
+    "soundSpeedMarsLowMs": {
+      "value": 240,
+      "unit": "m/s",
+      "src": "https://www.jpl.nasa.gov/news/what-sounds-captured-by-nasas-perseverance-rover-reveal-about-mars/",
+      "verified": true,
+      "note": "Perseverance SuperCam microphone: \"low-pitched sounds travel at about ... 240 meters per second\""
+    },
+    "soundSpeedMarsHighMs": {
+      "value": 250,
+      "unit": "m/s",
+      "src": "https://www.jpl.nasa.gov/news/what-sounds-captured-by-nasas-perseverance-rover-reveal-about-mars/",
+      "verified": true,
+      "note": "\"Higher-pitched sounds move at ... 250 meters per second\""
+    },
+    "soundSpeedEarthMs": {
+      "value": 343,
+      "unit": "m/s",
+      "src": "https://www.jpl.nasa.gov/news/what-sounds-captured-by-nasas-perseverance-rover-reveal-about-mars/",
+      "verified": true,
+      "note": "\"On Earth, sounds typically travel at ... 343 meters per second\""
+    },
+    "waterTriplePointPa": {
+      "value": 611.657,
+      "unit": "Pa",
+      "src": "https://www.nist.gov/si-redefinition/kelvin/kelvin-present-realization",
+      "verified": true,
+      "note": "NIST: \"until the pressure inside is 611.657 pascals\""
+    },
+    "waterTriplePointK": {
+      "value": 273.16,
+      "unit": "K",
+      "src": "https://www.nist.gov/si-redefinition/kelvin/kelvin-present-realization",
+      "verified": true,
+      "note": "NIST: \"That temperature is 273.16 K\""
+    },
+    "liquidWaterUnstable": {
+      "value": true,
+      "unit": "",
+      "src": "https://ntrs.nasa.gov/citations/20120016793",
+      "verified": true,
+      "note": "NASA: \"liquid water is unstable on the surface of Mars due to low atmospheric pressures\""
+    },
+    "perchlorateWtPct": {
+      "value": 0.5,
+      "unit": "wt%",
+      "src": "https://ntrs.nasa.gov/citations/20190028297",
+      "verified": true,
+      "note": "Phoenix soil perchlorate \"~0.5 wt%\""
+    },
+    "perchlorateLeachable": {
+      "value": true,
+      "unit": "",
+      "src": "https://www.nasa.gov/wp-content/uploads/2015/10/pom_workshopbooklet.pdf",
+      "verified": true,
+      "note": "Sutter (NASA JSC): soil \"can be leached with water to remove soluble oxychlorine phases and other salts\""
+    },
+    "tomatoGerminationSimulantPct": {
+      "value": 90,
+      "unit": "%",
+      "src": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0103138",
+      "verified": true,
+      "note": "Wamelink et al. 2014, Table S1: tomato on Mars simulant JSC Mars-1A, 50 days, 100 seeds; 66% on the Earth control soil"
+    },
+    "tomatoGerminationControlPct": {
+      "value": 66,
+      "unit": "%",
+      "src": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0103138",
+      "verified": true,
+      "note": "Wamelink et al. 2014, Table S1: tomato on nutrient-poor Earth river soil (control)"
+    }
+  },
   "loss": {
     "coldHours": {
       "value": 2,
@@ -427,11 +499,11 @@
       "simplified": true
     },
     "radiationLimitMSv": {
-      "value": null,
+      "value": 600,
       "unit": "mSv",
-      "src": "PLACEHOLDER",
-      "verified": false,
-      "todo": "NASA-STD-3001 Vol 1 career effective dose limit; verify the 600 mSv figure on the standard"
+      "src": "https://www.nasa.gov/wp-content/uploads/2020/10/2022-01-05_nasa-std-3001_vol.1_rev._b_final_draft_with_signature_010522.pdf",
+      "verified": true,
+      "note": "NASA-STD-3001 Vol 1 Rev B [V1 4030]: career effective dose \"shall be less than 600 mSv\""
     }
   },
   "events": {
@@ -1519,6 +1591,13 @@
         "src": "https://science.nasa.gov/photojournal/image-from-mars-orbit-indicates-solar-panels-on-phoenix-lander-may-have-collapsed/",
         "verified": true,
         "note": "panel collapse is inferred (\"scientists believe\"), not confirmed"
+      },
+      "lowestTempC": {
+        "value": -96,
+        "unit": "C",
+        "src": "https://www.jpl.nasa.gov/news/phoenix-mission-status-report/",
+        "verified": true,
+        "note": "\"overnight temperatures falling to -141F (-96C) ... the lowest temperatures experienced so far in the mission\" (29 Oct 2008)"
       }
     },
     {
@@ -1545,6 +1624,27 @@
         "unit": "text",
         "src": "https://www.nasa.gov/press-release/nasa-retires-insight-mars-lander-mission-after-years-of-science",
         "verified": true
+      },
+      "energyAtLandingWhPerSol": {
+        "value": 5000,
+        "unit": "Wh/sol",
+        "src": "https://www.jpl.nasa.gov/news/nasas-insight-still-hunting-marsquakes-as-power-levels-diminish/",
+        "verified": true,
+        "note": "\"When InSight landed, the solar panels produced around 5,000 watt-hours each Martian day\""
+      },
+      "energyMay2022WhPerSol": {
+        "value": 500,
+        "unit": "Wh/sol",
+        "src": "https://www.jpl.nasa.gov/news/nasas-insight-still-hunting-marsquakes-as-power-levels-diminish/",
+        "verified": true,
+        "note": "\"Now, they're producing roughly 500 watt-hours per sol\""
+      },
+      "energyDec2022WhPerSol": {
+        "value": 285,
+        "unit": "Wh/sol",
+        "src": "https://science.nasa.gov/blogs/insight/2022/12/12/nasa-insights-power-level-as-of-dec-12-2022/",
+        "verified": true,
+        "note": "\"As of Dec. 12, 2022, InSight is generating an average of ~285 watt-hours of energy per Martian day\""
       }
     },
     {
