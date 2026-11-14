@@ -723,12 +723,12 @@
         "verified": true,
         "note": "equatorial proxy: Gale Crater typical \"daily highs at about 32 degrees Fahrenheit (0 degrees Celsius)\""
       },
-      "iceDepthM": {
-        "value": null,
-        "unit": "m",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "depth to water ice near the equator (SWIM map)"
+      "nearSurfaceIce": {
+        "value": false,
+        "unit": "",
+        "src": "https://science.nasa.gov/wp-content/uploads/2023/04/Mellon_Water_PPS_May2011___TAGGED.pdf",
+        "verified": true,
+        "note": "\"Equatorial ground ice is generally not stable\" (Mellon, NASA PPS 2011)"
       }
     },
     {
@@ -755,12 +755,12 @@
         "verified": true,
         "note": "MEDA: air temperature typically \"between –83 Celsius and -23 Celsius\""
       },
-      "iceDepthM": {
-        "value": null,
-        "unit": "m",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "depth to water ice at Jezero (SWIM map)"
+      "nearSurfaceIce": {
+        "value": false,
+        "unit": "",
+        "src": "https://iopscience.iop.org/article/10.3847/PSJ/ad9b24",
+        "verified": true,
+        "note": "SWIM: ice-stable depth increases toward the equator; ice signs below 30° latitude are \"thought to be out of equilibrium\""
       }
     },
     {
@@ -786,6 +786,13 @@
         "src": "https://science.nasa.gov/photojournal/sixty-one-martian-days-of-weather-monitoring",
         "verified": true,
         "note": "high-latitude proxy: Phoenix (68°N) summer \"average daily high has been minus 30 degrees C\""
+      },
+      "nearSurfaceIce": {
+        "value": true,
+        "unit": "",
+        "src": "https://www.jpl.nasa.gov/news/nasas-treasure-map-for-water-ice-on-mars/",
+        "verified": true,
+        "note": "Arcadia: \"water ice less than one foot (30 centimeters) below the surface\""
       },
       "iceDepthM": {
         "value": 0.3,
@@ -1136,11 +1143,11 @@
       "id": "seis",
       "realName": "SEIS (InSight)",
       "massKg": {
-        "value": null,
+        "value": 28.8,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "SEIS mass not on NASA pages; 30 kg in the design doc is unsourced. Check CNES/IPGP SEIS papers"
+        "src": "https://link.springer.com/content/pdf/10.1007/s11214-018-0574-6.pdf",
+        "verified": true,
+        "note": "Lognonné et al. 2019: \"The full mass of the instrument is therefore large at about 28.8 kg\" (sensors 6.5 kg, Ebox 5.2 kg, rest windshield, tether, cradle)"
       },
       "powerW": {
         "value": 8.5,
@@ -1312,7 +1319,7 @@
         "unit": "kg",
         "src": "PLACEHOLDER",
         "verified": false,
-        "todo": "Veggie mass not found on an official page"
+        "todo": "Veggie mass not on NASA pages; Massa et al. 2017 (doi:10.1515/opag-2017-0003) may give it, check by hand"
       },
       "powerW": {
         "value": 70,
@@ -1348,11 +1355,11 @@
         "note": "\"1.8 kilograms\""
       },
       "powerW": {
-        "value": null,
+        "value": 0,
         "unit": "W",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "habitat draw: confirm Ingenuity recharges from its own solar panel"
+        "src": "https://assets.science.nasa.gov/content/dam/science/psd/mars/downloadable_items/4/4/44739_MarsHelicopterIngenuity_FactSheet.pdf",
+        "verified": true,
+        "note": "draws nothing from the habitat: \"Solar-powered and recharges on its own\""
       },
       "mbitPerUse": {
         "value": null,
@@ -1413,11 +1420,11 @@
     {
       "id": "relayX",
       "mbitPerSol": {
-        "value": null,
+        "value": 500.6,
         "unit": "Mbit/sol",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "relay + X-band DTE: 500 Mb/sol + DTE at 160 bit/s × daily DSN pass length"
+        "src": "https://descanso.jpl.nasa.gov/monograph/series13/DeepCommo_Chapter7--141030.pdf",
+        "verified": true,
+        "note": "derived: relay 500 Mb/sol + DTE 160 bit/s × 60 min; MER \"two-way DTE passes 30-60 min in duration\". The X-band link adds redundancy, not volume"
       },
       "standbyW": {
         "value": 21,
