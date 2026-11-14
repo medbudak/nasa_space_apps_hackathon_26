@@ -150,7 +150,7 @@ export function mountDecisionCards(root, opts) {
             </div>`).join('')}
         </div>
         <p class="decision-error" data-error role="alert" hidden></p>
-        <p class="decision-hint">${tv('decision.hint')}</p>
+        <p class="decision-hint">${opts.t('decision.hint', { keys: card.options.map((_, i) => i + 1).join(', ') })}</p>
       </section>`;
     layer.querySelectorAll('[data-option]').forEach((b) => b.addEventListener('click', () => choose(b.dataset.option)));
     layer.querySelector('[data-option]').focus();

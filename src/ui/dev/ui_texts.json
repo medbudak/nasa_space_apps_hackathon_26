@@ -6,7 +6,7 @@
   "lang.en": { "tr": "English", "en": "English" },
 
   "decision.kicker": { "tr": "KARAR", "en": "DECISION" },
-  "decision.hint": { "tr": "Bir seçenek seç ya da 1, 2, 3 tuşlarına bas. Kararın görev günlüğüne yazılır.", "en": "Pick an option or press 1, 2, 3. Your choice goes into the mission log." },
+  "decision.hint": { "tr": "Bir seçenek seç ya da {keys} tuşlarına bas. Kararın görev günlüğüne yazılır.", "en": "Pick an option or press {keys}. Your choice goes into the mission log." },
   "decision.noCost": { "tr": "bedelsiz", "en": "no cost" },
 
   "decision.estimate": { "tr": "tahmini", "en": "estimate" },
