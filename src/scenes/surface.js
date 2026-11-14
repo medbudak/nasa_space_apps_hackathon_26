@@ -139,6 +139,7 @@ function walk(dt) {
   const gameSeconds = realSecondsToHours(dt, ctx.data, state) * 3600;
   const metres = walkSpeedMs(state, ctx.data) * gameSeconds;
   scene.astronautX += right ? metres : -metres;
+  scene.facing = right ? 1 : -1;
   setEvaPosition(state, { distanceM: Math.abs(scene.astronautX) });
 }
 
@@ -154,7 +155,46 @@ function toggleEva(state, data) {
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder drawing (K4's sprites and effects replace this)
+// Drawing: K4's images (assets/), with plain shapes while an image is loading or missing.
+
+// Background per landing site, and on-screen sizes in px from K4's assets/sprites/sprites.json.
+const BACKGROUNDS = {
+  meridiani: 'assets/backgrounds/bg_meridiani_day.png',
+  jezero: 'assets/backgrounds/bg_jezero_sunset.png',
+  arcadia: 'assets/backgrounds/bg_arcadia_day.png',
+};
+const SPRITES = {
+  walk: { file: 'assets/sprites/astronaut_walk.png', w: 48, h: 64 },
+  frozen: { file: 'assets/sprites/astronaut_frozen.png', w: 48, h: 64 },
+  solarClean: { file: 'assets/structures/solar_clean.png', w: 144, h: 108 },
+  solarDusty: { file: 'assets/structures/solar_dusty.png', w: 144, h: 108 },
+  greenhouse: { file: 'assets/structures/greenhouse_ok.png', w: 144, h: 96 },
+  mav: { file: 'assets/structures/mav_rocket.png', w: 96, h: 192 },
+};
+const images = {};
+
+/** The loaded image for an asset path, or null while it loads (and always in Node tests). */
+function image(path) {
+  if (typeof Image === 'undefined') return null;
+  if (!images[path]) {
+    images[path] = new Image();
+    images[path].src = new URL(`../../${path}`, import.meta.url).href;
+  }
+  const img = images[path];
+  return img.complete && img.naturalWidth ? img : null;
+}
+
+/** Draws a sprite standing on the ground at screen x (its centre). Returns false if not loaded. */
+function drawSprite(g, sprite, x, groundY, flip = false) {
+  const img = image(sprite.file);
+  if (!img) return false;
+  g.save();
+  g.translate(x, groundY - sprite.h); // origin: top edge, horizontal centre
+  if (flip) g.scale(-1, 1); // mirror around the centre line
+  g.drawImage(img, -sprite.w / 2, 0, sprite.w, sprite.h);
+  g.restore();
+  return true;
+}
 
 function draw() {
   const { g, canvas, state, ctx, astronautX } = scene;
@@ -165,14 +205,26 @@ function draw() {
   const cameraX = astronautX; // keep the astronaut in the middle
   const toScreen = (m) => W / 2 + (m - cameraX) * pxPerM;
 
-  // Sky: dark at night, butterscotch by day (brightness follows the Sun).
+  // Sky and ground: K4's background for the site, darkened at night (brightness follows the Sun).
   const site = ctx.data.landingSites.find((r) => r.id === state.design.siteId);
   const sun = ctx.eng.sunCos(state.time.solFraction, site?.latitudeDeg?.value ?? 0);
-  g.fillStyle = `rgb(${Math.round(20 + 180 * sun)}, ${Math.round(12 + 120 * sun)}, ${Math.round(16 + 80 * sun)})`;
-  g.fillRect(0, 0, W, groundY);
+  const bg = image(BACKGROUNDS[state.design.siteId] ?? BACKGROUNDS.meridiani);
+  if (bg) {
+    g.drawImage(bg, 0, 0, W, H);
+    g.fillStyle = `rgba(8, 6, 20, ${(0.75 * (1 - Math.min(1, sun * 2))).toFixed(3)})`;
+    g.fillRect(0, 0, W, H);
+  } else {
+    g.fillStyle = `rgb(${Math.round(20 + 180 * sun)}, ${Math.round(12 + 120 * sun)}, ${Math.round(16 + 80 * sun)})`;
+    g.fillRect(0, 0, W, groundY);
+    g.fillStyle = '#7a3b22';
+    g.fillRect(0, groundY, W, H - groundY);
+  }
 
-  g.fillStyle = '#7a3b22';
-  g.fillRect(0, groundY, W, H - groundY);
+  // Base layout: panels and greenhouse left of the habitat, the ascent vehicle (MAV) to the right.
+  const dusty = (state.power.dust ?? 0) > 0.3;
+  if (state.design.powerId !== 'fission') drawSprite(g, dusty ? SPRITES.solarDusty : SPRITES.solarClean, toScreen(-30), groundY);
+  if (state.design.instrumentIds?.includes('plantChamber')) drawSprite(g, SPRITES.greenhouse, toScreen(-55), groundY);
+  drawSprite(g, SPRITES.mav, toScreen(40), groundY);
 
   // Habitat at x = 0 (door), 12 m wide to the left of the door.
   g.fillStyle = state.power.off.heating ? '#5b6b7a' : '#d9d2c5';
@@ -183,8 +235,11 @@ function draw() {
   // Astronaut (inside: drawn at the door, dimmed).
   const eva = state.life.eva;
   g.globalAlpha = eva.outside ? 1 : 0.35;
-  g.fillStyle = eva.jointsFrozen ? '#9fd3ff' : '#f2e8e4';
-  g.fillRect(toScreen(astronautX) - 0.4 * pxPerM, groundY - 1.8 * pxPerM, 0.8 * pxPerM, 1.8 * pxPerM);
+  const sprite = eva.jointsFrozen ? SPRITES.frozen : SPRITES.walk;
+  if (!drawSprite(g, sprite, toScreen(astronautX), groundY, scene.facing < 0)) {
+    g.fillStyle = eva.jointsFrozen ? '#9fd3ff' : '#f2e8e4';
+    g.fillRect(toScreen(astronautX) - 0.4 * pxPerM, groundY - 1.8 * pxPerM, 0.8 * pxPerM, 1.8 * pxPerM);
+  }
   g.globalAlpha = 1;
 
   // EVA prompt at the door.

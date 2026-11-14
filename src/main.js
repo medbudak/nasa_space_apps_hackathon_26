@@ -5,12 +5,18 @@
 // A scene that is not built yet shows a placeholder, so the flow always runs end to end.
 //
 // URL options: ?scene=surface jumps to a scene · ?seed=123 fixes the random seed.
+//
+// Shared UI that lives across scenes is mounted once here: K3's decision cards, mini-game host
+// and TR/EN switch. K3's HUD is mounted over the surface scene.
 
 import { bus } from './core/bus.js';
 import { loadNasaData, getData } from './core/nasaData.js';
-import { loadStory, t, getLang } from './core/i18n.js';
+import { loadStory, t, getLang, setLang } from './core/i18n.js';
 import { getState, newGame, load, save } from './core/state.js';
 import { evaluateDesign } from './core/engineering.js';
+
+const locale = () => (getLang() === 'tr' ? 'tr-TR' : 'en-US');
+const shared = []; // mounted shared panels, refreshed after a language switch
 
 const SCENES = {
   design: { path: './scenes/design.js', owner: 'K3', next: 'surface' },
@@ -73,7 +79,7 @@ function designScene(mountDesign) {
         t,
         evaluate: evaluateDesign,
         design: state.design,
-        locale: getLang() === 'tr' ? 'tr-TR' : 'en-US',
+        locale: locale(),
         onChange: (design) => {
           Object.assign(state.design, design);
           save();
@@ -91,17 +97,66 @@ function designScene(mountDesign) {
   };
 }
 
+// K2's surface scene with K3's HUD over it. The HUD redraws itself every refreshMs.
+function withHud(scene) {
+  let hud = null;
+  return {
+    async enter(ctx) {
+      await scene.enter(ctx);
+      if (!ctx.state.time) return; // the scene could not start and shows its own message
+      try {
+        const { mountHud } = await import('./ui/hud.js');
+        const el = document.createElement('div');
+        el.className = 'hud-root';
+        ctx.ui.append(el);
+        hud = mountHud(el, { state: ctx.state, data: ctx.data, t: ctx.t, bus: ctx.bus, locale, refreshMs: 250 });
+      } catch (err) {
+        console.warn('[main] HUD not available', err);
+      }
+    },
+    exit() {
+      hud?.destroy?.();
+      hud = null;
+      scene.exit?.();
+    },
+  };
+}
+
 async function loadScene(name) {
   if (name === 'title') return titleScene;
   const info = SCENES[name];
   if (!info) throw new Error(`unknown scene "${name}"`);
   try {
     const mod = await import(info.path);
+    if (name === 'surface' && mod.default) return withHud(mod.default);
     if (mod.default) return mod.default;
     if (mod.mountDesign) return designScene(mod.mountDesign);
     throw new Error(`${info.path} has no default export`);
   } catch (err) {
     return placeholderScene(name, info, err);
+  }
+}
+
+// Mounts K3's cross-scene panels once. A missing module only loses that panel.
+async function mountShared() {
+  const mounts = [
+    ['./ui/decisionCard.js', 'mountDecisionCards', () => ({ bus, t, locale })],
+    ['./minigames/index.js', 'mountMinigames', () => ({ bus, t, locale })],
+    ['./ui/langSwitch.js', 'mountLangSwitch', () => ({
+      t, getLang, setLang,
+      onChange: () => {
+        for (const panel of shared) panel?.refresh?.();
+        goTo(getState().scene);
+      },
+    })],
+  ];
+  for (const [path, fn, opts] of mounts) {
+    try {
+      const mod = await import(path);
+      shared.push(mod[fn](document.body, opts()));
+    } catch (err) {
+      console.warn(`[main] ${path} not mounted`, err);
+    }
   }
 }
 
@@ -133,6 +188,7 @@ async function start() {
   }
   // Handle for the debug console: sol14.state, sol14.goTo('ending'), ...
   window.sol14 = { get state() { return getState(); }, bus, data: getData(), goTo };
+  await mountShared();
 
   const jump = new URLSearchParams(location.search).get('scene');
   if (jump) newGame(seedFromUrl());
