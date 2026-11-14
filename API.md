@@ -18,7 +18,7 @@ $$P = S \cdot A \cdot \eta \cdot \cos Z \cdot (1 - d_{\text{toz}})$$
 * $d_{\text{toz}}$: Panel üzerindeki toz birikim katsayısı ($0.0\text{–}0.90$; fırtınada artar, manuel temizlik veya toz şeytanı ile azalır).
 
 ```js
-export function calcSolarPower({ irradiance = 590, area = 25, efficiency = 0.28, cosZ = 0.85, dustFactor = 0.1 })
+export function calcSolarPower({ irradiance = 586.2, area = 25, efficiency = 0.28, cosZ = 0.85, dustFactor = 0.1 })
 // Döndürür: Watt cinsinden anlık güç (number)
 ```
 
@@ -51,10 +51,10 @@ export function calcLightDelay(distanceKm)
 $$T = 2\pi \sqrt{\frac{L}{g_{\text{Mars}}}}$$
 
 * $L$: Sarkaç ip uzunluğu ($\text{m}$).
-* $g_{\text{Mars}} = 3.71\text{ m/s}^2$ (Dünya'da $9.81\text{ m/s}^2$; Mars'ta periyot Dünya'dakinin $\approx 1.63$ katıdır).
+* $g_{\text{Mars}} = 3.73\text{ m/s}^2$ (Dünya'da $9.81\text{ m/s}^2$; Mars'ta periyot Dünya'dakinin $\approx 1.62$ katıdır).
 
 ```js
-export function calcPendulumPeriod(lengthMeters = 1.0, gravity = 3.71)
+export function calcPendulumPeriod(lengthMeters = 1.0, gravity = 3.73)
 // Döndürür: 1 tam salınım süresi (saniye)
 ```
 

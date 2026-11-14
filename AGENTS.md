@@ -28,7 +28,7 @@ Ajanlar ve geliştiriciler kod yazarken aşağıdaki 5 temel sözleşmeye sadık
    - Hiçbir UI bileşeni veya mini-oyun kendi içinde gizli oyun durumu saklamaz; durumu `getState()` ile okur ve `updateState(patch)` veya tanımlı eylem fonksiyonları ile günceller.
 
 2. **Sabit Sayı Yasağı (`data/nasa_data.json`):**
-   - Kütle (`kg`), güç (`W`), veri (`Mbit`), güneş sabiti ($S \approx 590\text{ W/m}^2$), yerçekimi ($g = 3.71\text{ m/s}^2$), roket kapasiteleri ve sıcaklık eşikleri kod içine sabit (hardcoded) yazılamaz.
+   - Kütle (`kg`), güç (`W`), veri (`Mbit`), güneş sabiti ($S \approx 586.2\text{ W/m}^2$), yerçekimi ($g = 3.73\text{ m/s}^2$), roket kapasiteleri ve sıcaklık eşikleri kod içine sabit (hardcoded) yazılamaz.
    - Tüm bilimsel sabitler `data/nasa_data.json` dosyasından `src` (NASA kaynak URL'i) alanıyla birlikte okunur.
 
 3. **Düz Metin Yasağı (`content/story.json`):**

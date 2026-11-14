@@ -58,7 +58,7 @@ Oyuncu her enkaz için 5 adımlı dedektif döngüsünü tamamlar:
 
 ### 3.2. Ana Görev 2: Deney Sistemi (`systems/experiments.js`)
 Her deney 6 adımlı bilimsel yöntem döngüsünü izler: **Hipotez Seç (3 şıklı) → Ortam Seç (Habitat İçi vs. Dış Ortam) → Kontrol Grubu Ekle (+%50 puan) → Çalıştır → Ölç (Mini-Oyun) → Sonuç Kartı & Downlink**.
-1. **Sarkaçla Yerçekimi Ölçümü (Tutorial):** 10 salınım süresi → $T = 2\pi\sqrt{L/g} \rightarrow g \approx 3.71\text{ m/s}^2$ (Dünya periyodunun `~1.63` katı).
+1. **Sarkaçla Yerçekimi Ölçümü (Tutorial):** 10 salınım süresi → $T = 2\pi\sqrt{L/g} \rightarrow g \approx 3.73\text{ m/s}^2$ (Dünya periyodunun `~1.62` katı).
 2. **Serbest Düşüş / Zıplama (Tutorial):** 2 m'den düşüş süresi $t = \sqrt{2h/g} \approx 1.04\text{ s}$ (Dünya'da `~0.64 s`); `0.38g` zıplama yüksekliği `~2.6` kat.
 3. **Tohum Çimlenmesi (3 Grup):** Yıkanmamış regolit (perklorat toksik) vs. yıkanmış + gübreli regolit (habitatta çimlenir) vs. dış ortam (`~0.6 kPa` basınçta ölür). *Ödül: Sera verimi `+%30`.*
 4. **Suyun Kaynaması (Üçlü Nokta):** Dış ortama konan su düşük basınç (`~0.6 kPa`) nedeniyle üçlü noktada aynı anda kaynar ve donar. *Ödül: Buzu dışarıda eritme hatasından korunma.*

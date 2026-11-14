@@ -13,7 +13,7 @@ NASA Space Apps jürisinin **Validity (Bilimsel Geçerlilik)** puanını en üst
 2. **"Sıcak Hava" Yerine "Isı Atma (Radyatör) Arızası":**
    - Mars'ta bunaltıcı "sıcak hava dalgası" olamaz çünkü atmosfer çok incedir (`~0.6 kPa`, Dünya'nın `%1`'inden az). Bunun yerine ince atmosferde konveksiyonla soğutma yapılamadığı için **"Radyatör Tıkanması / Elektronik ve Habitat Isı Atma Arızası"** kurgulanır.
 3. **"Şiddetli Deprem ve Boşlukta Savrulma" Yerine "Orta Şiddette Sarsıntı + Heyelan":**
-   - InSight'ın kaydettiği en büyük Mars depremi (Marsquake) **`~M4.7`** büyüklüğündedir ve Mars'ta **`0.38g` (`3.71 m/s²`)** yerçekimi vardır; astronot boşlukta savrulmaz. Olay **"Yakın Meteor Çarpması + M4.7 Sarsıntı / Rafların Devrilmesi ve Denge Kaybı"** olarak kurgulanır.
+   - InSight'ın kaydettiği en büyük Mars depremi (Marsquake) **`~M4.7`** büyüklüğündedir ve Mars'ta **`0.38g` (`3.73 m/s²`)** yerçekimi vardır; astronot boşlukta savrulmaz. Olay **"Yakın Meteor Çarpması + M4.7 Sarsıntı / Rafların Devrilmesi ve Denge Kaybı"** olarak kurgulanır.
 4. **"Radyoaktif İzotoptan Yakıt Sentezi" Yerine "RHU Isısı + Sabatier Reaktörü (ISRU)":**
    - Radyoaktif izotop (`Pu-238`) kimyasal yakıt üretmez; yalnızca **RTG** (elektrik + ısı) veya **RHU** (`1 W` radyoizotop ısıtıcı ünite) olarak kullanılır. Dönüş yakıtı üretimi (ISRU), **Sabatier Reaksiyonu** ($\text{CO}_2 + 4\text{H}_2 \rightarrow \text{CH}_4 + 2\text{H}_2\text{O}$) ve su elektrolizi ile modellenir.
 5. **14 Sol'da "Sebze Hasadı" Yerine "Tohum Çimlenme ve Büyüme Oranı Deneyi":**

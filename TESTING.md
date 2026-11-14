@@ -24,7 +24,7 @@ Test dosyaları: `tests/engineering.test.js` (formüller), `tests/data_integrity
 3. **Işık Gecikmesi (`calcLightDelay`):**
    - En yakın ($5.5 \times 10^7\text{ km} \rightarrow \sim 3.05\text{ dk}$) ve en uzak ($4.0 \times 10^8\text{ km} \rightarrow \sim 22.2\text{ dk}$) Dünya-Mars mesafelerinde doğru gecikme hesabı.
 4. **Sarkaç Periyodu (`calcPendulumPeriod`):**
-   - $L = 1\text{ m}$ için Mars ($g = 3.71\text{ m/s}^2 \rightarrow T \approx 3.26\text{ sn}$) ve Dünya ($g = 9.81\text{ m/s}^2 \rightarrow T \approx 2.00\text{ sn}$) oranı ($\approx 1.63\times$).
+   - $L = 1\text{ m}$ için Mars ($g = 3.73\text{ m/s}^2 \rightarrow T \approx 3.25\text{ sn}$) ve Dünya ($g = 9.81\text{ m/s}^2 \rightarrow T \approx 2.00\text{ sn}$) oranı ($\approx 1.62\times$).
 5. **Dönüşsüzlük Noktası (`calcPointOfNoReturnO2` - `M4`):**
    - `900 m` mesafede normal hız vs. donmuş eklem (`%40` hız) durumunda gerekli $\text{O}_2$ çentiğinin yükselmesi ve kriz kartını tetiklemesi.
 6. **NASA Veri Doğrulaması (`data/nasa_data.json`):**
