@@ -103,6 +103,13 @@
       "src": "game: landing at local 06:00",
       "verified": true,
       "simplified": true
+    },
+    "evaGameSecondsPerRealSecond": {
+      "value": 60,
+      "unit": "game s per real s",
+      "src": "game: D-008: outside, 1 real second is 1 game minute",
+      "verified": true,
+      "simplified": true
     }
   },
   "life": {
@@ -529,10 +536,47 @@
         "verified": true,
         "simplified": true
       },
+      "triggerBelowC": {
+        "value": -40,
+        "unit": "C",
+        "src": "https://ntrs.nasa.gov/api/citations/20210022133/downloads/MAV_SRC_IEEE_2022.pdf",
+        "verified": true,
+        "note": "MSR Mars Ascent Vehicle \"non-operational AFT of -40°C\"; colder nights freeze the engine"
+      },
+      "manualO2Kg": {
+        "value": 0.086,
+        "unit": "kg",
+        "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
+        "verified": true,
+        "note": "derived: BVAD EVA O2 0.086 kg/h × manualEvaHours 1 h"
+      },
+      "manualRadiationMSv": {
+        "value": 0.028,
+        "unit": "mSv",
+        "src": "https://www.nasa.gov/news-release/nasa-rover-results-include-first-age-measurement-on-mars-and-help-for-human-exploration/",
+        "verified": true,
+        "note": "derived: Curiosity RAD 0.67 mSv/day × 1 h / 24 h"
+      },
       "batteryHeatKWh": {
         "value": 3,
         "unit": "kWh",
         "src": "game: K1 decision D-009: not published, game value (K2 proposal)",
+        "verified": true,
+        "simplified": true
+      }
+    },
+    "noReturn": {
+      "suitHeaterKWh": {
+        "value": 0.5,
+        "unit": "kWh",
+        "src": "game: K1 decision D-009: not published, game value (K2 proposal): habitat energy to recharge the suit after its heater ran",
+        "verified": true,
+        "simplified": true
+      },
+      "shelterHours": {
+        "value": 1,
+        "unit": "h",
+        "src": "game: K1 decision D-009: not published, game value (K2 proposal): thawing joints with a wreck RHU",
         "verified": true,
         "simplified": true
       }
