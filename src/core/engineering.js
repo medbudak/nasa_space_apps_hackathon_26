@@ -1,215 +1,210 @@
-// Every game formula lives here as a pure function: no state, no DOM, no real-world numbers.
-// Callers pass values read from src/data/nasa_data.json. Tested in tests/engineering.test.mjs.
-// The Sol 0 estimate (evaluateDesign) and K2's surface simulation use the same functions,
-// so what the design screen promises is what the player lives through.
-
-const DEG = Math.PI / 180;
-const clamp01 = (x) => Math.min(1, Math.max(0, x));
-
-// Sol fractions: 0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset (equinox model).
-const SUNRISE = 0.25;
-const NOON = 0.5;
-
 /**
- * Cosine of the solar zenith angle, 0 when the Sun is down.
- * cos Z = sin φ sin δ + cos φ cos δ cos h, with hour angle h = 2π (solFraction − 0.5).
- * Defaults (equator, equinox) give sunrise 06:00 and sunset 18:00.
+ * SOL 14: RED HORIZON — Mühendislik ve Fizik Formülleri (K1)
+ * Tüm sabitler SOL14.DATA (data/*.json) içinden okunur. tests/engineering.test.js ile doğrulanır.
  */
-export function sunCos(solFraction, latitudeDeg = 0, declinationDeg = 0) {
-  const phi = latitudeDeg * DEG;
-  const delta = declinationDeg * DEG;
-  const h = 2 * Math.PI * (solFraction - NOON);
-  return Math.max(0, Math.sin(phi) * Math.sin(delta) + Math.cos(phi) * Math.cos(delta) * Math.cos(h));
-}
+(function (S) {
+  'use strict';
+  const D = () => S.DATA;
+  const { clamp, round1 } = S.util;
 
-/** Solar array output in W. P = S · A · η · cos Z · (1 − dust). irradiance in W/m², area in m². */
-export function solarPower({ irradiance, area, efficiency, cosZ, dust = 0 }) {
-  return irradiance * area * efficiency * Math.max(0, cosZ) * (1 - clamp01(dust));
-}
+  const E = {};
 
-/**
- * Outside air temperature in °C over a sol. Simplified: coldest at sunrise, warmest at noon
- * (MEDA reports Jezero "–83 Celsius pre-dawn to 5 Celsius at noon"), smooth cosine in between.
- */
-export function surfaceTemp({ minC, maxC, solFraction }) {
-  const f = ((solFraction % 1) + 1) % 1;
-  const warming = f >= SUNRISE && f < NOON;
-  const progress = warming
-    ? (f - SUNRISE) / (NOON - SUNRISE) // sunrise → noon
-    : 1 - ((f < SUNRISE ? f + 1 : f) - NOON) / (1 + SUNRISE - NOON); // noon → next sunrise
-  return minC + ((maxC - minC) * (1 - Math.cos(Math.PI * progress))) / 2;
-}
-
-/**
- * Habitat air temperature in °C after dtHours without heating (Newton's law of cooling):
- * the inside moves toward the outside with time constant coolingTimeH.
- * Heating is part of the habitat power load, so this only applies while that load is cut.
- */
-export function habitatTemp({ insideC, outsideC, dtHours, coolingTimeH }) {
-  return outsideC + (insideC - outsideC) * Math.exp(-dtHours / coolingTimeH);
-}
-
-/** Tsiolkovsky rocket equation in m/s. Δv = Isp · g0 · ln(m0 / mf) */
-export function deltaV({ isp, g0, wetMass, dryMass }) {
-  if (dryMass <= 0 || wetMass < dryMass) throw new RangeError('need wetMass >= dryMass > 0');
-  return isp * g0 * Math.log(wetMass / dryMass);
-}
-
-/** One-way light time in s. t = d / c */
-export function lightDelaySec(distanceKm, cKms) {
-  return distanceKm / cKms;
-}
-
-/** Pendulum period in s. T = 2π √(L / g) */
-export function pendulumPeriod(lengthM, g) {
-  return 2 * Math.PI * Math.sqrt(lengthM / g);
-}
-
-/** Gravity measured with a pendulum, in m/s². g = 4π² L / T² */
-export function gravityFromPendulum(lengthM, periodSec) {
-  return (4 * Math.PI ** 2 * lengthM) / periodSec ** 2;
-}
-
-/** Free-fall time from rest in s. t = √(2h / g) */
-export function fallTime(heightM, g) {
-  return Math.sqrt((2 * heightM) / g);
-}
-
-/** Gravity measured by a drop, in m/s². g = 2h / t² */
-export function gravityFromFall(heightM, timeSec) {
-  return (2 * heightM) / timeSec ** 2;
-}
-
-/**
- * Point of no return: O2 needed to walk back to the habitat, in kg.
- * O2 = (distance / current speed) · consumption · safety factor
- */
-export function oxygenToReturn({ distanceM, speedMs, o2KgPerSec, safetyFactor }) {
-  if (speedMs <= 0) return Infinity;
-  return (distanceM / speedMs) * o2KgPerSec * safetyFactor;
-}
-
-/** Share of launch capacity left unused, 0..1. Negative means too heavy to launch. */
-export function massMargin(capacityKg, massKg) {
-  return (capacityKg - massKg) / capacityKg;
-}
-
-/** True when a measurement is within ±tolerance (a fraction, e.g. 0.1) of the expected value. */
-export function withinTolerance(measured, expected, tolerance) {
-  return Math.abs(measured - expected) <= Math.abs(expected) * tolerance;
-}
-
-// --- Sol 0 design evaluation -------------------------------------------------
-
-const SOL_STEPS = 96; // integration steps over one sol
-
-const find = (list, id) => list?.find((x) => x.id === id);
-const v = (rowObj, field) => rowObj?.[field]?.value ?? 0;
-
-/**
- * Night energy in kWh for one sol at a site: habitat load − continuous power,
- * integrated over the hours the Sun is down. Uses the same functions as the surface simulation.
- */
-export function nightEnergyKWh({ latitudeDeg, loadW, continuousW, solHours }) {
-  const dtHours = solHours / SOL_STEPS;
-  let wh = 0;
-  for (let i = 0; i < SOL_STEPS; i++) {
-    const f = (i + 0.5) / SOL_STEPS;
-    if (sunCos(f, latitudeDeg) > 0) continue;
-    wh += Math.max(0, loadW - continuousW) * dtHours;
-  }
-  return wh / 1000;
-}
-
-/** Solar energy in kWh over one clear sol at a site (no dust). */
-export function solarEnergyKWh({ latitudeDeg, irradiance, area, efficiency, solHours, dust = 0 }) {
-  const dtHours = solHours / SOL_STEPS;
-  let wh = 0;
-  for (let i = 0; i < SOL_STEPS; i++) {
-    const cosZ = sunCos((i + 0.5) / SOL_STEPS, latitudeDeg);
-    wh += solarPower({ irradiance, area, efficiency, cosZ, dust }) * dtHours;
-  }
-  return wh / 1000;
-}
-
-/**
- * Totals for a Sol 0 design (shape read by K3's design screen).
- * design: { objectiveId, rocketId, trajectoryId, siteId, powerId, batteryId, insulationId,
- *           instrumentIds: [], commsId, spareKitsId }
- * unresearched lists every PLACEHOLDER value the totals depend on, so the screen can flag them.
- */
-export function evaluateDesign(design, data) {
-  const rocket = find(data.launchVehicles, design.rocketId);
-  const traj = find(data.trajectories, design.trajectoryId);
-  const site = find(data.landingSites, design.siteId);
-  const power = find(data.powerSources, design.powerId);
-  const battery = find(data.batteries, design.batteryId);
-  const insulation = find(data.insulation, design.insulationId);
-  const comms = find(data.comms, design.commsId);
-  const kits = find(data.spareKits, design.spareKitsId);
-  const instruments = (design.instrumentIds ?? []).map((id) => find(data.instruments, id)).filter(Boolean);
-
-  const parts = [traj, power, battery, insulation, comms, kits, ...instruments];
-  const unresearched = [];
-  const track = (rowObj, field, label) => {
-    if (rowObj?.[field]?.src === 'PLACEHOLDER') unresearched.push(`${label}.${field}`);
+  /** P = S · A · η · cosZ · (1 − d_toz) · e^(−k·τ)   [W] */
+  E.calcSolarPower = function ({
+    irradiance = D().constants.solarIrradiance.mean,
+    area = D().habitat.base.solarAreaM2,
+    efficiency = D().habitat.base.solarEfficiency,
+    cosZ = 1,
+    dustFactor = 0,
+    tau = 0
+  } = {}) {
+    const transmission = Math.exp(-D().constants.dustStorm.solarTransmissionK * Math.max(0, tau));
+    const p =
+      irradiance * area * efficiency * clamp(cosZ, 0, 1) * (1 - clamp(dustFactor, 0, 0.95)) * transmission;
+    return round1(p);
   };
-  for (const p of [rocket, ...parts]) {
-    if (!p) continue;
-    track(p, 'costMUSD', p.id);
-    track(p, 'massKg', p.id);
-  }
-  track(rocket, 'capacityKg', rocket?.id);
-  track(data.rules, 'budgetMUSD', 'rules');
-  track(data.rules, 'baseMassKg', 'rules');
 
-  // A power source with an RTG lists the RTG's own mass and cost next to the panels'.
-  const cost = v(rocket, 'costMUSD') + parts.reduce((sum, p) => sum + v(p, 'costMUSD') + v(p, 'rtgCostMUSD'), 0);
-  const mass = v(data.rules, 'baseMassKg') + parts.reduce((sum, p) => sum + v(p, 'massKg') + v(p, 'rtgMassKg'), 0);
-  const instrumentDayW = instruments.reduce((sum, p) => sum + v(p, 'powerW'), 0);
-
-  const solHours = v(data.mars, 'solHours');
-  const latitudeDeg = v(site, 'latitudeDeg');
-  const habitatW = v(data.rules, 'habitatPowerW');
-  const continuousW = v(power, 'continuousW');
-  const nightNeedKWh = site
-    ? nightEnergyKWh({
-        latitudeDeg,
-        loadW: habitatW + (data.rules.instrumentsAtNight?.value ? instrumentDayW : 0),
-        continuousW,
-        solHours,
-      })
-    : 0;
-  // A whole clear sol: what the panels and continuous sources make versus what the habitat uses.
-  // Negative means the battery runs down a little more every sol, even without dust.
-  const solarKWhPerSol = site
-    ? solarEnergyKWh({
-        latitudeDeg,
-        irradiance: v(data.mars, 'solarIrradianceWm2'),
-        area: v(power, 'panelAreaM2'),
-        efficiency: v(power, 'panelEfficiency'),
-        solHours,
-      })
-    : 0;
-  // Instruments run in daylight only (half a sol at equinox) unless rules.instrumentsAtNight.
-  const instrumentHours = data.rules.instrumentsAtNight?.value ? solHours : solHours / 2;
-  const netKWhPerSol = site
-    ? solarKWhPerSol + ((continuousW - habitatW) * solHours - instrumentDayW * instrumentHours) / 1000
-    : 0;
-
-  return {
-    cost,
-    budget: v(data.rules, 'budgetMUSD'),
-    mass,
-    capacity: v(rocket, 'capacityKg'),
-    nightNeedKWh,
-    solarKWhPerSol,
-    netKWhPerSol,
-    coolingTimeH: v(insulation, 'coolingTimeH'),
-    batteryKWh: v(battery, 'capacityKWh'),
-    instrumentDayW,
-    transitDays: v(traj, 'transitDays'),
-    downlinkMbitPerSol: v(comms, 'mbitPerSol'),
-    unresearched,
+  /** Δv = Isp · g0 · ln(m0 / mf)   [m/s] */
+  E.calcDeltaV = function ({ isp, wetMass, dryMass, g0 = D().constants.marsGravity.earthValue }) {
+    if (!(wetMass > dryMass) || dryMass <= 0) return 0;
+    return Math.round(isp * g0 * Math.log(wetMass / dryMass));
   };
-}
+
+  /** t = d / c */
+  E.calcLightDelay = function (distanceKm) {
+    const seconds = Math.max(0, Math.round(distanceKm / D().constants.speedOfLight.kms));
+    return {
+      seconds,
+      minutes: Math.round((seconds / 60) * 100) / 100,
+      mm: Math.floor(seconds / 60),
+      ss: seconds % 60
+    };
+  };
+
+  E.getHorizons = function (sol, maxSols) {
+    const table = D().horizons.bySol;
+    const row = table.find((r) => r.sol === sol) || table[table.length - 1];
+    const delay = E.calcLightDelay(row.distanceMillionKm * 1e6);
+    const conjunction = Boolean(D().horizons.conjunctionOnFinalSol && maxSols && sol >= maxSols);
+    return Object.assign({ distanceMillionKm: row.distanceMillionKm, conjunction }, delay);
+  };
+
+  /** T = 2π √(L / g) */
+  E.calcPendulumPeriod = function (lengthM = 1, g = D().constants.marsGravity.value) {
+    if (lengthM <= 0 || g <= 0) return 0;
+    return Math.round(2 * Math.PI * Math.sqrt(lengthM / g) * 100) / 100;
+  };
+
+  /** t = √(2h / g) */
+  E.calcFreeFallTime = function (heightM = 2, g = D().constants.marsGravity.value) {
+    if (heightM <= 0 || g <= 0) return 0;
+    return Math.round(Math.sqrt((2 * heightM) / g) * 100) / 100;
+  };
+
+  /**
+   * M4 — Dönüşsüzlük Noktası: O2_gerekli = (mesafe / v_güncel) · ċ · 1.2   [% elbise O2]
+   */
+  E.calcPointOfNoReturnO2 = function ({
+    distanceM,
+    jointFrozen = false,
+    leak = false,
+    speedFactor = 1
+  }) {
+    const eva = D().constants.eva;
+    if (!(distanceM > 0)) return 0;
+    const v = eva.speedMPerMin * (jointFrozen ? eva.frozenSpeedFactor : 1) * speedFactor;
+    const rate = eva.suitO2PctPerMin * (leak ? eva.suitLeakO2Multiplier : 1);
+    return Math.min(100, round1((distanceM / v) * rate * eva.pointOfNoReturnSafetyFactor));
+  };
+
+  /** Habitat ısıtma ihtiyacı: max(0, UA·(T_hedef − T_dış) − RTG atık ısısı − RHU)   [W] */
+  E.calcHeatingW = function ({ uaWPerK, targetC, ambientC, wasteHeatW = 0 }) {
+    return Math.max(0, Math.round(uaWPerK * (targetC - ambientC) - wasteHeatW));
+  };
+
+  /** Günlük dış sıcaklık eğrisi: min ~05:30, max ~14:00 (Mars gün-gece farkı 70–100 °C) */
+  E.ambientTempAt = function (site, minute) {
+    const tMin = site.nightMinC;
+    const tMax = site.dayMaxC;
+    const minAt = 330;
+    const maxAt = 840;
+    let m = ((minute % 1480) + 1480) % 1480;
+    if (m >= minAt && m < maxAt) {
+      const f = (m - minAt) / (maxAt - minAt);
+      return round1(tMin + ((tMax - tMin) * (1 - Math.cos(Math.PI * f))) / 2);
+    }
+    if (m < minAt) m += 1480;
+    const f = (m - maxAt) / (minAt + 1480 - maxAt);
+    return round1(tMax - ((tMax - tMin) * (1 - Math.cos(Math.PI * f))) / 2);
+  };
+
+  /** Güneş zenit kosinüsü (gün doğumu–batımı arası sinüs profili) */
+  E.solarCosZAt = function (site, minute) {
+    const g = D().gameplay;
+    const rise = g.sunriseMinute;
+    const set = g.nightStartMinute - 30;
+    const m = ((minute % 1480) + 1480) % 1480;
+    if (m <= rise || m >= set) return 0;
+    return round1(site.cosZNoon * Math.sin((Math.PI * (m - rise)) / (set - rise)) * 100) / 100;
+  };
+
+  E.timeOfDay = function (minute) {
+    const g = D().gameplay;
+    const m = ((minute % 1480) + 1480) % 1480;
+    if (m >= g.nightStartMinute || m < g.sunriseMinute - 30) return 'night';
+    if (m >= g.sunsetStartMinute) return 'sunset';
+    if (m < g.sunriseMinute + 30) return 'dawn';
+    return 'day';
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Sol 0 Tasarım Toplamları + SPOF (M8)                                */
+  /* ------------------------------------------------------------------ */
+  E.findById = (list, id) => list.find((x) => x.id === id) || list[0];
+
+  E.calcDesignTotals = function (design) {
+    const d = D();
+    const rocket = E.findById(d.rockets, design.rocketId);
+    const orbit = E.findById(d.orbits, design.orbitType);
+    const site = E.findById(d.landingSites, design.landingSiteId);
+    const hab = d.habitat.base;
+    const pwr = d.habitat.powerSource[design.powerSource] || d.habitat.powerSource.solar_only;
+    const bat = d.habitat.batteries.find((b) => b.kwh === design.batteryKwh) || d.habitat.batteries[1];
+    const ins = d.habitat.insulation[design.insulation] || d.habitat.insulation.thick;
+    const comm = d.habitat.comms[design.commArchitecture] || d.habitat.comms.relay_only;
+    const kit = d.habitat.repairKit;
+    const insts = (design.instruments || [])
+      .map((id) => d.instruments.find((i) => i.id === id))
+      .filter(Boolean);
+    const kits = clamp(design.repairKits || 0, 0, kit.max);
+
+    const massUsed = round1(
+      hab.massKg + pwr.massKg + bat.massKg + ins.massKg + comm.massKg +
+        insts.reduce((a, i) => a + i.massKg, 0) + kits * kit.massKg
+    );
+    const massMax = rocket.payloadMarsKg - orbit.payloadPenaltyKg;
+    const massMarginPct = round1(((massMax - massUsed) / massMax) * 100);
+
+    const moneyUsed = Math.round(
+      rocket.costM + orbit.costPenaltyM +
+        (design.launchWindowCaught ? 0 : d.constants.synodicPeriod.missedWindowCostM) +
+        hab.costM + pwr.costM + bat.costM + ins.costM + comm.costM +
+        insts.reduce((a, i) => a + i.costM, 0) + kits * kit.costM
+    );
+    const moneyMax = d.habitat.budgetMaxM;
+
+    // Gün ortası güneş üretimi ve en soğuk gece ısıtma yükü
+    const solarNoonW = E.calcSolarPower({ cosZ: site.cosZNoon, dustFactor: 0 });
+    const heatingNightW = E.calcHeatingW({
+      uaWPerK: ins.uaWPerK,
+      targetC: d.gameplay.habitatTargetC,
+      ambientC: site.nightMinC,
+      wasteHeatW: pwr.rtgWasteHeatW
+    });
+    const instrumentW = insts.reduce((a, i) => a + i.powerW, 0);
+    const nightLoadW = hab.lifeSupportW + hab.commsW + heatingNightW + instrumentW;
+    const nightHours = (1480 - (d.gameplay.nightStartMinute - d.gameplay.sunriseMinute)) / 60;
+    const nightNeedKwh = round1((Math.max(0, nightLoadW - pwr.rtgW) * nightHours) / 1000);
+    const batteryNightSafe = bat.kwh >= nightNeedKwh;
+
+    const dataPerSolMbit = d.habitat.relayPasses
+      .filter((p) => !p.requires || p.requires === design.commArchitecture)
+      .reduce((a, p) => a + p.capacityMbit, 0);
+
+    const spof = [];
+    if (design.powerSource === 'solar_only') spof.push('spof.no_rtg');
+    if (design.commArchitecture === 'relay_only') spof.push('spof.no_xband');
+    if (kits === 0) spof.push('spof.no_repair_kit');
+    if (!batteryNightSafe) spof.push('spof.small_battery');
+    if (design.insulation === 'thin' && site.nightMinC <= -90) spof.push('spof.thin_insulation_cold');
+    if (!design.instruments.includes('meda')) spof.push('spof.no_meda');
+    if (massMarginPct < d.habitat.massMarginGoodPct) spof.push('spof.low_mass_margin');
+
+    const errors = [];
+    if (massUsed > massMax) errors.push('design.err_mass');
+    if (moneyUsed > moneyMax) errors.push('design.err_money');
+    if (insts.length < 1) errors.push('design.err_no_instrument');
+    if (insts.length > 5) errors.push('design.err_too_many');
+
+    return {
+      massUsed,
+      massMax,
+      massMarginPct,
+      moneyUsed,
+      moneyMax,
+      solarNoonW,
+      rtgW: pwr.rtgW,
+      nightLoadW,
+      nightNeedKwh,
+      batteryNightSafe,
+      dataPerSolMbit,
+      transitDays: orbit.transitDays,
+      transitDoseMsv: round1(orbit.transitDays * d.constants.radiation.transitDailyMsv),
+      spof,
+      errors,
+      canLaunch: errors.length === 0
+    };
+  };
+
+  S.Engineering = E;
+})((window.SOL14 = window.SOL14 || {}));

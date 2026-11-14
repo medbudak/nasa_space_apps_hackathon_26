@@ -1,0 +1,275 @@
+[
+  {
+    "asset": "sprites/astronaut_idle.png",
+    "size": "34x58",
+    "mode": "flood",
+    "bgRemovedPx": 1127405,
+    "whiteKeptPx": 30008
+  },
+  {
+    "asset": "sprites/astronaut_walk.png",
+    "size": "34x58",
+    "mode": "flood",
+    "bgRemovedPx": 1127405,
+    "whiteKeptPx": 30008
+  },
+  {
+    "asset": "sprites/astronaut_jump.png",
+    "size": "46x60",
+    "mode": "flood",
+    "bgRemovedPx": 1203099,
+    "whiteKeptPx": 31037
+  },
+  {
+    "asset": "sprites/astronaut_frozen.png",
+    "size": "37x58",
+    "mode": "flood",
+    "bgRemovedPx": 1221086,
+    "whiteKeptPx": 35806
+  },
+  {
+    "asset": "sprites/astronaut_action.png",
+    "size": "39x48",
+    "mode": "flood",
+    "bgRemovedPx": 1134311,
+    "whiteKeptPx": 33167
+  },
+  {
+    "asset": "sprites/drone_ingenuity.png",
+    "size": "47x34",
+    "mode": "flood",
+    "bgRemovedPx": 1251379,
+    "whiteKeptPx": 1
+  },
+  {
+    "asset": "sprites/rover_opportunity.png",
+    "size": "92x75",
+    "mode": "flood",
+    "bgRemovedPx": 1033193,
+    "whiteKeptPx": 13258
+  },
+  {
+    "asset": "sprites/rover_spirit.png",
+    "size": "92x75",
+    "mode": "flood",
+    "bgRemovedPx": 1033193,
+    "whiteKeptPx": 13258
+  },
+  {
+    "asset": "sprites/lander_phoenix.png",
+    "size": "104x91",
+    "mode": "flood",
+    "bgRemovedPx": 1034000,
+    "whiteKeptPx": 58812
+  },
+  {
+    "asset": "sprites/lander_insight.png",
+    "size": "104x73",
+    "mode": "flood",
+    "bgRemovedPx": 1095764,
+    "whiteKeptPx": 25162
+  },
+  {
+    "asset": "sprites/lander_beagle2.png",
+    "size": "84x45",
+    "mode": "flood",
+    "bgRemovedPx": 1139319,
+    "whiteKeptPx": 194
+  },
+  {
+    "asset": "structures/mav_rocket.png",
+    "size": "110x150",
+    "mode": "flood",
+    "bgRemovedPx": 1119589,
+    "whiteKeptPx": 40792
+  },
+  {
+    "asset": "structures/greenhouse_ok.png",
+    "size": "150x108",
+    "mode": "flood",
+    "bgRemovedPx": 500121,
+    "whiteKeptPx": 81299
+  },
+  {
+    "asset": "structures/greenhouse_frozen.png",
+    "size": "150x108",
+    "mode": "flood",
+    "bgRemovedPx": 499053,
+    "whiteKeptPx": 53305
+  },
+  {
+    "asset": "structures/solar_clean.png",
+    "size": "104x55",
+    "mode": "flood",
+    "bgRemovedPx": 839042,
+    "whiteKeptPx": 113244
+  },
+  {
+    "asset": "structures/solar_dusty.png",
+    "size": "104x55",
+    "mode": "flood",
+    "bgRemovedPx": 839547,
+    "whiteKeptPx": 87161
+  },
+  {
+    "asset": "structures/moxie_unit.png",
+    "size": "78x49",
+    "mode": "flood",
+    "bgRemovedPx": 939079,
+    "whiteKeptPx": 16836
+  },
+  {
+    "asset": "vfx/vfx_dust_devil.png",
+    "size": "100x130",
+    "mode": "flood",
+    "bgRemovedPx": 1168597,
+    "whiteKeptPx": 9974
+  },
+  {
+    "asset": "vfx/vfx_shadow_hallucination.png",
+    "size": "27x62",
+    "mode": "flood",
+    "bgRemovedPx": 1277377,
+    "whiteKeptPx": 3115
+  },
+  {
+    "asset": "vfx/vfx_frost_1.png",
+    "size": "640x360",
+    "mode": "vignette",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "vfx/vfx_frost_2.png",
+    "size": "640x360",
+    "mode": "vignette",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "vfx/vfx_dust_storm.png",
+    "size": "640x360",
+    "mode": "unwhite",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "backgrounds/bg_jezero_day.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "backgrounds/bg_jezero_sunset.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "backgrounds/bg_jezero_night.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "backgrounds/bg_meridiani_day.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "backgrounds/bg_arcadia_day.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "backgrounds/bg_storm.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "screens/scr_launch.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "screens/scr_transit.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "screens/scr_map_corridor.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "screens/scr_lab_desk.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "screens/scr_downlink.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "screens/scr_sol_transition.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "ending/ufo_liftoff.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "ending/ufo_sky.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "ending/ufo_photo_clear.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "ending/ufo_photo_blur.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "ending/cover_thumbnail.png",
+    "size": "960x540",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  }
+]

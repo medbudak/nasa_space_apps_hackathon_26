@@ -1,327 +1,520 @@
-// Entry point and scene router. Owner: K1.
-//
-// A scene is a module whose default export is { enter(ctx), exit?() }.
-// ctx = { state, data, bus, t, goTo, canvas, ui }. Call ctx.goTo('surface') to move on.
-// A scene that is not built yet shows a placeholder, so the flow always runs end to end.
-//
-// URL options: ?scene=surface jumps to a scene · ?seed=123 fixes the random seed.
-//
-// Shared UI that lives across scenes is mounted once here: K3's decision cards, mini-game host
-// and TR/EN switch. K3's HUD is mounted over the surface scene.
+/**
+ * SOL 14: RED HORIZON — Uygulama Denetleyicisi, Oyun Döngüsü, Girdi ve Sahne Yöneticisi (K1)
+ * Sahneler: loading -> menu -> design (Sol 0) -> transit -> world (yüzey/habitat) -> ending -> report
+ * ?demo=1 : Jüri hızlı görevi (5 Sol, hazır dengeli tasarımla doğrudan fırlatma)  (M9)
+ * ?lang=en : İngilizce başlat
+ */
+(function (S) {
+  'use strict';
+  const t = (k, v) => S.t(k, v);
+  const LANG_KEY = 'sol14_lang';
 
-import { bus } from './core/bus.js';
-import { loadNasaData, getData } from './core/nasaData.js';
-import { loadStory, t, getLang, setLang } from './core/i18n.js';
-import { getState, newGame, load, save } from './core/state.js';
-import { evaluateDesign } from './core/engineering.js';
-import { backdrop } from './core/backdrop.js';
+  /* ================================================================ */
+  /* GİRDİ                                                             */
+  /* ================================================================ */
+  const Input = { keys: new Set(), touch: { left: false, right: false, jump: false }, jumpQueued: false };
+  Input.dir = function () {
+    const l = Input.keys.has('ArrowLeft') || Input.keys.has('KeyA') || Input.touch.left;
+    const r = Input.keys.has('ArrowRight') || Input.keys.has('KeyD') || Input.touch.right;
+    return (r ? 1 : 0) - (l ? 1 : 0);
+  };
+  Input.consumeJump = function () {
+    const j = Input.jumpQueued || Input.touch.jump;
+    Input.jumpQueued = false;
+    Input.touch.jump = false;
+    return j;
+  };
+  S.Input = Input;
 
-const locale = () => (getLang() === 'tr' ? 'tr-TR' : 'en-US');
-const shared = []; // mounted shared panels, refreshed after a language switch
+  /* ================================================================ */
+  /* OYUN                                                              */
+  /* ================================================================ */
+  const Game = {
+    scene: 'loading',
+    pendingSol: [],
+    resumeCb: null,
+    lastHud: 0,
+    lastHab: 0,
+    lastSave: 0,
+    canvas: null,
+    ctx: null
+  };
+  S.Game = Game;
 
-const SCENES = {
-  design: { path: './scenes/design.js', owner: 'K3', next: 'surface' },
-  surface: { path: './scenes/surface.js', owner: 'K2', next: 'ending' },
-  ending: { path: './scenes/ending.js', owner: 'K1', next: 'title' },
-};
+  /* ================================================================ */
+  /* OYUNCU TESTİ OLAY KAYDI (Oyun Ritmi Planı §10 / RIT-13)            */
+  /* Yalnızca yerel (localStorage); kişisel/biyometrik veri yok.         */
+  /* Her kayıt: rastgele oturum kimliği, olay türü, Sol, aktif oyun      */
+  /* süresi (dünya açık + duraklatılmamış) ve gerçek geçen süre.         */
+  /* ================================================================ */
+  const PLAYTEST_KEY = 'sol14_playtest_log';
+  const PLAYTEST_MAX = 1500;
+  const Playtest = {
+    session: Math.random().toString(36).slice(2, 10),
+    t0: performance.now(),
+    activeSec: 0,
+    ended: false
+  };
+  Playtest.track = function (type, data) {
+    try {
+      const s = S.getState();
+      const entry = Object.assign(
+        {
+          session: Playtest.session,
+          type,
+          sol: s ? s.sol : null,
+          activeSec: Math.round(Playtest.activeSec),
+          realSec: Math.round((performance.now() - Playtest.t0) / 1000)
+        },
+        data || {}
+      );
+      const list = JSON.parse(localStorage.getItem(PLAYTEST_KEY) || '[]');
+      list.push(entry);
+      localStorage.setItem(PLAYTEST_KEY, JSON.stringify(list.slice(-PLAYTEST_MAX)));
+    } catch (e) {
+      /* kayıt opsiyoneldir; oyunu asla durdurmaz */
+    }
+  };
+  Playtest.end = function (reason) {
+    if (Playtest.ended) return;
+    Playtest.ended = true;
+    Playtest.track('session_end', { reason });
+  };
+  S.Playtest = Playtest;
 
-const canvas = document.getElementById('game');
-const ui = document.getElementById('ui');
-let current = null;
+  const handlers = {
+    retry: () => Game.retryCheckpoint(),
+    newGame: (demo) => Game.newGame(demo),
+    continueGame: () => Game.continueGame(),
+    toggleLang: () => Game.toggleLang(),
+    menu: () => Game.toMenu(),
+    launch: () => Game.launch(),
+    report: () => Game.showReport()
+  };
 
-function button(label, onClick) {
-  const el = document.createElement('button');
-  el.textContent = label;
-  el.addEventListener('click', onClick);
-  return el;
-}
+  Game.setScene = function (scene) {
+    Game.scene = scene;
+    document.body.dataset.scene = scene;
+    const world = scene === 'world';
+    Game.canvas.style.visibility = world ? 'visible' : 'hidden';
+    if (!world) {
+      S.HUD.hide();
+      S.Audio.setAmbience('none');
+    } else {
+      S.UI.hideScreen();
+    }
+  };
 
-function panel(...children) {
-  const el = document.createElement('div');
-  el.className = 'core-panel';
-  el.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;';
-  el.append(...children);
-  return el;
-}
+  Game.toMenu = function () {
+    S.UI.closeAll();
+    if (S.getState() && S.getState().sol >= 1 && !S.getState().ending && !S.getState().gameOver) S.saveGame();
+    Game.setScene('menu');
+    S.DesignScreens.showMenu(handlers);
+  };
 
-const titleScene = {
-  enter({ goTo }) {
-    const heading = document.createElement('h1');
-    heading.textContent = t('title.name');
-    heading.style.cssText = 'font-size:48px;margin:0;text-shadow:0 2px 12px rgba(0,0,0,.8);';
-    const start = button(t('title.newMission'), () => {
-      newGame(seedFromUrl());
-      goTo('design');
+  Game.newGame = function (demo) {
+    S.clearCheckpoint();
+    S.State.reset({ demoMode: demo, lang: S.lang });
+    S.getState().scene = 'design';
+    S.DesignScreens.step = demo ? 5 : 1;
+    Game.pendingSol = [];
+    Game.setScene('design');
+    S.DesignScreens.showDesign(handlers);
+  };
+
+  /** Görev kaybı → son Sol sabahının güvenli kaydına dön (habitat içinde) */
+  Game.retryCheckpoint = function () {
+    const s = S.loadCheckpoint();
+    if (!s) return Game.toMenu();
+    s.lang = S.lang;
+    Game.pendingSol = [];
+    Game.resumeCb = null;
+    S.UI.closeAll();
+    S.saveGame();
+    Playtest.track('checkpoint_loaded', { retries: s.checkpointRetries });
+    Game.enterWorld();
+    S.UI.toast(S.UI.icon('check') + t('toast.checkpoint', { sol: s.sol }), 'ok', 4200);
+  };
+
+  Game.continueGame = function () {
+    const s = S.loadGame();
+    if (!s) return Game.toMenu();
+    S.lang = s.lang || S.lang;
+    if (s.scene === 'transit' || s.scene === 'design') {
+      S.DesignScreens.showDesign(handlers);
+      return;
+    }
+    Game.enterWorld();
+  };
+
+  Game.launch = function () {
+    const s = S.getState();
+    const r = S.Sim.launch(s);
+    if (!r.ok) {
+      S.UI.toast(r.errors.map((k) => t(k)).join(' · '), 'warn');
+      return;
+    }
+    S.bus.emit('audio:play', 'launch');
+    Game.setScene('transit');
+    S.Cutscenes.playTransit((repair) => {
+      S.Sim.land(S.getState(), repair);
+      S.saveGame();
+      Game.enterWorld();
+      S.UI.toast(t('toast.landed', { site: t('site.' + s.design.landingSiteId + '.name') }), 'ok', 4200);
+      if (S.getState().sol === 1 && !Game.tutorialShown) {
+        Game.tutorialShown = true;
+        setTimeout(() => S.UI.toast(t('toast.tutorial'), 'info', 7000), 1200);
+      }
     });
-    start.className = 'btn';
-    const items = [heading, start];
-    if (load()) {
-      const resume = button(t('title.continue'), () => goTo(getState().scene === 'title' ? 'design' : getState().scene));
-      resume.className = 'btn ghost';
-      items.push(resume);
-    }
-    ui.append(backdrop('assets/ending/cover_thumbnail.png', 0.25), panel(...items));
-  },
-};
-
-// Launch and transit cutscene between Sol 0 and Sol 1 (C1: the cruise is not playable).
-// Each slide shows K4's artwork for a few seconds; a click, Enter or Space moves on.
-const SLIDE_MS = 3500;
-const launchScene = {
-  timer: 0,
-  onKey: null,
-  enter({ state, data, t, goTo, ui }) {
-    const rocket = data.launchVehicles.find((r) => r.id === state.design.rocketId);
-    const slides = [
-      { path: 'assets/screens/scr_launch.png', text: t('cutscene.launch', { rocket: rocket?.realName ?? '' }) },
-      { path: 'assets/screens/scr_transit.png', text: t('cutscene.transit', { days: state.designSummary?.transitDays ?? '' }) },
-    ];
-    let i = -1;
-    const next = () => {
-      clearTimeout(this.timer);
-      i += 1;
-      if (i >= slides.length) {
-        goTo('surface');
-        return;
-      }
-      const caption = document.createElement('p');
-      caption.textContent = slides[i].text;
-      caption.style.cssText = 'position:absolute;left:0;right:0;bottom:8%;margin:0;text-align:center;font-size:22px;text-shadow:0 2px 8px #000;';
-      const skip = button(t('cutscene.skip'), (e) => {
-        e.stopPropagation();
-        i = slides.length - 1;
-        next();
-      });
-      skip.className = 'btn ghost';
-      skip.style.cssText = 'position:absolute;right:16px;bottom:16px;';
-      const slide = backdrop(slides[i].path, 0.15);
-      slide.addEventListener('click', next);
-      ui.replaceChildren(slide, caption, skip);
-      this.timer = setTimeout(next, SLIDE_MS);
-    };
-    this.onKey = (e) => {
-      if (e.key === 'Enter' || e.key === ' ') next();
-    };
-    window.addEventListener('keydown', this.onKey);
-    next();
-  },
-  exit() {
-    clearTimeout(this.timer);
-    window.removeEventListener('keydown', this.onKey);
-  },
-};
-
-// Shown while a teammate's scene file does not exist yet.
-function placeholderScene(name, info, err) {
-  return {
-    enter({ goTo }) {
-      const note = document.createElement('p');
-      note.textContent = `Scene "${name}" is not built yet (owner ${info.owner}, file src/${info.path.slice(2)}).`;
-      console.warn(`[main] scene "${name}" failed to load`, err);
-      ui.append(panel(note, button('Skip →', () => goTo(info.next))));
-    },
   };
-}
 
-// Fictional epilogue after every ending (design doc v2, section 12): K4's canvas sequence
-// (MAV liftoff, a light in the sky), then K3's photo downlink, cut off by solar conjunction.
-const UFO_HANDOVER_SEC = 22; // where K4's sequence starts its own photo; K3's downlink takes over
-const ufoScene = {
-  raf: 0,
-  photo: null,
-  async enter({ state, data, t, goTo, canvas, ui }) {
-    const hasCamera = state.design.instrumentIds?.includes('camera');
-    const g = canvas.getContext('2d');
-    let done = false;
-    const showPhoto = async () => {
-      if (done) return;
-      done = true;
-      cancelAnimationFrame(this.raf);
-      g.clearRect(0, 0, canvas.width, canvas.height);
-      ui.replaceChildren(backdrop('assets/ending/ufo_sky.png', 0.6));
-      try {
-        const { mountUfoDownlink } = await import('./ui/ufoDownlink.js');
-        const camera = data.instruments.find((r) => r.id === 'camera');
-        const comms = data.comms.find((r) => r.id === state.design.commsId);
-        const budget = state.dataBudget;
-        const el = document.createElement('div');
-        el.style.cssText = 'position:absolute;inset:0;';
-        ui.append(el);
-        this.photo = mountUfoDownlink(el, {
-          t, locale,
-          photo: { clear: 'assets/ending/ufo_photo_clear.png', blur: 'assets/ending/ufo_photo_blur.png' },
-          cameraTier: hasCamera ? 'hires' : 'hand',
-          photoMbit: camera?.mbitPerUse?.value ?? 0,
-          remainingMbit: budget?.perSol ? Math.max(0, budget.perSol - budget.used) : comms?.mbitPerSol?.value ?? 0,
-          seconds: 8,
-          onRestart: () => {
-            newGame(seedFromUrl());
-            goTo('design');
-          },
-        });
-      } catch (err) {
-        console.warn('[main] UFO downlink not available', err);
-        const again = button(t('ending.designNext'), () => goTo('title'));
-        again.className = 'btn';
-        ui.append(panel(again));
+  Game.enterWorld = function () {
+    const s = S.getState();
+    s.scene = 'surface';
+    Game.setScene('world');
+    S.Surface.syncFromState(s);
+    S.FX.camX = S.Surface.body.px - 640 * 0.42;
+    S.HUD.build(s.player.inside ? 'habitat' : 'surface');
+    if (s.player.inside) S.HabitatPanel.show();
+  };
+
+  Game.exitHabitat = function () {
+    const s = S.getState();
+    S.Surface.exitHabitat(s);
+    S.HUD.build('surface');
+    S.FX.camX = S.Surface.body.px - 640 * 0.42;
+  };
+
+  Game.enterHabitat = function () {
+    const s = S.getState();
+    S.Surface.enterHabitat(s);
+    Playtest.track('habitat_enter');
+    S.HUD.build('habitat');
+    S.HabitatPanel.show();
+  };
+
+  Game.sleep = function () {
+    const s = S.getState();
+    const r = S.Sim.sleep(s);
+    if (r.interrupted) S.UI.toast(t('toast.sleep_interrupted'), 'warn');
+    Game.afterAction();
+  };
+
+  Game.launchMav = function () {
+    S.Sim.launchMav(S.getState(), { auto: false });
+  };
+
+  Game.openPanel = function (name) {
+    if (Game.scene !== 'world') return;
+    if (name === 'downlink') S.DownlinkPanel.open();
+    else if (name === 'power') S.PowerPanel.open();
+    else if (name === 'log') S.SciencePanels.openLog();
+    else if (name === 'lab') S.SciencePanels.openLab();
+    else if (name === 'pause') S.DesignScreens.openPause(handlers);
+  };
+
+  /** Eylem sonrası: kriz / sol geçişi / kayıp / final kuyruğu çözülünce cb çağrılır */
+  Game.afterAction = function (cb) {
+    Game.resumeCb = cb || null;
+    if (S.HabitatPanel) S.HabitatPanel.lastHtml = '';
+  };
+
+  Game.interact = function () {
+    if (Game.scene !== 'world' || S.UI.modalOpen() || S.isMinigameOpen()) return;
+    const s = S.getState();
+    if (s.player.inside) {
+      const st = S.Surface.nearestStation();
+      if (!st) return;
+      if (st.action === 'exit') return Game.exitHabitat();
+      const act = S.HabitatPanel.stationToAction(st.id);
+      if (act) {
+        S.HabitatPanel.selected = act;
+        S.HabitatPanel.run(act);
       }
-    };
+      return;
+    }
+    const it = S.HUD.prompt;
+    if (!it) return;
+    S.bus.emit('audio:play', 'click');
+    if (it.action === 'door') return Game.enterHabitat();
+    if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);
+    if (it.action === 'greenhouse') return S.HabitatPanel.openGreenhouse();
+    if (it.action === 'mav') return S.HabitatPanel.openMav();
+    S.HabitatPanel.openActionModal(it.action);
+  };
 
+  Game.toggleLang = function () {
+    S.lang = S.lang === 'tr' ? 'en' : 'tr';
+    document.documentElement.lang = S.lang;
     try {
-      const { VFXManager } = await import('./fx/effects.js');
-      const vfx = new VFXManager();
-      vfx.startUfoSequence(hasCamera ? 1 : 0.5);
-      const skip = button(t('cutscene.skip'), showPhoto);
-      skip.className = 'btn ghost';
-      skip.style.cssText = 'position:absolute;right:16px;bottom:16px;';
-      ui.append(skip);
-      let last = performance.now();
-      const frame = (now) => {
-        const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
-        last = now;
-        vfx.renderOverlays(g, canvas.width, canvas.height, dt);
-        if (vfx.ufoActive && vfx.ufoElapsed < UFO_HANDOVER_SEC) this.raf = requestAnimationFrame(frame);
-        else showPhoto();
-      };
-      this.raf = requestAnimationFrame(frame);
-    } catch (err) {
-      console.warn('[main] UFO sequence not available', err);
-      showPhoto();
+      localStorage.setItem(LANG_KEY, S.lang);
+    } catch (e) {
+      /* yok say */
     }
-  },
-  exit() {
-    cancelAnimationFrame(this.raf);
-    this.photo?.destroy?.();
-    this.photo = null;
-  },
-};
-
-// K3's Sol 0 screen exports mountDesign() instead of a default scene; this adapts it.
-function designScene(mountDesign) {
-  let mounted = null;
-  return {
-    enter({ state, data, t, goTo, ui }) {
-      mounted = mountDesign(ui, {
-        data,
-        t,
-        evaluate: evaluateDesign,
-        design: state.design,
-        locale: locale(),
-        onChange: (design) => {
-          Object.assign(state.design, design);
-          save();
-        },
-        onLaunch: (design, summary) => {
-          Object.assign(state.design, design);
-          state.designSummary = summary;
-          goTo('launch');
-        },
-      });
-    },
-    exit() {
-      mounted?.destroy?.();
-    },
+    const s = S.getState();
+    if (s) s.lang = S.lang;
+    if (Game.scene === 'menu') S.DesignScreens.showMenu(handlers);
+    else if (Game.scene === 'design') S.DesignScreens.showDesign(handlers);
+    else if (Game.scene === 'world') {
+      S.HUD.build(s.player.inside ? 'habitat' : 'surface');
+      if (s.player.inside) S.HabitatPanel.show();
+    } else if (Game.scene === 'report') Game.showReport();
   };
-}
 
-// K2's surface scene with K3's HUD over it. The HUD redraws itself every refreshMs.
-function withHud(scene) {
-  let hud = null;
-  return {
-    async enter(ctx) {
-      await scene.enter(ctx);
-      if (!ctx.state.time) return; // the scene could not start and shows its own message
-      try {
-        const { mountHud } = await import('./ui/hud.js');
-        const el = document.createElement('div');
-        el.className = 'hud-root';
-        ctx.ui.append(el);
-        hud = mountHud(el, { state: ctx.state, data: ctx.data, t: ctx.t, bus: ctx.bus, locale, refreshMs: 250 });
-      } catch (err) {
-        console.warn('[main] HUD not available', err);
+  Game.showReport = function () {
+    S.UI.closeAll();
+    Game.setScene('report');
+    S.ReportCard.show({
+      replay: () => Game.playEnding(),
+      newMission: () => Game.newGame(false),
+      menu: () => Game.toMenu()
+    });
+  };
+
+  Game.playEnding = function () {
+    S.UI.closeAll();
+    Game.setScene('ending');
+    S.Cutscenes.playEnding((choice) => (choice === 'menu' ? Game.toMenu() : Game.showReport()));
+  };
+
+  Game.checkEnd = function () {
+    const s = S.getState();
+    if (!s || Game.scene !== 'world') return false;
+    if (s.gameOver) {
+      S.UI.closeAll();
+      S.clearSave();
+      Game.setScene('gameover');
+      S.bus.emit('audio:play', 'fail');
+      S.DesignScreens.showGameOver(handlers);
+      return true;
+    }
+    if (s.ending) {
+      Game.playEnding();
+      return true;
+    }
+    return false;
+  };
+
+  /** Bekleyen olayları sırayla göster: Sol geçişi -> kriz kartı -> kayıp/final -> devam geri çağrısı */
+  Game.processPending = function () {
+    if (S.UI.modalOpen() || S.isMinigameOpen()) return true;
+    const s = S.getState();
+    if (Game.pendingSol.length) {
+      const sum = Game.pendingSol.shift();
+      S.Cutscenes.showSolTransition(sum);
+      return true;
+    }
+    if (Game.checkEnd()) return true;
+    if (s.crisis.active) {
+      S.DecisionCard.open();
+      return true;
+    }
+    if (Game.resumeCb) {
+      const cb = Game.resumeCb;
+      Game.resumeCb = null;
+      cb();
+      return true;
+    }
+    return false;
+  };
+
+  /* ================================================================ */
+  /* DÖNGÜ                                                             */
+  /* ================================================================ */
+  let lastT = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now;
+    const tSec = now / 1000;
+    if (Game.scene === 'world') {
+      const s = S.getState();
+      const busy = Game.processPending();
+      if (!busy && Game.scene === 'world') {
+        Playtest.activeSec += dt; // aktif oyun süresi: menü/kart açıkken sayılmaz
+        const input = { dir: Input.dir(), jump: Input.consumeJump() };
+        if (s.player.inside) S.Surface.updateInterior(s, dt, input);
+        else S.Surface.update(s, dt, input);
+        S.Sim.step(s, dt * S.DATA.gameplay.gameMinutesPerRealSecond);
+      } else {
+        S.Surface.body.moving = false;
       }
-    },
-    exit() {
-      hud?.destroy?.();
-      hud = null;
-      scene.exit?.();
-    },
-  };
-}
-
-async function loadScene(name) {
-  if (name === 'title') return titleScene;
-  if (name === 'launch') return launchScene;
-  if (name === 'ufo') return ufoScene;
-  const info = SCENES[name];
-  if (!info) throw new Error(`unknown scene "${name}"`);
-  try {
-    const mod = await import(info.path);
-    if (name === 'surface' && mod.default) return withHud(mod.default);
-    if (mod.default) return mod.default;
-    if (mod.mountDesign) return designScene(mod.mountDesign);
-    throw new Error(`${info.path} has no default export`);
-  } catch (err) {
-    return placeholderScene(name, info, err);
+      if (Game.scene === 'world') {
+        S.FX.render(Game.ctx, s, dt, tSec);
+        if (now - Game.lastHud > 100) {
+          Game.lastHud = now;
+          S.HUD.update(s);
+        }
+        if (s.player.inside && now - Game.lastHab > 300) {
+          Game.lastHab = now;
+          S.HabitatPanel.render(s);
+        }
+        S.Audio.setAmbience(s.player.inside ? 'habitat' : 'surface', s.weather.stormTau > 0 ? 1 : 0.25);
+        if (now - Game.lastSave > 30000) {
+          Game.lastSave = now;
+          S.saveGame();
+        }
+      }
+    }
+    requestAnimationFrame(frame);
   }
-}
 
-// Mounts K3's cross-scene panels once. A missing module only loses that panel.
-async function mountShared() {
-  const mounts = [
-    ['./ui/decisionCard.js', 'mountDecisionCards', () => ({ bus, t, locale })],
-    ['./minigames/index.js', 'mountMinigames', () => ({ bus, t, locale })],
-    ['./ui/langSwitch.js', 'mountLangSwitch', () => ({
-      t, getLang, setLang,
-      onChange: () => {
-        for (const panel of shared) panel?.refresh?.();
-        goTo(getState().scene);
+  /* ================================================================ */
+  /* KLAVYE                                                            */
+  /* ================================================================ */
+  function onKeyDown(e) {
+    if (S.isMinigameOpen()) return; // mini-oyun kendi tuşlarını yönetir
+    const top = S.UI.topModal();
+    if (e.key === 'Escape') {
+      if (top) {
+        if (top.opts.closable !== false) S.UI.closeModal(top.id);
+      } else if (Game.scene === 'world') Game.openPanel('pause');
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Enter' && top) {
+      const primary = top.el.querySelector('.btn-primary[data-close]');
+      if (primary) {
+        e.preventDefault();
+        primary.click();
+      }
+      return;
+    }
+    if (Game.scene !== 'world' || top) return;
+    Input.keys.add(e.code);
+    if (['Space', 'KeyW', 'ArrowUp'].includes(e.code)) {
+      if (!e.repeat) Input.jumpQueued = true;
+      e.preventDefault();
+    }
+    if (['ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+    if (e.repeat) return;
+    if (e.code === 'KeyE') Game.interact();
+    else if (e.code === 'KeyL') Game.openPanel('downlink');
+    else if (e.code === 'KeyP') Game.openPanel('power');
+    else if (e.code === 'KeyJ') Game.openPanel('log');
+  }
+
+  function fitStage() {
+    const stage = document.getElementById('stage');
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const scale = Math.min(vw / 960, vh / 540);
+    stage.style.width = Math.floor(960 * scale) + 'px';
+    stage.style.height = Math.floor(540 * scale) + 'px';
+    stage.style.setProperty('--k', scale.toFixed(4));
+  }
+
+  /* ================================================================ */
+  /* AÇILIŞ                                                            */
+  /* ================================================================ */
+  function boot() {
+    const params = new URLSearchParams(window.location.search);
+    let lang = params.get('lang');
+    if (lang !== 'tr' && lang !== 'en') {
+      try {
+        lang = localStorage.getItem(LANG_KEY);
+      } catch (e) {
+        lang = null;
+      }
+    }
+    S.lang = lang === 'en' ? 'en' : 'tr';
+    document.documentElement.lang = S.lang;
+    S.State.reset({ lang: S.lang });
+
+    Game.canvas = document.getElementById('game');
+    Game.ctx = Game.canvas.getContext('2d');
+    Game.ctx.imageSmoothingEnabled = false;
+    fitStage();
+    window.addEventListener('resize', fitStage);
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', (e) => Input.keys.delete(e.code));
+    window.addEventListener('blur', () => Input.keys.clear());
+
+    S.Audio.init();
+    S.FX.init();
+    S.bus.on('sol:advance', (sum) => Game.pendingSol.push(sum));
+    S.bus.on('forensics:discovered', (p) => S.UI.toast(S.UI.icon('target') + t('toast.discovered', { name: S.Forensics.get(p.id).name }), 'info'));
+    S.bus.on('downlink:arrived', (p) => S.UI.toast(S.UI.icon('signal') + t('toast.arrived', { title: t(p.titleKey, p.vars) }), 'ok'));
+    S.bus.on('greenhouse:frozen', () => S.UI.toast(S.UI.icon('leaf') + t('toast.gh_frozen'), 'danger', 5000));
+    S.bus.on('eva:frozen', () => S.UI.toast(S.UI.icon('temp') + t('toast.frozen'), 'danger', 4000));
+    S.bus.on('power:shed', (p) => {
+      if (Game.scene === 'world') S.UI.toast(S.UI.icon('power') + t('toast.shed', { load: t('load.' + p.id) }), 'warn');
+    });
+
+    // Oyuncu testi olayları (§10 "en küçük olay kaydı")
+    Playtest.track('session_start', { lang: S.lang, demo: params.get('demo') === '1' });
+    S.bus.on('goal:changed', (p) => {
+      if (p.from) Playtest.track('objective_completed', { objective: p.from });
+      Playtest.track('objective_shown', { objective: p.to });
+    });
+    S.bus.on('goal:hint', (p) => Playtest.track('hint_requested', { objective: p.id }));
+    S.bus.on('warning:shown', (p) => Playtest.track('warning_shown', { warning: p.id }));
+    S.bus.on('crisis:trigger', (c) => Playtest.track('warning_shown', { warning: 'crisis_' + c.id }));
+    S.bus.on('crisis:resolved', (p) => Playtest.track('optional_choice', { crisis: p.id, option: p.option }));
+    S.bus.on('ui:modal', (p) => {
+      if (Game.scene === 'world' && p.id !== 'minigame') Playtest.track(p.open ? 'menu_open' : 'menu_close', { menu: p.id });
+    });
+    S.bus.on('mission:gameover', (g) => {
+      Playtest.track('failure', { reason: g.reason });
+    });
+    S.bus.on('mission:end', () => Playtest.end('completed'));
+
+    // RIT-10: sekme gizlenince / pencere kapanırken ilerlemeyi kaydet (oturum dışında kaynak tüketimi yok)
+    const persist = () => {
+      const s = S.getState();
+      if (s && Game.scene === 'world' && s.sol >= 1 && !s.ending && !s.gameOver) S.saveGame();
+    };
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) persist();
+    });
+    window.addEventListener('beforeunload', () => {
+      persist();
+      Playtest.end('user_exit');
+    });
+
+    const bar = document.querySelector('#loading .ld-fill');
+    S.Sprites.preload((f) => {
+      if (bar) bar.style.width = Math.round(f * 100) + '%';
+    }).then(() => {
+      document.getElementById('loading').remove();
+      if (params.get('demo') === '1' || params.get('demo') === 'true') {
+        Game.newGame(true);
+        Game.launch();
+      } else {
+        Game.toMenu();
+      }
+      requestAnimationFrame(frame);
+    });
+
+    // TESTING.md §3 — geliştirici / jüri hızlı test konsolu
+    window.SOL14_DEBUG = {
+      state: () => S.getState(),
+      nextSol: () => {
+        S.Sim.sleep(S.getState());
       },
-    })],
-  ];
-  for (const [path, fn, opts] of mounts) {
-    try {
-      const mod = await import(path);
-      shared.push(mod[fn](document.body, opts()));
-    } catch (err) {
-      console.warn(`[main] ${path} not mounted`, err);
-    }
+      triggerCrisis: (id) => S.Events.trigger(S.getState(), id),
+      playUfoEnding: () => {
+        const s = S.getState();
+        if (!s.totals) S.Sim.launch(s);
+        if (s.sol < 1) S.Sim.land(s, null);
+        S.Sim.launchMav(s, { auto: false });
+        Game.playEnding();
+      },
+      showReport: () => Game.showReport(),
+      missingKeys: () => Array.from(S.debugMissingKeys || []),
+      /** Oyuncu testi kaydı: SOL14_DEBUG.playtestLog() / exportPlaytest() (JSON indirir) / clearPlaytest() */
+      playtestLog: () => JSON.parse(localStorage.getItem(PLAYTEST_KEY) || '[]'),
+      exportPlaytest: () => {
+        const blob = new Blob([localStorage.getItem(PLAYTEST_KEY) || '[]'], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'sol14_playtest_' + Playtest.session + '.json';
+        a.click();
+      },
+      clearPlaytest: () => localStorage.removeItem(PLAYTEST_KEY)
+    };
+    S.debugMissingKeys = new Set();
   }
-}
 
-export async function goTo(name) {
-  current?.exit?.();
-  ui.replaceChildren();
-  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-
-  const state = getState();
-  state.scene = name;
-  save();
-
-  current = await loadScene(name);
-  current.enter({ state, data: getData(), bus, t, goTo, canvas, ui });
-}
-
-function seedFromUrl() {
-  const seed = Number(new URLSearchParams(location.search).get('seed'));
-  return Number.isInteger(seed) && seed > 0 ? seed : undefined;
-}
-
-async function start() {
-  try {
-    await Promise.all([loadNasaData(), loadStory()]);
-  } catch (err) {
-    ui.append(panel(Object.assign(document.createElement('p'), { textContent: `Could not start: ${err.message}` })));
-    console.error(err);
-    return;
-  }
-  // Handle for the debug console: sol14.state, sol14.goTo('ending'), ...
-  window.sol14 = { get state() { return getState(); }, bus, data: getData(), goTo };
-  await mountShared();
-
-  const jump = new URLSearchParams(location.search).get('scene');
-  if (jump) newGame(seedFromUrl());
-  goTo(jump && (jump === 'title' || SCENES[jump]) ? jump : 'title');
-}
-
-start();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})((window.SOL14 = window.SOL14 || {}));

@@ -1,0 +1,192 @@
+{
+  "src": "https://science.nasa.gov/mars/",
+  "schedule": {
+    "full": [
+      { "sol": 2, "minute": 720, "id": "radiator_fault" },
+      { "sol": 3, "minute": 660, "id": "dust_devil" },
+      { "sol": 4, "minute": 900, "id": "perchlorate_dust" },
+      { "sol": 5, "minute": 630, "id": "suit_leak" },
+      { "sol": 6, "minute": 540, "id": "dust_storm" },
+      { "sol": 7, "minute": 780, "id": "marsquake" },
+      { "sol": 8, "minute": 1260, "id": "battery_cell_fault" },
+      { "sol": 9, "minute": 600, "id": "software_amnesia" },
+      { "sol": 10, "minute": 720, "id": "solar_flare" },
+      { "sol": 11, "minute": 420, "id": "frozen_valve" },
+      { "sol": 12, "minute": 840, "id": "data_congestion" },
+      { "sol": 13, "minute": 660, "id": "dust_devil" }
+    ],
+    "demo": [
+      { "sol": 2, "minute": 600, "id": "joint_freeze" },
+      { "sol": 3, "minute": 540, "id": "dust_storm" },
+      { "sol": 4, "minute": 840, "id": "perchlorate_dust" }
+    ]
+  },
+  "stormDurationSols": { "full": 3, "demo": 1 },
+  "crises": [
+    {
+      "id": "joint_freeze",
+      "fx": "frost",
+      "icon": "❄",
+      "outsideOnly": true,
+      "onTrigger": { "forceFreeze": true },
+      "options": [
+        { "id": "A", "icon": "🚶", "effects": {}, "score": -10 },
+        { "id": "B", "icon": "♨", "effects": { "suitBattery": -30, "unfreeze": true }, "score": 20 },
+        {
+          "id": "C", "icon": "☢", "requires": { "inventory": "rhuUnits" },
+          "effects": { "rhuUnits": -1, "unfreeze": true }, "score": 35
+        }
+      ]
+    },
+    {
+      "id": "dust_storm",
+      "fx": "storm",
+      "icon": "🌪",
+      "warnInstrument": "meda",
+      "preSignalKey": "hud.alert_storm_soon",
+      "onTrigger": { "startStorm": true },
+      "options": [
+        { "id": "A", "icon": "⚡", "effects": { "disableLoad": "moxie" }, "score": 20 },
+        { "id": "B", "icon": "📡", "effects": { "disableLoad": "experiments", "dataLossMbit": 15 }, "score": 15 },
+        {
+          "id": "C", "icon": "🧹", "effects": { "panelDust": -0.3, "minutes": 40, "morale": -5 }, "score": 10,
+          "alts": [ { "when": { "instrument": "meda" }, "effects": { "panelDust": -0.3, "energyKwh": 6, "minutes": 40 }, "score": 30, "resultKey": "crisis.dust_storm.C.res_meda" } ]
+        }
+      ]
+    },
+    {
+      "id": "radiator_fault",
+      "fx": "heat",
+      "icon": "🌡",
+      "options": [
+        { "id": "A", "icon": "🧑‍🚀", "effects": { "minutes": 45, "suitO2": -10 }, "score": 25 },
+        { "id": "B", "icon": "⚙", "effects": { "disableLoad": "moxie", "energyKwh": -2 }, "score": 10 },
+        {
+          "id": "C", "icon": "🎙", "effects": { "minutes": 90, "morale": -6 }, "score": 5,
+          "alts": [ { "when": { "reward": "acousticDiagnostics" }, "effects": { "minutes": 15 }, "score": 40, "resultKey": "crisis.radiator_fault.C.res_acoustic" } ]
+        }
+      ]
+    },
+    {
+      "id": "marsquake",
+      "fx": "quake",
+      "icon": "〰",
+      "warnInstrument": "seis",
+      "options": [
+        { "id": "A", "icon": "📦", "effects": { "morale": -6 }, "score": 10 },
+        { "id": "B", "icon": "🧪", "effects": { "o2ReserveKg": -0.6 }, "score": 5 },
+        {
+          "id": "C", "icon": "📈", "effects": { "o2ReserveKg": -0.8, "morale": -8 }, "score": -20,
+          "alts": [
+            { "when": { "instrument": "seis" }, "effects": {}, "score": 45, "resultKey": "crisis.marsquake.C.res_seis" },
+            { "when": { "inventory": "repairKits" }, "effects": { "repairKits": -1 }, "score": 25, "resultKey": "crisis.marsquake.C.res_kit" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "frozen_valve",
+      "fx": "frost",
+      "icon": "🧊",
+      "options": [
+        { "id": "A", "icon": "🔋", "effects": { "energyKwh": -6 }, "score": 10 },
+        { "id": "B", "icon": "🌙", "effects": { "minutes": 50, "suitO2": -15, "radiationMsv": 0.5 }, "score": 15 },
+        {
+          "id": "C", "icon": "🔧", "effects": { "energyKwh": -10, "mavFuel": -4 }, "score": -15,
+          "alts": [
+            { "when": { "inventory": "rhuUnits" }, "effects": { "rhuUnits": -1 }, "score": 40, "resultKey": "crisis.frozen_valve.C.res_rhu" },
+            { "when": { "inventory": "repairKits" }, "effects": { "repairKits": -1 }, "score": 30, "resultKey": "crisis.frozen_valve.C.res_kit" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "solar_flare",
+      "fx": "flare",
+      "icon": "☀",
+      "warnInstrument": "rad",
+      "options": [
+        { "id": "A", "icon": "🛡", "effects": { "minutes": 180, "radiationMsv": 3 }, "score": 30 },
+        { "id": "B", "icon": "⚠", "effects": { "radiationMsv": 45, "morale": -10 }, "score": -30 },
+        {
+          "id": "C", "icon": "🚁", "effects": { "minutes": 120, "radiationMsv": 12, "energyKwh": -3 }, "score": 10,
+          "alts": [ { "when": { "instrument": "rad" }, "effects": { "minutes": 60, "radiationMsv": 1 }, "score": 40, "resultKey": "crisis.solar_flare.C.res_rad" } ]
+        }
+      ]
+    },
+    {
+      "id": "data_congestion",
+      "fx": "none",
+      "icon": "📶",
+      "options": [
+        { "id": "A", "icon": "📄", "effects": { "morale": -5, "prioritize": "forensic" }, "score": 20 },
+        { "id": "B", "icon": "📡", "requires": { "comm": "relay_xband" }, "effects": { "energyKwh": -4, "extraBandwidthMbit": 20 }, "score": 30 },
+        { "id": "C", "icon": "💌", "effects": { "morale": 20, "dataLossMbit": 15 }, "score": 10 }
+      ]
+    },
+    {
+      "id": "dust_devil",
+      "fx": "dust_devil",
+      "icon": "🌀",
+      "bonus": true,
+      "options": [
+        { "id": "A", "icon": "☀", "effects": { "panelDust": -1, "energyKwh": 8, "morale": 6 }, "score": 40 },
+        { "id": "B", "icon": "📷", "effects": { "panelDust": -0.5, "bonusPhoto": true }, "score": 30 }
+      ]
+    },
+    {
+      "id": "perchlorate_dust",
+      "fx": "toxic",
+      "icon": "☣",
+      "options": [
+        {
+          "id": "A", "icon": "💧", "effects": { "waterL": -6, "energyKwh": -2 }, "score": 25,
+          "alts": [ { "when": { "instrument": "supercam" }, "effects": { "waterL": -3, "energyKwh": -1 }, "score": 35, "resultKey": "crisis.perchlorate_dust.A.res_supercam" } ]
+        },
+        {
+          "id": "B", "icon": "🌬", "effects": { "o2ReserveKg": -0.5 }, "score": 10,
+          "alts": [ { "when": { "instrument": "moxie" }, "effects": { "o2ReserveKg": -0.5, "morale": 2 }, "score": 20, "resultKey": "crisis.perchlorate_dust.B.res_moxie" } ]
+        },
+        { "id": "C", "icon": "🌀", "effects": { "energyKwh": -5, "morale": -10 }, "score": 5 }
+      ]
+    },
+    {
+      "id": "suit_leak",
+      "fx": "leak",
+      "icon": "💨",
+      "outsideOnly": true,
+      "onTrigger": { "suitLeak": true, "suitIntegrity": -35 },
+      "options": [
+        {
+          "id": "A", "icon": "🩹", "minigame": "qte", "effects": { "suitO2": -8, "suitLeak": false }, "score": 15,
+          "alts": [ { "when": { "minigameMin": 0.9 }, "effects": { "suitO2": -3, "suitLeak": false }, "score": 35, "resultKey": "crisis.suit_leak.A.res_good" } ]
+        },
+        { "id": "B", "icon": "🏠", "effects": {}, "score": 0 },
+        { "id": "C", "icon": "🔧", "requires": { "inventory": "repairKits" }, "effects": { "repairKits": -1, "suitLeak": false, "suitIntegrity": 25 }, "score": 30 }
+      ]
+    },
+    {
+      "id": "software_amnesia",
+      "fx": "glitch",
+      "icon": "💾",
+      "options": [
+        {
+          "id": "A", "icon": "🔌", "minigame": "wires", "effects": { "energyKwh": -3, "dataLossMbit": 10 }, "score": 15,
+          "alts": [ { "when": { "minigameMin": 0.9 }, "effects": { "energyKwh": -1 }, "score": 40, "resultKey": "crisis.software_amnesia.A.res_good" } ]
+        },
+        { "id": "B", "icon": "🌍", "effects": { "morale": -6, "dataLossMbit": 999, "minutes": 60 }, "score": 10 },
+        { "id": "C", "icon": "🗑", "effects": { "wipeQueue": true }, "score": -10 }
+      ]
+    },
+    {
+      "id": "battery_cell_fault",
+      "fx": "none",
+      "icon": "🔋",
+      "options": [
+        { "id": "A", "icon": "✂", "effects": { "batteryCapacityPct": -15 }, "score": 5 },
+        { "id": "B", "icon": "♨", "effects": { "energyKwh": -4 }, "score": 15 },
+        { "id": "C", "icon": "🔧", "requires": { "inventory": "repairKits" }, "effects": { "repairKits": -1 }, "score": 30 }
+      ]
+    }
+  ]
+}

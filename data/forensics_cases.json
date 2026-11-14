@@ -1,0 +1,88 @@
+{
+  "categories": ["power_dust", "thermal", "mechanical", "software", "comms"],
+  "evidenceTypes": [
+    { "id": "photo", "minigame": "align", "minutes": 10, "instrumentBonus": "mastcam_z" },
+    { "id": "telemetry", "minigame": "wires", "minutes": 20, "instrumentBonus": null },
+    { "id": "env", "minigame": "qte", "minutes": 15, "instrumentBonus": "supercam" }
+  ],
+  "minEvidenceForDiagnosis": 2,
+  "src": "https://nssdc.gsfc.nasa.gov/nmc/",
+  "cases": [
+    {
+      "id": "opportunity",
+      "name": "MER-B Opportunity",
+      "agency": "NASA / JPL",
+      "lastContact": "2018-06-10 (Sol 5111)",
+      "realCoords": "Meridiani Planum 2.05°S 354.47°E",
+      "distanceM": 380,
+      "sprite": "rover_opportunity",
+      "correctCategory": "power_dust",
+      "acceptedSecondary": null,
+      "reportMbit": 18,
+      "salvage": { "rhuUnits": 8 },
+      "telemetry": { "tau": 10.8, "panelW": 22, "coreTempC": -41 },
+      "src": "https://science.nasa.gov/mission/mer-opportunity/"
+    },
+    {
+      "id": "insight",
+      "name": "InSight Lander",
+      "agency": "NASA / JPL",
+      "lastContact": "2022-12-15 (Sol 1440)",
+      "realCoords": "Elysium Planitia 4.50°N 135.62°E",
+      "distanceM": 640,
+      "sprite": "lander_insight",
+      "correctCategory": "power_dust",
+      "acceptedSecondary": null,
+      "reportMbit": 18,
+      "salvage": { "seis": true },
+      "telemetry": { "dustCoverPct": 92, "whPerSol": 285, "maxQuakeM": 4.7 },
+      "src": "https://science.nasa.gov/mission/insight/"
+    },
+    {
+      "id": "spirit",
+      "name": "MER-A Spirit",
+      "agency": "NASA / JPL",
+      "lastContact": "2010-03-22 (Sol 2210)",
+      "realCoords": "Gusev / Troy 14.57°S 175.47°E",
+      "distanceM": 900,
+      "sprite": "rover_spirit",
+      "correctCategory": "mechanical",
+      "acceptedSecondary": "thermal",
+      "reportMbit": 18,
+      "salvage": { "rhuUnits": 8, "wheelPart": true },
+      "telemetry": { "wheelSlipPct": 98, "tiltDeg": -11.5, "heaterTempC": -55 },
+      "src": "https://science.nasa.gov/mission/mer-spirit/"
+    },
+    {
+      "id": "phoenix",
+      "name": "Phoenix Lander",
+      "agency": "NASA / UArizona",
+      "lastContact": "2008-11-02 (Sol 157)",
+      "realCoords": "Vastitas Borealis 68.22°N 234.25°E",
+      "distanceM": 1160,
+      "sprite": "lander_phoenix",
+      "correctCategory": "thermal",
+      "acceptedSecondary": "mechanical",
+      "reportMbit": 20,
+      "salvage": { "roboticArmPart": true },
+      "telemetry": { "co2IceKg": 140, "panelBusV": 0, "ambientC": -96 },
+      "src": "https://science.nasa.gov/mission/phoenix/"
+    },
+    {
+      "id": "beagle2",
+      "name": "Beagle 2 (Bonus)",
+      "agency": "ESA / UK",
+      "lastContact": "2003-12-25 (MRO HiRISE 2015)",
+      "realCoords": "Isidis Planitia 11.53°N 90.43°E",
+      "distanceM": 1450,
+      "sprite": "lander_beagle2",
+      "correctCategory": "comms",
+      "acceptedSecondary": "mechanical",
+      "reportMbit": 22,
+      "bonus": true,
+      "salvage": { "spareAntenna": true },
+      "telemetry": { "petalsDeployed": "2/4", "uhfBlocked": true, "rfDb": 0 },
+      "src": "https://www.esa.int/Science_Exploration/Space_Science/Mars_Express/Beagle-2_lander_found_on_Mars"
+    }
+  ]
+}

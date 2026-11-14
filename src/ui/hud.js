@@ -1,214 +1,319 @@
-// HUD (owner: K3): six status bars, the EVA suit-oxygen bar with the point-of-no-return notch (M4),
-// and tabs for Telemetry, Downlink and Power.
-//
-// K2 mounts it in the surface scene:
-//   const hud = mountHud(el, {
-//     state, data, t, locale, bus,
-//     telemetry,                                   // createTelemetry() from ./telemetry.js
-//     downlink: { passes, lightDelaySec },         // see ./downlink.js
-//     power: { getStatus, setOrder },              // K2 power.js, see ./powerPanel.js
-//     refreshMs: 500,
-//     onAlarmResolve: (r) => { ... },              // K2: consequence of a (fake) alarm answer, see ./alarms.js
-//   });
-//   hud.alarm({ id, stat: 'o2', value: 8, unit: '%', real: true });   // a real alarm; fake ones come via `hallucination`
-//   hud.openTab('telemetry');                      // e.g. from an alarm: "check it on telemetry"
-//
-// Bars read gameState (K1 schema + K2 sub-objects) and limits from nasa_data.json. A limit that is not
-// in the data yet shows as "?" instead of an invented number.
-
-import { mountTelemetry } from './telemetry.js';
-import { mountDownlink } from './downlink.js';
-import { mountPowerPanel } from './powerPanel.js';
-import { mountAlarms } from './alarms.js';
-
-// Display thresholds for bar colour only (share of the bar left). They change no game rule.
-const WARN = 0.3;
-const BAD = 0.15;
-
-const num = (entry) => (entry && typeof entry.value === 'number' ? entry.value : null);
-const levelLeft = (share) => (share == null ? 'ok' : share <= BAD ? 'bad' : share <= WARN ? 'warn' : 'ok');
-const levelUsed = (share) => (share == null ? 'ok' : share >= 1 - BAD ? 'bad' : share >= 1 - WARN ? 'warn' : 'ok');
-
 /**
- * Pure: the bars to draw. Each: { id, icon, value, max, unit, digits, fill (0..1 | null), level, note? }.
- * note: { key, vars } for a short line under the bar.
+ * SOL 14: RED HORIZON — Yüzey HUD'u (K3)
+ * Üst bar, yaşamsal değerler, M4 Dönüşsüzlük Noktası çentiği (eklem donunca sıçrama), mini harita
+ * (dönüş menzili), uyarı bantları, [E] etkileşim balonu, hızlı erişim ve dokunmatik kontroller.
  */
-export function hudBars(state, data) {
-  const p = state.power || {};
-  const life = state.life || {};
-  const env = state.env || {};
-  const db = state.dataBudget || {};
-  const bars = [];
+(function (S) {
+  'use strict';
+  const UI = () => S.UI;
+  const t = (k, v) => S.t(k, v);
+  const HUD = { refs: {}, mode: null, lastFrozen: false, lastNotch: 0, prompt: null };
 
-  // Energy
-  const capKWh = p.batteryCapacityWh ? p.batteryCapacityWh / 1000 : null;
-  const kWh = typeof p.batteryWh === 'number' ? p.batteryWh / 1000 : null;
-  const eShare = capKWh && kWh != null ? kWh / capKWh : null;
-  bars.push({ id: 'energy', icon: '⚡', value: kWh, max: capKWh, unit: 'kWh', digits: 1, fill: eShare, level: levelLeft(eShare) });
-
-  // Oxygen: shown as days left at the sourced consumption rate.
-  const o2 = typeof life.o2Kg === 'number' ? life.o2Kg : null;
-  const o2Max = num(data.life?.o2StartKg);
-  const perDay = (num(data.life?.o2KgPerCrewPerDay) ?? 0) * (num(data.life?.crew) ?? 1);
-  const days = o2 != null && perDay > 0 ? o2 / perDay : null;
-  const o2Share = o2 != null && o2Max ? o2 / o2Max : null;
-  bars.push({ id: 'o2', icon: 'O₂', value: o2, max: o2Max, unit: 'kg', digits: 1, fill: o2Share,
-    level: days != null ? (days < 1 ? 'bad' : days < 3 ? 'warn' : 'ok') : levelLeft(o2Share),
-    note: days != null ? { key: 'hud.o2Days', vars: { days: Math.floor(days * 10) / 10 } } : null });
-
-  // Heat: inside temperature between the cold threshold and the habitat target.
-  const inside = typeof env.insideC === 'number' ? env.insideC : null;
-  const target = num(data.thermal?.habitatTargetC);
-  const coldBelow = num(data.thermal?.bodyColdBelowC);
-  const heatShare = inside != null && target != null && coldBelow != null
-    ? Math.max(0, Math.min(1, (inside - coldBelow) / (target - coldBelow))) : null;
-  const coldHours = life.body?.coldHours ?? 0;
-  const coldLimit = num(data.rules?.coldLossHours);
-  bars.push({ id: 'heat', icon: '🌡', value: inside, max: target, unit: '°C', digits: 0, fill: heatShare,
-    level: life.body?.cold ? 'bad' : levelLeft(heatShare),
-    note: life.body?.cold ? { key: 'hud.coldFor', vars: { h: Math.round(coldHours * 10) / 10, limit: coldLimit ?? '?' } } : null });
-
-  // Radiation: cumulative dose against the mission limit (a rise is bad).
-  const dose = typeof life.radiationMSv === 'number' ? life.radiationMSv : null;
-  const limit = num(data.rules?.radiationLimitMSv);
-  const rShare = dose != null && limit ? dose / limit : null;
-  bars.push({ id: 'radiation', icon: '☢', value: dose, max: limit, unit: 'mSv', digits: 1, fill: rShare, level: levelUsed(rShare) });
-
-  // Sanity: 0..100, created by K2's sanity.js.
-  const sanity = typeof life.sanity === 'number' ? life.sanity : null;
-  bars.push({ id: 'sanity', icon: '🧠', value: sanity, max: 100, unit: '%', digits: 0,
-    fill: sanity != null ? sanity / 100 : null, level: levelLeft(sanity != null ? sanity / 100 : null) });
-
-  // Data: used this sol against the relay capacity, and how much is waiting.
-  const used = db.used ?? 0;
-  const perSol = db.perSol || null;
-  const dShare = perSol ? used / perSol : null;
-  bars.push({ id: 'data', icon: '📡', value: used, max: perSol, unit: 'Mbit', digits: 0, fill: dShare, level: 'ok',
-    note: db.queue?.length ? { key: 'hud.queued', vars: { n: db.queue.length } } : null });
-
-  return bars;
-}
-
-/**
- * Pure: the EVA suit bar with the no-return notch, or null when inside.
- * startKg: suit O2 when this EVA began (the HUD remembers it; gameState has no field for it).
- */
-export function evaBar(state, startKg = 0) {
-  const eva = state.life?.eva;
-  if (!eva?.outside) return null;
-  const max = Math.max(startKg, eva.suitO2Kg, eva.requiredO2Kg, 1e-9);
-  return {
-    value: eva.suitO2Kg,
-    required: eva.requiredO2Kg,
-    fill: eva.suitO2Kg / max,
-    notch: eva.requiredO2Kg / max,
-    noReturn: Boolean(eva.noReturn),
-    distanceM: eva.distanceM,
-  };
-}
-
-const TABS = ['telemetry', 'downlink', 'power'];
-
-export function mountHud(el, opts) {
-  const { state, data, t, bus } = opts;
-  const locale = () => (typeof opts.locale === 'function' ? opts.locale() : opts.locale || 'tr-TR');
-  const fmt = (n, d = 0) => (n == null ? '?' : Number(n).toLocaleString(locale(), { maximumFractionDigits: d, minimumFractionDigits: d }));
-  let tab = null; // open tab id, or null when collapsed
-  let panel = null; // mounted panel in the open tab
-  let timer = 0;
-  let evaStart = 0;
-
-  el.classList.add('hud');
-  el.innerHTML = `
-    <div class="hud-bars" data-bars></div>
-    <div class="hud-eva" data-eva></div>
-    <div class="hud-tabs" role="tablist" aria-label="${t('hud.tabs')}">
-      ${TABS.map((id) => `<button role="tab" class="hud-tab" data-tab="${id}" aria-selected="false" aria-controls="hud-panel">${t(`hud.tab.${id}`)}</button>`).join('')}
-    </div>
-    <div class="hud-panel" id="hud-panel" role="tabpanel" data-panel hidden></div>`;
-
-  const $ = (s) => el.querySelector(s);
-
-  function renderBars() {
-    el.querySelectorAll('[data-tab]').forEach((b) => { b.textContent = t(`hud.tab.${b.dataset.tab}`); }); // follows the language
-    $('[data-bars]').innerHTML = hudBars(state, data).map((b) => `
-      <div class="hud-bar ${b.level} ${b.fill == null && b.value != null ? 'nomax' : ''}" title="${t(`hud.bar.${b.id}.help`)}">
-        <div class="hud-bar-label"><span><i aria-hidden="true">${b.icon}</i> ${t(`hud.bar.${b.id}`)}</span>
-          <b>${b.value == null ? '—' : fmt(b.value, b.digits)}${b.max != null ? ` / ${fmt(b.max, b.digits)}` : b.value == null ? '' : ' / ?'} ${b.unit}</b></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${b.fill == null ? (b.value == null ? 0 : 100) : Math.round(Math.min(1, b.fill) * 100)}%"></div></div>
-        ${b.note ? `<small class="hud-note">${Object.entries(b.note.vars).reduce((s, [k, v]) => s.replace(`{${k}}`, typeof v === 'number' ? fmt(v, Number.isInteger(v) ? 0 : 1) : v), t(b.note.key))}</small>` : ''}
-        ${b.level === 'bad' ? `<span class="sr-only">${t('hud.critical')}</span>` : ''}
-      </div>`).join('');
-
-    const eva = state.life?.eva;
-    evaStart = eva?.outside ? Math.max(evaStart, eva.suitO2Kg) : 0; // remember the full suit; reset inside
-    const e = evaBar(state, evaStart);
-    $('[data-eva]').innerHTML = e ? `
-      <div class="hud-bar eva ${e.noReturn ? 'bad' : ''}" role="group" aria-label="${t('hud.eva')}">
-        <div class="hud-bar-label"><span>🧑‍🚀 ${t('hud.eva')}</span>
-          <b>${fmt(e.value, 2)} kg · ${t('hud.evaNeed').replace('{kg}', fmt(e.required, 2)).replace('{m}', fmt(e.distanceM))}</b></div>
-        <div class="bar-track eva-track"><div class="bar-fill" style="width:${Math.round(e.fill * 100)}%"></div>
-          <span class="eva-notch" style="left:${Math.round(e.notch * 100)}%" title="${t('hud.notch')}"></span></div>
-        ${e.noReturn ? `<small class="hud-note" role="alert">⚠ ${t('hud.noReturn')}</small>` : ''}
-      </div>` : '';
+  function ref(name) {
+    return HUD.refs[name];
   }
 
-  function openTab(id) {
-    if (tab === id) id = null; // clicking the open tab collapses it
-    panel?.destroy();
-    panel = null;
-    tab = id;
-    el.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
-    const box = $('[data-panel]');
-    box.hidden = !id;
-    box.innerHTML = '';
-    if (!id) return;
-    const host = document.createElement('div');
-    box.appendChild(host);
-    if (id === 'telemetry' && opts.telemetry) panel = mountTelemetry(host, { telemetry: opts.telemetry, t, locale, refreshMs: 1000 });
-    else if (id === 'downlink' && opts.downlink) panel = mountDownlink(host, { state, bus, t, locale, ...opts.downlink });
-    else if (id === 'power' && opts.power) panel = mountPowerPanel(host, { t, locale, bus, refreshMs: 500, ...opts.power });
-    else host.innerHTML = `<p class="dl-empty">${t('hud.notReady')}</p>`;
-  }
-
-  el.querySelectorAll('[data-tab]').forEach((b) => {
-    b.addEventListener('click', () => openTab(b.dataset.tab));
-    b.addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      e.preventDefault();
-      const i = TABS.indexOf(b.dataset.tab);
-      const next = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
-      el.querySelector(`[data-tab="${next}"]`).focus();
+  HUD.build = function (mode) {
+    HUD.mode = mode;
+    const layer = UI().hudLayer();
+    const I = UI().icon;
+    layer.hidden = false;
+    layer.className = 'hud-layer mode-' + mode;
+    layer.innerHTML =
+      UI().header(
+        '<span class="loc-ico">' + I(mode === 'habitat' ? 'home' : 'walk') + '</span><span data-ref="loc"></span>',
+        '<div class="status-pill">' +
+          '<span>' + I('calendar') + '<b data-ref="sol"></b></span><i></i>' +
+          '<span>' + I('clock') + '<b data-ref="clock"></b></span><i></i>' +
+          '<span>' + I('temp') + '<b data-ref="temp"></b></span></div>'
+      ) +
+      '<div class="hud-alerts" data-ref="alerts"></div>' +
+      // RIT-02: tek ana hedef + en fazla bir isteğe bağlı hedef; RIT-12: istenirse ipucu
+      '<section class="panel goal-card" data-ref="goal" hidden>' +
+      '<div class="goal-main"><span class="goal-tag">' + I('target') + t('goal.label_main') + '</span>' +
+      '<button class="goal-hint-btn" data-ref="hintbtn" title="' + t('goal.hint_btn') + '">?</button></div>' +
+      '<b class="goal-text" data-ref="goaltxt"></b>' +
+      '<p class="goal-hint" data-ref="goalhint" hidden></p>' +
+      '<div class="goal-opt" data-ref="goalopt"></div>' +
+      '<div class="goal-prog" data-ref="goalprog"></div></section>' +
+      (mode === 'surface'
+        ? '<section class="panel vitals">' +
+          '<div class="vital"><div class="vital-head">' + I('o2') + '<span>' + t('hud.suit_o2') + '</span><b data-ref="o2"></b></div>' +
+          '<div class="bar cyan ponr-bar"><div class="bar-fill" data-ref="o2fill"></div>' +
+          '<div class="ponr-ghost" data-ref="ghost"></div><div class="ponr-jump" data-ref="jump"><span data-ref="jumplbl"></span></div>' +
+          '<div class="ponr-notch" data-ref="notch"></div></div>' +
+          '<div class="vital-sub" data-ref="ponrtxt"></div></div>' +
+          '<div class="vital"><div class="vital-head">' + I('battery') + '<span>' + t('hud.suit_battery') + '</span><b data-ref="sbat"></b></div>' +
+          '<div class="bar amber"><div class="bar-fill" data-ref="sbatfill"></div></div></div>' +
+          '<div class="vital"><div class="vital-head">' + I('suit') + '<span>' + t('hud.suit_temp') + '</span><b data-ref="stemp"></b></div>' +
+          '<div class="vital-sub" data-ref="speed"></div></div>' +
+          '<div class="vital"><div class="vital-head">' + I('power') + '<span>' + t('hud.hab_battery') + '</span><b data-ref="hbat"></b></div>' +
+          '<div class="bar amber"><div class="bar-fill" data-ref="hbatfill"></div></div></div>' +
+          '<div class="vital vital-gh" data-ref="ghrow" hidden><div class="vital-head">' + I('leaf') + '<span>' + t('hud.greenhouse') + '</span></div>' +
+          '<div class="vital-sub" data-ref="gh"></div></div>' +
+          '</section>' +
+          '<div class="minimap"><div class="mm-track" data-ref="mm"></div><div class="mm-legend" data-ref="mmleg"></div></div>' +
+          '<div class="world-prompt" data-ref="prompt" hidden></div>'
+        : '') +
+      '<nav class="quickbar">' +
+      '<button class="qb" data-q="downlink" title="L">' + I('signal') + '<span>' + t('hud.q_downlink') + '</span><kbd>L</kbd></button>' +
+      '<button class="qb" data-q="power" title="P">' + I('power') + '<span>' + t('hud.q_power') + '</span><kbd>P</kbd></button>' +
+      '<button class="qb" data-q="log" title="J">' + I('log') + '<span>' + t('hud.q_log') + '</span><kbd>J</kbd></button>' +
+      '<button class="qb" data-q="pause" title="Esc">' + I('pause') + '<span>' + t('hud.q_menu') + '</span><kbd>Esc</kbd></button>' +
+      '</nav>' +
+      '<div class="touch-controls">' +
+      '<button class="tc" data-tc="left">' + I('arrowL') + '</button><button class="tc" data-tc="right">' + I('arrowR') + '</button>' +
+      '<button class="tc tc-act" data-tc="act">E</button>' +
+      (mode === 'surface' ? '<button class="tc tc-act" data-tc="jump">' + I('up') + '</button>' : '') +
+      '</div>';
+    HUD.refs = {};
+    layer.querySelectorAll('[data-ref]').forEach((el) => (HUD.refs[el.dataset.ref] = el));
+    layer.querySelectorAll('[data-q]').forEach((b) =>
+      b.addEventListener('click', () => {
+        S.bus.emit('audio:play', 'click');
+        S.Game.openPanel(b.dataset.q);
+      })
+    );
+    // Dokunmatik kontroller -> S.Input
+    layer.querySelectorAll('[data-tc]').forEach((b) => {
+      const k = b.dataset.tc;
+      const down = (e) => {
+        e.preventDefault();
+        if (k === 'act') S.Game.interact();
+        else S.Input.touch[k] = true;
+      };
+      const up = () => {
+        if (k !== 'act') S.Input.touch[k] = false;
+      };
+      b.addEventListener('pointerdown', down);
+      b.addEventListener('pointerup', up);
+      b.addEventListener('pointerleave', up);
+      b.addEventListener('pointercancel', up);
     });
-  });
-
-  // Alarms: "check telemetry" opens the Telemetry tab and shows the real reading from the same bars.
-  const alarms = mountAlarms(el, {
-    bus, t, locale,
-    onVerify: () => { if (tab !== 'telemetry') openTab('telemetry'); },
-    onResolve: opts.onAlarmResolve,
-    readStat: (stat) => {
-      const b = hudBars(state, data).find((x) => x.id === stat);
-      if (!b || b.value == null) return null;
-      const note = b.note ? Object.entries(b.note.vars).reduce((s2, [k, v]) => s2.replace(`{${k}}`, typeof v === 'number' ? fmt(v, Number.isInteger(v) ? 0 : 1) : v), t(b.note.key)) : '';
-      return { value: b.value, unit: b.unit, note };
-    },
-  });
-
-  renderBars();
-  if (opts.refreshMs) timer = setInterval(renderBars, opts.refreshMs);
-
-  return {
-    refresh: () => { renderBars(); panel?.refresh?.(); alarms.refresh(); }, // e.g. after a language switch
-    alarm: (a) => alarms.show({ real: true, ...a }),
-    openTab: (id) => { if (tab !== id) openTab(id); },
-    closeTabs: () => { if (tab) openTab(tab); },
-    destroy() {
-      clearInterval(timer);
-      panel?.destroy();
-      alarms.destroy();
-      el.innerHTML = '';
-      el.classList.remove('hud');
-    },
+    if (ref('prompt')) ref('prompt').addEventListener('click', () => S.Game.interact());
+    ref('hintbtn').addEventListener('click', () => {
+      const h = ref('goalhint');
+      h.hidden = !h.hidden;
+      S.bus.emit('audio:play', 'click');
+      if (!h.hidden) S.bus.emit('goal:hint', { id: HUD.goalId });
+    });
+    HUD.lastFrozen = false;
+    HUD._goalHtml = null;
   };
-}
+
+  HUD.hide = function () {
+    const layer = UI().hudLayer();
+    layer.hidden = true;
+    layer.innerHTML = '';
+    HUD.mode = null;
+  };
+
+  /* ------------------------------------------------------------------ */
+  HUD.update = function (s) {
+    if (!HUD.mode) return;
+    const site = S.Sim.site(s);
+    const amb = S.Sim.ambient(s);
+    ref('loc').textContent = HUD.mode === 'habitat' ? t('hud.loc_habitat') : t('hud.loc_surface', { site: t('site.' + site.id + '.short') });
+    ref('sol').textContent = 'SOL ' + s.sol + ' / ' + s.maxSols;
+    ref('clock').textContent = S.util.clock(S.Sim.clockMinute(s));
+    ref('temp').textContent = (HUD.mode === 'habitat' ? Math.round(s.res.habTempC) : Math.round(amb)) + ' °C';
+    HUD.updateAlerts(s, amb);
+    HUD.updateGoal(s);
+    if (HUD.mode !== 'surface') return;
+
+    // Yaşamsallar
+    const suit = s.suit;
+    const ponr = S.Sim.ponr(s);
+    ref('o2').textContent = Math.round(suit.o2) + '%';
+    ref('o2fill').style.width = suit.o2 + '%';
+    ref('o2fill').parentElement.classList.toggle('critical', ponr.critical);
+    const notch = ref('notch');
+    notch.style.left = Math.min(99, ponr.requiredO2) + '%';
+    notch.classList.toggle('frozen', suit.frozen);
+    notch.hidden = ponr.requiredO2 <= 0.2;
+    // Eklem donunca: hayalet çentik (normal hız) -> gerçek çentik (%40 hız) sıçrama oku
+    const ghost = ref('ghost');
+    const jump = ref('jump');
+    if (suit.frozen && ponr.requiredNormal > 0) {
+      ghost.hidden = false;
+      jump.hidden = false;
+      ghost.style.left = ponr.requiredNormal + '%';
+      jump.style.left = ponr.requiredNormal + '%';
+      jump.style.width = Math.max(0, Math.min(99, ponr.requiredO2) - ponr.requiredNormal) + '%';
+      ref('jumplbl').textContent = '×' + ponr.jumpFactor;
+    } else {
+      ghost.hidden = true;
+      jump.hidden = true;
+    }
+    if (suit.frozen && !HUD.lastFrozen) {
+      notch.classList.remove('jumped');
+      void notch.offsetWidth;
+      notch.classList.add('jumped');
+    }
+    HUD.lastFrozen = suit.frozen;
+    ref('ponrtxt').innerHTML = S.Sim.isOutside(s)
+      ? t(ponr.beyond ? 'hud.ponr_beyond' : 'hud.ponr_line', { pct: ponr.requiredO2, m: ponr.distanceM, speed: ponr.speedPct })
+      : '';
+    ref('ponrtxt').classList.toggle('danger', ponr.critical);
+
+    ref('sbat').textContent = Math.round(suit.battery) + '%';
+    ref('sbatfill').style.width = suit.battery + '%';
+    ref('stemp').textContent = Math.round(suit.tempC) + ' °C';
+    ref('stemp').classList.toggle('danger', suit.frozen);
+    ref('speed').innerHTML = suit.frozen
+      ? '<span class="danger">' + t('hud.joints_frozen', { pct: ponr.speedPct }) + '</span>'
+      : S.Surface.inSandPit(s.player.x)
+        ? '<span class="warn">' + t('hud.sand_pit') + '</span>'
+        : t('hud.speed_normal');
+    ref('hbat').textContent = s.res.energyKwh.toFixed(1) + ' / ' + s.res.batteryKwh + ' kWh';
+    ref('hbatfill').style.width = (s.res.energyKwh / s.res.batteryKwh) * 100 + '%';
+    HUD.updateGreenhouse(s);
+
+    HUD.updateMinimap(s, ponr);
+    HUD.updatePrompt(s);
+  };
+
+  /** RIT-02 — Hedef kartı. Ana hedef değişince 'goal:changed' yayınlanır (oyuncu testi günlüğü + kısa vurgu) */
+  HUD.updateGoal = function (s) {
+    const card = ref('goal');
+    if (!card) return;
+    const g = S.Objectives.compute(s);
+    card.hidden = !g;
+    if (!g) return;
+    const p = g.progress;
+    const mainTxt = S.util.escape(t(g.main.key, g.main.vars));
+    const optTxt = g.optional ? S.util.escape(t(g.optional.key, g.optional.vars)) : '';
+    const progTxt = t('goal.progress', { f: p.forensicsSent, fr: p.full.forensicsSent, e: p.experimentsSent, er: p.full.experimentsSent, fuel: p.fuel });
+    const sig = [mainTxt, optTxt, progTxt, S.lang].join('\u0001');
+    if (sig === HUD._goalHtml) return;
+    HUD._goalHtml = sig;
+    ref('goaltxt').innerHTML = mainTxt;
+    ref('goalopt').innerHTML = optTxt ? '<span class="goal-tag opt">' + t('goal.label_opt') + '</span>' + optTxt : '';
+    ref('goalprog').textContent = progTxt;
+    ref('goalhint').textContent = t(g.main.hintKey, g.main.vars);
+    if (HUD.goalId !== g.main.id) {
+      S.bus.emit('goal:changed', { from: HUD.goalId || null, to: g.main.id, sol: s.sol });
+      HUD.goalId = g.main.id;
+      ref('goalhint').hidden = true;
+      card.classList.remove('pulse');
+      void card.offsetWidth;
+      card.classList.add('pulse');
+    }
+  };
+
+  /** Sera durumu (sağlıklı / çimlenme bonusu / güçsüz / donmuş) — Adım 3.2 */
+  HUD.greenhouseStatus = function (s) {
+    const gh = s.greenhouse;
+    if (!gh.installed) return null;
+    if (gh.frozen) return { tone: 'danger', text: t('hud.gh_frozen') + ' · SOL ' + gh.frozenSol };
+    const load = s.loads.find((l) => l.id === 'greenhouse');
+    if (load && (load.shed || !load.on)) return { tone: 'warn', text: t('hud.gh_unpowered') };
+    if (gh.yieldPct > 100) return { tone: 'ok', text: t('hud.gh_boost', { pct: gh.yieldPct }) };
+    return { tone: 'ok', text: t('hud.gh_ok', { pct: gh.yieldPct }) };
+  };
+
+  HUD.updateGreenhouse = function (s) {
+    const row = ref('ghrow');
+    if (!row) return;
+    const st = HUD.greenhouseStatus(s);
+    row.hidden = !st;
+    if (!st) return;
+    const html = '<span class="' + st.tone + '">' + S.util.escape(st.text) + '</span>';
+    if (ref('gh')._html !== html) {
+      ref('gh').innerHTML = html;
+      ref('gh')._html = html;
+    }
+  };
+
+  HUD.updateAlerts = function (s, amb) {
+    const list = [];
+    const ponr = S.Sim.ponr(s);
+    // Plan §6: kritik kaynak için tek öncelikli uyarı — en fazla 3 bant, önce en acil olan
+    if (ponr.beyond) list.push(['danger', 'alert', t('hud.alert_ponr_beyond'), 'ponr_beyond']);
+    else if (ponr.critical) list.push(['danger', 'alert', t('hud.alert_ponr'), 'ponr']);
+    if (s.suit.frozen && HUD.mode === 'surface') list.push(['cold', 'temp', t('hud.alert_frozen'), 'frozen']);
+    if (s.suit.leak) list.push(['danger', 'suit', t('hud.alert_leak'), 'leak']);
+    if (s.weather.stormTau > 0) list.push(['warn', 'alert', t('hud.alert_storm', { tau: s.weather.stormTau, sols: s.weather.stormSolsLeft }), 'storm']);
+    for (const w of s.weather.warnings || []) {
+      if (w.sol === s.sol + 1 || (w.sol === s.sol && S.Sim.clockMinute(s) < w.minute)) {
+        list.push(['info', 'sat', t('warn.' + w.id, { inst: t('inst.' + w.instrument + '.short'), sol: w.sol }), 'warn_' + w.id]);
+      }
+    }
+    // RIT-07: uyarı aleti olmasa da görülebilen ön işaret (ör. ufukta toz duvarı) kısa süre önceden
+    for (const u of S.Events.upcoming(s, S.DATA.gameplay.threatPreSignalMinutes)) {
+      const hasInstrument = u.def && u.def.warnInstrument && S.Sim.has(s, u.def.warnInstrument);
+      if (u.def && u.def.preSignalKey && !hasInstrument) list.push(['warn', 'alert', t(u.def.preSignalKey), 'pre_' + u.ev.id]);
+    }
+    if (S.Sim.horizons(s).conjunction) list.push(['warn', 'signal', t('hud.alert_conjunction'), 'conjunction']);
+    if (s.loads.some((l) => l.shed)) list.push(['warn', 'power', t('hud.alert_shed'), 'shed']);
+    if (s.sol >= s.maxSols) list.push(['info', 'rocket', t('hud.alert_final_sol'), 'final_sol']);
+    const shown = list.slice(0, 3);
+    const html = shown
+      .map(([tone, ico, txt]) => '<div class="alert ' + tone + '">' + UI().icon(ico) + '<span>' + txt + '</span></div>')
+      .join('');
+    if (html !== HUD._alertsHtml) {
+      ref('alerts').innerHTML = html;
+      HUD._alertsHtml = html;
+      const ids = new Set(shown.map((a) => a[3]));
+      for (const id of ids) if (!HUD._alertIds || !HUD._alertIds.has(id)) S.bus.emit('warning:shown', { id, sol: s.sol });
+      HUD._alertIds = ids;
+    }
+  };
+
+  /** Mini harita: üs, enkazlar, buz, oyuncu ve O2'nin izin verdiği dönüş menzili */
+  HUD.updateMinimap = function (s, ponr) {
+    const maxM = S.DATA.gameplay.maxEvaRangeM;
+    const minM = -140;
+    const pos = (m) => ((m - minM) / (maxM - minM)) * 100;
+    const eva = S.DATA.constants.eva;
+    const v = eva.speedMPerMin * (s.suit.frozen ? eva.frozenSpeedFactor : 1);
+    const rate = eva.suitO2PctPerMin * (s.suit.leak ? eva.suitLeakO2Multiplier : 1) * eva.pointOfNoReturnSafetyFactor;
+    const reach = Math.max(0, Math.min(maxM, (s.suit.o2 / rate) * v));
+    let h = '<div class="mm-reach" style="left:' + pos(0) + '%;width:' + (pos(reach) - pos(0)) + '%"></div>';
+    h += '<div class="mm-base" style="left:' + pos(minM) + '%;width:' + (pos(0) - pos(minM)) + '%"></div>';
+    for (const c of S.Forensics.cases()) {
+      const rec = s.forensics[c.id];
+      const known = S.Forensics.identified(s, c);
+      h += '<div class="mm-mark ' + (rec.queued ? 'done' : known ? 'wreck' : 'unknown') + '" style="left:' + pos(c.distanceM) + '%" title="' + (known ? S.util.escape(c.name) : '?') + '">' + (known ? '' : '?') + '</div>';
+    }
+    if (S.Sim.has(s, 'rimfax')) h += '<div class="mm-mark ice" style="left:' + pos(S.DATA.terrain.iceDepositM) + '%"></div>';
+    h += '<div class="mm-player' + (ponr.beyond ? ' beyond' : '') + '" style="left:' + pos(s.player.x) + '%"></div>';
+    ref('mm').innerHTML = h;
+    ref('mmleg').innerHTML = t('hud.mm_legend', { reach: Math.round(reach), dist: ponr.distanceM });
+  };
+
+  /* ---------------- Etkileşim balonu ---------------- */
+  HUD.promptText = function (s, it) {
+    if (it.kind === 'wreck') {
+      const c = S.Forensics.get(it.id);
+      return t(s.forensics[it.id].queued ? 'prompt.wreck_done' : 'prompt.wreck', { name: c.name });
+    }
+    if (it.action === 'clean_panels') return t('prompt.solar', { pct: Math.round(s.res.panelDust * 100) });
+    if (it.action === 'sabatier') return t('prompt.isru', { fuel: Math.round(s.res.mavFuel) });
+    if (it.action === 'mav') return t(S.Sim.canLaunchMav(s) ? 'prompt.mav_launch' : 'prompt.mav', { fuel: Math.round(s.res.mavFuel) });
+    if (it.action === 'greenhouse') return t(s.greenhouse.installed ? (s.greenhouse.frozen ? 'prompt.greenhouse_frozen' : 'prompt.greenhouse') : 'prompt.greenhouse_empty');
+    return t('prompt.' + it.action);
+  };
+
+  HUD.updatePrompt = function (s) {
+    const el = ref('prompt');
+    if (!el) return;
+    const it = S.Surface.nearest(s, S.Surface.body.px);
+    HUD.prompt = it;
+    if (!it) {
+      el.hidden = true;
+      return;
+    }
+    const x = (S.FX.worldToScreen(it.px) / 640) * 100;
+    el.hidden = false;
+    el.style.left = Math.max(8, Math.min(92, x)) + '%';
+    const html = '<kbd>E</kbd><span>' + S.util.escape(HUD.promptText(s, it)) + '</span>';
+    if (el._html !== html) {
+      el.innerHTML = html;
+      el._html = html;
+    }
+    el.classList.toggle('wreck', it.kind === 'wreck');
+  };
+
+  S.HUD = HUD;
+})((window.SOL14 = window.SOL14 || {}));
