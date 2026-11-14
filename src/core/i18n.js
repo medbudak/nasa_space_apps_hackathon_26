@@ -1,5 +1,7 @@
 // Player-facing text, read from content/story.json (owned by K5) with t('key').
-// Expected shape: { "en": { "storm.warning": "..." }, "tr": { "storm.warning": "..." } }
+// Shape: one block per language, keys flat or nested:
+//   { "en": { "storm.warning": "...", "wrecks": { "opportunity": { "title": "..." } } }, "tr": { ... } }
+// t('wrecks.opportunity.title') and t('wrecks.opportunity.evidence.0') both work.
 // A missing key shows the key itself, so gaps are visible instead of crashing the game.
 
 const LANG_KEY = 'sol14.lang';
@@ -28,10 +30,24 @@ export async function loadStory(url = new URL('../../content/story.json', import
   return story;
 }
 
-/** Text for a key in the current language. {name} placeholders are filled from vars. */
+/** Raw value for a key in one language block: a flat key first, then a dotted path. */
+export function lookup(block, key) {
+  if (!block) return undefined;
+  if (key in block) return block[key];
+  return key.split('.').reduce((node, part) => node?.[part], block);
+}
+
+/** Text for a key in the current language, falling back to English. {name} is filled from vars. */
 export function t(key, vars = {}) {
-  const text = story[lang]?.[key] ?? story.en?.[key] ?? key;
+  const found = lookup(story[lang], key) ?? lookup(story.en, key);
+  const text = typeof found === 'string' ? found : key;
   return text.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match));
+}
+
+/** A list of texts, e.g. tList('wrecks.opportunity.evidence'). Empty when missing. */
+export function tList(key) {
+  const found = lookup(story[lang], key) ?? lookup(story.en, key);
+  return Array.isArray(found) ? found : [];
 }
 
 export function getLang() {
