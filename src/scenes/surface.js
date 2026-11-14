@@ -29,6 +29,7 @@ import {
 import { createEventState, checkEvents, reopenPending, resolveDecision, commsBlackout } from '../systems/events.js';
 import { getPowerStatus, setOrder } from '../systems/power.js';
 import { finaleDue, startFinale, updateFinale, finalePaused, finaleDone } from '../systems/finale.js';
+import { onDownlinkSent } from '../systems/sanity.js';
 import { val, withRequested } from '../systems/simData.js';
 import { createTelemetry } from '../ui/telemetry.js';
 import { runDuePasses } from '../ui/downlink.js';
@@ -84,6 +85,10 @@ export default {
       devNote: DEV_DATA ? addDevNote(ui, t) : null,
     };
 
+    // A packet that reached Earth: a family message lifts sanity (sanity.js).
+    scene.onSent = (packet) => onDownlinkSent(state, ctx, packet);
+    bus?.on?.('downlink:sent', scene.onSent);
+
     reopenPending(state, ctx); // a card that was open before a reload
     scene.raf = requestAnimationFrame(frame);
   },
@@ -106,6 +111,7 @@ export default {
   exit() {
     if (!scene) return;
     cancelAnimationFrame(scene.raf);
+    scene.ctx.bus?.off?.('downlink:sent', scene.onSent);
     window.removeEventListener('keydown', scene.onKeyDown);
     window.removeEventListener('keyup', scene.onKeyUp);
     scene = null;

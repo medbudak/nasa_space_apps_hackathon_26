@@ -6,7 +6,24 @@
       "survivalPointsPerSol": { "value": 10, "unit": "points", "simplified": true, "note": "survival points for each sol lived through (scored as it happens)", "src": "PLACEHOLDER", "verified": false },
       "antennaLostPoints": { "value": -50, "unit": "points", "simplified": true, "note": "last-sol antenna not re-aligned (lostSystems)", "src": "PLACEHOLDER", "verified": false },
       "launchPoints": { "value": 100, "unit": "points", "simplified": true, "note": "the MAV lifts off: safe return (survival)", "src": "PLACEHOLDER", "verified": false },
-      "missedLaunchPoints": { "value": -100, "unit": "points", "simplified": true, "note": "launch window closed with the MAV too cold (lostSystems)", "src": "PLACEHOLDER", "verified": false }
+      "missedLaunchPoints": { "value": -100, "unit": "points", "simplified": true, "note": "launch window closed with the MAV too cold (lostSystems)", "src": "PLACEHOLDER", "verified": false },
+      "greenhouseLostPoints": { "value": -120, "unit": "points", "simplified": true, "note": "plants froze (lostSystems); design doc example 'greenhouse froze -> -120'", "src": "PLACEHOLDER", "verified": false }
+    },
+    "sanity": {
+      "start": { "value": 100, "unit": "%", "simplified": true, "note": "full at landing", "src": "PLACEHOLDER", "verified": false },
+      "drainPerHour": { "value": 0.1, "unit": "%/h", "simplified": true, "note": "isolation; about -35 over 14 sols alone. Mars-500 / HI-SEAS show the effect but give no scale", "src": "PLACEHOLDER", "verified": false },
+      "coldDrainPerHour": { "value": 3, "unit": "%/h", "simplified": true, "note": "extra while in dangerous cold", "src": "PLACEHOLDER", "verified": false },
+      "darkDrainPerHour": { "value": 2, "unit": "%/h", "simplified": true, "note": "extra while the habitat is unpowered", "src": "PLACEHOLDER", "verified": false },
+      "greenhouseGainPerHour": { "value": 0.15, "unit": "%/h", "simplified": true, "note": "plant care, while the greenhouse works in daylight", "src": "PLACEHOLDER", "verified": false },
+      "familyMessageGain": { "value": 15, "unit": "%", "simplified": true, "note": "a family message from Earth", "src": "PLACEHOLDER", "verified": false },
+      "falseAlarmBelow": { "value": 40, "unit": "%", "simplified": true, "note": "false alarms start below this", "src": "PLACEHOLDER", "verified": false },
+      "falseAlarmPerHour": { "value": 0.15, "unit": "1/h", "simplified": true, "note": "chance of a false alarm per game hour below the line", "src": "PLACEHOLDER", "verified": false },
+      "falseAlarmHours": { "value": 0.5, "unit": "h", "simplified": true, "note": "how long a false alarm stays on screen", "src": "PLACEHOLDER", "verified": false }
+    },
+    "greenhouse": {
+      "frostC": { "value": 0, "unit": "C", "simplified": true, "note": "plants freeze below 0 C", "src": "PLACEHOLDER", "verified": false },
+      "growHours": { "value": 120, "unit": "h", "simplified": true, "note": "game time to a harvest; compressed (Veggie lettuce takes about 28 days)", "src": "PLACEHOLDER", "verified": false },
+      "harvestSanityGain": { "value": 10, "unit": "%", "simplified": true, "note": "fresh food and a success", "src": "PLACEHOLDER", "verified": false }
     },
     "events": {
       "storm": {

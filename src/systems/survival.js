@@ -20,6 +20,9 @@
 
 import { val, rowVal, designRows, recordScore } from './simData.js';
 import { initPower, computeLoads, sumOn, updateShedding, isOn } from './power.js';
+import { createSanityState, updateSanity } from './sanity.js';
+
+const hasInstrument = (state, id) => (state.design.instrumentIds ?? []).includes(id);
 
 /**
  * Fill state.time / power / env / life for a new surface run, after Sol 0.
@@ -67,8 +70,11 @@ export function createSurvivalState(state, data) {
       coldHours: 0, // game hours of cold in a row; resets when warm
     },
     loss: null, // set once by checkLoss(): { reasonKey, sol, solFraction, values }
+    // Plant chamber (only with the plantChamber instrument): growth 0..1 to the next harvest.
+    greenhouse: hasInstrument(state, 'plantChamber') ? { growth: 0, harvests: 0, dead: false } : null,
   };
   initPower(state);
+  createSanityState(state, data);
   return state;
 }
 
@@ -129,9 +135,71 @@ export function advanceHours(state, dtHours, ctx) {
   updateLife(state, dtHours, ctx.data);
   updateEva(state, dtHours, ctx);
   updateBody(state, dtHours, ctx.data);
+  const daylight = !isNight(state, ctx);
+  updateMoxie(state, dtHours, ctx, daylight);
+  updateGreenhouse(state, dtHours, ctx, daylight);
+  updateSanity(state, dtHours, ctx, { daylight });
   updateStats(state, dtHours);
   checkLoss(state, ctx);
   return state;
+}
+
+// ---------------------------------------------------------------------------
+// MOXIE: makes O2 from the CO2 atmosphere while it is installed, switched on and powered.
+// It runs when the other instruments do (rules.instrumentsAtNight, as the Sol 0 estimate assumes).
+// Its real output (instruments.moxie.o2GramsPerHour) is a small share of what one person
+// breathes: the player sees that it helps, but cannot replace the O2 reserve.
+
+function updateMoxie(state, dtHours, { data }, daylight) {
+  if (!hasInstrument(state, 'moxie') || !isOn(state, 'moxie') || state.power.deficitW > 0) return;
+  if (!daylight && !data.rules.instrumentsAtNight?.value) return;
+  const moxie = designRows(state, data).instruments.find((r) => r.id === 'moxie');
+  const kg = (rowVal(moxie, 'o2GramsPerHour') / 1000) * dtHours;
+  state.life.o2Kg += kg;
+  if (state.stats) state.stats.oxygenProducedKg += kg;
+}
+
+// ---------------------------------------------------------------------------
+// Greenhouse (plant chamber). Plants grow while the chamber is on and lit; a full grow cycle is
+// a harvest, which lifts sanity. Plants die of cold if the habitat air drops below
+// greenhouse.frostC, or on a night when the player cut the greenhouse heating (engineFreeze card,
+// option A). A dead greenhouse is a lost system on the report card, linked to its cause.
+
+function updateGreenhouse(state, dtHours, ctx, daylight) {
+  const gh = state.life.greenhouse;
+  const g = ctx.data.greenhouse;
+  if (!gh || gh.dead || !g) return;
+  const flags = state.events?.flags ?? {};
+
+  // A night without greenhouse heating kills the plants; by daylight the cut is over.
+  if (flags.greenhouseHeatingCut && daylight) flags.greenhouseHeatingCut = false;
+  const heatingCut = flags.greenhouseHeatingCut && !daylight;
+  const tooCold = state.env.insideC < val(g.frostC, 'greenhouse.frostC');
+  if (heatingCut || tooCold) {
+    gh.dead = true;
+    const cause = heatingCut ? 'decision.engineFreeze' : 'design.batteryId';
+    recordScore(state, {
+      category: 'lostSystems',
+      pointsEntry: ctx.data.rules.greenhouseLostPoints,
+      path: 'rules.greenhouseLostPoints',
+      reason: 'consequence.greenhouseFroze',
+      cause,
+    });
+    state.lostSystems?.push?.('greenhouse');
+    state.decisionLog.push({ sol: state.time.sol, eventId: 'greenhouseFroze', choice: null, effects: [{ type: 'estimate', cause }] });
+    return;
+  }
+
+  if (!daylight || !isOn(state, 'greenhouse') || state.power.deficitW > 0) return;
+  gh.growth += dtHours / val(g.growHours, 'greenhouse.growHours');
+  if (gh.growth >= 1) {
+    gh.growth -= 1;
+    gh.harvests += 1;
+    if (typeof state.life.sanity === 'number') {
+      state.life.sanity = Math.min(100, state.life.sanity + val(g.harvestSanityGain, 'greenhouse.harvestSanityGain'));
+    }
+    state.decisionLog.push({ sol: state.time.sol, eventId: 'harvest', choice: null, effects: [] });
+  }
 }
 
 function advanceTime(state, dSol) {
