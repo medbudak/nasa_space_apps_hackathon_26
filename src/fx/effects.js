@@ -11,9 +11,31 @@
       size: 2 + Math.random() * 3
     }));
 
+    // UFO Final Sahnesi Durumu (40 sn sekans)
+    this.ufoActive = false;
+    this.ufoElapsed = 0;
+    this.ufoDuration = 40;
+    this.ufoClearPhoto = false;
+    this.ufoImages = {};
+    this._preloadUfoAssets();
+
     if (bus && typeof bus.on === 'function') {
       this.bindBus(bus);
     }
+  }
+
+  _preloadUfoAssets() {
+    const paths = {
+      liftoff: 'assets/ending/ufo_liftoff.png',
+      sky: 'assets/ending/ufo_sky.png',
+      clear: 'assets/ending/ufo_photo_clear.png',
+      blur: 'assets/ending/ufo_photo_blur.png'
+    };
+    Object.entries(paths).forEach(([key, src]) => {
+      const img = new Image();
+      img.src = src;
+      this.ufoImages[key] = img;
+    });
   }
 
   bindBus(bus) {
@@ -30,10 +52,20 @@
     bus.on('hallucination', ({ alpha = 0 } = {}) => {
       this.hallucinationAlpha = alpha;
     });
+    bus.on('ufo', ({ active = true, quality = 0.8 } = {}) => {
+      if (active) this.startUfoSequence(quality);
+      else this.ufoActive = false;
+    });
   }
 
   triggerQuake(duration = 1.5) {
     this.shakeTime = duration;
+  }
+
+  startUfoSequence(quality = 0.8) {
+    this.ufoActive = true;
+    this.ufoElapsed = 0;
+    this.ufoClearPhoto = quality >= 0.8;
   }
 
   applyCameraShake(ctx, dt) {
@@ -45,7 +77,18 @@
     }
   }
 
-  renderOverlays(ctx, width, height) {
+  update(dt) {
+    if (this.ufoActive) {
+      this.ufoElapsed += dt;
+      if (this.ufoElapsed >= this.ufoDuration) {
+        this.ufoActive = false;
+      }
+    }
+  }
+
+  renderOverlays(ctx, width, height, dt = 0.016) {
+    this.update(dt);
+
     // 1. Kum Fırtınası
     if (this.stormIntensity > 0) {
       ctx.fillStyle = `rgba(180, 75, 35, ${this.stormIntensity * 0.45})`;
@@ -80,5 +123,64 @@
         ctx.fillRect(0, Math.random() * height, width, 4 + Math.random() * 10);
       }
     }
+
+    // 4. Final UFO Sahnesi (40 sn sekans)
+    if (this.ufoActive) {
+      this._renderUfoSequence(ctx, width, height);
+    }
+  }
+
+  _renderUfoSequence(ctx, width, height) {
+    const t = this.ufoElapsed;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, width, height);
+
+    // 0-10 sn: MAV Kalkışı
+    if (t < 10) {
+      const img = this.ufoImages.liftoff;
+      if (img && img.complete) ctx.drawImage(img, 0, 0, width, height);
+    }
+    // 10-22 sn: Gökyüzünde ışık + ani açı + sönmeden önce 3 kez yanıp sönme
+    else if (t < 22) {
+      const img = this.ufoImages.sky;
+      if (img && img.complete) ctx.drawImage(img, 0, 0, width, height);
+
+      const blinkPhase = t - 18; // Son 4 saniyede 3 kez yanıp sönme
+      let lightAlpha = 1;
+      if (blinkPhase > 0 && blinkPhase < 3) {
+        lightAlpha = Math.sin(blinkPhase * Math.PI * 2) > 0 ? 1 : 0.1;
+      } else if (blinkPhase >= 3) {
+        lightAlpha = 0;
+      }
+
+      if (lightAlpha > 0) {
+        ctx.save();
+        ctx.fillStyle = `rgba(186, 230, 253, ${lightAlpha * 0.9})`;
+        ctx.beginPath();
+        ctx.arc(width * 0.72, height * 0.24, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    // 22-36 sn: Görev Kontrol ekranında fotoğrafın satır satır (scanline) inmesi
+    else if (t < 36) {
+      const photo = this.ufoClearPhoto ? this.ufoImages.clear : this.ufoImages.blur;
+      const progress = Math.min(1, (t - 22) / 12);
+      const boxW = width * 0.5;
+      const boxH = height * 0.55;
+      const boxX = (width - boxW) / 2;
+      const boxY = (height - boxH) / 2;
+
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(boxX - 4, boxY - 4, boxW + 8, boxH + 8);
+
+      if (photo && photo.complete && photo.naturalWidth > 0) {
+        const srcH = photo.naturalHeight * progress;
+        const dstH = boxH * progress;
+        ctx.drawImage(photo, 0, 0, photo.naturalWidth, srcH, boxX, boxY, boxW, dstH);
+      }
+    }
+    // 36-40 sn: Siyah ekran
   }
 }
