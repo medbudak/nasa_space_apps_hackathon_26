@@ -134,3 +134,25 @@ mountLangSwitch(document.body, { t, getLang, setLang, onChange: () => goTo(getSt
 
 Re-entering the scene redraws it in the new language; Sol 0 keeps the player's picks and the step they were on.
 Texts: `lang.label`, `lang.tr`, `lang.en` in `ui_texts.json` (each language is named in its own language).
+
+# Alarms (real and false)
+
+In `hud.html`: "fake O₂ alarm" and "real energy alarm". Both look the same; "Check telemetry" opens the Telemetry tab and shows
+the real reading, then the player answers "false alarm" or "it's real".
+
+| Who | What |
+|---|---|
+| K2 (sanity.js) | A false alarm rides on the existing D-003 effect event: `bus.emit('hallucination', { alpha, alarm: { id, stat, value, unit } })`. K4's vignette keeps reading `alpha`; the HUD reads `alarm`. No new event name. `stat`: `o2`, `energy`, `heat`, `radiation`. |
+| K2 | A real alarm: `hud.alarm({ id, stat, value, unit })`. |
+| K2 | `onAlarmResolve({ id, stat, fake, answer, verified, correct })` in `mountHud` options: K2 decides the consequence (sanity, wasted resources). |
+
+# UFO epilogue downlink (fiction)
+
+Open http://localhost:8000/src/ui/dev/ufo.html. The anomaly photo comes down line by line and stops where the remaining data budget
+runs out ("SOLAR CONJUNCTION — SIGNAL LOST"); then "Design the next mission" calls `onRestart`. The scene is labelled FICTION.
+
+| Who | What |
+|---|---|
+| K2 / K1 | In the Sol 14 final sequence: `mountUfoDownlink(el, { t, locale, photo: { clear, blur }, cameraTier: state.flags.cameraTier, photoMbit, remainingMbit, onRestart: () => { newGame(); goTo('design'); } })`. `ufoStopPct(remaining, photo)` is a proposal for the D-006 rule; pass `stopAtPct` to use your own. |
+| K4 | Photos: `assets/ending/ufo_photo_clear.png` (hires camera) and `ufo_photo_blur.png` (hand camera), 1600×900. Note: both files are JPEG data with a `.png` name; browsers show them, but renaming to `.jpg` (or re-saving as PNG) avoids surprises. Without the files the screen draws a placeholder. |
+| K5 | Texts under `ufo.*` in `ui_texts.json`, including the FICTION label. |

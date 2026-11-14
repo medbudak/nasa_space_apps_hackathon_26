@@ -381,6 +381,30 @@ button { font: inherit; color: inherit; }
   font: 700 14px var(--font); color: var(--ink-dim); }
 .lang-switch button[aria-pressed="true"] { background: var(--mars); color: #fff; }
 
+/* ---------- alarms (real and false look the same) ---------- */
+.alarm-layer { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); z-index: 25; width: min(560px, calc(100vw - 32px)); }
+.alarm { background: #3a1416; border: 2px solid var(--bad); border-radius: 12px; padding: 14px 18px; box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  animation: alarm-pulse 1s ease-in-out infinite alternate; }
+.alarm h2 { margin: 0 0 6px; font-size: 22px; color: var(--bad-text); letter-spacing: .04em; }
+.alarm p { margin: 0 0 10px; }
+.alarm-reading { background: var(--night); border-radius: 8px; padding: 6px 10px; font-size: 15px; }
+.alarm-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+@keyframes alarm-pulse { from { border-color: var(--bad); } to { border-color: #ffb0a8; } }
+@media (prefers-reduced-motion: reduce) { .alarm { animation: none; } }
+
+/* ---------- UFO epilogue downlink (fiction) ---------- */
+.ufo { max-width: 560px; margin: 0 auto; background: var(--night-2); border: 1px solid var(--night-3); border-radius: 14px; padding: 18px 20px; }
+.ufo h2 { margin: 6px 0 12px; font-size: 22px; }
+.ufo-fiction { display: inline-block; margin: 0; padding: 2px 10px; border: 1px dashed var(--warn); border-radius: 6px; color: var(--warn); font-size: 14px; }
+.ufo-photo { width: 100%; height: auto; display: block; border-radius: 8px; background: #000; image-rendering: pixelated; }
+.ufo-meta { display: flex; justify-content: space-between; gap: 8px; margin: 10px 0 4px; font-size: 14px; }
+.ufo-meta b { font-family: var(--mono); }
+.ufo-track { position: relative; overflow: visible; height: 12px; }
+.ufo-stop { position: absolute; top: -5px; bottom: -5px; width: 3px; margin-left: -1px; background: var(--warn); border-radius: 2px; }
+.ufo-tier { color: var(--ink-dim); font-size: 14px; }
+.ufo-lost { font: 800 20px var(--font); letter-spacing: .06em; color: var(--warn); margin: 6px 0; }
+.ufo-why { margin: 0 0 14px; }
+
 /* ---------- dev page only ---------- */
 .dev-bar {
   position: fixed; bottom: 76px; right: 16px; display: flex; gap: 6px; z-index: 5;

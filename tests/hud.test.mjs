@@ -68,3 +68,23 @@ test('the EVA bar puts the no-return notch at the O2 needed to walk back', () =>
   s.life.eva.noReturn = true;
   assert.equal(evaBar(s, 0.8).noReturn, true);
 });
+
+// ---- alarms ----
+import { judge } from '../src/ui/alarms.js';
+
+test('a false alarm is answered right only with "fake", a real one only with "real"', () => {
+  assert.equal(judge({ fake: true }, 'fake'), true);
+  assert.equal(judge({ fake: true }, 'real'), false);
+  assert.equal(judge({ fake: false }, 'real'), true);
+  assert.equal(judge({ fake: false }, 'fake'), false);
+});
+
+// ---- UFO epilogue downlink ----
+import { ufoStopPct } from '../src/ui/ufoDownlink.js';
+
+test('the UFO photo stops at the share the remaining data budget can send', () => {
+  assert.equal(ufoStopPct(120, 300), 40);
+  assert.equal(ufoStopPct(500, 300), 100, 'never more than the whole photo');
+  assert.equal(ufoStopPct(0, 300), 0);
+  assert.equal(ufoStopPct(50, 0), 0, 'no photo size: nothing to send');
+});
