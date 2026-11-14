@@ -76,7 +76,8 @@ Say which tool was used, and where and how. AI-generated images and videos need 
 | Tool | Used for | Where in the project |
 |---|---|---|
 | Claude (Anthropic), via Claude Code | Wrote the first version of the code skeleton and tests; values were checked against the NASA and NIST pages listed above | `index.html`, `src/main.js`, `src/core/`, `src/scenes/ending.js`, `src/data/nasa_data.json`, `tests/` |
-| Claude (Anthropic), via Claude Code | Merged the team's TR/EN wreck-case texts into story.json and checked their claims against the sources in "Wreck cases: sources and corrections" | `content/story.json` → `tr.wrecks`, `en.wrecks` |
+| Claude (Anthropic) | Drafted the TR/EN crisis-card, experiment, report-card and UI texts and converted story.json to the flat key format read by `src/core/i18n.js`; science claims checked against the sources in this file | `content/story.json` → `event.*`, `experiment.*`, `ending.*`, `cause.*`, `title.*`, `ui.*`, `wiring.*` |
+| Claude (Anthropic), via Claude Code | Merged the team's TR/EN wreck-case texts into story.json and checked their claims against the sources in "Wreck cases: sources and corrections" | `content/story.json` → `wreck.*`, `forensics.*`, `lesson.*` keys |
 
 ## Simplified values
 
@@ -88,7 +89,7 @@ Real-world values that were changed or rounded for gameplay.
 
 ## Wreck cases: sources and corrections
 
-This is the task card's `docs/sources.md` (see D-004: REFERENCES.md is the single source log). It covers the wreck-case texts in `content/story.json` → `tr.wrecks` and `en.wrecks`. Numbers used by the game are proposed for `nasa_data.json` with a `src` field (K1). The project page's "Scientific corrections" section can be filled in from here.
+This is the task card's `docs/sources.md` (see D-004: REFERENCES.md is the single source log). It covers the wreck-case texts in `content/story.json` → the `wreck.*` keys (TR and EN). Numbers used by the game are proposed for `nasa_data.json` with a `src` field (K1). The project page's "Scientific corrections" section can be filled in from here.
 
 Each link below was opened and checked against the claim it supports. "Corrections" lists what was wrong in the first draft of the wreck texts and why it was changed.
 
@@ -124,7 +125,7 @@ Corrections:
 - "Overcurrent protection triggered" → removed, not in any source.
 - "Panel tilt -14.5 degrees" → removed. The number has no source. 14.5° is close to Gusev's *latitude*, which is probably where it came from.
 - The stuck date differs between sources: the JPL Troy article says "since April 23" and the mission page says May 1, 2009. The text follows the mission page.
-- Not confirmed by any source: "flour-fine" for the soil. Sulfate-rich soil at Troy is sourced.
+- "Flour-fine" soil → removed from the text, no source. Sulfate-rich soil at Troy is sourced.
 
 ### 3. Phoenix (NASA)
 
@@ -170,3 +171,23 @@ Corrections:
 
 - The task card's "black box" evidence is shown in the game as **"Last telemetry"**. Mars landers have no flight recorders; their last downlinked data is the real equivalent. Beagle 2 sent nothing, so its card says "No record".
 - Inner-voice lines are fiction written for the game. They contain no facts beyond those in the finding card.
+
+## Experiments: sources
+
+Covers the `experiment.*` texts in `content/story.json`. Experiment ids follow `src/data/experiments_config.json`.
+
+- Pendulum and free fall: Mars gravity 3.71 m/s² from the NASA Mars Fact Sheet (listed above). Period T = 2π√(L/g): a 1 m pendulum takes about 2.0 s on Earth and 3.3 s on Mars. A 2 m drop, t = √(2h/g): about 0.64 s on Earth and 1.04 s on Mars.
+- Seed germination: JPL, Phoenix results point to Martian climate cycles: https://www.jpl.nasa.gov/news/nasa-phoenix-results-point-to-martian-climate-cycles/ (perchlorate in the soil, "the mission's biggest surprise"). Share of a few tenths of a percent: https://www.universetoday.com/articles/perchlorates-and-water-make-for-potential-habitable-environment-on-mars
+- Water: surface pressure about 0.6 kPa from the NASA Mars Fact Sheet; water's triple point 0.61 kPa (`experiments_config.json` → `triplePointPressureKpa`).
+- Speed of sound: JPL, what sounds captured by Perseverance reveal: https://www.jpl.nasa.gov/news/what-sounds-captured-by-nasas-perseverance-rover-reveal-about-mars/ · CNRS summary of Maurice et al. 2022 (Nature): https://www.sciencedaily.com/releases/2022/04/220401122138.htm (about 240 m/s below 240 Hz and 250 m/s above; 340 m/s on Earth)
+- MOXIE: NASA, MOXIE completes Mars mission: https://www.nasa.gov/solar-system/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/ (16 runs, 122 g in total, 12 g per hour at its most efficient, twice NASA's original goal, 98% purity or better)
+
+Corrections against the first experiment draft:
+- "Water boils at 30 °C on Mars" → removed. At about 0.6 kPa water is near its triple point: it boils off and freezes at once.
+- "Tau 8.2, panels drop to zero" (dust-storm experiment) → removed with that experiment, which is not one of the six in the game.
+- The first draft's magnetic-field, night-temperature and CO₂-ice experiments were replaced by the six experiments the game code runs.
+
+## Hardware names in the wiring mini-game
+
+- Electra-Lite: a UHF relay transceiver, not a power unit. L3Harris product page: https://l3harris.com/all-capabilities/mars-electra-lite-uhf-transceiver (reduced-mass version of the Electra transceiver for landers). Curiosity and Perseverance use it.
+- SDST: Small Deep Space Transponder (not "Solar Data Sync Terminal"), JPL's X-band transponder for deep-space probes; flew on the Mars Exploration Rovers. Light delay comes from distance, so the old "manages the light-delay simulation" line was removed.
