@@ -1,0 +1,198 @@
+{
+  "tr": {
+    "wrecks": {
+      "ui": {
+        "evidence_photo": "Fotoğraf",
+        "evidence_telemetry": "Son telemetri",
+        "evidence_environment": "Çevre ölçümü",
+        "diagnosis_prompt": "Bu aracı ne durdurdu?",
+        "finding_nasa": "NASA bulgusu",
+        "finding_esa": "Bulgu: ESA / Birleşik Krallık",
+        "inner_voice": "İç ses"
+      },
+      "opportunity": {
+        "title": "Opportunity · Endeavour Krateri",
+        "subtitle": "Gezgin · NASA · İniş: 25 Ocak 2004, Meridiani Planum",
+        "evidence": {
+          "photo": "Son günün Pancam kareleri neredeyse tamamen karanlık. Gönderilen son görüntü, kararmış bir gökyüzünün yarım kalmış bir karesi.",
+          "telemetry": "Sol 5111 (10 Haziran 2018): günlük enerji yaklaşık 21–22 Wh. Aynı ayın 1'inde bu değer yaklaşık 645 Wh'ti.",
+          "environment": "Atmosfer opaklığı (tau) yaklaşık 10.8. Bu, Mars'ta o güne kadar ölçülen en yüksek değer; bölgede normali 0.5 civarı."
+        },
+        "diagnosis": {
+          "a": "Toz fırtınası güneşi kesti, güç tükendi",
+          "b": "Tekerlekleri yumuşak kuma saplandı",
+          "c": "İletişim anteni arızalandı",
+          "correct": "a"
+        },
+        "finding": "30 Mayıs 2018'de fark edilen toz fırtınası birkaç hafta içinde bütün gezegeni sardı. Panellere ulaşan güneş ışığı o kadar azaldı ki gezgin bataryalarını şarj edemedi ve büyük olasılıkla düşük güç arızasına geçti. Son sinyal 10 Haziran 2018'de alındı. NASA, aylarca süren kurtarma denemelerinden sonra görevi 13 Şubat 2019'da sona erdirdi.",
+        "inner_voice": "90 sol için tasarlandı, neredeyse 15 yıl dayandı. Onu deviren bir arıza değil, kararan gökyüzüydü."
+      },
+      "spirit": {
+        "title": "Spirit · Troy",
+        "subtitle": "Gezgin · NASA · İniş: 4 Ocak 2004, Gusev Krateri",
+        "evidence": {
+          "photo": "Arka tehlike kamerası: tekerlekler, Home Plate'in batı kenarındaki 'Troy' adlı gevşek toprağa gömülü. Açığa çıkan toprak un gibi ince ve sülfatça zengin.",
+          "telemetry": "Sağ ön tekerlek 2006'dan beri çalışmıyor. 1 Mayıs 2009'da saplanma, Ocak 2010'da sabit istasyon kararı; son iletişim 22 Mart 2010 (Sol 2210).",
+          "environment": "Güney yarımkürede kış yaklaşıyor. Önceki kışları panellerini güneşe eğik bir yamaçta park ederek atlattı; bu kez saplandığı yerde o açıyı yakalayamadı."
+        },
+        "diagnosis": {
+          "a": "Saplandı, kışta güneşe dönemedi, güç bitti",
+          "b": "Saplandığı gün iletişim koptu",
+          "c": "Küresel toz fırtınasına yakalandı",
+          "correct": "a"
+        },
+        "finding": "Spirit, 1 Mayıs 2009'da Troy'daki yumuşak toprağa saplandı. Aylarca kurtarılmaya çalışıldı ve Ocak 2010'da sabit araştırma istasyonu olarak kullanılmaya başlandı; yani saplanma, son temastan yaklaşık 11 ay önce oldu. Kış yaklaşırken panellerini güneşe yeterince eğemedi; azalan enerji ve soğuk büyük olasılıkla düşük güç arızasına yol açtı ve son iletişim 22 Mart 2010'da alındı. NASA, araca ulaşma girişimlerini 25 Mayıs 2011'de bıraktı.",
+        "inner_voice": "Kum onu durdurdu ama bitirmedi. Bitiren, ardından gelen kıştı."
+      },
+      "phoenix": {
+        "title": "Phoenix · Kuzey Ovaları",
+        "subtitle": "Sabit iniş aracı · NASA · İniş: 25 Mayıs 2008, Vastitas Borealis (~68° K)",
+        "evidence": {
+          "photo": "MRO/HiRISE, Mayıs 2010: 2008 görüntüsünde iki panelin gölgesi var, 2010'da batı panelinin gölgesi yok. Not: Bu fotoğraf kıştan sonra çekildi.",
+          "telemetry": "3 aylık ana görevini tamamladı, güneş ışığı azalana kadar 2 ay daha çalıştı. Son sinyal 2 Kasım 2008. 2010'da Mars Odyssey 200'den fazla geçişte dinledi, sinyal yok.",
+          "environment": "Kutup bölgesinde kış: karbondioksit buzu her kış bütün bölgeyi örter. Ekibin hesabına göre kış ortasında aracın üzerinde yüzlerce libre buz birikti."
+        },
+        "diagnosis": {
+          "a": "Kış geldi, ışık ve güç bitti",
+          "b": "Buz paneli kırdı, bu yüzden sustu",
+          "c": "İnişte hasar gördü",
+          "correct": "a"
+        },
+        "finding": "Phoenix, Mars kışında hayatta kalacak şekilde tasarlanmamıştı. Ana görevinden sonra güneş ışığı azalana kadar çalıştı ve son sinyalini 2 Kasım 2008'de gönderdi. 2010'da MRO'nun HiRISE görüntüleri, kış boyunca biriken CO₂ buzunun muhtemelen en az bir paneli büktüğünü ya da kırdığını gösterdi. Bu hasar büyük olasılıkla sessizlikten sonra, kış boyunca oluştu; 2008'deki sessizliğin nedeni olarak kanıtlanmış değil.",
+        "inner_voice": "Fotoğraf 2010'dan. Kırık panel hikâyenin sonu, başlangıcı değil."
+      },
+      "insight": {
+        "title": "InSight · Elysium Planitia",
+        "subtitle": "Sabit iniş aracı · NASA · İniş: 26 Kasım 2018, Elysium Planitia",
+        "evidence": {
+          "photo": "24 Nisan 2022 (Sol 1211): panellerden biri kalın, turuncu bir toz tabakasıyla kaplı.",
+          "telemetry": "İnişten sonra günde yaklaşık 5.000 Wh, 2022 baharında yaklaşık 500 Wh. Son iletişim 15 Aralık 2022.",
+          "environment": "Ocak 2022'de bölgesel bir toz fırtınası aracı güvenli moda soktu. Mevsim ilerledikçe havadaki toz arttı, ışık daha da azaldı."
+        },
+        "diagnosis": {
+          "a": "Biriken toz gücü yavaş yavaş düşürdü",
+          "b": "Tek bir fırtına bir gecede bitirdi",
+          "c": "Sismometre arızası görevi bitirdi",
+          "correct": "a"
+        },
+        "finding": "InSight'ın panelleri inişten sonra her sol yaklaşık 5.000 Wh üretiyordu; biriken toz bu değeri 2022 baharında yaklaşık 500 Wh'e düşürdü. Ekip, robot kolla panellerin yanına toprak dökerek tozun bir kısmını uzaklaştırdı ve görevi uzattı. Son iletişim 15 Aralık 2022'de kuruldu ve NASA görevi 21 Aralık 2022'de sona erdirdi. NASA bataryaların enerjisinin tükendiğini değerlendirdi; son düşüşü hangi olayın tetiklediği ise bilinmiyor.",
+        "inner_voice": "Onu tek bir fırtına bitirmedi. Dört yıl boyunca her gün biraz daha biriken toz bitirdi."
+      },
+      "beagle2": {
+        "title": "Beagle 2 · Isidis Planitia",
+        "subtitle": "Sabit iniş aracı · Birleşik Krallık liderliğinde, ESA Mars Express ile taşındı · Hedef iniş: 25 Aralık 2003",
+        "evidence": {
+          "photo": "NASA MRO/HiRISE, Ocak 2015'te duyuruldu: hedef alanın merkezine yaklaşık 5 km uzakta kısmen açılmış bir iniş aracı. Yakınında paraşüt ve arka kapak.",
+          "telemetry": "Kayıt yok. Araç 19 Aralık 2003'te Mars Express'ten ayrıldı, 25 Aralık 2003'te inmesi bekleniyordu. Beklenen ilk sinyal hiç gelmedi.",
+          "environment": "Isidis Planitia, ekvatora yakın, eski bir çarpma havzası. Görüntüler giriş, alçalma ve iniş sırasının çalıştığını gösteriyor."
+        },
+        "diagnosis": {
+          "a": "İndi ama paneller anteni kapattı",
+          "b": "Yüzeye çarpıp parçalandı",
+          "c": "Yörüngedeki araç sinyali kaçırdı",
+          "correct": "a"
+        },
+        "finding": "Beagle 2, Birleşik Krallık liderliğinde geliştirilen ve ESA'nın Mars Express aracıyla taşınan bir iniş aracıydı; NASA görevi değildi. 2015'te NASA'nın MRO aracındaki HiRISE kamerası onu hedef bölgede, kısmen açılmış hâlde görüntüledi. Görüntülere göre dört güneş panelinden en fazla üçü açıldı. Radyo anteni kapağın içindeydi ve dışarı çıkması için dört panelin de açılması gerekiyordu; bu yüzden araç büyük olasılıkla Dünya ile hiç iletişim kuramadı.",
+        "inner_voice": "On yıldan fazla kayıp sanıldı. Oysa başarıyla inmişti; yalnızca sesini duyuramadı."
+      }
+    }
+  },
+  "en": {
+    "wrecks": {
+      "ui": {
+        "evidence_photo": "Photo",
+        "evidence_telemetry": "Last telemetry",
+        "evidence_environment": "Environment reading",
+        "diagnosis_prompt": "What stopped this spacecraft?",
+        "finding_nasa": "NASA finding",
+        "finding_esa": "Finding: ESA / United Kingdom",
+        "inner_voice": "Inner voice"
+      },
+      "opportunity": {
+        "title": "Opportunity · Endeavour Crater",
+        "subtitle": "Rover · NASA · Landed: 25 Jan 2004, Meridiani Planum",
+        "evidence": {
+          "photo": "The last day's Pancam frames are almost completely dark. The final image sent is a partial frame of a darkened sky.",
+          "telemetry": "Sol 5111 (10 June 2018): daily energy about 21–22 Wh. On the 1st of the same month it was about 645 Wh.",
+          "environment": "Atmospheric opacity (tau) about 10.8, the highest ever measured on Mars at that time. The usual value at this site is around 0.5."
+        },
+        "diagnosis": {
+          "a": "Dust storm blocked sunlight, power ran out",
+          "b": "Wheels got stuck in soft sand",
+          "c": "Communication antenna failed",
+          "correct": "a"
+        },
+        "finding": "A dust storm detected on 30 May 2018 grew within weeks to encircle the planet. So little sunlight reached the solar arrays that the rover could not recharge its batteries and most likely entered a low-power fault. The last signal was received on 10 June 2018. After months of recovery attempts, NASA ended the mission on 13 February 2019.",
+        "inner_voice": "Built for 90 sols, it lasted almost 15 years. It wasn't a broken part that stopped it. It was a darkened sky."
+      },
+      "spirit": {
+        "title": "Spirit · Troy",
+        "subtitle": "Rover · NASA · Landed: 4 Jan 2004, Gusev Crater",
+        "evidence": {
+          "photo": "Rear hazard camera: the wheels are buried in loose soil at 'Troy', on the west side of Home Plate. The exposed soil is flour-fine and rich in sulfates.",
+          "telemetry": "Right front wheel inoperable since 2006. Stuck on 1 May 2009, declared a stationary station in January 2010; last contact 22 March 2010 (Sol 2210).",
+          "environment": "Southern winter is approaching. Spirit survived earlier winters by parking on slopes that tilted its panels toward the Sun; stuck here, it could not get that angle."
+        },
+        "diagnosis": {
+          "a": "Stuck, couldn't tilt to the winter Sun, power ran out",
+          "b": "Contact was lost the day it got stuck",
+          "c": "Caught in a global dust storm",
+          "correct": "a"
+        },
+        "finding": "Spirit became stuck in soft soil at Troy on 1 May 2009. After months of extraction attempts it was repurposed as a stationary research platform in January 2010, so getting stuck came about 11 months before the last contact. As winter approached it could not tilt its panels enough toward the Sun; falling energy and cold most likely led to a low-power fault, and the last communication was received on 22 March 2010. NASA ended its attempts to contact the rover on 25 May 2011.",
+        "inner_voice": "The sand stopped it, but didn't end it. The winter that followed did."
+      },
+      "phoenix": {
+        "title": "Phoenix · Northern Plains",
+        "subtitle": "Stationary lander · NASA · Landed: 25 May 2008, Vastitas Borealis (~68° N)",
+        "evidence": {
+          "photo": "MRO/HiRISE, May 2010: the 2008 image shows shadows from both arrays; in 2010 the western array casts no shadow. Note: this photo was taken after the winter.",
+          "telemetry": "Completed its 3-month primary mission and kept working 2 more months until sunlight waned. Last signal 2 November 2008. In 2010 Mars Odyssey listened on more than 200 overflights: no signal.",
+          "environment": "Polar winter: carbon dioxide ice covers the whole region every winter. The team calculated that hundreds of pounds of ice coated the lander in mid-winter."
+        },
+        "diagnosis": {
+          "a": "Winter came, light and power ran out",
+          "b": "Ice broke a panel, so it went silent",
+          "c": "Damaged during landing",
+          "correct": "a"
+        },
+        "finding": "Phoenix was not designed to survive the Martian winter. After its primary mission it kept working until sunlight waned, and sent its last signal on 2 November 2008. In 2010, HiRISE images from MRO showed that carbon dioxide ice built up over the winter had probably bent or broken at least one solar array. That damage most likely happened during the winter, after the lander fell silent; it is not a proven cause of the 2008 loss of contact.",
+        "inner_voice": "The photo is from 2010. The broken panel is the end of the story, not the beginning."
+      },
+      "insight": {
+        "title": "InSight · Elysium Planitia",
+        "subtitle": "Stationary lander · NASA · Landed: 26 Nov 2018, Elysium Planitia",
+        "evidence": {
+          "photo": "24 April 2022 (Sol 1211): one of the solar panels is covered in a thick orange layer of dust.",
+          "telemetry": "About 5,000 Wh per sol after landing, about 500 Wh per sol by spring 2022. Last contact 15 December 2022.",
+          "environment": "In January 2022 a regional dust storm put the lander into safe mode. As the season changed, more dust filled the air and sunlight dropped further."
+        },
+        "diagnosis": {
+          "a": "Accumulating dust slowly cut its power",
+          "b": "A single storm ended it overnight",
+          "c": "A seismometer failure ended the mission",
+          "correct": "a"
+        },
+        "finding": "After landing, InSight's solar panels produced about 5,000 Wh each sol; accumulating dust reduced that to about 500 Wh by spring 2022. The team used the robotic arm to trickle soil next to the panels, removing some of the dust and extending the mission. The last contact was made on 15 December 2022, and NASA ended the mission on 21 December 2022. NASA concluded that the batteries had run out of energy; what triggered the final drop is not known.",
+        "inner_voice": "No single storm ended it. Four years of dust, a little more every day, did."
+      },
+      "beagle2": {
+        "title": "Beagle 2 · Isidis Planitia",
+        "subtitle": "Stationary lander · UK-led, carried by ESA's Mars Express · Planned landing: 25 Dec 2003",
+        "evidence": {
+          "photo": "NASA MRO/HiRISE, announced January 2015: a partially deployed lander about 5 km from the centre of the target area. Parachute and rear cover nearby.",
+          "telemetry": "No record. It separated from Mars Express on 19 December 2003 and was due to land on 25 December 2003. The expected first signal never came.",
+          "environment": "Isidis Planitia is an ancient impact basin near the equator. The images show that entry, descent and landing worked."
+        },
+        "diagnosis": {
+          "a": "Landed, but panels blocked the antenna",
+          "b": "Crashed and broke apart",
+          "c": "The orbiter missed its signal",
+          "correct": "a"
+        },
+        "finding": "Beagle 2 was a UK-led lander carried to Mars by ESA's Mars Express; it was not a NASA mission. In 2015, the HiRISE camera on NASA's MRO imaged it in the target area, partially deployed. The images suggest that at most three of its four solar panels opened. Its radio antenna sat inside the lid and needed all four panels to open to be exposed, so the lander most likely never communicated with Earth.",
+        "inner_voice": "Thought lost for more than a decade. It had landed after all; it just couldn't make itself heard."
+      }
+    }
+  }
+}
