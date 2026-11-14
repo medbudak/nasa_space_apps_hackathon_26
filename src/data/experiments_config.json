@@ -1,6 +1,6 @@
 {
-  "marsGravity": 3.71,
-  "earthGravity": 9.81,
+  "marsGravity": 3.73,
+  "earthGravity": 9.80665,
   "toleranceRatio": 0.10,
   "experiments": {
     "pendulum": {
@@ -24,7 +24,7 @@
       "id": "seed_germination",
       "durationSols": 3,
       "energyWh": 150,
-      "requiredInstrument": "veggie",
+      "requiredInstrument": "plantChamber",
       "unlockBonus": "greenhouse_yield_plus_30"
     },
     "water_boiling": {
@@ -42,7 +42,7 @@
       "expectedEarthSpeedMs": 343,
       "durationHours": 0.5,
       "energyWh": 15,
-      "requiredInstrument": "mastcam",
+      "requiredInstrument": "camera",
       "unlockBonus": "acoustic_diagnostics"
     },
     "moxie_efficiency": {

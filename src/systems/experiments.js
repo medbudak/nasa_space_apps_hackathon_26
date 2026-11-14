@@ -1,7 +1,7 @@
 // src/systems/experiments.js
 import config from '../data/experiments_config.json' with { type: 'json' };
 import { getState, logDecision } from '../core/state.js';
-import { gravityFromPendulum_ms2 } from '../core/engineering.js';
+import { gravityFromPendulum } from '../core/engineering.js';
 
 export function initExperimentsState() {
   const state = getState();
@@ -19,7 +19,7 @@ export function initExperimentsState() {
 export function evaluatePendulumExperiment({ lengthM, tenSwingsDurationSec, hasControlGroup = false }) {
   initExperimentsState();
   const periodT = tenSwingsDurationSec / 10;
-  const measuredG = gravityFromPendulum_ms2(lengthM, periodT);
+  const measuredG = gravityFromPendulum(lengthM, periodT);
   const actualG = config.marsGravity;
 
   const errorRatio = Math.abs(measuredG - actualG) / actualG;
@@ -65,8 +65,8 @@ export function evaluateFreeFallExperiment({ dropTimeSec, hasControlGroup = fals
 export function evaluateSeedExperiment({ soilGroup, environment }) {
   initExperimentsState();
   const state = getState();
-  const instruments = state.design?.selectedInstruments || state.instruments || [];
-  const hasVeggie = instruments.includes('veggie');
+  const instruments = state.design?.instrumentIds || [];
+  const hasVeggie = instruments.includes('plantChamber');
   const success = hasVeggie && environment === 'indoor' && soilGroup === 'C';
   const points = success ? 100 : 20;
 
@@ -131,7 +131,7 @@ function finalizeExperiment(expId, result) {
 
   if (typeof logDecision === 'function') {
     logDecision(
-      state.sol,
+      state.time?.sol ?? 0,
       `experiment:${expId}`,
       result.success ? 'success' : 'failed',
       `Ölçülen: ${result.measuredValue} ${result.unit} (+${result.points} puan)`

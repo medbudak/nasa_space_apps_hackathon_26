@@ -70,10 +70,10 @@ export function collectEvidence(wreckId, evidenceType) {
   const wreck = state.forensics[wreckId];
   if (!wreck || !wreck.found) return { ok: false, reason: 'not_found' };
 
-  const instruments = state.design?.selectedInstruments || state.instruments || [];
+  const instruments = state.design?.instrumentIds || [];
 
   if (evidenceType === 'photo') {
-    wreck.evidence.photo = instruments.includes('mastcam') ? 'hd' : 'hand';
+    wreck.evidence.photo = instruments.includes('camera') ? 'hd' : 'hand';
   } else if (evidenceType === 'blackbox') {
     wreck.evidence.blackbox = true;
   } else if (evidenceType === 'env') {
@@ -121,7 +121,7 @@ export function submitDiagnosisToQueue(wreckId, chosenCategory) {
 
   if (typeof logDecision === 'function') {
     logDecision(
-      state.sol,
+      state.time?.sol ?? 0,
       `forensics:${wreckId}`,
       chosenCategory,
       isCorrect ? `Doğru teşhis (+${points} puan)` : `Yanlış teşhis (+${points} puan)`
@@ -141,7 +141,7 @@ export function onForensicsDownlinkComplete(wreckId) {
   wreck.sent = true;
   wreck.salvaged = true;
 
-  const instruments = state.design?.selectedInstruments || state.instruments;
+  const instruments = state.design?.instrumentIds || [];
   if (wreckId === 'insight' && Array.isArray(instruments) && !instruments.includes('seis')) {
     instruments.push('seis');
   }
