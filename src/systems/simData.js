@@ -11,6 +11,7 @@ export function val(entry, path = '?') {
 
 /** One row of a table by id. */
 export function rowOf(data, table, id) {
+  if (id == null) throw new Error(`K2: no Sol 0 choice for "${table}" in state.design (design not finished?)`);
   const row = data[table]?.find((r) => r.id === id);
   if (!row) throw new Error(`K2: no row "${id}" in nasa_data.json table "${table}"`);
   return row;
@@ -22,6 +23,39 @@ export function rowVal(row, field, { optional = false } = {}) {
   if (typeof v === 'number') return v;
   if (optional) return 0;
   throw new Error(`K2 needs nasa_data.json "${row?.id}.${field}" (missing or null)`);
+}
+
+const isEntry = (o) => o && typeof o === 'object' && 'value' in o;
+
+function addMissing(target, extra) {
+  for (const [key, v] of Object.entries(extra ?? {})) {
+    if (key.startsWith('_')) continue;
+    if (isEntry(v)) {
+      if (target[key]?.value == null) target[key] = v;
+    } else {
+      target[key] ??= {};
+      addMissing(target[key], v);
+    }
+  }
+}
+
+/**
+ * A copy of nasa_data.json with K2's requested values (tests/fixtures/k2_requested.json) added
+ * where the real file has nothing or null. Never overwrites a value K1 has filled in.
+ * Used by K2's tests, and by the surface scene only with ?devData=k2.
+ */
+export function withRequested(data, requested) {
+  const out = structuredClone(data);
+  addMissing(out, requested.add);
+  const { rows, ...scalars } = requested.fill ?? {};
+  addMissing(out, scalars);
+  for (const [table, byId] of Object.entries(rows ?? {})) {
+    for (const [id, fields] of Object.entries(byId)) {
+      const row = out[table]?.find((r) => r.id === id);
+      if (row) addMissing(row, fields);
+    }
+  }
+  return out;
 }
 
 /** The data rows behind the Sol 0 choices in state.design (ids, D-003). */

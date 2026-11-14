@@ -63,6 +63,17 @@ export function checkEvents(state, ctx) {
 }
 
 /**
+ * Show the open card again (after a page reload: the saved state keeps the card,
+ * but the UI and the choose() function are gone). Returns true if a card was reopened.
+ */
+export function reopenPending(state, ctx) {
+  const pending = state.events?.pending;
+  if (!pending) return false;
+  ctx.bus?.emit('decision:open', cardPayload(state, pending.eventId, pending.card, ctx));
+  return true;
+}
+
+/**
  * What the UI receives with decision:open.
  * Disabled options are left out of `options` so a UI that cannot grey them out never offers
  * a choice that would be refused; they are listed in `unavailable` for a UI that can show why.

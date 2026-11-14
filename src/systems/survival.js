@@ -80,7 +80,7 @@ export function isNight(state, { data, eng }) {
  * Does nothing once the mission is lost.
  */
 export function step(state, realDt, ctx) {
-  if (state.life.loss) return state;
+  if (state.life.loss || !(realDt > 0)) return state; // over, or no time passed (never run backwards)
   const dtHours = realSecondsToHours(realDt, ctx.data);
   advanceTime(state, dtHours / val(ctx.data.mars.solHours, 'mars.solHours'));
   updateEnvironment(state, ctx);

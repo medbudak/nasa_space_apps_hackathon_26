@@ -4,40 +4,11 @@ import * as engineering from '../../src/core/engineering.js';
 import { createState } from '../../src/core/state.js';
 import { createSurvivalState } from '../../src/systems/survival.js';
 import { createEventState } from '../../src/systems/events.js';
+import { withRequested } from '../../src/systems/simData.js';
 
 const read = (rel) => JSON.parse(readFileSync(new URL(rel, import.meta.url)));
-const realData = read('../../src/data/nasa_data.json');
-const requested = read('../fixtures/k2_requested.json');
 
-const isEntry = (o) => o && typeof o === 'object' && 'value' in o;
-
-/** Add entries that do not exist; never overwrite a value K1 has already filled in. */
-function addMissing(target, extra) {
-  for (const [key, v] of Object.entries(extra)) {
-    if (key.startsWith('_')) continue;
-    if (isEntry(v)) {
-      if (target[key]?.value == null) target[key] = v;
-    } else {
-      target[key] ??= {};
-      addMissing(target[key], v);
-    }
-  }
-}
-
-function withRequested(base) {
-  const data = structuredClone(base);
-  addMissing(data, requested.add);
-  addMissing(data, { life: requested.fill.life });
-  for (const [table, rows] of Object.entries(requested.fill.rows)) {
-    for (const [id, fields] of Object.entries(rows)) {
-      const row = data[table].find((r) => r.id === id);
-      addMissing(row, fields);
-    }
-  }
-  return data;
-}
-
-export const data = withRequested(realData);
+export const data = withRequested(read('../../src/data/nasa_data.json'), read('../fixtures/k2_requested.json'));
 
 // K1's real formulas, plus the one K2 still waits for. The double goes away once K1 adds it.
 export const eng = {

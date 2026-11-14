@@ -22,7 +22,7 @@
         "shelterHours": { "value": 1, "unit": "h", "simplified": true, "note": "time to thaw joints with a wreck's RHU heat; game value", "src": "PLACEHOLDER", "verified": false }
       },
       "engineFreeze": {
-        "earliestSol": { "value": 1, "unit": "sol", "note": "first sol the card may appear; game value", "src": "PLACEHOLDER", "verified": false },
+        "earliestSol": { "value": 2, "unit": "sol", "note": "first sol the card may appear; game value. The run lands at sunrise, the coldest moment in K1's surfaceTemp, so 1 would open the card at landing", "src": "PLACEHOLDER", "verified": false },
         "triggerBelowC": { "value": -60, "unit": "C", "simplified": true, "note": "outside temperature that freezes the engine; game value", "src": "PLACEHOLDER", "verified": false },
         "batteryHeatKWh": { "value": 20, "unit": "kWh", "simplified": true, "note": "energy to warm the engine from the battery; game value", "src": "PLACEHOLDER", "verified": false },
         "manualO2Kg": { "value": 0.1, "unit": "kg", "note": "O2 for a short EVA; derive from life.evaO2KgPerHour x EVA hours", "src": "PLACEHOLDER", "verified": false },
