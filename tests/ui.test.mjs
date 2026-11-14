@@ -101,3 +101,42 @@ test('every sample converter number has a src', () => {
     for (const [field, row] of Object.entries(rows)) assert.ok(row.src, `${group}.${field} has no src`);
   }
 });
+
+// ---- align ----
+import { angleError, signalAt, alignScore } from '../src/minigames/align.js';
+import { sampleAligns, alignRows } from '../src/ui/dev/stub_samples.js';
+
+const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
+
+test('panel power follows cos(angle error): full on target, half at 60°', () => {
+  const c = sampleAligns.panel;
+  assert.ok(near(signalAt(c, c.targetDeg), 1));
+  assert.ok(near(signalAt({ ...c, targetDeg: 60 }, 0), 0.5));
+});
+
+test('the antenna beam is half strength at half its width and weak far away', () => {
+  const c = { ...sampleAligns.antenna, targetDeg: 100, beamWidthDeg: 12 };
+  assert.ok(near(signalAt(c, 106), 0.5));
+  assert.ok(signalAt(c, 130) < 0.01);
+});
+
+test('on a full circle the error wraps: 350° is 20° from 10°', () => {
+  const c = { ...sampleAligns.antenna, targetDeg: 10 };
+  assert.equal(angleError(c, 350), 20);
+  assert.equal(angleError({ ...sampleAligns.photo, targetDeg: 10 }, -50), 60, 'a partial range does not wrap');
+});
+
+test('faster solves score higher; no time limit scores 100', () => {
+  const c = sampleAligns.antenna;
+  assert.ok(alignScore(c, 3) > alignScore(c, 15));
+  assert.equal(alignScore(sampleAligns.photo, 50), 100);
+  assert.ok(alignScore(c, 999) >= 10);
+});
+
+test('every sample align is solvable inside its dial range', () => {
+  for (const [name, c] of Object.entries(sampleAligns)) {
+    assert.ok(c.targetDeg >= c.minDeg && c.targetDeg <= c.maxDeg, `${name}: target outside the dial`);
+    assert.ok(signalAt(c, c.startDeg) * 100 < c.successPct, `${name}: already solved at the start`);
+  }
+  for (const [k, row] of Object.entries(alignRows)) assert.ok(row.src, `${k} has no src`);
+});

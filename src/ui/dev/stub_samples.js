@@ -143,3 +143,32 @@ export const samplePackets = [
   { type: 'experiment', id: 'exp-pendulum', mbit: 2, points: 60, labelKey: 'downlink.sample.pendulum' },
   { type: 'family', id: 'family-1', mbit: 300, points: 0, labelKey: 'downlink.sample.family' },
 ];
+
+// ---- align -------------------------------------------------------------------
+// `minigame:open` configs for the three uses. The targets would be rolled with the seeded RNG by the
+// caller; the rest are game tuning values, to be moved into nasa_data.json by K1.
+export const alignRows = {
+  antennaBeamWidthDeg: P(12, 'game tuning: simplified beam, wide enough to find by ear'),
+  photoBeamWidthDeg: P(20, 'game tuning'),
+  successPct: P(90, 'game tuning (K3 draft)'),
+  holdSeconds: P(1, 'game tuning (K3 draft)'),
+  timeLimitSeconds: P(20, 'game tuning (K3 draft)'),
+};
+
+export const sampleAligns = {
+  panel: {
+    mode: 'panel', titleKey: 'align.panel.title', introKey: 'align.panel.intro', response: 'cos',
+    minDeg: 0, maxDeg: 90, startDeg: 5, targetDeg: 62, stepDeg: 1,
+    successPct: 98, holdSeconds: v(alignRows.holdSeconds), timeLimitSeconds: v(alignRows.timeLimitSeconds),
+  },
+  antenna: {
+    mode: 'antenna', titleKey: 'align.antenna.title', introKey: 'align.antenna.intro', response: 'beam',
+    beamWidthDeg: v(alignRows.antennaBeamWidthDeg), minDeg: 0, maxDeg: 360, startDeg: 0, targetDeg: 217, stepDeg: 1,
+    successPct: v(alignRows.successPct), holdSeconds: v(alignRows.holdSeconds), timeLimitSeconds: v(alignRows.timeLimitSeconds),
+  },
+  photo: {
+    mode: 'photo', titleKey: 'align.photo.title', introKey: 'align.photo.intro', response: 'beam',
+    beamWidthDeg: v(alignRows.photoBeamWidthDeg), minDeg: -60, maxDeg: 60, startDeg: -50, targetDeg: 18, stepDeg: 1,
+    successPct: v(alignRows.successPct), holdSeconds: v(alignRows.holdSeconds),
+  },
+};

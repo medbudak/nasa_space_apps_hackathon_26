@@ -17,8 +17,9 @@
 // Template interface: { mount(el, { config, t, locale, done }) -> { destroy() } }
 
 import { converter } from './converter.js';
+import { align } from './align.js';
 
-const TEMPLATES = { converter };
+const TEMPLATES = { converter, align };
 
 export function registerTemplate(name, template) {
   TEMPLATES[name] = template;

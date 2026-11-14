@@ -59,6 +59,11 @@ The card follows K2's `decision:open` format (top of src/systems/events.js):
 - The card calls `choose(id)`; K2 applies the effects, writes the decision log and emits `decision:made`. If `choose()` throws,
   the card stays open with a short message.
 
+Align (`template: 'align'`): turn a dial until the signal peaks, hold it above `successPct` for `holdSeconds`. Config format at the
+top of `src/minigames/align.js`; samples in `sampleAligns` (panel, antenna, photo). `response: 'cos'` is the real panel law
+(power ∝ cos of the angle error); `'beam'` is a simplified Gaussian beam and says so on screen. Callers roll `targetDeg` with the
+seeded RNG. Tuning values (`alignRows`) are placeholders for K1 to move into `nasa_data.json`.
+
 `onDone` result: `{ success, score, timeUsed, detail }`. `timeUsed` is real seconds. `detail` is template-specific
 (converter: `{input, outputs, energyWh, gameMinutes}`); it is an addition to the D-003 shape. Esc closes a mini-game
 with `success: false`. Decision cards cannot be closed with Esc; the player has to choose.

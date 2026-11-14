@@ -206,7 +206,30 @@ button { font: inherit; color: inherit; }
 .conv-msg.warn { color: var(--bad); }
 .conv-msg.ok { color: var(--ok); font-weight: 700; }
 
+.al-stage { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: center; }
+.al-dial { width: 220px; height: 220px; }
+.al-ring { fill: var(--night); stroke: var(--night-3); stroke-width: 4; }
+.al-tick { stroke: var(--ink-dim); stroke-width: 2; }
+.al-needle { stroke: var(--mars); stroke-width: 6; stroke-linecap: round; }
+.al-tip { fill: var(--mars); }
+.al-hub { fill: var(--night-2); stroke: var(--night-3); stroke-width: 2; }
+.al-icon { font-size: 24px; fill: var(--ink); }
+.al-readout { display: grid; gap: 8px; }
+.al-row { display: flex; justify-content: space-between; font-size: 15px; }
+.al-row b { font-family: var(--mono); }
+.al-bar, .al-hold { position: relative; height: 14px; background: var(--night-3); border-radius: 99px; overflow: hidden; }
+.al-hold { height: 8px; }
+.al-bar span, .al-hold span { display: block; height: 100%; width: 0; transition: width .08s linear, background .2s; }
+.al-bar span.cold { background: var(--sunset-blue); }
+.al-bar span.warm { background: var(--warn); }
+.al-bar span.hot { background: var(--ok); }
+.al-hold span { background: var(--ok); }
+.al-goal { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink); opacity: .7; }
+.al-range { width: 100%; accent-color: var(--mars); margin-top: 6px; }
+.al-model { color: var(--ink-dim); font-size: 14px; margin: 4px 0 0; }
+
 @media (max-width: 560px) {
+  .al-stage { grid-template-columns: 1fr; justify-items: center; }
   .conv-flow { grid-template-columns: 1fr; }
   .conv-arrow { transform: rotate(90deg); justify-self: center; }
 }
