@@ -13,13 +13,15 @@
 //   ?debug=1     text panel with the simulation numbers, and buttons to answer decision
 //                cards while K3's card UI is not wired into main.js yet.
 //
-// Open question for the team (D-001): at 1 sol = 2 min, a 900 m walk takes about 1 s of real
-// time. Walking here runs at the real suit speed in game time, so the O2 maths stays honest.
+// Time (D-008): inside, 1 sol is about 2 minutes; outside, 1 real second = 1 game minute, so a
+// 900 m walk takes about 15 s on screen. Walking uses the real suit speed in game time, so the
+// O2 maths stays honest. survival.gameSecondsPerRealSecond() gives the current rate (for the HUD).
 
 import * as engineering from '../core/engineering.js';
 import { save } from '../core/state.js';
 import {
   createSurvivalState, step, startEva, endEva, setEvaPosition, walkSpeedMs, realSecondsToHours,
+  gameSecondsPerRealSecond,
 } from '../systems/survival.js';
 import { createEventState, checkEvents, reopenPending, resolveDecision } from '../systems/events.js';
 import { val, withRequested } from '../systems/simData.js';
@@ -133,8 +135,8 @@ function walk(dt) {
   const right = keys.has('ArrowRight') || keys.has('d') || keys.has('D');
   if (!state.life.eva.outside || left === right) return;
 
-  // Real suit speed in game time (see the open question at the top of this file).
-  const gameSeconds = realSecondsToHours(dt, ctx.data) * 3600;
+  // Real suit speed in game time; outside, game time runs slower (D-008).
+  const gameSeconds = realSecondsToHours(dt, ctx.data, state) * 3600;
   const metres = walkSpeedMs(state, ctx.data) * gameSeconds;
   scene.astronautX += right ? metres : -metres;
   setEvaPosition(state, { distanceM: Math.abs(scene.astronautX) });
@@ -261,7 +263,7 @@ function updateDebugPanel() {
   const l = state.life;
   const hours = (state.time.solFraction * val(ctx.data.mars.solHours, 'mars.solHours')).toFixed(1);
   const lines = [
-    `SOL ${state.time.sol}  ${hours} h  ${state.events.pending ? '[PAUSED: card open]' : ''}`,
+    `SOL ${state.time.sol}  ${hours} h  1 s = ${(gameSecondsPerRealSecond(state, ctx.data) / 60).toFixed(1)} game min  ${state.events.pending ? '[PAUSED: card open]' : ''}`,
     `outside ${state.env.outsideC.toFixed(1)} C   inside ${state.env.insideC.toFixed(1)} C`,
     `gen ${(p.generationW / 1000).toFixed(1)} kW   load ${(p.loadW / 1000).toFixed(1)} kW   deficit ${(p.deficitW / 1000).toFixed(1)} kW`,
     `battery ${(p.batteryWh / 1000).toFixed(1)} / ${(p.batteryCapacityWh / 1000).toFixed(0)} kWh`,

@@ -2,6 +2,9 @@
   "_readme": "K2's request list for K1, and the overlay K2's tests put on top of the real src/data/nasa_data.json. 'add' holds entries nasa_data.json does not have yet; 'fill' holds row fields that are still null there. Every value here is a TEST value with src PLACEHOLDER, not a researched figure: do not copy the numbers into nasa_data.json. When K1 adds an entry for real, delete it here.",
 
   "add": {
+    "time": {
+      "evaGameSecondsPerRealSecond": { "value": 60, "unit": "game s per real s", "simplified": true, "note": "D-008: while outside, 1 real second = 1 game minute (inside it is about 740)", "src": "game: DECISIONS.md D-008", "verified": true }
+    },
     "thermal": {
       "habitatCoolingHours": { "value": 6, "unit": "h", "simplified": true, "note": "time constant for the habitat to cool toward outside with heating off; game value", "src": "PLACEHOLDER", "verified": false },
       "bodyColdBelowC": { "value": 5, "unit": "C", "simplified": true, "note": "habitat air temperature counted as dangerous cold; game value", "src": "PLACEHOLDER", "verified": false }

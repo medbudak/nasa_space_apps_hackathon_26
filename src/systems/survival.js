@@ -64,9 +64,20 @@ export function createSurvivalState(state, data) {
   return state;
 }
 
-/** Real seconds -> game hours. */
-export function realSecondsToHours(seconds, data) {
-  return (seconds / val(data.time.solRealSeconds, 'time.solRealSeconds')) * val(data.mars.solHours, 'mars.solHours');
+/**
+ * Game seconds that pass per real second right now (D-008).
+ * Inside: a sol lasts time.solRealSeconds of real time. Outside (EVA): time runs slower,
+ * time.evaGameSecondsPerRealSecond, so a walk takes visible time and the O2 notch matters.
+ * There is one game clock: the Sun, heat, battery and O2 all follow this same rate.
+ */
+export function gameSecondsPerRealSecond(state, data) {
+  if (state?.life?.eva?.outside) return val(data.time.evaGameSecondsPerRealSecond, 'time.evaGameSecondsPerRealSecond');
+  return (val(data.mars.solHours, 'mars.solHours') * 3600) / val(data.time.solRealSeconds, 'time.solRealSeconds');
+}
+
+/** Real seconds -> game hours at the current rate (inside or outside). */
+export function realSecondsToHours(seconds, data, state = null) {
+  return (seconds * gameSecondsPerRealSecond(state, data)) / 3600;
 }
 
 /** True while the Sun is down at the landing site. */
@@ -80,8 +91,16 @@ export function isNight(state, { data, eng }) {
  * Does nothing once the mission is lost.
  */
 export function step(state, realDt, ctx) {
-  if (state.life.loss || !(realDt > 0)) return state; // over, or no time passed (never run backwards)
-  const dtHours = realSecondsToHours(realDt, ctx.data);
+  if (!(realDt > 0)) return state; // no time passed (never run backwards)
+  return advanceHours(state, realSecondsToHours(realDt, ctx.data, state), ctx);
+}
+
+/**
+ * Advance the simulation by game hours, whatever the real-time rate.
+ * One call is one simulation step: keep dtHours small (spendTime splits long spans).
+ */
+export function advanceHours(state, dtHours, ctx) {
+  if (state.life.loss || !(dtHours > 0)) return state;
   advanceTime(state, dtHours / val(ctx.data.mars.solHours, 'mars.solHours'));
   updateEnvironment(state, ctx);
   updatePower(state, dtHours, ctx);
@@ -297,12 +316,20 @@ export function checkLoss(state, { data }) {
 // Spend helpers for K6 (experiments, forensics). Each returns false and changes
 // nothing if there is not enough of the resource.
 
-/** Spend game time in game hours; runs the simulation forward. */
+// Longest single step spendTime takes, as a share of a sol (simulation accuracy, not gameplay):
+// about 12 game minutes, the same size as one real second inside.
+const MAX_STEP_SOL = 1 / 120;
+
+/**
+ * Spend game time in game hours; runs the simulation forward.
+ * Counted in game hours, so it costs the same inside or outside (D-008).
+ */
 export function spendTime(state, hours, ctx) {
-  let left = hours / realSecondsToHours(1, ctx.data); // in real seconds
-  while (left > 0 && !state.life.loss) {
-    const dt = Math.min(1, left);
-    step(state, dt, ctx);
+  const maxStep = MAX_STEP_SOL * val(ctx.data.mars.solHours, 'mars.solHours');
+  let left = hours;
+  while (left > 1e-12 && !state.life.loss) {
+    const dt = Math.min(maxStep, left);
+    advanceHours(state, dt, ctx);
     left -= dt;
   }
   return true;

@@ -86,19 +86,50 @@ test('the loop pauses while a decision card is open and goes on after the choice
   surface.exit();
 });
 
+function release(key) {
+  for (const fn of listeners.keyup ?? []) fn({ key });
+}
+
 test('E at the door goes out and comes back in; walking moves the astronaut away', async () => {
   const { surface, state } = await enterScene();
-  state.time.solFraction = 0.5; // midday
-  tick(16);
-  press('e');
-  assert.equal(state.life.eva.outside, true);
-  for (const fn of listeners.keydown ?? []) fn({ key: 'ArrowRight' });
-  tick(16);
-  assert.ok(state.life.eva.distanceM > 0, 'astronaut did not move');
-  for (const fn of listeners.keyup ?? []) fn({ key: 'ArrowRight' });
-  press('e'); // too far from the door: nothing happens
-  assert.equal(state.life.eva.outside, true);
-  surface.exit();
+  try {
+    state.time.solFraction = 0.5; // midday
+    tick(16);
+    press('e');
+    assert.equal(state.life.eva.outside, true);
+    press('ArrowRight');
+    for (let i = 0; i < 10; i++) tick(100); // 1 real second
+    release('ArrowRight');
+    assert.ok(state.life.eva.distanceM > 3, 'astronaut did not leave the door');
+    press('e'); // away from the door: nothing happens
+    assert.equal(state.life.eva.outside, true);
+  } finally {
+    surface.exit();
+  }
+});
+
+test('D-008: outside, time runs slower, so a 900 m walk takes about 15 real seconds', async () => {
+  const { surface, state } = await enterScene();
+  try {
+    state.time.solFraction = 0.5;
+    tick(16);
+    press('e');
+    const t0 = state.time.solFraction;
+    press('ArrowRight');
+    let ms = 0;
+    while (state.life.eva.distanceM < 900 && ms < 60000) {
+      tick(100);
+      ms += 100;
+    }
+    release('ArrowRight');
+    const expectedSec = 900 / data.eva.walkSpeedMs.value / data.time.evaGameSecondsPerRealSecond.value;
+    assert.ok(Math.abs(ms / 1000 - expectedSec) <= 0.2, `walk took ${ms / 1000} s, expected about ${expectedSec} s`);
+    // The one game clock moved by the walk's game time (15 game minutes), not by a 2-minute-sol rate.
+    const gameMinutes = (state.time.solFraction - t0) * data.mars.solHours.value * 60;
+    assert.ok(Math.abs(gameMinutes - 900 / data.eva.walkSpeedMs.value / 60) < 0.5, `clock moved ${gameMinutes} game min`);
+  } finally {
+    surface.exit();
+  }
 });
 
 test('a loss ends the scene and goes to the ending', async () => {

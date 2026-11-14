@@ -2,7 +2,9 @@
 // Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { endEva, setEvaPosition, startEva, step } from '../src/systems/survival.js';
+import {
+  advanceHours, endEva, gameSecondsPerRealSecond, setEvaPosition, spendTime, startEva, step,
+} from '../src/systems/survival.js';
 import { checkEvents, resolveDecision } from '../src/systems/events.js';
 import { data, eng, fakeBus, newState, realSeconds } from './helpers/k2_env.mjs';
 
@@ -50,12 +52,40 @@ test('outside, the suit supplies O2 and the habitat tank is not used', () => {
   startEva(s, data);
   const habitat = s.life.o2Kg;
   const suit = s.life.eva.suitO2Kg;
-  step(s, realSeconds(1), ctx); // one game hour
+  advanceHours(s, 1, ctx); // one game hour
   assert.equal(s.life.o2Kg, habitat);
   assert.ok(Math.abs(suit - s.life.eva.suitO2Kg - o2PerHour) < 1e-9);
   endEva(s);
   step(s, 1, ctx);
   assert.ok(s.life.o2Kg < habitat, 'back inside the habitat tank is used again');
+});
+
+test('D-008: outside, one real second is one game minute; inside, a sol lasts solRealSeconds', () => {
+  const { s, ctx } = setup();
+  const inside = gameSecondsPerRealSecond(s, data);
+  assert.ok(Math.abs(inside - (data.mars.solHours.value * 3600) / data.time.solRealSeconds.value) < 1e-9);
+  at(s, ctx, NOON);
+  startEva(s, data);
+  assert.equal(gameSecondsPerRealSecond(s, data), data.time.evaGameSecondsPerRealSecond.value);
+  const f0 = s.time.solFraction;
+  step(s, 1, ctx); // one real second outside
+  const gameSec = (s.time.solFraction - f0) * data.mars.solHours.value * 3600;
+  assert.ok(Math.abs(gameSec - data.time.evaGameSecondsPerRealSecond.value) < 1e-6);
+});
+
+test('D-008: work measured in game hours costs the same inside or outside', () => {
+  const a = setup();
+  at(a.s, a.ctx, NOON);
+  const fa = a.s.time.solFraction;
+  spendTime(a.s, 2, a.ctx);
+
+  const b = setup();
+  at(b.s, b.ctx, NOON);
+  startEva(b.s, data);
+  const fb = b.s.time.solFraction;
+  spendTime(b.s, 2, b.ctx);
+
+  assert.ok(Math.abs((a.s.time.solFraction - fa) - (b.s.time.solFraction - fb)) < 1e-9);
 });
 
 test('deep cold freezes the joints: speed drops and the notch moves up', () => {
