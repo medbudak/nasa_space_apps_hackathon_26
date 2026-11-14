@@ -16,21 +16,44 @@ export const sampleEngineFreeze = {
   options: [
     { id: 'batteryHeat', labelKey: 'event.engineFreeze.option.batteryHeat', resultKey: 'event.engineFreeze.result.batteryHeat',
       effects: [
-        { type: 'resource', stat: 'batteryWh', delta: -4000 },
+        { type: 'resource', stat: 'energy_kWh', delta: -4 },
         { type: 'flag', key: 'greenhouseHeatingCut', value: true },
         { type: 'flag', key: 'engineFrozen', value: false },
       ] },
     { id: 'manualHeat', labelKey: 'event.engineFreeze.option.manualHeat', resultKey: 'event.engineFreeze.result.manualHeat',
       effects: [
-        { type: 'resource', stat: 'o2Kg', delta: -0.5 },
-        { type: 'resource', stat: 'radiationMSv', delta: 0.3 },
+        { type: 'resource', stat: 'oxygen_kg', delta: -0.5 },
+        { type: 'resource', stat: 'radiation_mSv', delta: 0.3 },
         { type: 'flag', key: 'engineFrozen', value: false },
       ] },
     { id: 'wait', labelKey: 'event.engineFreeze.option.wait', resultKey: 'event.engineFreeze.result.wait',
       effects: [
-        { type: 'wait', sols: 1, estimate: { o2Kg: -1.68 } },
+        { type: 'wait', sols: 1, estimate: { oxygen_kg: -1.68 } },
         { type: 'flag', key: 'engineFrozen', value: false },
       ] },
+  ],
+};
+
+// K2's noReturn card (M4) as events.js sends it: vars for the texts, an estimate-only option,
+// a wait in hours, and an option that cannot be chosen (moved to `unavailable`).
+export const sampleNoReturn = {
+  eventId: 'noReturn',
+  sol: 5,
+  titleKey: 'event.noReturn.title',
+  bodyKey: 'event.noReturn.body',
+  vars: { suitO2Kg: 0.42, requiredO2Kg: 0.55, distanceM: 640, speedPct: 60 },
+  options: [
+    { id: 'slowWalk', labelKey: 'event.noReturn.option.slowWalk',
+      effects: [{ type: 'estimate', suitO2Kg: -0.38, safetyMarginLeft: false }, { type: 'flag', key: 'walkedWithoutMargin', value: true }] },
+    { id: 'suitHeater', labelKey: 'event.noReturn.option.suitHeater',
+      effects: [
+        { type: 'eva', set: { speedFactor: 1, jointsFrozen: false, thawed: true } },
+        { type: 'resource', stat: 'energy_kWh', delta: -1.2 },
+        { type: 'estimate', suitO2Kg: -0.23 },
+      ] },
+  ],
+  unavailable: [
+    { id: 'shelterWreck', labelKey: 'event.noReturn.option.shelterWreck', disabledKey: 'event.noReturn.option.shelterWreck.disabled' },
   ],
 };
 

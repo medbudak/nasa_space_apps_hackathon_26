@@ -22,6 +22,8 @@
     <div class="dev-row">
       <button class="btn" data-card>decision:open (engineFreeze)</button>
       <button class="btn" data-card2>2 cards in a row</button>
+      <button class="btn" data-noreturn>decision:open (noReturn)</button>
+      <button class="btn ghost" data-failing>choose() throws</button>
     </div>
     <div class="dev-row">
       <button class="btn ghost" data-conv="ice">converter: ice → water</button>
@@ -40,11 +42,11 @@
     import { mountDecisionCards } from '../decisionCard.js';
     import { mountMinigames } from '../../minigames/index.js';
     import { createBus } from './stub_bus.js';
-    import { sampleEngineFreeze, withChoose, sampleConverters } from './stub_samples.js';
+    import { sampleEngineFreeze, sampleNoReturn, withChoose, sampleConverters } from './stub_samples.js';
 
     const texts = await (await fetch('./ui_texts.json')).json();
     let lang = 'tr';
-    const t = (key) => (texts[key] ? texts[key][lang] : key);
+    const t = (key, vars = {}) => (texts[key] ? texts[key][lang] : key).replace(/\{(\w+)\}/g, (m, n) => (n in vars ? String(vars[n]) : m));
     const locale = () => (lang === 'tr' ? 'tr-TR' : 'en-US');
 
     const logEl = document.querySelector('[data-log]');
@@ -63,6 +65,9 @@
       bus.emit('decision:open', withChoose(sampleEngineFreeze, bus));
       bus.emit('decision:open', withChoose({ ...sampleEngineFreeze, sol: 4 }, bus));
     });
+    document.querySelector('[data-noreturn]').addEventListener('click', () => bus.emit('decision:open', withChoose(sampleNoReturn, bus)));
+    document.querySelector('[data-failing]').addEventListener('click', () => bus.emit('decision:open',
+      { ...sampleEngineFreeze, choose: () => { throw new Error('dev: refused'); } }));
     document.querySelectorAll('[data-conv]').forEach((b) => b.addEventListener('click', () => {
       bus.emit('minigame:open', {
         template: 'converter', config: sampleConverters[b.dataset.conv],

@@ -38,21 +38,26 @@ Open http://localhost:8000/src/ui/dev/play.html. Buttons fire sample events on a
 |---|---|---|
 | K1 | `src/core/bus.js` with `on(name, fn)`, `off(name, fn)`, `emit(name, payload)` | `stub_bus.js` |
 | K1 | `main.js` calls `mountDecisionCards(document.body, {bus, t, locale})` and `mountMinigames(document.body, {bus, t, locale})` once. `locale` may be a function so a TR/EN switch takes effect. | `play.html` |
-| K2 | Add an optional `resultKey` to each option, for the short result line after a choice. Optional: `sol` on the card for the header. | `sampleEngineFreeze` in `stub_samples.js` |
+| K2 | Optional `resultKey` per option, for the short result line after a choice. Send the final stat names when K1's state is settled; only `STATS` in `decisionCard.js` needs updating. | `sampleEngineFreeze`, `sampleNoReturn` in `stub_samples.js` |
 | K1 | Converter numbers (ratios, Wh/kg, minutes/kg) in `nasa_data.json` with `src` | `stub_samples.js` (all `src: "PLACEHOLDER"`) |
 | K2, K6 | Open the converter with `bus.emit('minigame:open', {template: 'converter', config, onDone})`; config format is at the top of `src/minigames/converter.js` | `sampleConverters` |
 | K5 | Copy the keys in `ui_texts.json` into `content/story.json` and review them. `event.*` keys are samples only. | `ui_texts.json` |
 
-The card follows K2's `decision:open` format (src/systems/events.js):
+The card follows K2's `decision:open` format (top of src/systems/events.js):
 ```
-{ eventId, titleKey, bodyKey, sol?,
-  options: [{ id, labelKey, resultKey?, effects: [
-    { type: 'resource', stat, delta } | { type: 'wait', sols, estimate } | { type: 'flag', key, value } ] }],
+{ eventId, sol, titleKey, bodyKey, vars?,
+  options: [{ id, labelKey, resultKey?, effects: [...] }],
+  unavailable?: [{ id, labelKey, disabledKey }],
   choose(choiceId) }
 ```
-The card calls `choose(id)`; K2 applies the effects, writes the decision log and emits `decision:made`. The card never emits it.
-Shown stats: `batteryWh` (as kWh) · `o2Kg` · `waterKg` · `foodKg` · `radiationMSv` · `sanity` % · `dataMbit` · `score`. `wait` shows the sols and
-the estimate. `flag` effects are not shown. Negative values are red, positive green (for `radiationMSv` the other way round).
+- Texts are read with `t(key, vars)`; numbers in `vars` are formatted for the language (0,42 / 0.42).
+- Effects: `resource` → a chip with icon and unit · `estimate` → dashed "≈" chips, applies nothing · `wait` → `+N h` when
+  `hours` is given, else `+N sol`, plus "≈" estimates · `flag` and `eva` → not shown.
+- Known stats: `energy_kWh`, `oxygen_kg`, `suitO2Kg`, `water_kg`, `food_kg`, `radiation_mSv`, `sanity` %, `dataMbit`, `score`
+  (and the older `batteryWh`, `o2Kg`, `radiationMSv`). Negative values are red, positive green; for radiation the other way round.
+- `unavailable` options are greyed out with `t(disabledKey)` and cannot be chosen (not by click, not by number key).
+- The card calls `choose(id)`; K2 applies the effects, writes the decision log and emits `decision:made`. If `choose()` throws,
+  the card stays open with a short message.
 
 `onDone` result: `{ success, score, timeUsed, detail }`. `timeUsed` is real seconds. `detail` is template-specific
 (converter: `{input, outputs, energyWh, gameMinutes}`); it is an addition to the D-003 shape. Esc closes a mini-game

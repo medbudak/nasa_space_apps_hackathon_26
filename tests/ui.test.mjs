@@ -1,9 +1,9 @@
 // Tests for decision cards and the converter mini-game (owner: K3). Run: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatEffect, STATS } from '../src/ui/decisionCard.js';
+import { formatEffect, effectParts, STATS } from '../src/ui/decisionCard.js';
 import { computeConversion } from '../src/minigames/converter.js';
-import { sampleEngineFreeze, sampleConverters, sampleRows } from '../src/ui/dev/stub_samples.js';
+import { sampleEngineFreeze, sampleNoReturn, sampleConverters, sampleRows } from '../src/ui/dev/stub_samples.js';
 
 // ---- decision cards (K2's effect format) ----
 
@@ -41,12 +41,36 @@ test('flags are internal and not shown to the player', () => {
   assert.equal(formatEffect({ type: 'flag', key: 'engineFrozen', value: false }), null);
 });
 
-test('every effect in the sample card is either shown or a flag', () => {
-  for (const o of sampleEngineFreeze.options) {
-    for (const e of o.effects) {
-      const f = formatEffect(e);
-      assert.ok(f || e.type === 'flag', `${o.id}: ${JSON.stringify(e)} is not shown`);
-      if (e.type === 'resource') assert.ok(STATS[e.stat], `no display rule for stat ${e.stat}`);
+test("K2's current stat names are shown with icons and units", () => {
+  assert.equal(formatEffect(res('energy_kWh', -4), { locale: 'en-US' }).amount, '−4 kWh');
+  assert.equal(formatEffect(res('oxygen_kg', -0.5), { locale: 'en-US' }).amount, '−0.5 kg');
+  assert.equal(formatEffect(res('radiation_mSv', 0.3)).tone, 'bad');
+});
+
+test('an estimate is shown as "≈" chips and ignores non-numbers', () => {
+  const parts = effectParts({ type: 'estimate', suitO2Kg: -0.05, safetyMarginLeft: false }, { locale: 'en-US' });
+  assert.equal(parts.length, 1);
+  assert.equal(parts[0].amount, '≈ −0.05 kg');
+  assert.equal(parts[0].approx, true);
+  assert.equal(parts[0].tone, 'bad');
+});
+
+test('a wait in hours shows hours; otherwise sols', () => {
+  assert.equal(formatEffect({ type: 'wait', hours: 2, sols: 0.08 }, { locale: 'en-US' }).amount, '+2 h');
+  assert.equal(formatEffect({ type: 'wait', sols: 0.04 }, { locale: 'en-US' }).amount, '+0.04 sol');
+});
+
+test('eva and flag effects stay hidden', () => {
+  assert.deepEqual(effectParts({ type: 'eva', set: { speedFactor: 1 } }), []);
+  assert.deepEqual(effectParts({ type: 'flag', key: 'x', value: true }), []);
+});
+
+test('every option in the sample cards shows at least one cost, and every stat has a display rule', () => {
+  for (const card of [sampleEngineFreeze, sampleNoReturn]) {
+    for (const o of card.options) {
+      const parts = o.effects.flatMap((e) => effectParts(e));
+      assert.ok(parts.length > 0, `${card.eventId}.${o.id} would show "no cost"`);
+      for (const e of o.effects) if (e.type === 'resource') assert.ok(STATS[e.stat], `no display rule for stat ${e.stat}`);
     }
   }
 });

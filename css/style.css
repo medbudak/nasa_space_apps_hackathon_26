@@ -168,6 +168,12 @@ button { font: inherit; color: inherit; }
 .effect.bad { background: rgba(229, 87, 74, .18); color: #ff9a8f; }
 .effect.good { background: rgba(95, 191, 127, .18); color: #8fe0a9; }
 .effect.neutral { color: var(--ink-dim); }
+.effect.approx { background: transparent; border: 1px dashed currentColor; }
+.effect small { font-size: 14px; opacity: .85; }
+.decision-option.unavailable { cursor: not-allowed; opacity: .55; border-style: dashed; }
+.decision-option.unavailable .decision-key { background: transparent; border: 1px solid var(--night-3); }
+.decision-why { color: var(--warn); font-size: 14px; }
+.decision-error { color: var(--bad); font-size: 14px; margin: 10px 0 0; }
 .decision-hint { color: var(--ink-dim); font-size: 14px; margin: 14px 0 0; }
 .decision-result {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 19;
