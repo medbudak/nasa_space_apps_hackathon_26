@@ -80,9 +80,19 @@ export function mountMinigames(root, opts) {
   }
 
   function onKey(e) {
-    if (active && e.key === 'Escape') {
+    if (!active) return;
+    if (e.key === 'Escape') {
       e.preventDefault();
       active.done({ success: false, score: 0, detail: { cancelled: true } });
+    } else if (e.key === 'Tab') {
+      // Keep keyboard focus inside the open mini-game (it is a modal dialog).
+      const items = [...layer.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')]
+        .filter((x) => !x.disabled && !x.closest('[hidden]') && x.offsetParent !== null);
+      if (!items.length) return;
+      const i = items.indexOf(document.activeElement);
+      const next = e.shiftKey ? (i <= 0 ? items.length - 1 : i - 1) : (i === -1 || i === items.length - 1 ? 0 : i + 1);
+      e.preventDefault();
+      items[next].focus();
     }
   }
 

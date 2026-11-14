@@ -67,16 +67,26 @@ const CHARTS = [
   { id: 'radiation', unit: 'mSv', series: [{ key: 'radiationMSv', color: COLORS.primary }], digits: 2, zero: true },
 ];
 
-const W = 320;
-const H = 130;
-const PAD = { l: 40, r: 44, t: 10, b: 22 };
+const H = 160; // chart height; the width follows the panel (see fitWidth), so 1 SVG unit = 1 screen pixel
+const PAD = { l: 52, r: 56, t: 12, b: 28 };
 
 export function mountTelemetry(el, opts) {
   const { telemetry, t } = opts;
   const locale = () => (typeof opts.locale === 'function' ? opts.locale() : opts.locale || 'tr-TR');
   const fmt = (n, d) => Number(n).toLocaleString(locale(), { maximumFractionDigits: d, minimumFractionDigits: d });
   let timer = 0;
+  let W = 340;
   el.classList.add('telemetry');
+
+  // Chart width in screen pixels, mirroring the CSS grid: two columns above 700 px of content, one below.
+  let fitted = false; // W was measured from a drawn chart; keep it on the redraw that follows
+  function fitWidth() {
+    if (fitted) { fitted = false; return; }
+    const inner = el.clientWidth - 36; // .telemetry padding
+    if (inner <= 0) return;
+    const cols = inner > 700 ? 2 : 1;
+    W = Math.max(240, Math.floor((inner - 14 * (cols - 1)) / cols - 22)); // grid gap, figure padding + border
+  }
 
   function chart(def) {
     const pts = telemetry.points;
@@ -110,9 +120,9 @@ export function mountTelemetry(el, opts) {
     return `<figure class="tm-chart" data-chart="${def.id}">${title}${legend}
       <svg viewBox="0 0 ${W} ${H}" class="tm-svg" role="img" aria-label="${t(`telemetry.${def.id}`)}">
         ${ticks.map((v) => `<line x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(v)}" y2="${y(v)}" class="tm-grid"></line>
-          <text x="${PAD.l - 6}" y="${y(v) + 4}" class="tm-axis" text-anchor="end">${fmt(v, tickDigits)}</text>`).join('')}
+          <text x="${PAD.l - 6}" y="${y(v) + 5}" class="tm-axis" text-anchor="end">${fmt(v, tickDigits)}</text>`).join('')}
         ${solTicks.map((s) => `<line x1="${x(s)}" x2="${x(s)}" y1="${PAD.t}" y2="${H - PAD.b}" class="tm-grid sol"></line>
-          <text x="${x(s)}" y="${H - 6}" class="tm-axis" text-anchor="middle">Sol ${s}</text>`).join('')}
+          <text x="${x(s)}" y="${H - 7}" class="tm-axis" text-anchor="middle">Sol ${s}</text>`).join('')}
         ${lines}
         <g class="tm-hover" visibility="hidden"><line class="tm-cross" x1="0" x2="0" y1="${PAD.t}" y2="${H - PAD.b}"></line></g>
         <rect x="${PAD.l}" y="${PAD.t}" width="${W - PAD.l - PAD.r}" height="${H - PAD.t - PAD.b}" class="tm-hit"></rect>
@@ -121,10 +131,15 @@ export function mountTelemetry(el, opts) {
     </figure>`;
   }
 
-  function render() {
+  function render(again = true) {
+    fitWidth();
     el.innerHTML = `<header class="dl-head"><h2>${t('telemetry.title')}</h2>
       <span class="dl-delay">${t('telemetry.window').replace('{n}', 3)}</span></header>
       <div class="tm-grid-wrap">${CHARTS.map(chart).join('')}</div>`;
+    // The estimate in fitWidth cannot see scrollbars; measure the real chart box and redraw once if it differs.
+    const svg = el.querySelector('.tm-svg');
+    const real = svg ? Math.floor(svg.getBoundingClientRect().width) : 0;
+    if (again && real > 0 && Math.abs(real - W) > 1) { W = real; fitted = true; return render(false); }
     el.querySelectorAll('[data-chart]').forEach(hover);
   }
 
