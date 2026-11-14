@@ -94,3 +94,29 @@ export const sampleConverters = {
 };
 
 export const sampleRows = conv;
+
+// ---- downlink -------------------------------------------------------------
+// Relay passes for one sol, in the shape mountDownlink/runDuePasses read. MRO's volume is K1's sourced
+// telecom.mroMbitPerPass; the rest is placeholder until K1 adds pass times and MAVEN's volume.
+export const downlinkRows = {
+  mroMbitPerPass: { value: 221.2, src: 'nasa_data.json telecom.mroMbitPerPass (Discovery 2019 AO, Table 2-1)', verified: true },
+  mavenMbitPerPass: P(278.8, 'K1: MAVEN relay volume per pass; dev value = relay 500 Mbit/sol minus MRO'),
+  mroAtSolFraction: P(0.3, 'K1: game schedule for the pass time'),
+  mavenAtSolFraction: P(0.75, 'K1: game schedule for the pass time'),
+  earthDistanceKm: P(258900000, 'K1: Earth-Mars distance during the mission, precomputed from Horizons (scripts/)'),
+  speedOfLightKms: { value: 299792.458, src: 'https://physics.nist.gov/cgi-bin/cuu/Value?c', verified: true },
+};
+
+export const samplePasses = [
+  { id: 'mro', name: 'MRO', atSolFraction: v(downlinkRows.mroAtSolFraction), mbit: v(downlinkRows.mroMbitPerPass) },
+  { id: 'maven', name: 'MAVEN', atSolFraction: v(downlinkRows.mavenAtSolFraction), mbit: v(downlinkRows.mavenMbitPerPass) },
+];
+
+// downlink:queue packets (D-003 shape { type, id, mbit, points } + optional labelKey). Sizes and points
+// are placeholders; the real ones come from K6 (forensics, experiments) and K2.
+export const samplePackets = [
+  { type: 'photo', id: 'photo-opportunity', mbit: 148, points: 20, labelKey: 'downlink.sample.photoOpportunity' },
+  { type: 'report', id: 'report-opportunity', mbit: 12, points: 100, labelKey: 'downlink.sample.reportOpportunity' },
+  { type: 'experiment', id: 'exp-pendulum', mbit: 2, points: 60, labelKey: 'downlink.sample.pendulum' },
+  { type: 'family', id: 'family-1', mbit: 300, points: 0, labelKey: 'downlink.sample.family' },
+];

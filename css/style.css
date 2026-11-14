@@ -205,6 +205,52 @@ button { font: inherit; color: inherit; }
   .conv-arrow { transform: rotate(90deg); justify-self: center; }
 }
 
+/* ---------- downlink queue (M1) ---------- */
+.downlink { background: var(--night-2); border: 1px solid var(--night-3); border-radius: 14px; padding: 16px 18px; }
+.dl-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.dl-head h2 { margin: 0; font-size: 20px; }
+.dl-delay { font: 14px var(--mono); color: var(--sunset-blue); }
+.dl-cols { display: grid; grid-template-columns: 3fr 2fr; gap: 18px; margin-top: 12px; }
+.dl-cols h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--dust); margin: 0 0 8px; }
+.dl-sum { font-family: var(--mono); color: var(--ink-dim); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.dl-empty { color: var(--ink-dim); font-size: 14px; }
+.dl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dl-item {
+  display: grid; grid-template-columns: auto auto 1fr auto auto; grid-template-areas:
+    "grip icon name mbit pts" "grip icon when when move" "grip icon prog prog prog";
+  gap: 2px 8px; align-items: center; padding: 8px 10px; border-radius: var(--radius);
+  background: var(--night); border: 2px solid var(--night-3); cursor: grab;
+}
+.dl-item.late { border-style: dashed; opacity: .85; }
+.dl-item.over { border-color: var(--sunset-blue); }
+.dl-item.dragging { opacity: .4; }
+.dl-grip { grid-area: grip; color: var(--ink-dim); letter-spacing: -2px; }
+.dl-icon { grid-area: icon; font-size: 20px; }
+.dl-name { grid-area: name; font-weight: 700; display: flex; flex-direction: column; }
+.dl-name small { font-weight: 400; color: var(--ink-dim); font-size: 14px; }
+.dl-item > .chip:nth-of-type(1) { grid-area: mbit; }
+.dl-item > .chip:nth-of-type(2) { grid-area: pts; }
+.dl-when { grid-area: when; font-size: 14px; color: var(--ok); }
+.dl-item.late .dl-when { color: var(--warn); }
+.dl-progress { grid-area: prog; height: 6px; background: var(--night-3); border-radius: 99px; overflow: hidden; }
+.dl-progress span { display: block; height: 100%; background: var(--sunset-blue); }
+.dl-move { grid-area: move; display: flex; gap: 4px; }
+.dl-btn { background: var(--night-3); border: 0; border-radius: 6px; width: 30px; height: 28px; cursor: pointer; font-size: 15px; }
+.dl-btn:disabled { opacity: .3; cursor: default; }
+.dl-pass-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.dl-pass {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 2px 10px; align-items: center;
+  padding: 8px 10px; border-radius: var(--radius); background: var(--night); border: 1px solid var(--night-3);
+}
+.dl-pass span:first-of-type { font-family: var(--mono); color: var(--ink-dim); }
+.dl-pass-state { grid-column: 1 / -1; font-size: 14px; color: var(--ink-dim); }
+.dl-pass.next { border-color: var(--ok); }
+.dl-pass.next .dl-pass-state { color: var(--ok); font-weight: 700; }
+.dl-pass.done { opacity: .5; }
+.dl-sent { color: var(--ok); font-size: 14px; }
+.dl-rule { color: var(--ink-dim); font-size: 14px; border-top: 1px solid var(--night-3); padding-top: 8px; }
+@media (max-width: 760px) { .dl-cols { grid-template-columns: 1fr; } }
+
 /* ---------- dev page only ---------- */
 .dev-bar {
   position: fixed; bottom: 76px; right: 16px; display: flex; gap: 6px; z-index: 5;
