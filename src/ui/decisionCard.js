@@ -15,6 +15,7 @@
 //       { type: 'flag' | 'eva', ... }                  // internal, not shown
 //     ]}],
 //     unavailable?: [{ id, labelKey, disabledKey }],   // shown greyed out with the reason, cannot be chosen
+//     advice?: { optionId, key },                      // Mission Control's answer (M7): that option is marked with t(key)
 //     choose(choiceId),                                // K2 applies the effects, logs and emits decision:made
 //   }
 // This module never emits decision:made and changes no state; it only calls choose().
@@ -84,11 +85,15 @@ export function effectParts(effect, { t = (k) => k, locale = 'tr-TR' } = {}) {
       .map(([k, v]) => statPart(k, v, { ...o, approx: true }));
   }
   if (effect.type === 'wait') {
-    const amount = effect.hours != null
-      ? `+${num(effect.hours, locale)} h`
-      : `+${num(Number(effect.sols) || 0, locale)} sol`;
+    // Most precise unit first: estimate.minutes (e.g. the Mission Control round trip), then hours, then sols.
+    const minutes = effect.estimate?.minutes;
+    const amount = typeof minutes === 'number'
+      ? `+${num(minutes, locale)} ${t('unit.minutes')}`
+      : effect.hours != null
+        ? `+${num(effect.hours, locale)} h`
+        : `+${num(Number(effect.sols) || 0, locale)} sol`;
     const note = Object.entries(effect.estimate || {})
-      .filter(([, v]) => typeof v === 'number')
+      .filter(([k, v]) => k !== 'minutes' && typeof v === 'number')
       .map(([k, v]) => { const p = statPart(k, v, o); return `≈ ${p.icon} ${p.amount}`; })
       .join(' ');
     return [{ icon: '⏱', ico: 'fx_time', amount, tone: 'bad', label: t('effect.wait'), approx: false, note }];
@@ -141,8 +146,9 @@ export function mountDecisionCards(root, opts) {
         <p id="decision-text" class="decision-text">${tv(card.bodyKey)}</p>
         <div class="decision-options">
           ${card.options.map((o, i) => `
-            <button class="decision-option" data-option="${o.id}">
+            <button class="decision-option ${card.advice?.optionId === o.id ? 'advised' : ''}" data-option="${o.id}">
               <span class="decision-key" aria-hidden="true">${i + 1}</span>
+              ${card.advice?.optionId === o.id ? `<span class="decision-advice">📡 ${tv(card.advice.key)}</span>` : ''}
               <span class="decision-label">${tv(o.labelKey)}</span>
               <span class="decision-effects">${effectChips(o.effects)}</span>
             </button>`).join('')}

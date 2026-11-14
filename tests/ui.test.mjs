@@ -199,3 +199,13 @@ test('the sample box has every device on the right exactly once, shuffled', () =
   assert.deepEqual([...sampleWiring.rightOrder].sort(), [...ids].sort());
   assert.notDeepEqual(sampleWiring.rightOrder, ids);
 });
+
+test('a wait with estimate.minutes is shown in minutes, and minutes are not repeated as a note', () => {
+  const t = (k) => ({ 'unit.minutes': 'min' }[k] ?? k);
+  const f = formatEffect({ type: 'wait', hours: 0.4, sols: 0.016, estimate: { minutes: 24 } }, { t, locale: 'en-US' });
+  assert.equal(f.amount, '+24 min');
+  assert.equal(f.note, '');
+  const g = formatEffect({ type: 'wait', hours: 2, estimate: { minutes: 120, oxygen_kg: -0.1 } }, { t, locale: 'en-US' });
+  assert.equal(g.amount, '+120 min');
+  assert.equal(g.note, '≈ O₂ −0.1 kg');
+});

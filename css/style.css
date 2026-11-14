@@ -183,6 +183,12 @@ button { font: inherit; color: inherit; }
 .effect.approx { background: transparent; border: 1px dashed currentColor; }
 .effect small { font-size: 14px; opacity: .85; }
 .decision-option.unavailable { cursor: not-allowed; opacity: .55; border-style: dashed; }
+/* Mission Control's advice (M7): the recommended option gets a badge and a blue edge. */
+.decision-option.advised { border-color: var(--sunset-blue); }
+.decision-option > :not(.decision-key) { grid-column: 2; } /* name, badge and costs always stay in the right column */
+.decision-option.advised .decision-key { grid-row: span 3; }
+.decision-advice { justify-self: start; padding: 1px 8px; border-radius: 99px; font-size: 14px;
+  background: rgba(127, 167, 214, .18); color: var(--sunset-blue); }
 .decision-option.unavailable .decision-key { background: transparent; border: 1px solid var(--night-3); }
 .decision-why { color: var(--warn); font-size: 14px; }
 .decision-error { color: var(--bad-text); font-size: 14px; margin: 10px 0 0; }

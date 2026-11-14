@@ -253,6 +253,8 @@
   "event.noReturn.option.suitHeater": { "tr": "Giysi ısıtıcısını aç, eklemleri çöz", "en": "Turn on the suit heater to free your joints" },
   "event.noReturn.option.shelterWreck": { "tr": "Yakındaki enkaza sığın, RHU ısısıyla ısın", "en": "Shelter at the nearby wreck and warm up with its RHU heat" },
   "event.noReturn.option.shelterWreck.disabled": { "tr": "Yakında sığınılacak bir enkaz yok.", "en": "There is no wreck close enough to shelter at." },
+  "missionControl.ask": { "tr": "Görev Kontrol'e sor (cevap ışık hızıyla gelir)", "en": "Ask Mission Control (the answer travels at light speed)" },
+  "missionControl.advice": { "tr": "Görev Kontrol bunu öneriyor", "en": "Mission Control recommends this" },
   "event.engineFreeze.title": { "tr": "Motor gece dondu", "en": "The engine froze overnight" },
   "event.engineFreeze.body": { "tr": "Sabahki yola çıkış penceresi yaklaşıyor ama gezicinin motoru donmuş.", "en": "The morning departure window is close, but the rover engine is frozen." },
   "event.engineFreeze.option.batteryHeat": { "tr": "Bataryayla ısıt (sera ısıtıcısı bu gece kesilir)", "en": "Heat it with the battery (the greenhouse heater is cut tonight)" },

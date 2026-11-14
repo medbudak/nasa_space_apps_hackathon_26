@@ -59,6 +59,15 @@ export const sampleNoReturn = {
   ],
 };
 
+// M7: the "ask Mission Control" option K2 adds (a wait of 2 x the light delay; dev value: 24 min), and the card
+// K2 reopens with Mission Control's advice marked.
+export const sampleAskEarth = {
+  id: 'askEarth', labelKey: 'missionControl.ask',
+  effects: [{ type: 'wait', hours: 0.4, sols: 0.4 / 24.6597, estimate: { minutes: 24 } }],
+};
+export const sampleEngineFreezeAsk = { ...sampleEngineFreeze, options: [...sampleEngineFreeze.options, sampleAskEarth] };
+export const sampleEngineFreezeAdvised = { ...sampleEngineFreeze, advice: { optionId: 'batteryHeat', key: 'missionControl.advice' } };
+
 // Mimics K2's resolveDecision(): builds the log entry and emits decision:made.
 export function withChoose(card, bus) {
   return {
