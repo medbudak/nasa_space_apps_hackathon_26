@@ -159,5 +159,12 @@ runs out ("SOLAR CONJUNCTION — SIGNAL LOST"); then "Design the next mission" c
 | Who | What |
 |---|---|
 | K2 / K1 | In the Sol 14 final sequence: `mountUfoDownlink(el, { t, locale, photo: { clear, blur }, cameraTier: state.flags.cameraTier, photoMbit, remainingMbit, onRestart: () => { newGame(); goTo('design'); } })`. `ufoStopPct(remaining, photo)` is a proposal for the D-006 rule; pass `stopAtPct` to use your own. |
-| K4 | Photos: `assets/ending/ufo_photo_clear.png` (hires camera) and `ufo_photo_blur.png` (hand camera), 1600×900. Note: both files are JPEG data with a `.png` name; browsers show them, but renaming to `.jpg` (or re-saving as PNG) avoids surprises. Without the files the screen draws a placeholder. |
+| K4 | Photos: `assets/ending/ufo_photo_clear.jpeg` (hires camera) and `ufo_photo_blur.jpeg` (hand camera), 1600×900. Without the files the screen draws a placeholder. |
 | K5 | Texts under `ufo.*` in `ui_texts.json`, including the FICTION label. |
+
+# UI icons (K4)
+
+`src/ui/icons.js` draws K4's pixel-art icons from `assets/ui/`. Only names in its `AVAILABLE` set are requested, so missing files
+never produce 404s; a listed icon that fails to load falls back to the emoji. Delivered (P1): `hud_*` (16×16, HUD bars) and
+`instr_*` (48×48, Sol 0 instrument cards). When K4 delivers P2/P3 (`obj_*`, `lv_*`, `pwr_*`, `comms_*`, `traj_*`, `ins_*`, `pkt_*`, `fx_*`,
+`load_*`, `mg_*`), add the names to `AVAILABLE`; Sol 0 already looks them up by group (`ICON_PREFIX` in `design.js`).

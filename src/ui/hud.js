@@ -20,6 +20,7 @@ import { mountTelemetry } from './telemetry.js';
 import { mountDownlink } from './downlink.js';
 import { mountPowerPanel } from './powerPanel.js';
 import { mountAlarms } from './alarms.js';
+import { icon, watchIconErrors } from './icons.js';
 
 // Display thresholds for bar colour only (share of the bar left). They change no game rule.
 const WARN = 0.3;
@@ -119,6 +120,7 @@ export function mountHud(el, opts) {
   let evaStart = 0;
 
   el.classList.add('hud');
+  watchIconErrors(el);
   el.innerHTML = `
     <div class="hud-bars" data-bars></div>
     <div class="hud-eva" data-eva></div>
@@ -133,7 +135,7 @@ export function mountHud(el, opts) {
     el.querySelectorAll('[data-tab]').forEach((b) => { b.textContent = t(`hud.tab.${b.dataset.tab}`); }); // follows the language
     $('[data-bars]').innerHTML = hudBars(state, data).map((b) => `
       <div class="hud-bar ${b.level} ${b.fill == null && b.value != null ? 'nomax' : ''}" title="${t(`hud.bar.${b.id}.help`)}">
-        <div class="hud-bar-label"><span><i aria-hidden="true">${b.icon}</i> ${t(`hud.bar.${b.id}`)}</span>
+        <div class="hud-bar-label"><span>${icon(`hud_${b.id}`, { fallback: b.icon })} ${t(`hud.bar.${b.id}`)}</span>
           <b>${b.value == null ? '—' : fmt(b.value, b.digits)}${b.max != null ? ` / ${fmt(b.max, b.digits)}` : b.value == null ? '' : ' / ?'} ${b.unit}</b></div>
         <div class="bar-track"><div class="bar-fill" style="width:${b.fill == null ? (b.value == null ? 0 : 100) : Math.round(Math.min(1, b.fill) * 100)}%"></div></div>
         ${b.note ? `<small class="hud-note">${Object.entries(b.note.vars).reduce((s, [k, v]) => s.replace(`{${k}}`, typeof v === 'number' ? fmt(v, Number.isInteger(v) ? 0 : 1) : v), t(b.note.key))}</small>` : ''}

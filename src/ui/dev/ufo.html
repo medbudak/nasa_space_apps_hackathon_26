@@ -43,7 +43,7 @@
       screen?.destroy();
       screen = mountUfoDownlink(document.querySelector('[data-ufo]'), {
         t, locale: () => (lang === 'tr' ? 'tr-TR' : 'en-US'),
-        photo: { clear: '../../../assets/ending/ufo_photo_clear.png', blur: '../../../assets/ending/ufo_photo_blur.png' },
+        photo: { clear: '../../../assets/ending/ufo_photo_clear.jpeg', blur: '../../../assets/ending/ufo_photo_blur.jpeg' },
         cameraTier: tier, photoMbit: 300, remainingMbit: Number(document.querySelector('[data-left]').value), seconds: 4,
         onRestart: () => { document.querySelector('[data-log]').textContent = '→ onRestart (game: newGame + goTo design)'; },
       });

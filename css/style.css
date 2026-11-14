@@ -100,6 +100,11 @@ button { font: inherit; color: inherit; }
 .card.locked { opacity: .45; cursor: not-allowed; }
 .card.locked:hover { transform: none; border-color: var(--night-3); }
 .card-name { font-weight: 700; font-size: 15.5px; padding-right: 18px; }
+/* K4's 48x48 pixel-art icon in the card's top-left corner (instruments for now). */
+.card.has-ico { padding-left: 74px; }
+.card-ico { position: absolute; left: 14px; top: 14px; width: 48px; height: 48px; }
+.ico { image-rendering: pixelated; vertical-align: -3px; }
+.ico-fallback { font-style: normal; }
 .card-real { font-size: 14px; color: var(--sunset-blue); font-weight: 600; letter-spacing: .02em; }
 .card-stats { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {

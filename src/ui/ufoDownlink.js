@@ -4,7 +4,7 @@
 //
 //   mountUfoDownlink(el, {
 //     t, locale,
-//     photo: { clear: 'assets/ending/ufo_photo_clear.png', blur: 'assets/ending/ufo_photo_blur.png' },  // K4
+//     photo: { clear: 'assets/ending/ufo_photo_clear.jpeg', blur: 'assets/ending/ufo_photo_blur.jpeg' },  // K4
 //     cameraTier: state.flags.cameraTier,      // 'hires' -> clear photo, 'hand' -> blurred photo
 //     photoMbit, remainingMbit,                // from the downlink budget (K1/K2 rule, see ufoStopPct)
 //     seconds: 8,                              // real seconds for a full photo

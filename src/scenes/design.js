@@ -16,6 +16,15 @@
 //   { objectiveId, rocketId, trajectoryId, siteId, powerId, batteryId, insulationId,
 //     instrumentIds: [], commsId, spareKitsId }
 
+import { icon, hasIcon, watchIconErrors } from '../ui/icons.js';
+
+// Icon file name per data group (K4's assets/ui/). Groups K4 has not drawn yet simply show no icon.
+const ICON_PREFIX = {
+  instruments: 'instr_', objectives: 'obj_', launchVehicles: 'lv_', trajectories: 'traj_',
+  powerSources: 'pwr_', comms: 'comms_', insulation: 'ins_',
+};
+const iconName = (g, id) => (ICON_PREFIX[g] ? `${ICON_PREFIX[g]}${id}` : null);
+
 const STEPS = [
   { id: 'objective', groups: ['objectives'] },
   { id: 'launch', groups: ['launchVehicles', 'trajectories'] },
@@ -74,6 +83,7 @@ export function mountDesign(root, opts) {
   let step = started ? lastStep : 0; // a new game starts at step 1
 
   root.classList.add('design');
+  watchIconErrors(root);
   root.innerHTML = `
     <header class="design-head">
       <div class="design-title">
@@ -195,8 +205,11 @@ export function mountDesign(root, opts) {
     const cards = (data[g] || []).map((opt) => {
       const on = multi ? design.instrumentIds.includes(opt.id) : design[field] === opt.id;
       const locked = multi && !on && design.instrumentIds.length >= max;
-      return `<button class="card ${on ? 'on' : ''} ${locked ? 'locked' : ''}" data-group="${g}" data-pick="${opt.id}"
+      const ico = iconName(g, opt.id);
+      const withIco = ico && hasIcon(ico);
+      return `<button class="card ${on ? 'on' : ''} ${locked ? 'locked' : ''} ${withIco ? 'has-ico' : ''}" data-group="${g}" data-pick="${opt.id}"
           aria-pressed="${on}" ${locked ? 'aria-disabled="true"' : ''}>
+        ${withIco ? icon(ico, { size: 48, className: 'card-ico' }) : ''}
         <span class="card-name">${t(`${g}.${opt.id}.name`)}</span>
         ${opt.realName ? `<span class="card-real">${opt.realName}</span>` : ''}
         <span class="card-stats">${stats(g, opt, summary)}</span>
