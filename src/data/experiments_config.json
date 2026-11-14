@@ -1,0 +1,58 @@
+{
+  "marsGravity": 3.71,
+  "earthGravity": 9.81,
+  "toleranceRatio": 0.10,
+  "experiments": {
+    "pendulum": {
+      "id": "pendulum",
+      "durationHours": 0.5,
+      "energyWh": 10,
+      "requiredInstrument": null,
+      "unlockBonus": "tutorial_gravity_verified"
+    },
+    "freefall": {
+      "id": "freefall",
+      "dropHeightM": 2.0,
+      "expectedMarsSec": 1.04,
+      "expectedEarthSec": 0.64,
+      "durationHours": 0.5,
+      "energyWh": 5,
+      "requiredInstrument": null,
+      "unlockBonus": "jump_physics_calibrated"
+    },
+    "seed_germination": {
+      "id": "seed_germination",
+      "durationSols": 3,
+      "energyWh": 150,
+      "requiredInstrument": "veggie",
+      "unlockBonus": "greenhouse_yield_plus_30"
+    },
+    "water_boiling": {
+      "id": "water_boiling",
+      "triplePointPressureKpa": 0.61,
+      "durationHours": 1.0,
+      "energyWh": 25,
+      "requiredInstrument": "meda",
+      "unlockBonus": "prevent_outdoor_ice_melt_error"
+    },
+    "speed_of_sound": {
+      "id": "speed_of_sound",
+      "distanceM": 50,
+      "expectedMarsSpeedMs": 240,
+      "expectedEarthSpeedMs": 343,
+      "durationHours": 0.5,
+      "energyWh": 15,
+      "requiredInstrument": "mastcam",
+      "unlockBonus": "acoustic_diagnostics"
+    },
+    "moxie_efficiency": {
+      "id": "moxie_efficiency",
+      "minRateGPerHour": 6,
+      "maxRateGPerHour": 12,
+      "durationHours": 2.0,
+      "energyWh": 600,
+      "requiredInstrument": "moxie",
+      "unlockBonus": "moxie_optimal_night_schedule"
+    }
+  }
+}
