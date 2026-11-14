@@ -123,6 +123,79 @@ function placeholderScene(name, info, err) {
   };
 }
 
+// Fictional epilogue after every ending (design doc v2, section 12): K4's canvas sequence
+// (MAV liftoff, a light in the sky), then K3's photo downlink, cut off by solar conjunction.
+const UFO_HANDOVER_SEC = 22; // where K4's sequence starts its own photo; K3's downlink takes over
+const ufoScene = {
+  raf: 0,
+  photo: null,
+  async enter({ state, data, t, goTo, canvas, ui }) {
+    const hasCamera = state.design.instrumentIds?.includes('camera');
+    const g = canvas.getContext('2d');
+    let done = false;
+    const showPhoto = async () => {
+      if (done) return;
+      done = true;
+      cancelAnimationFrame(this.raf);
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      ui.replaceChildren(backdrop('assets/ending/ufo_sky.png', 0.6));
+      try {
+        const { mountUfoDownlink } = await import('./ui/ufoDownlink.js');
+        const camera = data.instruments.find((r) => r.id === 'camera');
+        const comms = data.comms.find((r) => r.id === state.design.commsId);
+        const budget = state.dataBudget;
+        const el = document.createElement('div');
+        el.style.cssText = 'position:absolute;inset:0;';
+        ui.append(el);
+        this.photo = mountUfoDownlink(el, {
+          t, locale,
+          photo: { clear: 'assets/ending/ufo_photo_clear.png', blur: 'assets/ending/ufo_photo_blur.png' },
+          cameraTier: hasCamera ? 'hires' : 'hand',
+          photoMbit: camera?.mbitPerUse?.value ?? 0,
+          remainingMbit: budget?.perSol ? Math.max(0, budget.perSol - budget.used) : comms?.mbitPerSol?.value ?? 0,
+          seconds: 8,
+          onRestart: () => {
+            newGame(seedFromUrl());
+            goTo('design');
+          },
+        });
+      } catch (err) {
+        console.warn('[main] UFO downlink not available', err);
+        const again = button(t('ending.designNext'), () => goTo('title'));
+        again.className = 'btn';
+        ui.append(panel(again));
+      }
+    };
+
+    try {
+      const { VFXManager } = await import('./fx/effects.js');
+      const vfx = new VFXManager();
+      vfx.startUfoSequence(hasCamera ? 1 : 0.5);
+      const skip = button(t('cutscene.skip'), showPhoto);
+      skip.className = 'btn ghost';
+      skip.style.cssText = 'position:absolute;right:16px;bottom:16px;';
+      ui.append(skip);
+      let last = performance.now();
+      const frame = (now) => {
+        const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
+        last = now;
+        vfx.renderOverlays(g, canvas.width, canvas.height, dt);
+        if (vfx.ufoActive && vfx.ufoElapsed < UFO_HANDOVER_SEC) this.raf = requestAnimationFrame(frame);
+        else showPhoto();
+      };
+      this.raf = requestAnimationFrame(frame);
+    } catch (err) {
+      console.warn('[main] UFO sequence not available', err);
+      showPhoto();
+    }
+  },
+  exit() {
+    cancelAnimationFrame(this.raf);
+    this.photo?.destroy?.();
+    this.photo = null;
+  },
+};
+
 // K3's Sol 0 screen exports mountDesign() instead of a default scene; this adapts it.
 function designScene(mountDesign) {
   let mounted = null;
@@ -179,6 +252,7 @@ function withHud(scene) {
 async function loadScene(name) {
   if (name === 'title') return titleScene;
   if (name === 'launch') return launchScene;
+  if (name === 'ufo') return ufoScene;
   const info = SCENES[name];
   if (!info) throw new Error(`unknown scene "${name}"`);
   try {

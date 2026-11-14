@@ -151,8 +151,8 @@ export default {
       );
     }
 
-    const again = el('button', t('ending.designNext'));
-    again.addEventListener('click', () => goTo('title'));
+    const again = el('button', t('ending.continue'), 'btn');
+    again.addEventListener('click', () => goTo('ufo')); // the epilogue ends with "design the next mission"
     root.append(again);
     ui.append(backdrop('assets/ending/cover_thumbnail_alt.png', 0.75), root);
   },

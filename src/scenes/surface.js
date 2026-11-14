@@ -167,21 +167,23 @@ const BACKGROUNDS = {
   jezero: 'assets/backgrounds/bg_jezero_sunset.png',
   arcadia: 'assets/backgrounds/bg_arcadia_day.png',
   storm: 'assets/backgrounds/bg_storm.png',
+  jezeroNight: 'assets/backgrounds/bg_jezero_night.png',
 };
 const SCREENS = { habitat: 'assets/screens/scr_habitat_cutaway.png' };
 const VFX = { storm: 'assets/vfx/vfx_dust_storm.png', frost: 'assets/vfx/vfx_frost_1.png' };
 const STORM_DUST = 0.5; // panel dust share drawn as a storm (display only, no game rule)
 const WRECK_RADIUS_M = 10; // how close counts as "at the wreck" (shelter by its RHUs)
-// Spirit and Opportunity were twin rovers, so Opportunity uses Spirit's sprite.
 const WRECK_SPRITES = {
-  opportunity: { file: 'assets/sprites/rover_spirit.png', w: 96, h: 64 },
+  opportunity: { file: 'assets/sprites/rover_opportunity.png', w: 96, h: 64 },
   spirit: { file: 'assets/sprites/rover_spirit.png', w: 96, h: 64 },
   phoenix: { file: 'assets/sprites/lander_phoenix.png', w: 96, h: 64 },
   insight: { file: 'assets/sprites/lander_insight.png', w: 96, h: 64 },
   beagle2: { file: 'assets/sprites/lander_beagle2.png', w: 48, h: 48 },
 };
 const SPRITES = {
+  idle: { file: 'assets/sprites/astronaut_idle.png', w: 48, h: 64 },
   walk: { file: 'assets/sprites/astronaut_walk.png', w: 48, h: 64 },
+  habitat: { file: 'assets/structures/habitat_main.png', w: 192, h: 144 },
   frozen: { file: 'assets/sprites/astronaut_frozen.png', w: 48, h: 64 },
   solarClean: { file: 'assets/structures/solar_clean.png', w: 144, h: 108 },
   solarDusty: { file: 'assets/structures/solar_dusty.png', w: 144, h: 108 },
@@ -237,7 +239,7 @@ function drawInside() {
     g.fillStyle = 'rgba(120, 170, 255, 0.25)';
     g.fillRect(0, 0, W, H);
   }
-  drawSprite(g, SPRITES.walk, W * 0.5, H * 0.9, scene.facing < 0);
+  drawSprite(g, SPRITES.idle, W * 0.5, H * 0.9, scene.facing < 0);
   if (!state.events.pending) hint(scene.t('surface.hint.exit'), W / 2, H * 0.97);
 }
 
@@ -265,7 +267,9 @@ function drawOutside() {
   // Sky and ground: K4's background for the site (or the storm sky), darkened at night.
   const site = ctx.data.landingSites.find((r) => r.id === state.design.siteId);
   const sun = ctx.eng.sunCos(state.time.solFraction, site?.latitudeDeg?.value ?? 0);
-  const bg = image(dust > STORM_DUST ? BACKGROUNDS.storm : BACKGROUNDS[state.design.siteId] ?? BACKGROUNDS.meridiani);
+  const night = sun === 0;
+  const bgKey = dust > STORM_DUST ? 'storm' : night && state.design.siteId === 'jezero' ? 'jezeroNight' : state.design.siteId;
+  const bg = image(BACKGROUNDS[bgKey] ?? BACKGROUNDS.meridiani);
   if (bg) {
     g.drawImage(bg, 0, 0, W, H);
     g.fillStyle = `rgba(8, 6, 20, ${(0.75 * (1 - Math.min(1, sun * 2))).toFixed(3)})`;
@@ -292,15 +296,18 @@ function drawOutside() {
   if (state.design.instrumentIds?.includes('plantChamber')) drawSprite(g, SPRITES.greenhouse, toScreen(-55), groundY);
   drawSprite(g, SPRITES.mav, toScreen(40), groundY);
 
-  // Habitat at x = 0 (door), 12 m wide to the left of the door.
-  g.fillStyle = state.power.off.heating ? '#5b6b7a' : '#d9d2c5';
-  g.fillRect(toScreen(-12), groundY - 6 * pxPerM, 12 * pxPerM, 6 * pxPerM);
-  g.fillStyle = '#222';
-  g.fillRect(toScreen(-0.6), groundY - 2.2 * pxPerM, 0.6 * pxPerM, 2.2 * pxPerM);
+  // Habitat with its door at x = 0.
+  if (!drawSprite(g, SPRITES.habitat, toScreen(0) - SPRITES.habitat.w / 2, groundY)) {
+    g.fillStyle = state.power.off.heating ? '#5b6b7a' : '#d9d2c5';
+    g.fillRect(toScreen(-12), groundY - 6 * pxPerM, 12 * pxPerM, 6 * pxPerM);
+    g.fillStyle = '#222';
+    g.fillRect(toScreen(-0.6), groundY - 2.2 * pxPerM, 0.6 * pxPerM, 2.2 * pxPerM);
+  }
 
   // Astronaut.
   const eva = state.life.eva;
-  const sprite = eva.jointsFrozen ? SPRITES.frozen : SPRITES.walk;
+  const moving = ['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D'].some((k) => scene.keys.has(k));
+  const sprite = eva.jointsFrozen ? SPRITES.frozen : moving ? SPRITES.walk : SPRITES.idle;
   if (!drawSprite(g, sprite, toScreen(astronautX), groundY, scene.facing < 0)) {
     g.fillStyle = eva.jointsFrozen ? '#9fd3ff' : '#f2e8e4';
     g.fillRect(toScreen(astronautX) - 0.4 * pxPerM, groundY - 1.8 * pxPerM, 0.8 * pxPerM, 1.8 * pxPerM);
