@@ -1,0 +1,9 @@
+{
+  "name": "sol14-red-horizon",
+  "private": true,
+  "description": "No dependencies and no build step. This file only tells Node that src/ uses ES modules, so the tests can import it.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
