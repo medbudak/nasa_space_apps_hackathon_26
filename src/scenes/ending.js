@@ -3,6 +3,7 @@
 
 import { addScore, SCORE_CATEGORIES } from '../core/state.js';
 import { massMargin } from '../core/engineering.js';
+import { backdrop } from '../core/backdrop.js';
 
 const TOP_CAUSES = 5;
 
@@ -150,9 +151,9 @@ export default {
       );
     }
 
-    const again = el('button', t('ending.designNext'));
-    again.addEventListener('click', () => goTo('title'));
+    const again = el('button', t('ending.continue'), 'btn');
+    again.addEventListener('click', () => goTo('ufo')); // the epilogue ends with "design the next mission"
     root.append(again);
-    ui.append(root);
+    ui.append(backdrop('assets/ending/cover_thumbnail_alt.png', 0.75), root);
   },
 };

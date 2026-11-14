@@ -1564,6 +1564,13 @@
     {
       "id": "opportunity",
       "realName": "Opportunity",
+      "corridorM": {
+        "value": 300,
+        "unit": "m",
+        "src": "game: K1 decision D-009: game layout of the compressed exploration corridor (design doc v2); the real landers are thousands of km apart",
+        "verified": true,
+        "simplified": true
+      },
       "categories": [
         "power"
       ],
@@ -1598,6 +1605,13 @@
     {
       "id": "spirit",
       "realName": "Spirit",
+      "corridorM": {
+        "value": -450,
+        "unit": "m",
+        "src": "game: K1 decision D-009: game layout of the compressed exploration corridor (design doc v2); the real landers are thousands of km apart",
+        "verified": true,
+        "simplified": true
+      },
       "categories": [
         "mechanical",
         "thermal"
@@ -1626,6 +1640,13 @@
     {
       "id": "phoenix",
       "realName": "Phoenix",
+      "corridorM": {
+        "value": -900,
+        "unit": "m",
+        "src": "game: K1 decision D-009: game layout of the compressed exploration corridor (design doc v2); the real landers are thousands of km apart",
+        "verified": true,
+        "simplified": true
+      },
       "categories": [
         "thermal"
       ],
@@ -1654,6 +1675,13 @@
     {
       "id": "insight",
       "realName": "InSight",
+      "corridorM": {
+        "value": 700,
+        "unit": "m",
+        "src": "game: K1 decision D-009: game layout of the compressed exploration corridor (design doc v2); the real landers are thousands of km apart",
+        "verified": true,
+        "simplified": true
+      },
       "categories": [
         "power"
       ],
@@ -1701,6 +1729,13 @@
     {
       "id": "beagle2",
       "realName": "Beagle 2 (ESA/UK, bonus)",
+      "corridorM": {
+        "value": 1200,
+        "unit": "m",
+        "src": "game: K1 decision D-009: game layout of the compressed exploration corridor (design doc v2); the real landers are thousands of km apart",
+        "verified": true,
+        "simplified": true
+      },
       "categories": [
         "comms",
         "mechanical"

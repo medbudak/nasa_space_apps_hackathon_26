@@ -14,6 +14,7 @@ import { loadNasaData, getData } from './core/nasaData.js';
 import { loadStory, t, getLang, setLang } from './core/i18n.js';
 import { getState, newGame, load, save } from './core/state.js';
 import { evaluateDesign } from './core/engineering.js';
+import { backdrop } from './core/backdrop.js';
 
 const locale = () => (getLang() === 'tr' ? 'tr-TR' : 'en-US');
 const shared = []; // mounted shared panels, refreshed after a language switch
@@ -47,13 +48,66 @@ const titleScene = {
   enter({ goTo }) {
     const heading = document.createElement('h1');
     heading.textContent = t('title.name');
+    heading.style.cssText = 'font-size:48px;margin:0;text-shadow:0 2px 12px rgba(0,0,0,.8);';
     const start = button(t('title.newMission'), () => {
       newGame(seedFromUrl());
       goTo('design');
     });
+    start.className = 'btn';
     const items = [heading, start];
-    if (load()) items.push(button(t('title.continue'), () => goTo(getState().scene === 'title' ? 'design' : getState().scene)));
-    ui.append(panel(...items));
+    if (load()) {
+      const resume = button(t('title.continue'), () => goTo(getState().scene === 'title' ? 'design' : getState().scene));
+      resume.className = 'btn ghost';
+      items.push(resume);
+    }
+    ui.append(backdrop('assets/ending/cover_thumbnail.png', 0.25), panel(...items));
+  },
+};
+
+// Launch and transit cutscene between Sol 0 and Sol 1 (C1: the cruise is not playable).
+// Each slide shows K4's artwork for a few seconds; a click, Enter or Space moves on.
+const SLIDE_MS = 3500;
+const launchScene = {
+  timer: 0,
+  onKey: null,
+  enter({ state, data, t, goTo, ui }) {
+    const rocket = data.launchVehicles.find((r) => r.id === state.design.rocketId);
+    const slides = [
+      { path: 'assets/screens/scr_launch.png', text: t('cutscene.launch', { rocket: rocket?.realName ?? '' }) },
+      { path: 'assets/screens/scr_transit.png', text: t('cutscene.transit', { days: state.designSummary?.transitDays ?? '' }) },
+    ];
+    let i = -1;
+    const next = () => {
+      clearTimeout(this.timer);
+      i += 1;
+      if (i >= slides.length) {
+        goTo('surface');
+        return;
+      }
+      const caption = document.createElement('p');
+      caption.textContent = slides[i].text;
+      caption.style.cssText = 'position:absolute;left:0;right:0;bottom:8%;margin:0;text-align:center;font-size:22px;text-shadow:0 2px 8px #000;';
+      const skip = button(t('cutscene.skip'), (e) => {
+        e.stopPropagation();
+        i = slides.length - 1;
+        next();
+      });
+      skip.className = 'btn ghost';
+      skip.style.cssText = 'position:absolute;right:16px;bottom:16px;';
+      const slide = backdrop(slides[i].path, 0.15);
+      slide.addEventListener('click', next);
+      ui.replaceChildren(slide, caption, skip);
+      this.timer = setTimeout(next, SLIDE_MS);
+    };
+    this.onKey = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') next();
+    };
+    window.addEventListener('keydown', this.onKey);
+    next();
+  },
+  exit() {
+    clearTimeout(this.timer);
+    window.removeEventListener('keydown', this.onKey);
   },
 };
 
@@ -68,6 +122,79 @@ function placeholderScene(name, info, err) {
     },
   };
 }
+
+// Fictional epilogue after every ending (design doc v2, section 12): K4's canvas sequence
+// (MAV liftoff, a light in the sky), then K3's photo downlink, cut off by solar conjunction.
+const UFO_HANDOVER_SEC = 22; // where K4's sequence starts its own photo; K3's downlink takes over
+const ufoScene = {
+  raf: 0,
+  photo: null,
+  async enter({ state, data, t, goTo, canvas, ui }) {
+    const hasCamera = state.design.instrumentIds?.includes('camera');
+    const g = canvas.getContext('2d');
+    let done = false;
+    const showPhoto = async () => {
+      if (done) return;
+      done = true;
+      cancelAnimationFrame(this.raf);
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      ui.replaceChildren(backdrop('assets/ending/ufo_sky.png', 0.6));
+      try {
+        const { mountUfoDownlink } = await import('./ui/ufoDownlink.js');
+        const camera = data.instruments.find((r) => r.id === 'camera');
+        const comms = data.comms.find((r) => r.id === state.design.commsId);
+        const budget = state.dataBudget;
+        const el = document.createElement('div');
+        el.style.cssText = 'position:absolute;inset:0;';
+        ui.append(el);
+        this.photo = mountUfoDownlink(el, {
+          t, locale,
+          photo: { clear: 'assets/ending/ufo_photo_clear.png', blur: 'assets/ending/ufo_photo_blur.png' },
+          cameraTier: hasCamera ? 'hires' : 'hand',
+          photoMbit: camera?.mbitPerUse?.value ?? 0,
+          remainingMbit: budget?.perSol ? Math.max(0, budget.perSol - budget.used) : comms?.mbitPerSol?.value ?? 0,
+          seconds: 8,
+          onRestart: () => {
+            newGame(seedFromUrl());
+            goTo('design');
+          },
+        });
+      } catch (err) {
+        console.warn('[main] UFO downlink not available', err);
+        const again = button(t('ending.designNext'), () => goTo('title'));
+        again.className = 'btn';
+        ui.append(panel(again));
+      }
+    };
+
+    try {
+      const { VFXManager } = await import('./fx/effects.js');
+      const vfx = new VFXManager();
+      vfx.startUfoSequence(hasCamera ? 1 : 0.5);
+      const skip = button(t('cutscene.skip'), showPhoto);
+      skip.className = 'btn ghost';
+      skip.style.cssText = 'position:absolute;right:16px;bottom:16px;';
+      ui.append(skip);
+      let last = performance.now();
+      const frame = (now) => {
+        const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
+        last = now;
+        vfx.renderOverlays(g, canvas.width, canvas.height, dt);
+        if (vfx.ufoActive && vfx.ufoElapsed < UFO_HANDOVER_SEC) this.raf = requestAnimationFrame(frame);
+        else showPhoto();
+      };
+      this.raf = requestAnimationFrame(frame);
+    } catch (err) {
+      console.warn('[main] UFO sequence not available', err);
+      showPhoto();
+    }
+  },
+  exit() {
+    cancelAnimationFrame(this.raf);
+    this.photo?.destroy?.();
+    this.photo = null;
+  },
+};
 
 // K3's Sol 0 screen exports mountDesign() instead of a default scene; this adapts it.
 function designScene(mountDesign) {
@@ -87,7 +214,7 @@ function designScene(mountDesign) {
         onLaunch: (design, summary) => {
           Object.assign(state.design, design);
           state.designSummary = summary;
-          goTo('surface');
+          goTo('launch');
         },
       });
     },
@@ -124,6 +251,8 @@ function withHud(scene) {
 
 async function loadScene(name) {
   if (name === 'title') return titleScene;
+  if (name === 'launch') return launchScene;
+  if (name === 'ufo') return ufoScene;
   const info = SCENES[name];
   if (!info) throw new Error(`unknown scene "${name}"`);
   try {

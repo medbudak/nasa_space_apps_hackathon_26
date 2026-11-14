@@ -248,6 +248,23 @@ button { font: inherit; color: inherit; }
 .qte-clock { font: 700 34px var(--mono); color: var(--ink); }
 .qte-action { min-width: 180px; }
 
+.wr-board { display: grid; grid-template-columns: 1fr 70px 1fr; gap: 0; align-items: stretch; }
+.wr-col { display: grid; gap: 10px; }
+.wr-wires { width: 100%; height: 100%; }
+.wr-end, .wr-dev {
+  display: flex; align-items: center; gap: 8px; text-align: left; padding: 10px 12px; border-radius: var(--radius);
+  background: var(--night); border: 2px solid var(--night-3); cursor: pointer; font-size: 14px; min-height: 48px;
+}
+.wr-end { --wire: var(--sunset-blue); }
+.wr-dev { flex-direction: row-reverse; justify-content: flex-end; }
+.wr-dot { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--wire, var(--night-3)); border: 2px solid var(--ink-dim); }
+.wr-end[aria-pressed="true"] { border-color: var(--wire); box-shadow: 0 0 0 3px rgba(127, 167, 214, .25); }
+.wr-end.done, .wr-dev.done { border-color: var(--ok); }
+.wr-dev.spark { border-color: var(--bad); animation: spark .15s linear 3; }
+@keyframes spark { 50% { background: rgba(229, 87, 74, .3); } }
+@media (prefers-reduced-motion: reduce) { .wr-dev.spark { animation: none; } }
+.wr-status { display: flex; justify-content: space-between; margin-top: 10px; font: 14px var(--mono); color: var(--ink-dim); }
+
 @media (max-width: 560px) {
   .qte-stage { grid-template-columns: 1fr; justify-items: center; }
   .al-stage { grid-template-columns: 1fr; justify-items: center; }

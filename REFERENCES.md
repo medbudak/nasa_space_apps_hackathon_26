@@ -86,6 +86,8 @@ Include open-source and free items too. Note the license.
 
 | Item | URL | License | Used for |
 |---|---|---|---|
+| awesome-gamedev-agent-skills (`workflows`, `disciplines` plugins) | https://github.com/gamedev-skills/awesome-gamedev-agent-skills | Apache-2.0 | Instructions for the team's AI coding agent (game-jam, UI/UX, game-feel checklists); not shipped in the game |
+| Game artwork in `assets/` (backgrounds, sprites, screens, effects, ending) | this repository | Original work by the team (K4) | All in-game images |
 | | | | |
 
 ## Use of AI
