@@ -20,6 +20,9 @@ export const eng = {
   // Requested: heater draw grows with the inside/outside gap; thick insulation halves it.
   heatingPower_W: ({ inside_C, outside_C, insulation }) =>
     Math.max(0, inside_C - outside_C) * (insulation === 'thick' ? 10 : 20),
+  // Same as K1's oxygenToReturn in src/core/engineering.js (enes branch).
+  oxygenToReturn: ({ distanceM, speedMs, o2KgPerSec, safetyFactor }) =>
+    speedMs <= 0 ? Infinity : (distanceM / speedMs) * o2KgPerSec * safetyFactor,
 };
 
 /** Minimal stand-in for K1's bus.js: records every emit. */

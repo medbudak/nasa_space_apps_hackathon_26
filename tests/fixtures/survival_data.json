@@ -35,7 +35,20 @@
     "oxygenStart_kg": { "value": 10, "unit": "kg", "requested": "K2", "note": "game design: starting O2 reserve", "src": "PLACEHOLDER", "verified": false }
   },
 
+  "eva": {
+    "oxygenPerHour_kg": { "value": 0.086, "unit": "kg/CM-h", "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf", "verified": true, "note": "copied from K1's life.evaO2KgPerHour (BVAD Rev 2 Table 4-70)" },
+    "noReturnSafetyFactor": { "value": 1.2, "unit": "", "simplified": true, "src": "game: design doc v2, point-of-no-return formula", "verified": true, "note": "copied from K1's rules.noReturnSafetyFactor" },
+    "suitO2_kg": { "value": 0.5, "unit": "kg", "requested": "K2", "note": "usable O2 in the suit at EVA start; find an EMU/xEMU figure", "src": "PLACEHOLDER", "verified": false },
+    "walkSpeed_ms": { "value": 1, "unit": "m/s", "requested": "K2", "note": "suited walking speed on Mars; find an Apollo/analog EVA figure", "src": "PLACEHOLDER", "verified": false },
+    "jointFreezeBelow_C": { "value": -60, "unit": "C", "requested": "K2", "simplified": true, "note": "game: outside temperature at which suit joints stiffen", "src": "PLACEHOLDER", "verified": false },
+    "jointFreezeSpeedFactor": { "value": 0.4, "unit": "", "requested": "K2", "simplified": true, "note": "game: design doc v2 crisis card 'speed 40%'", "src": "PLACEHOLDER", "verified": false }
+  },
+
   "events": {
+    "noReturn": {
+      "suitHeater_kWh": { "value": 0.5, "unit": "kWh", "requested": "K2", "simplified": true, "note": "habitat energy to recharge the suit after running its heater; game value", "src": "PLACEHOLDER", "verified": false },
+      "shelterHours": { "value": 1, "unit": "h", "requested": "K2", "simplified": true, "note": "time to thaw joints with a wreck's RHU heat; game value", "src": "PLACEHOLDER", "verified": false }
+    },
     "engineFreeze": {
       "earliestSol": { "value": 1, "unit": "sol", "requested": "K2", "note": "game design", "src": "PLACEHOLDER", "verified": false },
       "triggerBelow_C": { "value": -70, "unit": "C", "requested": "K2", "note": "temperature that freezes the engine; game design, simplified", "src": "PLACEHOLDER", "verified": false },

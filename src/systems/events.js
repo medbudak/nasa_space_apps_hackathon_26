@@ -5,15 +5,19 @@
 //   effect    -> applied immediately when it fires (optional)
 //   decision  -> returns a card { titleKey, bodyKey, options[] } (optional)
 //
-// A card option is { id, labelKey, effects[] }. The same effects[] list is
+// A card is { titleKey, bodyKey, vars?, options[] }; vars fills {name} slots in the texts.
+// A card option is { id, labelKey, effects[], disabled?, disabledKey? }. A disabled option is
+// shown greyed out with the disabledKey text and cannot be chosen. The same effects[] list is
 //   1) shown to the player before choosing (every cost is visible up front),
 //   2) applied when chosen,
 //   3) written to state.decisionLog so the report card can explain the outcome.
 //
 // Effect types:
 //   { type: 'resource', stat: 'energy_kWh' | 'oxygen_kg' | 'radiation_mSv', delta }  // state.resources
-//   { type: 'wait', sols, estimate: { oxygen_kg } }   // runs the simulation forward
+//   { type: 'wait', sols | hours, estimate: {...} }  // runs the simulation forward
 //   { type: 'flag', key, value }                      // state.sim.events.flags
+//   { type: 'eva', set: { speedFactor, jointsFrozen } } // changes the EVA state
+//   { type: 'estimate', ...numbers }                  // shown on the card only, applies nothing
 //
 // The decision:open payload is K2's proposal and still has to be agreed with K3.
 // Text is never written here: titleKey / bodyKey / labelKey are keys in K5's story.json.
@@ -64,6 +68,7 @@ export function resolveDecision(state, choiceId, ctx) {
   if (!pending) throw new Error('events: no decision is open');
   const option = pending.card.options.find((o) => o.id === choiceId);
   if (!option) throw new Error(`events: unknown choice "${choiceId}" for ${pending.eventId}`);
+  if (option.disabled) throw new Error(`events: choice "${choiceId}" is not available right now`);
 
   for (const effect of option.effects) applyEffect(state, effect, ctx);
 
@@ -87,12 +92,19 @@ export function applyEffect(state, effect, ctx) {
       res[effect.stat] = next;
       break;
     }
-    case 'wait':
-      spendTime(state, effect.sols * val(ctx.data.mars.solLength), ctx);
+    case 'wait': {
+      const hours = effect.hours ?? effect.sols * val(ctx.data.mars.solLength);
+      spendTime(state, hours, ctx);
       break;
+    }
     case 'flag':
       state.sim.events.flags[effect.key] = effect.value;
       break;
+    case 'eva':
+      Object.assign(state.sim.eva, effect.set);
+      break;
+    case 'estimate':
+      break; // display only
     default:
       throw new Error(`events: unknown effect type "${effect.type}"`);
   }
@@ -103,10 +115,82 @@ function isNight(state, ctx) {
 }
 
 // ---------------------------------------------------------------------------
-// Event catalogue. More crises (storm, quake, SPE, conjunction, dust devil,
+// Event catalogue, in priority order: when two events trigger in the same step,
+// the earlier one opens its card first (life-threatening ones on top). More crises (storm, quake, SPE, conjunction, dust devil,
 // radiator failure) are added here in S10–14.
 
 export const EVENTS = [
+  {
+    // Design doc M4 / operations card 1: "Joints froze outside, speed 40%, O2 31%, habitat 900 m".
+    // Opens when suit O2 drops below the O2 needed to walk back (with the safety factor).
+    id: 'noReturn',
+    once: false, // can happen on any EVA; eva.cardShown limits it to once per EVA
+    trigger: (state) => {
+      const eva = state.sim.eva;
+      return eva.outside && eva.noReturn && !eva.cardShown;
+    },
+    effect: (state) => {
+      state.sim.eva.cardShown = true;
+    },
+    decision: (state, ctx) => {
+      const { data } = ctx;
+      const eva = state.sim.eva;
+      const cfg = data.events.noReturn;
+      const safety = val(data.eva.noReturnSafetyFactor);
+      const o2PerHour = val(data.eva.oxygenPerHour_kg);
+      // Without the safety factor: the bare O2 the walk takes at the current speed.
+      const bareNeedKg = eva.requiredO2Kg / safety;
+      // At normal speed (after thawing the joints).
+      const thawedNeedKg = eva.requiredO2Kg * eva.speedFactor;
+      const shelterHours = val(cfg.shelterHours);
+
+      return {
+        titleKey: 'event.noReturn.title',
+        bodyKey: 'event.noReturn.body',
+        vars: {
+          suitO2Kg: round2(eva.suitO2Kg),
+          requiredO2Kg: round2(eva.requiredO2Kg),
+          distanceM: Math.round(eva.distanceM),
+          speedPct: Math.round(eva.speedFactor * 100),
+        },
+        options: [
+          {
+            // A: walk back slowly. Only possible if the O2 covers the walk without the safety margin.
+            id: 'slowWalk',
+            labelKey: 'event.noReturn.option.slowWalk',
+            disabled: eva.suitO2Kg < bareNeedKg,
+            disabledKey: 'event.noReturn.option.slowWalk.disabled',
+            effects: [
+              { type: 'estimate', suitO2Kg: -round2(bareNeedKg), safetyMarginLeft: false },
+              { type: 'flag', key: 'walkedWithoutMargin', value: true },
+            ],
+          },
+          {
+            // B: suit heater: speed comes back; recharging the suit afterwards costs habitat energy.
+            id: 'suitHeater',
+            labelKey: 'event.noReturn.option.suitHeater',
+            effects: [
+              { type: 'eva', set: { speedFactor: 1, jointsFrozen: false, thawed: true } },
+              { type: 'resource', stat: 'energy_kWh', delta: -val(cfg.suitHeater_kWh) },
+              { type: 'estimate', suitO2Kg: -round2(thawedNeedKg / safety) },
+            ],
+          },
+          {
+            // C: shelter at a nearby wreck, thaw the joints with its RHU heat, then walk back.
+            id: 'shelterWreck',
+            labelKey: 'event.noReturn.option.shelterWreck',
+            disabled: !eva.nearWreck,
+            disabledKey: 'event.noReturn.option.shelterWreck.disabled',
+            effects: [
+              { type: 'wait', hours: shelterHours, estimate: { suitO2Kg: -round2(o2PerHour * shelterHours) } },
+              { type: 'eva', set: { speedFactor: 1, jointsFrozen: false, thawed: true } },
+            ],
+          },
+        ],
+      };
+    },
+  },
+
   {
     // Design doc, operations card 2: "Engine froze overnight, morning departure window".
     id: 'engineFreeze',
@@ -162,3 +246,7 @@ export const EVENTS = [
     },
   },
 ];
+
+function round2(x) {
+  return Math.round(x * 100) / 100;
+}

@@ -102,6 +102,17 @@ test('energy from an effect never goes above battery capacity or below zero', ()
   assert.equal(s.resources.energy_kWh, 0);
 });
 
+test('a life-threatening EVA card wins over the engine card when both trigger', () => {
+  const { s, ctx } = setup();
+  runUntilCard(s, ctx); // engineFreeze is now open: resolve it and set up the clash again
+  resolveDecision(s, 'batteryHeat', ctx);
+  delete s.sim.events.fired.engineFreeze;
+  s.sim.eva.outside = true;
+  s.sim.eva.noReturn = true;
+  s.sim.eva.cardShown = false;
+  assert.equal(checkEvents(s, ctx), 'noReturn');
+});
+
 test('unknown choice throws instead of silently doing nothing', () => {
   const { s, ctx } = setup();
   runUntilCard(s, ctx);
