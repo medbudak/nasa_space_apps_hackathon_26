@@ -90,3 +90,19 @@ Open http://localhost:8000/src/ui/dev/downlink.html. Add packets, reorder them, 
 Rules: a pass sends the queue in the player's order up to its capacity. A packet that does not fit goes out in part and finishes on a
 later pass. `downlink:sent` fires only for finished packets. The panel shows, before anything is sent, on which pass each packet will
 go or that it will not go this sol. The queue packet keeps an internal `sentMbit`; the `downlink:sent` payload does not carry it.
+
+# K3 dev page — power panel (M3) + telemetry
+
+Open http://localhost:8000/src/ui/dev/power.html. A fake simulation (dev values only) drives both panels: press "run", add a dust
+storm, and watch loads switch off from the bottom when the battery empties.
+
+| Who | What | Placeholder here |
+|---|---|---|
+| K2 | Mount the panel in the surface scene: `mountPowerPanel(el, { t, locale, bus, getStatus: () => getPowerStatus(state, ctx), setOrder: (ids) => setOrder(state, ids), refreshMs: 500 })`. Keep emitting `power:shed`. | fake sim in `power.html` |
+| K2 | `shedPreview()` in `powerPanel.js` mirrors the rule in `power.updateShedding` to show "switched off if the battery runs out" before it happens. If the rule changes, tell K3, or export the rule as a pure function so the panel can call it. | — |
+| K2 | Create one `createTelemetry({ maxSols: 3 })` per run and call `telemetry.sample(state)` every surface step; mount the charts with `mountTelemetry(el, { telemetry, t, locale, refreshMs: 1000 })`. | fake sim in `power.html` |
+| K1 | Δv left for the return has no state field yet, so its chart says "No data yet". When one exists, pass `readDeltaV: (state) => …` to `createTelemetry`. | — |
+| K5 | Texts under `power.*` and `telemetry.*` in `ui_texts.json`. | `ui_texts.json` |
+
+Telemetry history lives in memory (no new gameState field), so it starts empty after a page reload. Chart colours are the dataviz
+reference dark steps (`#3987e5` blue, `#d95926` orange), checked with the palette validator on the `#141b2d` surface.
