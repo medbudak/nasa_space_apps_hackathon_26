@@ -1,0 +1,373 @@
+{
+  "wrecks": {
+    "opportunity": {
+      "title": "Opportunity (June 2018)",
+      "cause": "Global dust storm blocked all solar irradiance, leading to a total power blackout.",
+      "landing_site": "Meridiani Planum",
+      "evidence": [
+        "Thick dust layer covering solar panels with zero light transmission.",
+        "Battery voltage dropped below critical survival threshold; heaters shut down.",
+        "Atmospheric opacity (Tau value) exceeded 8.5."
+      ],
+      "nasa_finding": "Opportunity exceeded expectations significantly, but the 2018 planetary dust storm permanently ended its power generation.",
+      "inner_voice": "The sun is setting, commander, but this time the panels are too dark to ever wake up."
+    },
+    "spirit": {
+      "title": "Spirit (March 2010)",
+      "cause": "Wheel trapped in a hidden volcanic sulfate salt bed and unable to tilt panels toward the sun during winter.",
+      "landing_site": "Gusev Crater",
+      "evidence": [
+        "Middle-left wheel completely buried in loose sand and clay mixture.",
+        "Wheel motor current triggered overcurrent protection; mobility zero.",
+        "Solar panel tilt angle at -14.5 degrees (south-facing winter slope)."
+      ],
+      "nasa_finding": "Spirit transitioned from a mobile rover to a stationary science station, but failed to secure survival power through the harsh Martian winter.",
+      "inner_voice": "The wheels are spinning in place. The ground feels like it's slipping away from under us."
+    },
+    "phoenix": {
+      "title": "Phoenix (November 2008)",
+      "cause": "Accumulated CO2 dry ice mass mechanically fractured the solar panels during the polar winter.",
+      "landing_site": "Vastitas Borealis",
+      "evidence": [
+        "Panels warped and broken under frozen carbon dioxide layers.",
+        "Power management module experienced low-temperature fault; final telemetry received.",
+        "Ambient temperature dropped to -120 degrees Celsius."
+      ],
+      "nasa_finding": "Phoenix successfully performed polar water-ice exploration, but physically succumbed to the destructive freezing cycles of the polar winter.",
+      "inner_voice": "The weight of the ice proved stronger than the metal. Mission accomplished, time for silence."
+    },
+    "insight": {
+      "title": "InSight (December 2022)",
+      "cause": "Uncleanable fine dust accumulation over years choked solar panels and drove power output to zero.",
+      "landing_site": "Elysium Planitia",
+      "evidence": [
+        "Red dust blanket completely covering solar arrays after successive dust storms.",
+        "Power output plummeted below 50 Watt-hours per day.",
+        "Seismometer recordings terminated; deep interior operations halted."
+      ],
+      "nasa_finding": "InSight successfully mapped the Martian interior, but could no longer feed its batteries due to inevitable dust accumulation.",
+      "inner_voice": "I listened to the interior whispers and measured seismic waves... Now my own heart is stopping."
+    },
+    "beagle2": {
+      "title": "Beagle 2 (2003)",
+      "cause": "One or more of the four solar panels failed to fully open upon landing, blocking the internal radio antenna.",
+      "landing_site": "Isidis Planitia",
+      "evidence": [
+        "2015 MRO imagery showing the antenna trapped between partially deployed honeycomb panels.",
+        "Communication attempts timed out with zero return data packets.",
+        "RF signal strength at -120 dBm, undetectable for 13 years."
+      ],
+      "nasa_finding": "ESA's lost Beagle 2 partially deployed as proven by 2015 imagery, but antenna blockage permanently silenced its transmissions.",
+      "inner_voice": "I opened my eyes, but my connection to the outside world is sealed shut."
+    }
+  },
+  "crisis_cards": [
+    {
+      "id": 1,
+      "title": "Güneş Paneli Toz Birikmesi",
+      "situation": "Panellerdeki kalın toz tabakası enerji üretimini kritik seviyeye düşürdü. Güç yönetimi acil müdahale gerektiriyor.",
+      "option_a": "Manuel temizlik yap",
+      "option_b": "Enerjiyi paylaştır"
+    },
+    {
+      "id": 2,
+      "title": "Radyasyon Fırtınası Uyarısı",
+      "situation": "Güneşten gelen yüksek enerjili proton akışı yaşam alanını tehdit ediyor. Sığınak protokolü devreye alınmalı.",
+      "option_a": "Sığınağa çekil",
+      "option_b": "Sistemi korumaya al"
+    },
+    {
+      "id": 3,
+      "title": "İletişim Gecikmesi Sıkıntısı",
+      "situation": "Dünya ile veri senkronizasyonu sırasında paket kaybı yaşandı. Yer kontrol ile bağlantı kesildi.",
+      "option_a": "Otonom moda geç",
+      "option_b": "Anteni yeniden yönlendir"
+    },
+    {
+      "id": 4,
+      "title": "Isı Döngüsü Arızası",
+      "situation": "Gece sıcaklıkları -80°C altına düştü ve termal izolasyon zorlanıyor. Bataryalar donma tehlikesi altında.",
+      "option_a": "Ekstra ısıtıcı aç",
+      "option_b": "Bazı sistemleri kapat"
+    },
+    {
+      "id": 5,
+      "title": "Hayati Oksijen Filtresi Tıkanması",
+      "situation": "Yaşam destek sistemindeki ana filtre toz nedeniyle verimsiz çalışıyor. Oksijen saflığı düşüş gösteriyor.",
+      "option_a": "Filtreyi değiştir",
+      "option_b": "Tüketimi kısıtla"
+    },
+    {
+      "id": 6,
+      "title": "Sismik Sarsıntı Anomalisi",
+      "situation": "Bölgede hafif şiddetli bir deprem kaydedildi ve sismometre verileri dalgalandı. Yapısal bütünlük kontrol edilmeli.",
+      "option_a": "Yapısal tarama yap",
+      "option_b": "Cihazları sabitle"
+    },
+    {
+      "id": 7,
+      "title": "Batarya Hücre Dengesizliği",
+      "situation": "Lityum-iyon batarya paketlerinden birinde hücre voltajı düşüşü tespit edildi. Kısa devre riski bulunuyor.",
+      "option_a": "Sorunlu hücreyi izole et",
+      "option_b": "Şarj akımını düşür"
+    },
+    {
+      "id": 8,
+      "title": "Su Geri Kazanım Düşüşü",
+      "situation": "Su geri dönüşüm ünitesinde pompa verimliliği beklenenden hızlı azaldı. Rezervler hızla azalıyor.",
+      "option_a": "Pompayı onar",
+      "option_b": "Su rasyonunu yarıya indir"
+    },
+    {
+      "id": 9,
+      "title": "Rüzgar Türbini Sıkışması",
+      "situation": "Fırtına sonrası türbin kanatlarında mekanik direnç ve rotasyon hatası saptandı. Üretim durdu.",
+      "option_a": "Türbini frenle",
+      "option_b": "Uzaktan reset at"
+    },
+    {
+      "id": 10,
+      "title": "Rover Navigasyon Sapması",
+      "situation": "Haritalama verilerindeki kayma nedeniyle keşif aracı rota dışına çıktı. Konum doğrulaması gerekiyor.",
+      "option_a": "Olduğun yerde kal",
+      "option_b": "Güvenli rotaya dön"
+    },
+    {
+      "id": 11,
+      "title": "Veri Depolama Doluluğu",
+      "situation": "Bilimsel log dosyaları ana belleği doldurdu, yeni veriler yazılamıyor. Arşiv temizliği şart.",
+      "option_a": "Eski logları sil",
+      "option_b": "Harici diske aktar"
+    },
+    {
+      "id": 12,
+      "title": "RTG Isı Çıkışı Düşüşü",
+      "situation": "Radyoizotop termo-elektrik jeneratörünün termal çıkış gücünde kademeli bir düşüş var. Enerji optimizasyonu şart.",
+      "option_a": "Yükü azalt",
+      "option_b": "Çekirdek soğutmayı ayarla"
+    }
+  ],
+  "experiments": [
+    {
+      "id": 1,
+      "title": "Sarkaç ile Yerçekimi Ölçümü",
+      "hypothesis": "Mars yerçekimi Dünya'ya kıyasla nasıldır?",
+      "options": ["3.7 m/s²", "5.0 m/s²", "9.8 m/s²"],
+      "result": "Ölçtüğün g = 3.7 m/s². Dünya'da 9.8.",
+      "explanation": "Mars'ın kütlesi Dünya'nınkinin yaklaşık %11'idir ve bu durum yüzey yerçekimi ivmesini önemli ölçüde düşürür. Sarkaç periyodu bu farkı net bir şekilde ortaya koyar."
+    },
+    {
+      "id": 2,
+      "title": "Düşük Basınçta Su Kaynama Noktası",
+      "hypothesis": "Mars'ın ince atmosferi suyun kaynama noktasını nasıl etkiler?",
+      "options": ["25°C", "50°C", "100°C"],
+      "result": "Ölçülen kaynama noktası = 30°C. Dünya'da 100°C.",
+      "explanation": "Mars atmosfer basıncı Dünya deniz seviyesinin çok altındadır. Bu ultra düşük basınç, sıvının çok daha düşük sıcaklıklarda hızla buharlaşmasına neden olur."
+    },
+    {
+      "id": 3,
+      "title": "Toz Fırtınası Işık Geçirgenliği",
+      "hypothesis": "Küresel toz fırtınası sırasında güneş ışığı panellere ne kadar ulaşır?",
+      "options": ["%10 ışık geçirgenliği", "%50 ışık geçirgenliği", "%90 ışık geçirgenliği"],
+      "result": "Ölçülen Tau değeri = 8.2 (Işık geçirgenliği <%5).",
+      "explanation": "Askıdaki ince demir oksit tozları güneş ışığını hapseder ve yüzeye ulaşmasını engeller. Bu durum panellerin enerji üretimini doğrudan sıfırlar."
+    },
+    {
+      "id": 4,
+      "title": "Manyetik Alan Kalıntı Testi",
+      "hypothesis": "Mars'ın küresel bir dipol manyetik alanı var mıdır?",
+      "options": ["Güçlü küresel alan", "Yerel kalıntı alanlar", "Sıfır manyetik etki"],
+      "result": "Ölçülen alan = Zayıf kabuksal kalıntı manyetizma.",
+      "explanation": "Mars'ın küresel iç dinamosu milyarlarca yıl önce sönmüştür. Yüzeyde tespit edilen sinyaller yalnızca eski kabuk kayaçlarının yerel kalıntı mıknatıslığıdır."
+    },
+    {
+      "id": 5,
+      "title": "Gece Termal İzolasyon Testi",
+      "hypothesis": "İnce atmosfer gece sıcaklıklarını nasıl etkiler?",
+      "options": ["-30°C minimum", "-80°C minimum", "0°C minimum"],
+      "result": "Ölçülen gece sıcaklığı = -81°C.",
+      "explanation": "Mars'ın zayıf sera etkisi ve ince atmosferi ısıyı tutamaz. Güneş battıktan sonra yüzey sıcaklıkları hızla donma noktasının çok altına düşer."
+    },
+    {
+      "id": 6,
+      "title": "Karbondioksit Buz Faz Değişimi",
+      "hypothesis": "Kutuplardaki kuru buz ısındığında nasıl erir?",
+      "options": ["Doğrudan gazlaşır (Süblimleşir)", "Önce sıvı su olur", "Değişmeden kalır"],
+      "result": "Gözlem = Sıvı faz görülmeden doğrudan gaza dönüşüm.",
+      "explanation": "Mars'ın düşük basınç koşullarında katı karbondioksit erime evresini atlar. Isı aldığında doğrudan süblimleşerek gaz haline geçer."
+    }
+  ],
+  "crisis_cards_en": [
+    {
+      "id": 1,
+      "title": "Solar Panel Dust Buildup",
+      "situation": "Thick dust layer on panels dropped power output to critical levels. Power management requires immediate action.",
+      "option_a": "Perform manual cleaning",
+      "option_b": "Apportion power"
+    },
+    {
+      "id": 2,
+      "title": "Radiation Storm Warning",
+      "situation": "High-energy proton flux from the sun threatens the habitat. Shelter protocol must be engaged.",
+      "option_a": "Retreat to shelter",
+      "option_b": "Secure systems"
+    },
+    {
+      "id": 3,
+      "title": "Communication Delay Issue",
+      "situation": "Packet loss occurred during data synchronization with Earth. Connection to mission control is lost.",
+      "option_a": "Switch to autonomous mode",
+      "option_b": "Realign antenna"
+    },
+    {
+      "id": 4,
+      "title": "Thermal Cycle Malfunction",
+      "situation": "Night temperatures dropped below -80°C and thermal insulation is struggling. Batteries face freezing risk.",
+      "option_a": "Activate extra heater",
+      "option_b": "Shut down secondary systems"
+    },
+    {
+      "id": 5,
+      "title": "Vital Oxygen Filter Clog",
+      "situation": "Main filter in life support is underperforming due to dust. Oxygen purity is dropping.",
+      "option_a": "Replace filter",
+      "option_b": "Restrict consumption"
+    },
+    {
+      "id": 6,
+      "title": "Seismic Tremor Anomaly",
+      "situation": "A mild quake was detected in the region and seismometer data fluctuated. Structural integrity must be checked.",
+      "option_a": "Perform structural scan",
+      "option_b": "Secure equipment"
+    },
+    {
+      "id": 7,
+      "title": "Battery Cell Imbalance",
+      "situation": "Cell voltage drop detected in one of the lithium-ion battery packs. Short circuit risk exists.",
+      "option_a": "Isolate faulty cell",
+      "option_b": "Lower charge current"
+    },
+    {
+      "id": 8,
+      "title": "Water Recovery Drop",
+      "situation": "Pump efficiency in water recycling unit dropped faster than expected. Reserves are depleting rapidly.",
+      "option_a": "Repair pump",
+      "option_b": "Halve water ration"
+    },
+    {
+      "id": 9,
+      "title": "Wind Turbine Jam",
+      "situation": "Mechanical resistance and rotation error detected on turbine blades after the storm. Production halted.",
+      "option_a": "Brake turbine",
+      "option_b": "Remote reset"
+    },
+    {
+      "id": 10,
+      "title": "Rover Navigation Drift",
+      "situation": "The rover went off-route due to shift in mapping data. Position verification is required.",
+      "option_a": "Stay in place",
+      "option_b": "Return to safe route"
+    },
+    {
+      "id": 11,
+      "title": "Data Storage Full",
+      "situation": "Science log files filled the main memory, new data cannot be written. Archive cleanup is mandatory.",
+      "option_a": "Delete old logs",
+      "option_b": "Transfer to external drive"
+    },
+    {
+      "id": 12,
+      "title": "RTG Thermal Output Drop",
+      "situation": "Gradual drop in thermal output power of radioisotope thermoelectric generator. Energy optimization required.",
+      "option_a": "Reduce load",
+      "option_b": "Adjust core cooling"
+    }
+  ],
+  "experiments_en": [
+    {
+      "id": 1,
+      "title": "Gravity Measurement via Pendulum",
+      "hypothesis": "How does Mars gravity compare to Earth?",
+      "options": ["3.7 m/s²", "5.0 m/s²", "9.8 m/s²"],
+      "result": "Measured g = 3.7 m/s². Earth is 9.8.",
+      "explanation": "Mars' mass is about 11% of Earth's, significantly reducing surface gravitational acceleration. Pendulum period clearly reveals this difference."
+    },
+    {
+      "id": 2,
+      "title": "Water Boiling Point at Low Pressure",
+      "hypothesis": "How does Mars thin atmosphere affect the boiling point of water?",
+      "options": ["25°C", "50°C", "100°C"],
+      "result": "Measured boiling point = 30°C. Earth is 100°C.",
+      "explanation": "Mars atmospheric pressure is well below Earth sea level (~610 Pascals). This ultra-low pressure causes liquid to evaporate rapidly at much lower temperatures."
+    },
+    {
+      "id": 3,
+      "title": "Dust Storm Light Transmittance",
+      "hypothesis": "How much sunlight reaches panels during a global dust storm?",
+      "options": ["10% transmittance", "50% transmittance", "90% transmittance"],
+      "result": "Measured Tau value = 8.2 (Light transmittance <5%).",
+      "explanation": "Suspended fine iron oxide dust traps sunlight and blocks it from reaching the surface, directly driving solar panel power generation to zero."
+    },
+    {
+      "id": 4,
+      "title": "Magnetic Field Remnant Test",
+      "hypothesis": "Does Mars have a global dipole magnetic field?",
+      "options": ["Strong global field", "Local remnant fields", "Zero magnetic effect"],
+      "result": "Measured field = Weak crustal remnant magnetism.",
+      "explanation": "Mars' global internal dynamo died billions of years ago. Signals detected on the surface are solely local remnant magnetization of ancient crustal rocks."
+    },
+    {
+      "id": 5,
+      "title": "Night Thermal Insulation Test",
+      "hypothesis": "How does the thin atmosphere affect night temperatures?",
+      "options": ["-30°C minimum", "-80°C minimum", "0°C minimum"],
+      "result": "Measured night temperature = -81°C.",
+      "explanation": "Mars' weak greenhouse effect and thin atmosphere cannot retain heat. After sunset, surface temperatures rapidly plunge far below freezing."
+    },
+    {
+      "id": 6,
+      "title": "Carbon Dioxide Ice Phase Change",
+      "hypothesis": "How does polar dry ice melt when warmed?",
+      "options": ["Sublimates directly to gas", "Turns to liquid water first", "Remains unchanged"],
+      "result": "Observation = Direct transition to gas without liquid phase.",
+      "explanation": "Mars' low-pressure conditions, solid carbon dioxide skips the melting phase, turning directly into gas upon receiving heat."
+    }
+  ],
+  "ui_texts": {
+    "main_menu": {
+      "title": "SOL 14: RED HORIZON",
+      "start_game": "Oyuna Başla / Start Game",
+      "load_game": "Kayıttan Devam / Load Game",
+      "settings": "Ayarlar / Settings"
+    },
+    "status_bar": {
+      "mass": "Kütle (kg)",
+      "power": "Güç (W)",
+      "thermal": "Sıcaklık (°C)",
+      "sol_counter": "Sol"
+    },
+    "buttons": {
+      "confirm": "Onayla / Confirm",
+      "cancel": "İptal / Cancel",
+      "inspect": "İncele / Inspect",
+      "proceed": "Devam Et / Proceed"
+    }
+  },
+  "design_texts": {
+    "intro_lore": "Mars yüzeyinde katı fiziksel kısıtlamalar altında yürütülen kritik bir hayatta kalma ve misyon tasarım simülasyonu.",
+    "mission_objective": "Koloninin enerji ve yaşam destek dengesini korurken tarihi enkaz vakalarını çöz ve verileri Dünya'ya aktar.",
+    "ai_disclosure": "Bu proje geliştirilirken mimari planlama ve metin yapılandırması için insan denetiminde yapay zeka araçlarından yararlanılmıştır."
+  },
+  "wiring_hardware": {
+    "electra_lite": {
+      "name": "Electra-Lite Power Node",
+      "spec": "Düşük kütleli, yüksek verimli güneş enerji dağıtım ünitesi. Aşırı yük altında devre kesici korumasına sahiptir.",
+      "status_check": "Gerilim kararlılığı normal, akım sınırları optimize edildi."
+    },
+    "sdst": {
+      "name": "SDST (Solar Data Sync Terminal)",
+      "spec": "Derin uzay ve yer kontrol veri senkronizasyon birimi. Işık gecikmesi (3-22 dk) simülasyonunu yönetir.",
+      "status_check": "Paket kaybı eşiği kontrol edildi, otonom senkronizasyon aktif."
+    }
+  }
+}
