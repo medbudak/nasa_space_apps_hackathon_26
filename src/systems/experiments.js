@@ -1,11 +1,12 @@
 // src/systems/experiments.js
 import config from '../data/experiments_config.json' with { type: 'json' };
-import { gameState, logDecision } from '../core/state.js';
-import { calcPendulumGravity } from '../core/engineering.js';
+import { getState, logDecision } from '../core/state.js';
+import { gravityFromPendulum_ms2 } from '../core/engineering.js';
 
 export function initExperimentsState() {
-  if (!gameState.experiments) {
-    gameState.experiments = {
+  const state = getState();
+  if (!state.experiments) {
+    state.experiments = {
       completed: {},
       activeBonuses: []
     };
@@ -14,16 +15,15 @@ export function initExperimentsState() {
 
 /**
  * Deney 1: Sarkaç ile Yerçekimi Ölçümü
- * Oyuncu ip uzunluğu (L) seçer ve 10 salınımın süresini kronometreyle ölçer.
  */
 export function evaluatePendulumExperiment({ lengthM, tenSwingsDurationSec, hasControlGroup = false }) {
   initExperimentsState();
   const periodT = tenSwingsDurationSec / 10;
-  const measuredG = calcPendulumGravity(lengthM, periodT);
-  const actualG = config.marsGravity; // 3.71 m/s2[cite: 4]
+  const measuredG = gravityFromPendulum_ms2(lengthM, periodT);
+  const actualG = config.marsGravity;
 
   const errorRatio = Math.abs(measuredG - actualG) / actualG;
-  const success = errorRatio <= config.toleranceRatio; // ±%10 hata payı[cite: 3]
+  const success = errorRatio <= config.toleranceRatio;
   const points = success ? (hasControlGroup ? 90 : 60) : 15;
 
   return finalizeExperiment('pendulum', {
@@ -37,11 +37,11 @@ export function evaluatePendulumExperiment({ lengthM, tenSwingsDurationSec, hasC
 }
 
 /**
- * Deney 2: Serbest Düşüş (2 metreden bırakma -> g = 2h / t^2)[cite: 3]
+ * Deney 2: Serbest Düşüş (2 metreden bırakma -> g = 2h / t^2)
  */
 export function evaluateFreeFallExperiment({ dropTimeSec, hasControlGroup = false }) {
   initExperimentsState();
-  const h = config.experiments.freefall.dropHeightM; // 2.0 m[cite: 3]
+  const h = config.experiments.freefall.dropHeightM;
   const measuredG = dropTimeSec > 0 ? (2 * h) / (dropTimeSec * dropTimeSec) : 0;
   const actualG = config.marsGravity;
 
@@ -60,11 +60,13 @@ export function evaluateFreeFallExperiment({ dropTimeSec, hasControlGroup = fals
 }
 
 /**
- * Deney 3: Tohum Çimlenmesi (Grup A: Dünya, B: Yıkanmamış Regolit, C: Yıkanmış + Gübreli)[cite: 3]
+ * Deney 3: Tohum Çimlenmesi (Grup A: Dünya, B: Yıkanmamış Regolit, C: Yıkanmış + Gübreli)
  */
 export function evaluateSeedExperiment({ soilGroup, environment }) {
   initExperimentsState();
-  const hasVeggie = gameState.design.selectedInstruments.includes('veggie');
+  const state = getState();
+  const instruments = state.design?.selectedInstruments || state.instruments || [];
+  const hasVeggie = instruments.includes('veggie');
   const success = hasVeggie && environment === 'indoor' && soilGroup === 'C';
   const points = success ? 100 : 20;
 
@@ -79,7 +81,7 @@ export function evaluateSeedExperiment({ soilGroup, environment }) {
 }
 
 /**
- * Deney 4-5-6: Suyun Kaynaması, Ses Hızı ve MOXIE Verimi[cite: 3]
+ * Deney 4-5-6: Suyun Kaynaması, Ses Hızı ve MOXIE Verimi
  */
 export function evaluateLabExperiment(expId, { hypothesisChoice, measuredValue, hasControlGroup = false }) {
   initExperimentsState();
@@ -110,14 +112,16 @@ export function evaluateLabExperiment(expId, { hypothesisChoice, measuredValue, 
 }
 
 function finalizeExperiment(expId, result) {
+  const state = getState();
   const spec = config.experiments[expId];
-  gameState.experiments.completed[expId] = result;
+  state.experiments.completed[expId] = result;
 
-  if (result.success && spec.unlockBonus && !gameState.experiments.activeBonuses.includes(spec.unlockBonus)) {
-    gameState.experiments.activeBonuses.push(spec.unlockBonus);
+  if (result.success && spec.unlockBonus && !state.experiments.activeBonuses.includes(spec.unlockBonus)) {
+    state.experiments.activeBonuses.push(spec.unlockBonus);
   }
 
-  gameState.resources.downlinkQueue.push({
+  if (!state.dataBudget) state.dataBudget = { queue: [] };
+  state.dataBudget.queue.push({
     type: 'experiment',
     id: `exp_${expId}`,
     expId,
@@ -125,12 +129,14 @@ function finalizeExperiment(expId, result) {
     points: result.points
   });
 
-  logDecision(
-    gameState.sol,
-    `experiment:${expId}`,
-    result.success ? 'success' : 'failed',
-    `Ölçülen: ${result.measuredValue} ${result.unit} (+${result.points} puan)`
-  );
+  if (typeof logDecision === 'function') {
+    logDecision(
+      state.sol,
+      `experiment:${expId}`,
+      result.success ? 'success' : 'failed',
+      `Ölçülen: ${result.measuredValue} ${result.unit} (+${result.points} puan)`
+    );
+  }
 
   return { ok: true, result };
 }

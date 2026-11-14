@@ -1,5 +1,5 @@
 // src/systems/forensics.js
-import { gameState, logDecision } from '../core/state.js';
+import { getState, logDecision } from '../core/state.js';
 
 export const WRECK_CASES = {
   opportunity: {
@@ -40,10 +40,11 @@ export const WRECK_CASES = {
 };
 
 export function initForensicsState() {
-  if (!gameState.forensics) {
-    gameState.forensics = {};
+  const state = getState();
+  if (!state.forensics) {
+    state.forensics = {};
     for (const id of Object.keys(WRECK_CASES)) {
-      gameState.forensics[id] = {
+      state.forensics[id] = {
         found: false,
         evidence: { photo: null, blackbox: false, env: false },
         diagnosis: null,
@@ -56,7 +57,8 @@ export function initForensicsState() {
 
 export function discoverWreck(wreckId) {
   initForensicsState();
-  const wreck = gameState.forensics[wreckId];
+  const state = getState();
+  const wreck = state.forensics[wreckId];
   if (!wreck) return false;
   wreck.found = true;
   return true;
@@ -64,10 +66,11 @@ export function discoverWreck(wreckId) {
 
 export function collectEvidence(wreckId, evidenceType) {
   initForensicsState();
-  const wreck = gameState.forensics[wreckId];
+  const state = getState();
+  const wreck = state.forensics[wreckId];
   if (!wreck || !wreck.found) return { ok: false, reason: 'not_found' };
 
-  const instruments = gameState.design.selectedInstruments || [];
+  const instruments = state.design?.selectedInstruments || state.instruments || [];
 
   if (evidenceType === 'photo') {
     wreck.evidence.photo = instruments.includes('mastcam') ? 'hd' : 'hand';
@@ -84,7 +87,8 @@ export function collectEvidence(wreckId, evidenceType) {
 
 export function submitDiagnosisToQueue(wreckId, chosenCategory) {
   initForensicsState();
-  const wreck = gameState.forensics[wreckId];
+  const state = getState();
+  const wreck = state.forensics[wreckId];
   const spec = WRECK_CASES[wreckId];
   if (!wreck || !spec || !wreck.found) return { ok: false };
 
@@ -111,28 +115,34 @@ export function submitDiagnosisToQueue(wreckId, chosenCategory) {
     points,
     isCorrect
   };
-  gameState.resources.downlinkQueue.push(packet);
 
-  logDecision(
-    gameState.sol,
-    `forensics:${wreckId}`,
-    chosenCategory,
-    isCorrect ? `Doğru teşhis (+${points} puan)` : `Yanlış teşhis (+${points} puan)`
-  );
+  if (!state.dataBudget) state.dataBudget = { queue: [] };
+  state.dataBudget.queue.push(packet);
+
+  if (typeof logDecision === 'function') {
+    logDecision(
+      state.sol,
+      `forensics:${wreckId}`,
+      chosenCategory,
+      isCorrect ? `Doğru teşhis (+${points} puan)` : `Yanlış teşhis (+${points} puan)`
+    );
+  }
 
   return { ok: true, packet };
 }
 
 export function onForensicsDownlinkComplete(wreckId) {
   initForensicsState();
-  const wreck = gameState.forensics[wreckId];
+  const state = getState();
+  const wreck = state.forensics[wreckId];
   const spec = WRECK_CASES[wreckId];
   if (!wreck || !spec || wreck.sent) return;
 
   wreck.sent = true;
   wreck.salvaged = true;
 
-  if (wreckId === 'insight' && !gameState.design.selectedInstruments.includes('seis')) {
-    gameState.design.selectedInstruments.push('seis');
+  const instruments = state.design?.selectedInstruments || state.instruments;
+  if (wreckId === 'insight' && Array.isArray(instruments) && !instruments.includes('seis')) {
+    instruments.push('seis');
   }
 }
