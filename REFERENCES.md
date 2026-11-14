@@ -86,6 +86,7 @@ Include open-source and free items too. Note the license.
 
 | Item | URL | License | Used for |
 |---|---|---|---|
+| Game artwork in `assets/` (backgrounds, sprites, screens, effects, ending) | this repository | Original work by the team (K4) | All in-game images |
 | | | | |
 
 ## Use of AI
