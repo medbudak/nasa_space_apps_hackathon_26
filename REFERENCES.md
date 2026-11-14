@@ -7,6 +7,15 @@ Running log of everything external the project uses. The submission form asks fo
 | Resource | URL | Used for |
 |---|---|---|
 | NASA Mars Fact Sheet (NSSDCA) | https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html | Mars gravity, solar irradiance, sol length, pressure, CO2 share, temperatures, Earth-Mars distance, synodic period (`src/data/nasa_data.json` → `mars`) |
+| ntrs.nasa.gov | https://ntrs.nasa.gov/api/citations/20170009505/downloads/20170009505.pdf | nasa_data.json: life |
+| nasa.gov | https://www.nasa.gov/wp-content/uploads/2017/02/eva-exp-0042_xeva_system_con_ops_rev_b_final_dtd_10192020_ref_doc.pdf | nasa_data.json: life |
+| ntrs.nasa.gov | https://ntrs.nasa.gov/citations/20150008865 | nasa_data.json: thermal |
+| ntrs.nasa.gov | https://ntrs.nasa.gov/api/citations/20210022133/downloads/MAV_SRC_IEEE_2022.pdf | nasa_data.json: ascent |
+| ntrs.nasa.gov | https://ntrs.nasa.gov/api/citations/20040191326/downloads/20040191326.pdf | nasa_data.json: powerSources |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/spirit-gets-energy-boost-from-cleaner-solar-panels/ | nasa_data.json: powerSources |
+| ntrs.nasa.gov | https://ntrs.nasa.gov/api/citations/20100033102/downloads/20100033102.pdf | nasa_data.json: powerSources |
+| descanso.jpl.nasa.gov | https://descanso.jpl.nasa.gov/DPSummary/Descanso14_MSL_Telecom.pdf | nasa_data.json: comms |
+| discovery.larc.nasa.gov | https://discovery.larc.nasa.gov/PDF_FILES/30Electra-Lite_Description.pdf | nasa_data.json: comms |
 | ntrs.nasa.gov | https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf | nasa_data.json: life, thermal |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/data-from-nasa-rovers-voyage-to-mars-aids-planning/ | nasa_data.json: radiation |
 | nasa.gov | https://www.nasa.gov/news-release/nasa-rover-results-include-first-age-measurement-on-mars-and-help-for-human-exploration/ | nasa_data.json: radiation |
