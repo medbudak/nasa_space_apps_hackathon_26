@@ -86,7 +86,7 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 
 ## Working rules
 
-- Numbers live in data, not in code: `data/nasa_data.json` (and the other `data/*.json`), each with a `src` URL. Values simplified for gameplay are flagged as simplified and say so; never put an official URL on a number that source does not state (D-009). A value without a source does not go into the game.
+- Numbers live in data, not in code: `data/nasa_data.json` (and the other `data/*.json`), each with a `src` URL. Values scaled for gameplay are flagged `simplified: true` with a note giving the real figure; their `src` then points to where that real figure is published (D-009). Never present a game value as a measured one. A value without a source does not go into the game.
 - Stub first, then the real thing. Hand over a correctly shaped placeholder early so nobody waits on you. Placeholder numbers are marked as placeholders, and none may remain at content lock.
 - Edit only the files your role owns (AGENTS.md §1). If you need a change in someone else's area, ask the owner or emit a bus event.
 - Player-facing text is not hard-coded in code. It lives in `content/story.json`, in both `tr` and `en`, read with `S.t('key')`. `tests/data_integrity.test.js` checks every key used in code and data.
