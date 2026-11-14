@@ -60,7 +60,7 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Status: Proposed
 - Date: 2026-11-14
 - Agreed by: (pending)
-- Decision: Vanilla JavaScript + HTML5 Canvas, no framework, hosted on GitHub Pages. Runs locally with `python3 -m http.server 8000`. Tests run with `node --test tests/`. Seeded RNG so the same seed gives the same run. Progress is saved to `localStorage` so a page reload continues the run.
+- Decision: Vanilla JavaScript + HTML5 Canvas, no framework, hosted on GitHub Pages. Runs locally with `python -m http.server 8000` (`python3` on macOS/Linux). Tests run with `node --test` (Node 22+ rejects a folder argument, so no `tests/`). Seeded RNG so the same seed gives the same run. Progress is saved to `localStorage` so a page reload continues the run.
 - Why: Judges open it from one link in a browser with no setup. Rejected: React/Phaser (extra build and dependencies), Godot web export (heavier, fewer people can work on it).
 - Affects: repo structure, deploy
 
@@ -71,10 +71,12 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Decision: K1 publishes these names before the vertical slice, and everyone builds against them:
   - State: one `gameState` in `src/core/state.js`. New fields: `design{}`, `decisionLog[]`, `dataBudget{perSol, used, queue[]}`, `forensics{}`, `experiments{}`, `flags{anomalyPhotos, cameraTier}`, `score{}`.
   - Event bus (`src/core/bus.js`): `decision:open`, `decision:made`, `downlink:queue`, `downlink:sent`, `forensics:diagnosed`, `experiment:result`, `power:shed`, `ufo:start`, `minigame:open`. Effect events, emitted by K2 and drawn by K4: `storm`, `quake`, `frost`, `hallucination`, `ufo`.
-  - Numbers: `src/data/nasa_data.json`. Every row has `src` and `verified`. Balance is tuned only through its `tuning` field. Experiment settings live in `src/data/experiments_config.json` and refer to `nasa_data.json` keys.
+  - Numbers: `src/data/nasa_data.json`. Every number is an entry `{value, unit, src, verified}` (tables are arrays of rows whose numeric fields are entries; group names follow K3's design screen: `rules`, `launchVehicles`, `trajectories`, `landingSites`, `powerSources`, `batteries`, `insulation`, `instruments`, `comms`, `spareKits`). `src` is the source URL, `game: ...` for a game rule, or `PLACEHOLDER` while unresearched, and then `value` is `null`: no estimates (enforced by `tests/nasa_data.test.mjs`). Design: `state.design = {objectiveId, rocketId, trajectoryId, siteId, powerId, batteryId, insulationId, instrumentIds[], commsId, spareKitsId}` (K3); `evaluateDesign(design, data)` in `engineering.js`. Surface simulation sub-objects `time`, `power`, `env`, `life`, `events` follow K2's `survival.js`. Balance is tuned only through its `rules` group. Experiment settings live in `src/data/experiments_config.json` and refer to `nasa_data.json` keys.
   - Formulas: only in `src/core/engineering.js`, as pure functions tested in `tests/engineering.test.mjs`.
-  - Text: all player-facing text in `content/story.json` (TR + EN), read with `t('key')`.
-  - Records: decision log entry `{sol, eventId, choice, effects: [...]}` · score via `addScore(category, points, reason)` · downlink packet `{type, id, mbit, points}` · event `{id, trigger(state), effect(state), decision?}`.
+  - Text: all player-facing text in `content/story.json`, shaped `{ "en": {"key": "text"}, "tr": {...} }`, read with `t('key', vars)` from `src/core/i18n.js`. `{name}` in a text is filled from `vars`. A missing key shows the key itself.
+  - Scenes: a scene module's default export is `{ enter(ctx), exit?() }` with `ctx = {state, data, bus, t, goTo, canvas, ui}`. Flow: `title → design → surface → ending`; `src/main.js` shows a placeholder while a scene file is missing. `?scene=<name>` and `?seed=<n>` for testing.
+  - Data access: `value('mars.gravity')`, `rows('instruments')`, `row('instruments', 'moxie')` from `src/core/nasaData.js`. Random numbers: `createRng(state.seed)` from `src/core/rng.js`, never `Math.random()` for gameplay.
+  - Records: decision log entry `{sol, eventId, choice, effects: [...]}` · score via `addScore(category, points, reason, cause?)`, where `category` is `forensics | experiments | survival | massMargin | lostSystems`, `reason` is a story key and `cause` is the choice behind it (`'design.power.battery_kWh'` or `'decision.<eventId>'`), so the report card can link choice → consequence → points · run totals in `state.stats {energyUsed_kWh, oxygenProduced_kg, dataSent_Mbit, solsSurvived}` · final outcome in `state.outcome` (`hero | colonist | explorer | lost`), set by K2 · downlink packet `{type, id, mbit, points}` · event `{id, trigger(state), effect(state), decision?}`.
   - Mini-games: `bus.emit('minigame:open', {template, config, onDone})` with templates `align`, `wiring`, `qte`, `converter`. `onDone` receives `{success, score, timeUsed}`.
   - Sprites: 48×48 grid. K4 publishes file names and frame counts.
 - Why: Six people can build in parallel against fixed names, and every number stays traceable to a source.
@@ -119,3 +121,19 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Decision: The Project Demo is a 30-second video with English subtitles, made by K5 with K4: 0–5 s team and challenge · 5–12 s Sol 0 with the mass bar turning red · 12–20 s storm, decision card and wreck diagnosis · 20–25 s report card · 25–30 s UFO scene. K5 also writes the English project page (Summary · How it addresses the challenge · NASA data used · Engineering trade-offs · Scientific corrections · Team · AI disclosure, plus a note that the UFO scene is fiction) and 7 English slides. K1 submits on the portal and opens every link in a private window first. At the local event, K2 plays the live demo with `?demo` and K5 presents from a Turkish script.
 - Why: The submission guide limits the demo to a 30-second video or 7 slides and requires English. A video shows the trade-offs moving, which slides can't.
 - Affects: K1, K2, K4, K5
+
+### D-008: Game time runs slower during an EVA
+- Status: Accepted
+- Date: 2026-11-14
+- Agreed by: team (reported by Sude, K2)
+- Decision: Inside the habitat, 1 sol stays about 2 minutes of real time (D-001). While the astronaut is outside, game time runs slower: 1 real second = 1 game minute (`time.evaGameSecondsPerRealSecond` = 60 in `nasa_data.json`, tuned there, flagged simplified). Every system (Sun, temperature, battery, O2) keeps running on the one game clock; only its rate against real time changes. Walking speed and suit O2 use stay real-world values in game time. Actions measured in game hours (experiments, waits on cards) cost the same inside or outside. The game and the project page say that time is compressed.
+- Why: At the inside rate a 900 m walk lasts about 1 real second, so the point of no return (M4) never comes into play. Rejected: making the map distances kilometres long (still about 1 s on screen, and it changes the map), and leaving it as it is (M4 and the "can I still make it back?" scene would not work).
+- Affects: K2 (`survival.js`, `surface.js`), K1 (`nasa_data.json`, session length, `?demo`), K3 (HUD can show the slower clock)
+
+### D-009: Game values where no source exists
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending; K1 decided)
+- Decision: Real-world numbers are researched first; when no official value is published, K1 sets a game value and labels it in `nasa_data.json` with `src: "game: K1 decision D-009 ..."` and `simplified: true`. Set this way: costs without a public unit price (budget 500 M$), panel area 250 m², battery options 150/200/300 kWh, O2 reserve 15.4 kg (14 sols of BVAD use + 20%), habitat cooling time 10/20 h, base mass 0 (DRA 5.0 pre-deploys habitat and ascent vehicle), insulation and spare-kit masses, fast-transfer propellant, some instrument data volumes, X-band hardware mass, engine-heating energy. Every such value is listed under "Simplified values" in REFERENCES.md. No estimate is ever presented as a measured value.
+- Why: The game needs a number to run, the team rule forbids passing estimates off as real data, and the judges score Validity.
+- Affects: `src/data/nasa_data.json`, REFERENCES.md, project page

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOL 14 · HUD (dev page)</title>
+  <link rel="stylesheet" href="../../../css/style.css">
+  <style>
+    /* dev page layout only */
+    .dev-main { max-width: 1280px; margin: 0 auto; padding: 16px 24px; }
+    .dev-main h1 { font-size: 20px; margin: 0 0 8px; }
+    .dev-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .dev-clock { font: 15px var(--mono); color: var(--sunset-blue); }
+  </style>
+</head>
+<body>
+  <!-- DEV PAGE (owner: K3). Open with: python -m http.server 8000  ->  http://localhost:8000/src/ui/dev/hud.html
+       Real nasa_data.json for limits; a FAKE simulation for the state (dev values only). In the game, K2's surface scene mounts the HUD. -->
+  <main class="dev-main">
+    <h1>DEV · HUD</h1>
+    <div class="dev-row">
+      <button class="btn" data-run>▶ run</button>
+      <button class="btn ghost" data-eva>EVA: go outside</button>
+      <button class="btn ghost" data-walk>walk +100 m</button>
+      <button class="btn ghost" data-cold>habitat heater off</button>
+      <button class="btn ghost" data-packet>+ photo packet</button>
+      <button class="btn ghost" data-fake>fake O₂ alarm (hallucination)</button>
+      <button class="btn ghost" data-real>real energy alarm</button>
+      <span class="dev-clock" data-clock></span>
+    </div>
+    <div data-hud></div>
+  </main>
+  <div class="dev-bar">
+    <span>DEV</span>
+    <button data-lang="tr" class="on">TR</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <script type="module">
+    import { mountHud } from '../hud.js';
+    import { createTelemetry } from '../telemetry.js';
+    import { connectDownlink } from '../downlink.js';
+    import { shedPreview } from '../powerPanel.js';
+    import { createBus } from './stub_bus.js';
+    import { samplePasses, samplePackets, downlinkRows } from './stub_samples.js';
+
+    const texts = await (await fetch('./ui_texts.json')).json();
+    const data = await (await fetch('../../data/nasa_data.json')).json();
+    let lang = 'tr';
+    const t = (key) => (texts[key] ? texts[key][lang] : key);
+    const locale = () => (lang === 'tr' ? 'tr-TR' : 'en-US');
+    const bus = createBus();
+
+    // ---- fake surface state (dev values only) ----
+    const W = { lifeSupport: 3000, heating: 1800, greenhouse: 900, moxie: 300, experiments: 250, comms: 120 };
+    const state = {
+      time: { sol: 2, solFraction: 0.3 },
+      power: { batteryWh: 120000, batteryCapacityWh: 150000, generationW: 0, loadW: 0, deficitW: 0,
+        order: ['lifeSupport', 'heating', 'greenhouse', 'moxie', 'experiments', 'comms'], off: {} },
+      env: { insideC: 22, outsideC: -60 },
+      life: { o2Kg: 4.2, radiationMSv: 3.1, sanity: 72, body: { cold: false, coldHours: 0 },
+        eva: { outside: false, suitO2Kg: 0, requiredO2Kg: 0, distanceM: 0, noReturn: false } },
+      dataBudget: { perSol: 500, used: 120, queue: [] },
+    };
+    let heater = true;
+    const loads = () => state.power.order.map((id) => ({ id, watts: W[id], on: !state.power.off[id], pinned: id === 'lifeSupport' }));
+    const getStatus = () => ({ ...state.power, loads: loads() });
+    const setOrder = (order) => { if (order[0] !== 'lifeSupport') return false; state.power.order.splice(0, order.length, ...order); return true; };
+
+    function step(dt) {
+      const p = state.power;
+      const sun = Math.max(0, Math.cos(2 * Math.PI * (state.time.solFraction - 0.5)));
+      p.generationW = 9000 * sun;
+      p.loadW = loads().reduce((s, l) => s + (l.on ? l.watts : 0), 0);
+      p.batteryWh = Math.max(0, Math.min(p.batteryCapacityWh, p.batteryWh + (p.generationW - p.loadW) * dt * 24.66));
+      if (p.batteryWh <= 0) shedPreview(loads(), p.generationW).forEach((id) => { p.off[id] = true; });
+      state.env.outsideC = -80 + 60 * sun;
+      state.env.insideC += ((heater && !p.off.heating ? 22 : state.env.outsideC) - state.env.insideC) * 0.03;
+      state.life.body.cold = state.env.insideC < 5;
+      state.life.body.coldHours = state.life.body.cold ? state.life.body.coldHours + dt * 24.66 : 0;
+      state.life.o2Kg = Math.max(0, state.life.o2Kg - 0.895 * dt);
+      state.life.radiationMSv += 0.67 * dt;
+      const eva = state.life.eva;
+      if (eva.outside) {
+        eva.suitO2Kg = Math.max(0, eva.suitO2Kg - 0.1 * dt * 24.66);
+        eva.requiredO2Kg = (eva.distanceM / 0.8 / 3600) * 0.1 * 1.2 * 3; // dev stand-in for engineering.oxygenToReturn
+        eva.noReturn = eva.suitO2Kg < eva.requiredO2Kg;
+      }
+      const T = state.time.sol + state.time.solFraction + dt;
+      state.time.sol = Math.floor(T);
+      state.time.solFraction = T - Math.floor(T);
+      tm.sample(state);
+      document.querySelector('[data-clock]').textContent = `SOL ${state.time.sol} · ${(state.time.solFraction * 24).toFixed(1)} h`;
+    }
+
+    const tm = createTelemetry({ maxSols: 3 });
+    for (let i = 0; i < 200; i++) step(0.005);
+    connectDownlink(bus, () => state);
+    const hud = mountHud(document.querySelector('[data-hud]'), {
+      state, data, t, locale, bus, telemetry: tm, refreshMs: 300,
+      downlink: { passes: samplePasses, lightDelaySec: downlinkRows.earthDistanceKm.value / downlinkRows.speedOfLightKms.value },
+      power: { getStatus, setOrder },
+      onAlarmResolve: (r) => { document.querySelector('[data-clock]').textContent += ` · alarm ${r.id}: ${r.answer} (${r.correct ? 'right' : 'wrong'}${r.verified ? ', checked' : ''})`; },
+    });
+    window.devHud = { hud, state };
+
+    let run = 0;
+    document.querySelector('[data-run]').addEventListener('click', (e) => {
+      if (run) { clearInterval(run); run = 0; e.target.textContent = '▶ run'; return; }
+      run = setInterval(() => step(0.002), 50);
+      e.target.textContent = '⏸ pause';
+    });
+    document.querySelector('[data-eva]').addEventListener('click', (e) => {
+      const eva = state.life.eva;
+      Object.assign(eva, eva.outside ? { outside: false, distanceM: 0, suitO2Kg: 0, requiredO2Kg: 0, noReturn: false }
+        : { outside: true, distanceM: 0, suitO2Kg: 0.25, requiredO2Kg: 0, noReturn: false });
+      e.target.textContent = eva.outside ? 'EVA: go inside' : 'EVA: go outside';
+      hud.refresh();
+    });
+    document.querySelector('[data-walk]').addEventListener('click', () => { state.life.eva.distanceM += 100; step(0.002); hud.refresh(); });
+    document.querySelector('[data-cold]').addEventListener('click', (e) => { heater = !heater; e.target.textContent = heater ? 'habitat heater off' : 'habitat heater on'; });
+    let h = 0;
+    document.querySelector('[data-fake]').addEventListener('click', () => bus.emit('hallucination', { alpha: 0.6, alarm: { id: `h${++h}`, stat: 'o2', value: 2, unit: '%' } }));
+    document.querySelector('[data-real]').addEventListener('click', () => hud.alarm({ id: 'energy-low', stat: 'energy', value: 4, unit: '%' }));
+    let n = 0;
+    document.querySelector('[data-packet]').addEventListener('click', () => bus.emit('downlink:queue', { ...samplePackets[0], id: `photo-${++n}` }));
+    document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-lang]').forEach((x) => x.classList.toggle('on', x === b));
+      hud.refresh();
+    }));
+  </script>
+</body>
+</html>

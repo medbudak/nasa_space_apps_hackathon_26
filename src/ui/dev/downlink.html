@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOL 14 · downlink (dev page)</title>
+  <link rel="stylesheet" href="../../../css/style.css">
+  <style>
+    /* dev page layout only */
+    .dev-main { max-width: 980px; margin: 0 auto; padding: 24px; }
+    .dev-main h1 { font-size: 20px; }
+    .dev-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 18px; align-items: center; }
+    .dev-clock { font: 15px var(--mono); color: var(--sunset-blue); }
+    .dev-log { margin-top: 16px; background: var(--night-2); border: 1px solid var(--night-3); border-radius: 10px; padding: 12px;
+      font: 13px/1.5 var(--mono); white-space: pre-wrap; max-height: 30vh; overflow: auto; }
+  </style>
+</head>
+<body>
+  <!-- DEV PAGE (owner: K3). Open with: python -m http.server 8000  ->  http://localhost:8000/src/ui/dev/downlink.html
+       Uses a stub bus, a fake gameState and sample packets. Not part of the game build. -->
+  <main class="dev-main">
+    <h1>DEV · downlink queue (M1)</h1>
+    <div class="dev-row" data-add></div>
+    <div class="dev-row">
+      <button class="btn" data-advance="0.1">time +0.1 sol</button>
+      <button class="btn" data-next-pass>→ next pass</button>
+      <span class="dev-clock" data-clock></span>
+    </div>
+    <div data-panel></div>
+    <div class="dev-log" data-log>bus log:</div>
+  </main>
+  <div class="dev-bar">
+    <span>DEV</span>
+    <button data-lang="tr" class="on">TR</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <script type="module">
+    import { connectDownlink, mountDownlink, runDuePasses, marsClock } from '../downlink.js';
+    import { createBus } from './stub_bus.js';
+    import { samplePasses, samplePackets, downlinkRows } from './stub_samples.js';
+
+    const texts = await (await fetch('./ui_texts.json')).json();
+    let lang = 'tr';
+    const t = (key) => (texts[key] ? texts[key][lang] : key);
+    const locale = () => (lang === 'tr' ? 'tr-TR' : 'en-US');
+
+    const logEl = document.querySelector('[data-log]');
+    const bus = createBus({ log: (name, p) => { logEl.textContent += `\n→ ${name} ${JSON.stringify(p)}`; logEl.scrollTop = logEl.scrollHeight; } });
+
+    // Fake gameState: only the fields this panel uses.
+    const state = { time: { sol: 1, solFraction: 0.1 }, dataBudget: { perSol: 500, used: 0, queue: [] } };
+    const T = () => state.time.sol + state.time.solFraction;
+    const setT = (x) => { state.time.sol = Math.floor(x); state.time.solFraction = x - Math.floor(x); };
+
+    connectDownlink(bus, () => state);
+    // Light delay t = d / c (engineering.js lightDelaySec in the game).
+    const lightDelaySec = downlinkRows.earthDistanceKm.value / downlinkRows.speedOfLightKms.value;
+    const panel = mountDownlink(document.querySelector('[data-panel]'), { state, bus, t, locale, passes: samplePasses, lightDelaySec });
+
+    const clock = () => { document.querySelector('[data-clock]').textContent = `SOL ${state.time.sol} · ${marsClock(state.time.solFraction)}`; };
+    function advanceTo(to) {
+      const from = T();
+      runDuePasses(state, samplePasses, from, to, bus);
+      setT(to);
+      clock();
+      panel.refresh();
+    }
+
+    const add = document.querySelector('[data-add]');
+    samplePackets.forEach((p) => {
+      const b = document.createElement('button');
+      b.className = 'btn ghost';
+      b.textContent = `+ ${p.type} (${p.mbit} Mbit)`;
+      b.addEventListener('click', () => bus.emit('downlink:queue', p));
+      add.appendChild(b);
+    });
+    document.querySelector('[data-advance]').addEventListener('click', () => advanceTo(T() + 0.1));
+    document.querySelector('[data-next-pass]').addEventListener('click', () => {
+      const sol = state.time.sol;
+      const next = [...samplePasses.map((p) => sol + p.atSolFraction), ...samplePasses.map((p) => sol + 1 + p.atSolFraction)]
+        .filter((x) => x > T()).sort((a, b) => a - b)[0];
+      advanceTo(next + 0.001);
+    });
+    document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-lang]').forEach((x) => x.classList.toggle('on', x === b));
+      panel.refresh();
+    }));
+    clock();
+  </script>
+</body>
+</html>

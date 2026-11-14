@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOL 14 · UFO downlink (dev page)</title>
+  <link rel="stylesheet" href="../../../css/style.css">
+  <style>
+    /* dev page layout only */
+    .dev-main { max-width: 900px; margin: 0 auto; padding: 24px; }
+    .dev-main h1 { font-size: 20px; }
+    .dev-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 10px 0 18px; }
+  </style>
+</head>
+<body>
+  <!-- DEV PAGE (owner: K3). Open with: python -m http.server 8000  ->  http://localhost:8000/src/ui/dev/ufo.html
+       K4's photos live in assets/ending/ (K4's branch); until they are on main the screen draws its own placeholder. -->
+  <main class="dev-main">
+    <h1>DEV · UFO epilogue downlink</h1>
+    <div class="dev-row">
+      <label>remaining Mbit <input type="range" min="0" max="400" step="10" value="120" data-left> <b data-left-val>120</b></label>
+      <button class="btn ghost" data-tier>camera: hand</button>
+      <button class="btn" data-play>▶ play</button>
+      <span data-log></span>
+    </div>
+    <div data-ufo></div>
+  </main>
+  <div class="dev-bar">
+    <span>DEV</span>
+    <button data-lang="tr" class="on">TR</button>
+    <button data-lang="en">EN</button>
+  </div>
+  <script type="module">
+    import { mountUfoDownlink } from '../ufoDownlink.js';
+
+    const texts = await (await fetch('./ui_texts.json')).json();
+    let lang = 'tr';
+    const t = (key) => (texts[key] ? texts[key][lang] : key);
+    let tier = 'hand';
+    let screen = null;
+
+    function play() {
+      screen?.destroy();
+      screen = mountUfoDownlink(document.querySelector('[data-ufo]'), {
+        t, locale: () => (lang === 'tr' ? 'tr-TR' : 'en-US'),
+        photo: { clear: '../../../assets/ending/ufo_photo_clear.png', blur: '../../../assets/ending/ufo_photo_blur.png' },
+        cameraTier: tier, photoMbit: 300, remainingMbit: Number(document.querySelector('[data-left]').value), seconds: 4,
+        onRestart: () => { document.querySelector('[data-log]').textContent = '→ onRestart (game: newGame + goTo design)'; },
+      });
+    }
+    document.querySelector('[data-left]').addEventListener('input', (e) => { document.querySelector('[data-left-val]').textContent = e.target.value; });
+    document.querySelector('[data-tier]').addEventListener('click', (e) => { tier = tier === 'hand' ? 'hires' : 'hand'; e.target.textContent = `camera: ${tier}`; });
+    document.querySelector('[data-play]').addEventListener('click', play);
+    document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-lang]').forEach((x) => x.classList.toggle('on', x === b));
+      play();
+    }));
+    play();
+  </script>
+</body>
+</html>
