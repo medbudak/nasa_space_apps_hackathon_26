@@ -14,7 +14,7 @@
       "basePoints": 80,
       "hypotheses": ["slower_163", "faster", "same"],
       "correctHypothesis": "slower_163",
-      "marsValue": 3.26,
+      "marsValue": 3.25,
       "earthValue": 2.01,
       "unit": "s",
       "minigame": "qte",

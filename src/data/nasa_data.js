@@ -9,14 +9,15 @@ window.SOL14.DATA = {
  },
  "constants": {
   "marsGravity": {
-   "value": 3.71,
+   "value": 3.73,
    "earthValue": 9.80665,
-   "ratioToEarth": 0.378,
+   "ratioToEarth": 0.38,
+   "note": "Mean surface gravity on the NASA Mars Fact Sheet (3.71 in older documents is out of date).",
    "unit": "m/s^2",
    "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
   },
   "solarIrradiance": {
-   "mean": 590,
+   "mean": 586.2,
    "perihelion": 715,
    "aphelion": 492,
    "earthMean": 1361,
@@ -83,12 +84,17 @@ window.SOL14.DATA = {
    "src": "https://science.nasa.gov/mission/insight/"
   },
   "lifeSupport": {
-   "o2KgPerSol": 0.84,
+   "o2KgPerSol": 0.92,
    "waterLPerSol": 2,
    "suitO2CapacityKg": 0.9,
-   "src": "https://www.nasa.gov/hrp/"
+   "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
+   "note": "o2KgPerSol: BVAD Rev 2 Table 3-31, 0.895 kg per crew member per Earth day x 24.66/24 h. waterLPerSol: BVAD drinking water 2.00 kg per day.",
+   "simplified": true,
+   "simplifiedNote": "suitO2CapacityKg is a game value; the Advanced EMU stores about 0.77 kg (1.7 lbm) of usable O2 (ntrs.nasa.gov/citations/20170009505)."
   },
   "eva": {
+   "simplified": true,
+   "simplifiedNote": "speedMPerMin and the suit percentages are game values. NASA xEVA planning assumes about 2 km/h (33 m/min) walking and up to 8 h EVAs; BVAD gives 0.086 kg O2 per EVA hour.",
    "speedMPerMin": 45,
    "frozenSpeedFactor": 0.4,
    "suitO2PctPerMin": 0.5,
@@ -282,21 +288,27 @@ window.SOL14.DATA = {
    "name": "Falcon Heavy",
    "payloadMarsKg": 1300,
    "costM": 210,
-   "src": "https://elvperf.ksc.nasa.gov/"
+   "src": "https://public.ksc.nasa.gov/lspeducation/spacex/",
+   "simplified": true,
+   "simplifiedNote": "Game values scaled to the game's lander. Real: up to 16,800 kg to Mars (NASA LSP); NASA's Europa Clipper launch contract was about $178 M."
   },
   {
    "id": "vulcan_centaur",
    "name": "Vulcan Centaur",
    "payloadMarsKg": 1450,
    "costM": 260,
-   "src": "https://elvperf.ksc.nasa.gov/"
+   "src": "https://elvperf.ksc.nasa.gov/",
+   "simplified": true,
+   "simplifiedNote": "Game values scaled to the game's lander; a Mars payload figure for Vulcan Centaur was not found on an official page."
   },
   {
    "id": "sls_block1b",
    "name": "SLS Block 1B",
    "payloadMarsKg": 2000,
    "costM": 470,
-   "src": "https://www.nasa.gov/humans-in-space/space-launch-system/"
+   "src": "https://www.nasa.gov/wp-content/uploads/2022/03/sls_reference_guide_2022_web.pdf",
+   "simplified": true,
+   "simplifiedNote": "Game values scaled to the game's lander. Real: Block 1B carries more than 27 t to TLI and Block 2 cargo more than 80,000 lb (36 t) to Mars (SLS Reference Guide); NASA OIG IG-22-003 puts one SLS at $2.2 B."
   }
  ],
  "orbits": [
@@ -355,6 +367,8 @@ window.SOL14.DATA = {
  "habitat": {
   "src": "https://www.nasa.gov/reference/systems-engineering-handbook/",
   "base": {
+   "simplified": true,
+   "simplifiedNote": "Habitat mass, cost and power loads are game values for a one-astronaut base. NASA DRA 5.0 Addendum estimates 12 kWe day and night for a crew-of-four habitat (www.nasa.gov/pdf/373667main_NASA-SP-2009-566-ADD.pdf).",
    "massKg": 760,
    "costM": 150,
    "lifeSupportW": 180,
@@ -748,7 +762,7 @@ window.SOL14.DATA = {
      "same"
     ],
     "correctHypothesis": "slower_163",
-    "marsValue": 3.26,
+    "marsValue": 3.25,
     "earthValue": 2.01,
     "unit": "s",
     "minigame": "qte",

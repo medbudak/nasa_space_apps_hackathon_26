@@ -15,7 +15,7 @@ const D = S.DATA;
 test('calcSolarPower: temiz panel > tozlu panel (d_toz = 0.8)', () => {
   const clean = E.calcSolarPower({ cosZ: 1, dustFactor: 0 });
   const dusty = E.calcSolarPower({ cosZ: 1, dustFactor: 0.8 });
-  // P = S·A·η·cosZ → 590 · 22 · 0.28 ≈ 3634 W
+  // P = S·A·η·cosZ → 586.2 · 22 · 0.28 ≈ 3611 W
   const expected = D.constants.solarIrradiance.mean * D.habitat.base.solarAreaM2 * D.habitat.base.solarEfficiency;
   assert.ok(Math.abs(clean - expected) < 1, `temiz panel ${clean} W ≈ ${expected} W olmalı`);
   assert.ok(Math.abs(dusty - expected * 0.2) < 1, `%80 toz → %20 üretim (${dusty} W)`);
@@ -59,12 +59,12 @@ test('getHorizons: son Sol Güneş Kavuşumu (iletişim kesintisi)', () => {
   assert.ok(d.minutes >= 3 && d.minutes <= 22.5, 'tek yön gecikme 3–22 dk aralığında');
 });
 
-test('calcPendulumPeriod: 1 m sarkaç Mars ≈ 3.26 s, Dünya ≈ 2.01 s, oran ≈ 1.63', () => {
+test('calcPendulumPeriod: 1 m sarkaç Mars ≈ 3.25 s, Dünya ≈ 2.01 s, oran ≈ 1.62', () => {
   const mars = E.calcPendulumPeriod(1);
   const earth = E.calcPendulumPeriod(1, D.constants.marsGravity.earthValue);
-  assert.equal(mars, 3.26);
+  assert.equal(mars, 3.25);
   assert.equal(earth, 2.01);
-  assert.ok(Math.abs(mars / earth - 1.63) < 0.01);
+  assert.ok(Math.abs(mars / earth - 1.62) < 0.01);
 });
 
 test('calcFreeFallTime: 2 m düşüş Mars ≈ 1.04 s, Dünya ≈ 0.64 s', () => {

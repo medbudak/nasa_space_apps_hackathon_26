@@ -70,8 +70,8 @@ test('nasa_data.json: alet, roket, iniş bölgesi, yörünge ve vaka kayıtları
 
 test('nasa_data.json: bilimsel doğruluk sabitleri (RULES §1)', () => {
   const c = readJson('data', 'nasa_data.json').constants;
-  assert.equal(c.marsGravity.value, 3.71);
-  assert.equal(c.solarIrradiance.mean, 590);
+  assert.equal(c.marsGravity.value, 3.73); // NASA Mars Fact Sheet, mean surface gravity
+  assert.equal(c.solarIrradiance.mean, 586.2); // NASA Mars Fact Sheet
   assert.equal(c.temperature.equatorNightMinC, -80);
   assert.ok(c.atmosphere.surfacePressureKpa > 0.6 && c.atmosphere.surfacePressureKpa < 0.7);
   assert.equal(c.marsquake.largestRecordedMagnitude, 4.7);

@@ -36,7 +36,7 @@
 
 ### Slide 4: Dual Science Loops — Forensics & 0.38g Lab (*Creativity & Validity*)
 * **Objective 1 — Lost Spacecraft Forensics:** Investigate *Opportunity, Spirit, Phoenix, InSight,* and *Beagle 2*. Collect 3 evidence types, diagnose the real failure mode, salvage `RHU` heaters or `SEIS`, and compare against official NSSDCA findings.
-* **Objective 2 — 6 Lab Experiments:** Hypothesis → Environment → Earth Control Group (`+50%` score) → Measurement Minigame ($T = 2\pi\sqrt{L/g} \rightarrow g = 3.71\text{ m/s}^2$, triple-point water boiling at `0.61 kPa`, perchlorate soil washing, `240 m/s` acoustic speed, `MOXIE` night density).
+* **Objective 2 — 6 Lab Experiments:** Hypothesis → Environment → Earth Control Group (`+50%` score) → Measurement Minigame ($T = 2\pi\sqrt{L/g} \rightarrow g = 3.73\text{ m/s}^2$, triple-point water boiling at `0.61 kPa`, perchlorate soil washing, `240 m/s` acoustic speed, `MOXIE` night density).
 
 ### Slide 5: Survival Mechanics — Data Downlink, Load Shedding & Point of No Return
 * **Data Budget (`M1`):** Unsent photos, forensic reports, and experiments score `0` points until transmitted via `MRO`/`MAVEN` passes.
