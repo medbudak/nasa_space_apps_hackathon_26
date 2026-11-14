@@ -27,22 +27,95 @@ If something is not recorded here, it has not been decided.
 
 ## Open questions
 
-Decide these together at the start. When one is agreed, move it to the log below.
+Still open:
 
-- Platform (web, desktop, mobile) and tech stack
-- Game format: turn-based or real-time, single-player or multiplayer, length of a session
-- Target player and difficulty level
-- Mission destinations and the mission types players can choose
-- Which constraints the game models (budget, mass, power, communications, orbit, ...) and how simple each model is
-- Data sources for real-world values
-- Where game data lives (parts, launch vehicles, costs, scenarios) and in what format, so values can be tuned without touching logic
-- How success is measured for the player (score, science return, mission outcome) and how the game explains why a mission failed
-- What the final demo must show (minimum scope)
-- Feature freeze time: when we stop adding features and switch to polish, demo and submission
-- Demo format (30-second video or 7 slides) and who prepares it
-- Who owns the submission page and REFERENCES.md at the end
-- Who owns which part of the project
+- Member names for K1–K6.
+- The real submission deadline at the Sakarya local event. K1 confirms it with the local organizer.
+
+Covered by a proposal below. Each one closes when the team accepts that entry:
+
+- Platform and tech stack → D-002
+- Game format, session length, target player, mission type → D-001
+- Which constraints the game models and how → D-001, D-003
+- Data sources and where game data lives → D-003
+- How success is measured and how the game explains a failure → D-006
+- Minimum scope, checkpoints and feature freeze → D-005
+- Demo format, who prepares it, who owns the submission page and REFERENCES.md → D-004, D-007
+- Who owns which part of the project → D-004
 
 ## Decision log
 
-_No decisions yet._
+Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards (2026-11-14). All entries below are `Proposed` until the team agrees.
+
+### D-001: Game concept "SOL 14: Red Horizon"
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending)
+- Decision: The player designs a crewed Mars mission on Sol 0 (objective, launch vehicle and trajectory, landing site, power, battery, insulation, up to 5 of 9 instruments, comms architecture, spare kits, mass margin), then lives with its consequences for 14 sols. Two main tasks: forensic investigation of lost landers (Opportunity, Spirit, Phoenix, InSight, Beagle 2 bonus) and a science experiment loop. Ends with a cause-and-effect report card compared to real missions.
+- Format: single-player, for students. The surface runs in real time (1 sol ≈ 2 minutes), so a full run takes about half an hour; `?demo` reaches the finale in 5 minutes.
+- Why: Covers every concept the challenge names (objectives, spacecraft, instruments, launch vehicles, budget, power, mass, comms, orbit) with a visible screen or number, and shows how each choice shapes success.
+- Affects: whole game
+
+### D-002: Tech stack and hosting
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending)
+- Decision: Vanilla JavaScript + HTML5 Canvas, no framework, hosted on GitHub Pages. Runs locally with `python3 -m http.server 8000`. Tests run with `node --test tests/`. Seeded RNG so the same seed gives the same run. Progress is saved to `localStorage` so a page reload continues the run.
+- Why: Judges open it from one link in a browser with no setup. Rejected: React/Phaser (extra build and dependencies), Godot web export (heavier, fewer people can work on it).
+- Affects: repo structure, deploy
+
+### D-003: Shared contracts
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending)
+- Decision: K1 publishes these names before the vertical slice, and everyone builds against them:
+  - State: one `gameState` in `src/core/state.js`. New fields: `design{}`, `decisionLog[]`, `dataBudget{perSol, used, queue[]}`, `forensics{}`, `experiments{}`, `flags{anomalyPhotos, cameraTier}`, `score{}`.
+  - Event bus (`src/core/bus.js`): `decision:open`, `decision:made`, `downlink:queue`, `downlink:sent`, `forensics:diagnosed`, `experiment:result`, `power:shed`, `ufo:start`, `minigame:open`. Effect events, emitted by K2 and drawn by K4: `storm`, `quake`, `frost`, `hallucination`, `ufo`.
+  - Numbers: `src/data/nasa_data.json`. Every row has `src` and `verified`. Balance is tuned only through its `tuning` field. Experiment settings live in `src/data/experiments_config.json` and refer to `nasa_data.json` keys.
+  - Formulas: only in `src/core/engineering.js`, as pure functions tested in `tests/engineering.test.mjs`.
+  - Text: all player-facing text in `content/story.json` (TR + EN), read with `t('key')`.
+  - Records: decision log entry `{sol, eventId, choice, effects: [...]}` · score via `addScore(category, points, reason)` · downlink packet `{type, id, mbit, points}` · event `{id, trigger(state), effect(state), decision?}`.
+  - Mini-games: `bus.emit('minigame:open', {template, config, onDone})` with templates `align`, `wiring`, `qte`, `converter`. `onDone` receives `{success, score, timeUsed}`.
+  - Sprites: 48×48 grid. K4 publishes file names and frame counts.
+- Why: Six people can build in parallel against fixed names, and every number stays traceable to a source.
+- Affects: all code
+
+### D-004: Roles and file ownership
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending)
+- Decision: Only the owner edits a role's files. If you need a change in someone else's file, ask the owner or ask for a bus event.
+  - **K1 Lead / System architect:** `index.html`, `src/main.js`, `src/core/` (`engineering.js`, `state.js`, `nasaData.js`, `bus.js`), `src/data/nasa_data.json`, `src/scenes/ending.js`, `tests/engineering.test.mjs`, `scripts/`. Repo and Pages, integration, cause-and-effect report card, `?demo` mode and save, balance, portal submission. Has the final say on scope and priority.
+  - **K2 Gameplay / Survival simulation:** `src/systems/survival.js`, `events.js`, `sanity.js`, `power.js`, `src/scenes/surface.js`. Movement, day/night, energy, heat, O2, greenhouse, crisis events, decision-card logic, load shedding, point of no return, delayed Mission Control, UFO trigger, Sol 14 final sequence. Plays the live demo.
+  - **K3 UI / Mini-games:** `css/style.css`, `src/scenes/design.js`, `src/ui/` (`hud.js`, `alarms.js`, `decisionCard.js`, `downlink.js`, `powerPanel.js`), `src/minigames/`. Sol 0's five screens, HUD and telemetry, decision cards, downlink queue, power panel, mini-game templates, TR/EN switch.
+  - **K4 Pixel art / VFX:** `assets/sprites/`, `src/fx/` (`effects.js`, `sprites.js`). Style guide, astronaut, habitat, five wrecks, MAV, background, effects, UFO scene, cover image.
+  - **K5 Story / Science validation / Audio / Presentation:** `content/story.json`, `src/systems/audio.js`, `assets/audio/`, `docs/`. All texts in TR and EN, checks the wreck cases and experiments against NASA sources, CC0 sounds, project page, slides, video. Keeps REFERENCES.md, the single source log (the task card calls it `docs/sources.md`).
+  - **K6 Science gameplay / QA:** `src/systems/forensics.js`, `src/systems/experiments.js`, `src/data/experiments_config.json`, `tests/science.test.mjs`, GitHub Issues. Forensics loop, six experiments, Beagle 2 bonus, full-run testing. Files every bug and assigns it to its owner.
+  - Step-by-step tasks for each role are on the K1–K6 task cards. Member names are still to be filled in.
+- Why: Follows the task cards handed to the team; separate file areas keep six people from colliding. Critical path: K1's state, bus and data → K2 and K6 → K3. Replaces the earlier draft in which K5 owned the data and K1 had no code area.
+- Affects: everyone
+
+### D-005: Minimum scope and cut order
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending)
+- Decision: Required: M1 downlink data budget, M2 decision cards + log, M3 power load prioritization, M4 point-of-no-return indicator, M5 cause-and-effect report card. Also planned: M7 delayed Mission Control (K2) and M9 `?demo` quick mode (K1). Only if time allows: M8 single-point-of-failure warning. Already cut: playable space transit (C1), sol planning screen (M6 / C4), live Horizons calls (C7, a precomputed table in `scripts/` instead). Cut next if behind: extension mode (C2), extra sanity effects (C3).
+- Checkpoints, in order: vertical slice (Sol 0 → landing → one wreck's forensics loop → pendulum experiment → night-freeze card) → alpha (everything runs end to end, no crashes) → content lock (no new text or features) → feature freeze (bug fixes only) → live build + video → submission. Times are on the task cards.
+- Why: 48 hours. One mission that plays well from start to finish beats a wide unfinished one.
+- Affects: scope, schedule
+
+### D-006: Scoring and loss conditions
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending)
+- Decision: Mission Success Score = forensic reports + experiment results (only those that reached Earth) + survival + mass-margin bonus − lost systems. Minimum success: 2 reports + 2 experiments sent. Full success: 4 reports + 4 experiments + safe return. Forensics: correct diagnosis 100, wrong but all 3 clues collected 50, clues missing 20, report not sent 0; Spirit accepts Mechanical or Thermal. An experiment succeeds when the measured value is within ±10%. Loss: O2 at zero, body temperature below the critical threshold for 2 game-hours, cumulative radiation dose over the mission limit, or sanity at zero. The report card is shown on loss too. The UFO scene is a labeled fictional epilogue resolved by camera tier and remaining data budget.
+- Why: NASA-style minimum/full success thresholds, and only data that reached Earth counts, which makes the comms trade-off matter.
+- Affects: K1, K2, K3, K6
+
+### D-007: Demo and submission
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending)
+- Decision: The Project Demo is a 30-second video with English subtitles, made by K5 with K4: 0–5 s team and challenge · 5–12 s Sol 0 with the mass bar turning red · 12–20 s storm, decision card and wreck diagnosis · 20–25 s report card · 25–30 s UFO scene. K5 also writes the English project page (Summary · How it addresses the challenge · NASA data used · Engineering trade-offs · Scientific corrections · Team · AI disclosure, plus a note that the UFO scene is fiction) and 7 English slides. K1 submits on the portal and opens every link in a private window first. At the local event, K2 plays the live demo with `?demo` and K5 presents from a Turkish script.
+- Why: The submission guide limits the demo to a 30-second video or 7 slides and requires English. A video shows the trade-offs moving, which slides can't.
+- Affects: K1, K2, K4, K5
