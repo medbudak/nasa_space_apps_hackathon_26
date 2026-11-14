@@ -10,16 +10,9 @@ Player feedback after the first full playthrough of v3, turned into tasks. Goal:
 | 1 | Window fit: stage fills the viewport, canvas follows the window aspect, no letterbox bars | `116aa65` (`src/main.js` fitStage, `styles/main.css`) |
 | 2 | Clock 4 → 2 game min per real s (demo stays 4); suit O2 0.5 → 0.2083 %/min (xEVA 8 h) | `116aa65` (`data/nasa_data.json` gameplay, constants.eva) |
 | 7 | Suit temperature: battery/heater lasts ~8 h at −80 °C; dead-battery cooling 0.025 → 0.004 /min (~1 h to return) | `116aa65` |
+| 6 | Transit: 4-task engineering chain (arrays `align`, O2 leak `wires`, TCM `qte`, thermal `converter`); bar moves only on completion; typewriter "GEZEGENE YAKLAŞILIYOR..."; outcomes feed landing (`gameplay.transit`, `Sim.transitOutcome`); skip asks twice and degrades | transit commit |
 
 ## To do (in this order)
-
-### 6. Transit: active engineering chain instead of a timed bar
-Today `src/ui/cutscenes.js` (`TRANSIT_MS 15000`, `METEOR_AT 5200`, `EDL_AT 11500`) fills a DÜNYA→MARS bar on a timer with one `wires` minigame. Replace with a sequence the player works through; the bar only moves when a task is done:
-1. Deploy and point the cruise-stage solar arrays → `align` (power for the cruise).
-2. Micrometeoroid hit: find and patch the O2 line leak → `wires`.
-3. Trajectory correction manoeuvre (TCM) burn → `qte` (timing). Mars 2020 flew TCMs on its cruise.
-4. Optional or 4th: life-support/thermal calibration → `converter`.
-Each task: problem card (what broke, why it matters, what you will do) → minigame → result changes ship state shown on screen (checklist: power / O2 line / trajectory). Day counter and dose jump per task (Day 1 → … → transitDays). After the last task a retro typewriter subtitle **"GEZEGENE YAKLAŞILIYOR..." / "APPROACHING MARS..."**, then the existing EDL phases and `Sim.land`. Results feed landing (today: score < 0.85 or skip → −4 kWh, `sim.js:110-127`); make each task's outcome matter (e.g. arrays → starting battery, leak → habitat O2 reserve, TCM → landing accuracy/walk distance or MAV fuel). Keep Skip available but say what skipping costs.
 
 ### 5. Sol 0 choices: tooltips + real consequences
 `src/ui/design_screens.js` `card()` builds option buttons; there is no tooltip system (only native `title`). Add a styled hover/focus tooltip (also keyboard focus; touch: tap-and-hold or an info icon) with three lines per option: **What is it? · Why choose it? · What changes in the game?** (story keys e.g. `design.tip.<field>.<value>.{what,why,effect}`). Make weak choices matter:
