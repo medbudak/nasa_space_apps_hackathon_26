@@ -145,3 +145,7 @@ Real-world values that were changed or rounded for gameplay.
 | `spareKits[k1].costMUSD` | K1 balance | 10 M$ | Not published for this case; set by K1 for gameplay |
 | `spareKits[k2].massKg` | K1 decision D-009: not published, game value (K3 proposal) | 300 kg | Not published for this case; set by K1 for gameplay |
 | `spareKits[k2].costMUSD` | K1 balance | 20 M$ | Not published for this case; set by K1 for gameplay |
+
+- **Oyun İçi Pixel Art Varlıkları & UI İkonları (ssets/):** Yapay zeka destekli pixel art üretim araçları (Gemini / Adobe Firefly) ile 'SOL 14: RED HORIZON' renk paletine uygun olarak üretilmiş ve düzenlenmiştir.
+
+- **Oyun İçi Pixel Art Varlıkları & UI İkonları (ssets/):** Yapay zeka destekli pixel art araçları ve özel piksel çizim betikleri ile 'SOL 14: RED HORIZON' renk paletine uygun olarak üretilmiştir.
