@@ -40,13 +40,10 @@
     </div>
     <div class="dev-log" data-log>bus log:</div>
   </main>
-  <div class="dev-bar">
-    <span>DEV</span>
-    <button data-lang="tr" class="on">TR</button>
-    <button data-lang="en">EN</button>
-  </div>
+
   <script type="module">
     import { mountDecisionCards } from '../decisionCard.js';
+    import { mountLangSwitch } from '../langSwitch.js';
     import { mountMinigames } from '../../minigames/index.js';
     import { createBus } from './stub_bus.js';
     import { sampleEngineFreeze, sampleNoReturn, withChoose, sampleConverters, sampleAligns, sampleQtes } from './stub_samples.js';
@@ -90,11 +87,8 @@
     document.querySelector('[data-unknown]').addEventListener('click', () =>
       bus.emit('minigame:open', { template: 'nope', config: {}, onDone: (r) => log('onDone', r) }));
 
-    document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
-      lang = b.dataset.lang;
-      document.documentElement.lang = lang;
-      document.querySelectorAll('[data-lang]').forEach((x) => x.classList.toggle('on', x === b));
-    }));
+    // The real TR/EN switch, wired the way main.js would (here the open card or mini-game redraws on its own next render).
+    mountLangSwitch(document.body, { t, getLang: () => lang, setLang: (l) => { lang = l; } });
   </script>
 </body>
 </html>

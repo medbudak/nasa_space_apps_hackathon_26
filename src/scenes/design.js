@@ -63,11 +63,15 @@ export function launchBlockers(design, data, summary) {
   return out;
 }
 
+// The step the player was on, so a remount (e.g. after a language switch) does not send them back to step 1.
+let lastStep = 0;
+
 export function mountDesign(root, opts) {
   const { data, t, evaluate, onLaunch } = opts;
   const onChange = opts.onChange || (() => {});
   const design = Object.assign(emptyDesign(), opts.design || {});
-  let step = 0;
+  const started = Object.values(design).some((v) => (Array.isArray(v) ? v.length : v));
+  let step = started ? lastStep : 0; // a new game starts at step 1
 
   root.classList.add('design');
   root.innerHTML = `
@@ -101,6 +105,7 @@ export function mountDesign(root, opts) {
 
   function go(i) {
     step = Math.max(0, Math.min(STEPS.length - 1, i));
+    lastStep = step;
     render();
     el.body.scrollTop = 0;
     el.body.focus({ preventScroll: true });

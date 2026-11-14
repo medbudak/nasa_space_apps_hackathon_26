@@ -1,6 +1,10 @@
 {
   "_note": "DEV TEXTS (owner: K3). Proposed texts for decision cards and mini-games, for K5 to copy into content/story.json and review. Keys under event.* are samples for K2's engineFreeze card; K5 writes the real event texts. Format: key -> {tr, en}.",
 
+  "lang.label": { "tr": "Dil", "en": "Language" },
+  "lang.tr": { "tr": "Türkçe", "en": "Türkçe" },
+  "lang.en": { "tr": "English", "en": "English" },
+
   "decision.kicker": { "tr": "KARAR", "en": "DECISION" },
   "decision.hint": { "tr": "Bir seçenek seç ya da 1, 2, 3 tuşlarına bas. Kararın görev günlüğüne yazılır.", "en": "Pick an option or press 1, 2, 3. Your choice goes into the mission log." },
   "decision.noCost": { "tr": "bedelsiz", "en": "no cost" },

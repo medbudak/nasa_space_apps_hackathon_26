@@ -121,3 +121,16 @@ Try "EVA: go outside" and "walk +100 m" to see the point-of-no-return notch (M4)
 | K5 | Texts under `hud.*` in `ui_texts.json`. |
 
 Bar colours use display thresholds in `hud.js` (30 % / 15 % left): they colour the bar and change no game rule.
+
+# TR/EN switch
+
+`src/ui/langSwitch.js`, shown at the top right. Tried in a copy of the game with this one line in `main.js` (K1's file, so it is
+a request, not a change):
+
+```js
+import { mountLangSwitch } from './ui/langSwitch.js';   // and setLang from ./core/i18n.js
+mountLangSwitch(document.body, { t, getLang, setLang, onChange: () => goTo(getState().scene) });
+```
+
+Re-entering the scene redraws it in the new language; Sol 0 keeps the player's picks and the step they were on.
+Texts: `lang.label`, `lang.tr`, `lang.en` in `ui_texts.json` (each language is named in its own language).

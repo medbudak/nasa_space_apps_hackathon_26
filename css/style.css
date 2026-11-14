@@ -374,6 +374,13 @@ button { font: inherit; color: inherit; }
 @media (max-width: 900px) { .hud-bars { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .hud-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+/* ---------- TR/EN switch ---------- */
+.lang-switch { position: fixed; top: 12px; right: 12px; z-index: 30; display: flex; gap: 2px; padding: 3px;
+  background: var(--night-2); border: 1px solid var(--night-3); border-radius: 99px; }
+.lang-switch button { background: transparent; border: 0; border-radius: 99px; padding: 4px 12px; cursor: pointer;
+  font: 700 14px var(--font); color: var(--ink-dim); }
+.lang-switch button[aria-pressed="true"] { background: var(--mars); color: #fff; }
+
 /* ---------- dev page only ---------- */
 .dev-bar {
   position: fixed; bottom: 76px; right: 16px; display: flex; gap: 6px; z-index: 5;
