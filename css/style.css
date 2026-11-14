@@ -368,10 +368,10 @@ button { font: inherit; color: inherit; }
 .hud-bars { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; background: rgba(20, 27, 45, .88);
   border: 1px solid var(--night-3); border-radius: var(--radius); padding: 8px 12px; }
 .hud-bar { display: grid; gap: 3px; min-width: 0; }
-.hud-bar-label { display: flex; justify-content: space-between; gap: 6px; font-size: 14px; white-space: nowrap; }
+.hud-bar-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 6px; font-size: 14px; } /* value wraps under the name when the bar is narrow */
 .hud-bar-label span { overflow: hidden; text-overflow: ellipsis; }
 .hud-bar-label i { font-style: normal; }
-.hud-bar-label b { font: 600 14px var(--mono); color: var(--ink-dim); }
+.hud-bar-label b { font: 600 14px var(--mono); color: var(--ink-dim); white-space: nowrap; }
 .hud-bar .bar-track { height: 8px; }
 /* value known, limit not in the data yet: a full, neutral, striped bar instead of a misleading empty one */
 .hud-bar.nomax .bar-fill { background: repeating-linear-gradient(135deg, var(--night-3) 0 6px, #3b4a6e 6px 12px); }
@@ -397,6 +397,8 @@ button { font: inherit; color: inherit; }
 .lang-switch button { background: transparent; border: 0; border-radius: 99px; padding: 4px 12px; cursor: pointer;
   font: 700 14px var(--font); color: var(--ink-dim); }
 .lang-switch button[aria-pressed="true"] { background: var(--mars); color: #fff; }
+/* In the game the switch sits over the HUD row (top right): keep the last bar clear of it. */
+.hud-root .hud-bars { margin-right: 112px; }
 
 /* ---------- alarms (real and false look the same) ---------- */
 .alarm-layer { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); z-index: 25; width: min(560px, calc(100vw - 32px)); }

@@ -220,6 +220,7 @@
   "downlink.passes": { "tr": "Röle geçişleri", "en": "Relay passes" },
   "downlink.empty": { "tr": "Kuyruk boş. Fotoğraf, rapor ve deney sonuçları buraya gelir.", "en": "The queue is empty. Photos, reports and experiment results land here." },
   "downlink.delay": { "tr": "Dünya'ya {min} dk {sec} sn", "en": "{min} min {sec} s to Earth" },
+  "downlink.delayUnknown": { "tr": "Dünya'ya ışık gecikmesi: ? (mesafe verisi bekleniyor)", "en": "Light delay to Earth: ? (distance data pending)" },
   "downlink.delay.help": { "tr": "Işık hızıyla bile sinyal bu kadar sürede ulaşır. Dünya'dan gelen cevap da o kadar gecikir.", "en": "Even at the speed of light the signal takes this long. Any answer from Earth is just as late." },
   "downlink.goesOn": { "tr": "{pass} geçişinde gider", "en": "Goes on the {pass} pass" },
   "downlink.notToday": { "tr": "Bu sol gitmez", "en": "Will not go this sol" },

@@ -78,3 +78,10 @@ test('light delay and Mars clock are formatted for the panel', () => {
 test('every downlink sample number has a src', () => {
   for (const [k, row] of Object.entries(downlinkRows)) assert.ok(row.src, `${k} has no src`);
 });
+
+test('an unknown light delay is not shown as 0', () => {
+  assert.equal(splitDelay(null), null);
+  assert.equal(splitDelay(undefined), null);
+  assert.equal(splitDelay(NaN), null);
+  assert.deepEqual(splitDelay(0), { min: 0, sec: 0 });
+});

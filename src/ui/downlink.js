@@ -100,8 +100,9 @@ export function runDuePasses(state, passes, fromT, toT, bus) {
   return results;
 }
 
-/** Seconds -> { min, sec } for "14 min 22 s". */
+/** Seconds -> { min, sec } for "14 min 22 s", or null when the delay is not known yet (never a fake 0). */
 export function splitDelay(seconds) {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return null;
   const s = Math.round(Math.max(0, seconds));
   return { min: Math.floor(s / 60), sec: s % 60 };
 }
@@ -164,15 +165,15 @@ export function mountDownlink(el, opts) {
     const plan = planQueue(q, ahead);
     const passName = Object.fromEntries(passes.map((p) => [p.id, p.name]));
     const T = now();
-    const { min, sec } = splitDelay(typeof opts.lightDelaySec === 'function' ? opts.lightDelaySec() : opts.lightDelaySec);
+    const delay = splitDelay(typeof opts.lightDelaySec === 'function' ? opts.lightDelaySec() : opts.lightDelaySec);
+    const delayText = delay ? t('downlink.delay').replace('{min}', delay.min).replace('{sec}', delay.sec) : t('downlink.delayUnknown');
     const queuedMbit = q.reduce((s, p) => s + p.mbit - (p.sentMbit || 0), 0);
     const aheadMbit = ahead.reduce((s, p) => s + p.mbit, 0);
 
     el.innerHTML = `
       <header class="dl-head">
         <h2>${t('downlink.title')}</h2>
-        <span class="dl-delay" title="${t('downlink.delay.help')}">🛰 ${t('downlink.delay')
-          .replace('{min}', min).replace('{sec}', sec)}</span>
+        <span class="dl-delay" title="${t('downlink.delay.help')}">🛰 ${delayText}</span>
       </header>
       <div class="dl-cols">
         <section class="dl-queue" aria-label="${t('downlink.queue')}">

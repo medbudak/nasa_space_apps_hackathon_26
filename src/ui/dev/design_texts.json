@@ -95,12 +95,6 @@
   "batteries.b150.desc": { "tr": "En hafif seçenek; gece yüküne ancak yeter, fırtınada pay kalmaz.", "en": "Lightest option; barely covers the night load, no margin in a storm." },
   "batteries.b200.desc": { "tr": "Bir miktar gece payı bırakır.", "en": "Leaves some margin for the night." },
   "batteries.b300.desc": { "tr": "Uzun gecelere ve fırtınalara dayanır; ağır.", "en": "Survives long nights and storms; heavy." },
-  "batteries.b20.name": { "tr": "20 kWh batarya", "en": "20 kWh battery" },
-  "batteries.b20.desc": { "tr": "Hafif; soğuk gecelerde yetmeyebilir.", "en": "Light; may not last a cold night." },
-  "batteries.b40.name": { "tr": "40 kWh batarya", "en": "40 kWh battery" },
-  "batteries.b40.desc": { "tr": "Çoğu gece için yeterli.", "en": "Enough for most nights." },
-  "batteries.b60.name": { "tr": "60 kWh batarya", "en": "60 kWh battery" },
-  "batteries.b60.desc": { "tr": "Fırtınaya karşı yedek; ağır.", "en": "Reserve for storms; heavy." },
 
   "insulation.thin.name": { "tr": "İnce yalıtım", "en": "Thin insulation" },
   "insulation.thin.desc": { "tr": "Hafif; gece ısıtması tam güç ister.", "en": "Light; night heating runs at full power." },
