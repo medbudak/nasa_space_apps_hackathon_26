@@ -60,7 +60,7 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Status: Proposed
 - Date: 2026-11-14
 - Agreed by: (pending)
-- Decision: Vanilla JavaScript + HTML5 Canvas, no framework, hosted on GitHub Pages. Runs locally with `python3 -m http.server 8000`. Tests run with `node --test tests/`. Seeded RNG so the same seed gives the same run. Progress is saved to `localStorage` so a page reload continues the run.
+- Decision: Vanilla JavaScript + HTML5 Canvas, no framework, hosted on GitHub Pages. Runs locally with `python -m http.server 8000` (`python3` on macOS/Linux). Tests run with `node --test` (Node 22+ rejects a folder argument, so no `tests/`). Seeded RNG so the same seed gives the same run. Progress is saved to `localStorage` so a page reload continues the run.
 - Why: Judges open it from one link in a browser with no setup. Rejected: React/Phaser (extra build and dependencies), Godot web export (heavier, fewer people can work on it).
 - Affects: repo structure, deploy
 
@@ -73,8 +73,10 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
   - Event bus (`src/core/bus.js`): `decision:open`, `decision:made`, `downlink:queue`, `downlink:sent`, `forensics:diagnosed`, `experiment:result`, `power:shed`, `ufo:start`, `minigame:open`. Effect events, emitted by K2 and drawn by K4: `storm`, `quake`, `frost`, `hallucination`, `ufo`.
   - Numbers: `src/data/nasa_data.json`. Every row has `src` and `verified`. Balance is tuned only through its `tuning` field. Experiment settings live in `src/data/experiments_config.json` and refer to `nasa_data.json` keys.
   - Formulas: only in `src/core/engineering.js`, as pure functions tested in `tests/engineering.test.mjs`.
-  - Text: all player-facing text in `content/story.json` (TR + EN), read with `t('key')`.
-  - Records: decision log entry `{sol, eventId, choice, effects: [...]}` · score via `addScore(category, points, reason)` · downlink packet `{type, id, mbit, points}` · event `{id, trigger(state), effect(state), decision?}`.
+  - Text: all player-facing text in `content/story.json`, shaped `{ "en": {"key": "text"}, "tr": {...} }`, read with `t('key', vars)` from `src/core/i18n.js`. `{name}` in a text is filled from `vars`. A missing key shows the key itself.
+  - Scenes: a scene module's default export is `{ enter(ctx), exit?() }` with `ctx = {state, data, bus, t, goTo, canvas, ui}`. Flow: `title → design → surface → ending`; `src/main.js` shows a placeholder while a scene file is missing. `?scene=<name>` and `?seed=<n>` for testing.
+  - Data access: `value('mars.gravity')`, `rows('instruments')`, `row('instruments', 'moxie')` from `src/core/nasaData.js`. Random numbers: `createRng(state.seed)` from `src/core/rng.js`, never `Math.random()` for gameplay.
+  - Records: decision log entry `{sol, eventId, choice, effects: [...]}` · score via `addScore(category, points, reason, cause?)`, where `category` is `forensics | experiments | survival | massMargin | lostSystems`, `reason` is a story key and `cause` is the choice behind it (`'design.power.battery_kWh'` or `'decision.<eventId>'`), so the report card can link choice → consequence → points · run totals in `state.stats {energyUsed_kWh, oxygenProduced_kg, dataSent_Mbit, solsSurvived}` · final outcome in `state.outcome` (`hero | colonist | explorer | lost`), set by K2 · downlink packet `{type, id, mbit, points}` · event `{id, trigger(state), effect(state), decision?}`.
   - Mini-games: `bus.emit('minigame:open', {template, config, onDone})` with templates `align`, `wiring`, `qte`, `converter`. `onDone` receives `{success, score, timeUsed}`.
   - Sprites: 48×48 grid. K4 publishes file names and frame counts.
 - Why: Six people can build in parallel against fixed names, and every number stays traceable to a source.
