@@ -341,6 +341,34 @@ button { font: inherit; color: inherit; }
 }
 @media (max-width: 760px) { .tm-grid-wrap, .pw-summary { grid-template-columns: 1fr; } }
 
+/* ---------- HUD ---------- */
+.hud { display: grid; gap: 8px; }
+.hud-bars { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; background: rgba(20, 27, 45, .88);
+  border: 1px solid var(--night-3); border-radius: var(--radius); padding: 8px 12px; }
+.hud-bar { display: grid; gap: 3px; min-width: 0; }
+.hud-bar-label { display: flex; justify-content: space-between; gap: 6px; font-size: 14px; white-space: nowrap; }
+.hud-bar-label span { overflow: hidden; text-overflow: ellipsis; }
+.hud-bar-label i { font-style: normal; }
+.hud-bar-label b { font: 600 13px var(--mono); color: var(--ink-dim); }
+.hud-bar .bar-track { height: 8px; }
+/* value known, limit not in the data yet: a full, neutral, striped bar instead of a misleading empty one */
+.hud-bar.nomax .bar-fill { background: repeating-linear-gradient(135deg, var(--night-3) 0 6px, #3b4a6e 6px 12px); }
+.hud-bar.warn .bar-fill { background: var(--warn); }
+.hud-bar.bad .bar-fill { background: var(--bad); }
+.hud-bar.bad .hud-bar-label { color: var(--bad); font-weight: 700; }
+.hud-note { font-size: 13px; color: var(--ink-dim); }
+.hud-bar.bad .hud-note { color: var(--bad); }
+.hud-eva .hud-bar { background: rgba(20, 27, 45, .88); border: 1px solid var(--night-3); border-radius: var(--radius); padding: 8px 12px; }
+.eva-track { position: relative; overflow: visible; height: 12px; }
+.eva-notch { position: absolute; top: -5px; bottom: -5px; width: 3px; margin-left: -1px; background: var(--bad); border-radius: 2px; }
+.hud-eva .hud-bar:not(.bad) .bar-fill { background: var(--ok); }
+.hud-tabs { display: flex; gap: 6px; }
+.hud-tab { background: var(--night-2); border: 1px solid var(--night-3); border-radius: 8px 8px 0 0; padding: 6px 14px; cursor: pointer; font-size: 14px; }
+.hud-tab[aria-selected="true"] { background: var(--night-3); border-color: var(--sunset-blue); }
+.hud-panel { max-height: 70vh; overflow-y: auto; }
+@media (max-width: 900px) { .hud-bars { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .hud-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 /* ---------- dev page only ---------- */
 .dev-bar {
   position: fixed; bottom: 76px; right: 16px; display: flex; gap: 6px; z-index: 5;

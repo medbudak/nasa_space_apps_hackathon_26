@@ -106,3 +106,18 @@ storm, and watch loads switch off from the bottom when the battery empties.
 
 Telemetry history lives in memory (no new gameState field), so it starts empty after a page reload. Chart colours are the dataviz
 reference dark steps (`#3987e5` blue, `#d95926` orange), checked with the palette validator on the `#141b2d` surface.
+
+# K3 dev page — HUD
+
+Open http://localhost:8000/src/ui/dev/hud.html. Limits come from the real `src/data/nasa_data.json`; the state is a fake simulation.
+Try "EVA: go outside" and "walk +100 m" to see the point-of-no-return notch (M4) move.
+
+| Who | What |
+|---|---|
+| K2 | Mount once in the surface scene: `mountHud(el, { state, data, t, locale, bus, telemetry, downlink: { passes, lightDelaySec }, power: { getStatus, setOrder }, refreshMs: 500 })`. `hud.openTab('telemetry')` opens a tab from code (alarms). |
+| K2 | The EVA bar reads `life.eva.{outside, suitO2Kg, requiredO2Kg, distanceM, noReturn}`; the red notch sits at `requiredO2Kg`. The HUD remembers the suit O2 at the start of each EVA as the full bar. |
+| K2 | Sanity reads `life.sanity` (0..100) once `sanity.js` sets it; until then the bar shows "—". |
+| K1 | Limits read from `nasa_data.json`: `life.o2StartKg`, `rules.radiationLimitMSv`, `rules.coldLossHours`, `thermal.bodyColdBelowC`. Missing ones show "?" and a striped bar instead of an invented number. Oxygen also shows days left from `life.o2KgPerCrewPerDay × life.crew`. |
+| K5 | Texts under `hud.*` in `ui_texts.json`. |
+
+Bar colours use display thresholds in `hud.js` (30 % / 15 % left): they colour the bar and change no game rule.
