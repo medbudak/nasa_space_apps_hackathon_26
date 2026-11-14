@@ -50,6 +50,18 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 - Shared files: dependency manifests and lockfiles, the entry point, global config, shared types/models, CLAUDE.md and DECISIONS.md. REFERENCES.md is shared too, but anyone may append a line to it without asking. For the others, tell the team before you edit one, keep the change small, and commit it on its own.
 - Never commit secrets (API keys, tokens, `.env`). Personal notes go in `CLAUDE.local.md`, which is gitignored.
 
+## Working rules
+
+- Numbers live in data, not in code. Every gameplay value is read from the game data file and carries a `src` field with its source. Values simplified for gameplay are flagged as simplified. A value without a source does not go into the game.
+- Stub first, then the real thing. Hand over a correctly shaped placeholder early so nobody waits on you. Placeholder numbers are marked `src: "PLACEHOLDER"`, and none may remain at content lock.
+- Edit only the files your role owns (ownership is recorded in DECISIONS.md). If you need a change in someone else's area, ask the owner.
+- Player-facing text is not hard-coded in UI code. It lives in the text data file, in Turkish and English.
+- Anything fictional or compressed for gameplay (a compressed map, a fictional scene) is labeled as such in the game and on the project page.
+- REFERENCES.md is the single log for sources, licenses and AI use. Don't start a separate licenses file.
+- A feature is done only when it works on `main`, works on the live deploy, at least one other person has tried it, and the data/validation owner has checked its numbers and texts.
+- Stuck for more than 15 minutes? Ask in the team chat.
+- After content lock, no new features or text: new ideas go to a "next version" list. After feature freeze, only game-breaking bugs are fixed.
+
 ## Language
 
 - Code, comments, commit messages, PRs, issues and repo docs are in English.
