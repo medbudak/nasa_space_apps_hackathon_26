@@ -1,98 +1,517 @@
 {
   "_readme": "K2's open request list for K1, and the overlay K2's tests put on top of the real src/data/nasa_data.json. 'add' holds entries nasa_data.json does not have yet; 'fill' holds row fields that are missing or null there. The numbers are TEST values (src PLACEHOLDER): K1 sets the real game values (D-009). When K1 adds an entry, delete it here. Still missing too, not overlaid here because it is a table: relayPasses [{ id, name, atSolFraction, mbit }] and an Earth-Mars light-delay table.",
-
   "add": {
     "rules": {
-      "survivalPointsPerSol": { "value": 10, "unit": "points", "simplified": true, "note": "survival points for each sol lived through (scored as it happens)", "src": "PLACEHOLDER", "verified": false },
-      "antennaLostPoints": { "value": -50, "unit": "points", "simplified": true, "note": "last-sol antenna not re-aligned (lostSystems)", "src": "PLACEHOLDER", "verified": false },
-      "launchPoints": { "value": 100, "unit": "points", "simplified": true, "note": "the MAV lifts off: safe return (survival)", "src": "PLACEHOLDER", "verified": false },
-      "missedLaunchPoints": { "value": -100, "unit": "points", "simplified": true, "note": "launch window closed with the MAV too cold (lostSystems)", "src": "PLACEHOLDER", "verified": false },
-      "greenhouseLostPoints": { "value": -120, "unit": "points", "simplified": true, "note": "plants froze (lostSystems); design doc example 'greenhouse froze -> -120'", "src": "PLACEHOLDER", "verified": false },
-      "quakeDamagePoints": { "value": -60, "unit": "points", "simplified": true, "note": "equipment broken in a quake (lostSystems)", "src": "PLACEHOLDER", "verified": false }
+      "survivalPointsPerSol": {
+        "value": 10,
+        "unit": "points",
+        "simplified": true,
+        "note": "survival points for each sol lived through (scored as it happens)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "antennaLostPoints": {
+        "value": -50,
+        "unit": "points",
+        "simplified": true,
+        "note": "last-sol antenna not re-aligned (lostSystems)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "launchPoints": {
+        "value": 100,
+        "unit": "points",
+        "simplified": true,
+        "note": "the MAV lifts off: safe return (survival)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "missedLaunchPoints": {
+        "value": -100,
+        "unit": "points",
+        "simplified": true,
+        "note": "launch window closed with the MAV too cold (lostSystems)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "greenhouseLostPoints": {
+        "value": -120,
+        "unit": "points",
+        "simplified": true,
+        "note": "plants froze (lostSystems); design doc example 'greenhouse froze -> -120'",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "quakeDamagePoints": {
+        "value": -60,
+        "unit": "points",
+        "simplified": true,
+        "note": "equipment broken in a quake (lostSystems)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      }
     },
     "sanity": {
-      "start": { "value": 100, "unit": "%", "simplified": true, "note": "full at landing", "src": "PLACEHOLDER", "verified": false },
-      "drainPerHour": { "value": 0.1, "unit": "%/h", "simplified": true, "note": "isolation; about -35 over 14 sols alone. Mars-500 / HI-SEAS show the effect but give no scale", "src": "PLACEHOLDER", "verified": false },
-      "coldDrainPerHour": { "value": 3, "unit": "%/h", "simplified": true, "note": "extra while in dangerous cold", "src": "PLACEHOLDER", "verified": false },
-      "darkDrainPerHour": { "value": 2, "unit": "%/h", "simplified": true, "note": "extra while the habitat is unpowered", "src": "PLACEHOLDER", "verified": false },
-      "greenhouseGainPerHour": { "value": 0.15, "unit": "%/h", "simplified": true, "note": "plant care, while the greenhouse works in daylight", "src": "PLACEHOLDER", "verified": false },
-      "familyMessageGain": { "value": 15, "unit": "%", "simplified": true, "note": "a family message from Earth", "src": "PLACEHOLDER", "verified": false },
-      "falseAlarmBelow": { "value": 40, "unit": "%", "simplified": true, "note": "false alarms start below this", "src": "PLACEHOLDER", "verified": false },
-      "falseAlarmPerHour": { "value": 0.15, "unit": "1/h", "simplified": true, "note": "chance of a false alarm per game hour below the line", "src": "PLACEHOLDER", "verified": false },
-      "falseAlarmHours": { "value": 0.5, "unit": "h", "simplified": true, "note": "how long a false alarm stays on screen", "src": "PLACEHOLDER", "verified": false },
-      "alarmSeenThroughGain": { "value": 3, "unit": "%", "simplified": true, "note": "the player calls a false alarm false (checked against the instruments)", "src": "PLACEHOLDER", "verified": false },
-      "alarmBelievedLoss": { "value": 5, "unit": "%", "simplified": true, "note": "an emergency procedure run for a false alarm", "src": "PLACEHOLDER", "verified": false }
+      "start": {
+        "value": 100,
+        "unit": "%",
+        "simplified": true,
+        "note": "full at landing",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "drainPerHour": {
+        "value": 0.1,
+        "unit": "%/h",
+        "simplified": true,
+        "note": "isolation; about -35 over 14 sols alone. Mars-500 / HI-SEAS show the effect but give no scale",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "coldDrainPerHour": {
+        "value": 3,
+        "unit": "%/h",
+        "simplified": true,
+        "note": "extra while in dangerous cold",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "darkDrainPerHour": {
+        "value": 2,
+        "unit": "%/h",
+        "simplified": true,
+        "note": "extra while the habitat is unpowered",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "greenhouseGainPerHour": {
+        "value": 0.15,
+        "unit": "%/h",
+        "simplified": true,
+        "note": "plant care, while the greenhouse works in daylight",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "familyMessageGain": {
+        "value": 15,
+        "unit": "%",
+        "simplified": true,
+        "note": "a family message from Earth",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "falseAlarmBelow": {
+        "value": 40,
+        "unit": "%",
+        "simplified": true,
+        "note": "false alarms start below this",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "falseAlarmPerHour": {
+        "value": 0.15,
+        "unit": "1/h",
+        "simplified": true,
+        "note": "chance of a false alarm per game hour below the line",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "falseAlarmHours": {
+        "value": 0.5,
+        "unit": "h",
+        "simplified": true,
+        "note": "how long a false alarm stays on screen",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "alarmSeenThroughGain": {
+        "value": 3,
+        "unit": "%",
+        "simplified": true,
+        "note": "the player calls a false alarm false (checked against the instruments)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "alarmBelievedLoss": {
+        "value": 5,
+        "unit": "%",
+        "simplified": true,
+        "note": "an emergency procedure run for a false alarm",
+        "src": "PLACEHOLDER",
+        "verified": false
+      }
     },
     "greenhouse": {
-      "frostC": { "value": 0, "unit": "C", "simplified": true, "note": "plants freeze below 0 C", "src": "PLACEHOLDER", "verified": false },
-      "growHours": { "value": 120, "unit": "h", "simplified": true, "note": "game time to a harvest; compressed (Veggie lettuce takes about 28 days)", "src": "PLACEHOLDER", "verified": false },
-      "harvestSanityGain": { "value": 10, "unit": "%", "simplified": true, "note": "fresh food and a success", "src": "PLACEHOLDER", "verified": false }
+      "frostC": {
+        "value": 0,
+        "unit": "C",
+        "simplified": true,
+        "note": "plants freeze below 0 C",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "growHours": {
+        "value": 120,
+        "unit": "h",
+        "simplified": true,
+        "note": "game time to a harvest; compressed (Veggie lettuce takes about 28 days)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      },
+      "harvestSanityGain": {
+        "value": 10,
+        "unit": "%",
+        "simplified": true,
+        "note": "fresh food and a success",
+        "src": "PLACEHOLDER",
+        "verified": false
+      }
     },
     "events": {
       "storm": {
-        "sol": { "value": 4, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "atSolFraction": { "value": 0.4, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "durationSols": { "value": 1.5, "unit": "sol", "simplified": true, "note": "game value; real global storms last weeks (Opportunity 2018)", "src": "PLACEHOLDER", "verified": false },
-        "dustLoss": { "value": 0.8, "unit": "", "simplified": true, "note": "design doc v2 crisis card 'panel output down 80%'", "src": "PLACEHOLDER", "verified": false },
-        "residualDust": { "value": 0.3, "unit": "", "simplified": true, "note": "dust left on the panels after the storm, until a dust devil; game value", "src": "PLACEHOLDER", "verified": false },
-        "warnSols": { "value": 1, "unit": "sol", "simplified": true, "note": "design doc v2: MEDA warns 1 sol early", "src": "PLACEHOLDER", "verified": false }
+        "sol": {
+          "value": 4,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "atSolFraction": {
+          "value": 0.4,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "durationSols": {
+          "value": 1,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game value; real global storms last weeks (Opportunity 2018). Balanced with K2 outcome runs: 1 sol at 40 % separates b300 (survives) from b200/b150 (freeze)",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "dustLoss": {
+          "value": 0.4,
+          "unit": "",
+          "simplified": true,
+          "note": "game value, balanced: the design doc card says 80 %, but with the 12 kW habitat that kills every design whatever the player chooses (K2 outcome runs). 40 % makes the battery choice decide",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "residualDust": {
+          "value": 0.1,
+          "unit": "",
+          "simplified": true,
+          "note": "dust left on the panels after the storm, until a dust devil; game value, balanced (above ~25 % lasting dust is fatal with the 12 kW habitat)",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "warnSols": {
+          "value": 1,
+          "unit": "sol",
+          "simplified": true,
+          "note": "design doc v2: MEDA warns 1 sol early",
+          "src": "PLACEHOLDER",
+          "verified": false
+        }
       },
       "dustDevil": {
-        "sol": { "value": 8, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "atSolFraction": { "value": 0.55, "unit": "sol", "simplified": true, "note": "game schedule (dust devils form in the afternoon)", "src": "PLACEHOLDER", "verified": false }
+        "sol": {
+          "value": 8,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "atSolFraction": {
+          "value": 0.55,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule (dust devils form in the afternoon)",
+          "src": "PLACEHOLDER",
+          "verified": false
+        }
       },
       "spe": {
-        "sol": { "value": 6, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "atSolFraction": { "value": 0.45, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "durationHours": { "value": 6, "unit": "h", "simplified": true, "note": "design doc: dose rises for hours", "src": "PLACEHOLDER", "verified": false },
-        "extraMSvPerHour": { "value": 0.05, "unit": "mSv/h", "simplified": true, "note": "extra surface dose rate during the event; check Curiosity RAD SPE measurements (e.g. September 2017)", "src": "PLACEHOLDER", "verified": false },
-        "shelterFactor": { "value": 0.5, "unit": "", "simplified": true, "note": "share of the extra dose left behind the water tanks", "src": "PLACEHOLDER", "verified": false },
-        "warnHours": { "value": 2, "unit": "h", "simplified": true, "note": "RAD warning lead time", "src": "PLACEHOLDER", "verified": false },
-        "unnoticedHours": { "value": 2, "unit": "h", "simplified": true, "note": "without RAD, hours of dose taken before the crew notices", "src": "PLACEHOLDER", "verified": false }
+        "sol": {
+          "value": 6,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "atSolFraction": {
+          "value": 0.45,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "durationHours": {
+          "value": 6,
+          "unit": "h",
+          "simplified": true,
+          "note": "design doc: dose rises for hours",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "extraMSvPerHour": {
+          "value": 0.05,
+          "unit": "mSv/h",
+          "simplified": true,
+          "note": "extra surface dose rate during the event; check Curiosity RAD SPE measurements (e.g. September 2017)",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "shelterFactor": {
+          "value": 0.5,
+          "unit": "",
+          "simplified": true,
+          "note": "share of the extra dose left behind the water tanks",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "warnHours": {
+          "value": 2,
+          "unit": "h",
+          "simplified": true,
+          "note": "RAD warning lead time",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "unnoticedHours": {
+          "value": 2,
+          "unit": "h",
+          "simplified": true,
+          "note": "without RAD, hours of dose taken before the crew notices",
+          "src": "PLACEHOLDER",
+          "verified": false
+        }
       },
       "quake": {
-        "sol": { "value": 11, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "atSolFraction": { "value": 0.3, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "shelfHeightM": { "value": 1.8, "unit": "m", "simplified": true, "note": "height the tool falls from", "src": "PLACEHOLDER", "verified": false },
-        "rounds": { "value": 3, "unit": "", "simplified": true, "note": "K3 QTE sample", "src": "PLACEHOLDER", "verified": false },
-        "needed": { "value": 2, "unit": "", "simplified": true, "note": "K3 QTE sample", "src": "PLACEHOLDER", "verified": false },
-        "catchWindow": { "value": 0.15, "unit": "", "simplified": true, "note": "K3 QTE sample", "src": "PLACEHOLDER", "verified": false },
-        "minDelaySeconds": { "value": 0.8, "unit": "s", "simplified": true, "note": "pause before a drop (rolled)", "src": "PLACEHOLDER", "verified": false },
-        "maxDelaySeconds": { "value": 2, "unit": "s", "simplified": true, "note": "pause before a drop (rolled)", "src": "PLACEHOLDER", "verified": false },
-        "shakeSeconds": { "value": 1.5, "unit": "s", "simplified": true, "note": "screen shake length for K4", "src": "PLACEHOLDER", "verified": false },
-        "warnHours": { "value": 0.1, "unit": "h", "simplified": true, "note": "SEIS warning; about 30 real seconds inside (design doc '30 s')", "src": "PLACEHOLDER", "verified": false },
-        "secureHours": { "value": 0.5, "unit": "h", "simplified": true, "note": "time to strap the shelves down", "src": "PLACEHOLDER", "verified": false }
+        "sol": {
+          "value": 11,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "atSolFraction": {
+          "value": 0.3,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "shelfHeightM": {
+          "value": 1.8,
+          "unit": "m",
+          "simplified": true,
+          "note": "height the tool falls from",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "rounds": {
+          "value": 3,
+          "unit": "",
+          "simplified": true,
+          "note": "K3 QTE sample",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "needed": {
+          "value": 2,
+          "unit": "",
+          "simplified": true,
+          "note": "K3 QTE sample",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "catchWindow": {
+          "value": 0.15,
+          "unit": "",
+          "simplified": true,
+          "note": "K3 QTE sample",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "minDelaySeconds": {
+          "value": 0.8,
+          "unit": "s",
+          "simplified": true,
+          "note": "pause before a drop (rolled)",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "maxDelaySeconds": {
+          "value": 2,
+          "unit": "s",
+          "simplified": true,
+          "note": "pause before a drop (rolled)",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "shakeSeconds": {
+          "value": 1.5,
+          "unit": "s",
+          "simplified": true,
+          "note": "screen shake length for K4",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "warnHours": {
+          "value": 0.1,
+          "unit": "h",
+          "simplified": true,
+          "note": "SEIS warning; about 30 real seconds inside (design doc '30 s')",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "secureHours": {
+          "value": 0.5,
+          "unit": "h",
+          "simplified": true,
+          "note": "time to strap the shelves down",
+          "src": "PLACEHOLDER",
+          "verified": false
+        }
       },
       "radiator": {
-        "sol": { "value": 12, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "atSolFraction": { "value": 0.6, "unit": "sol", "simplified": true, "note": "game schedule (afternoon, the warmest time)", "src": "PLACEHOLDER", "verified": false },
-        "cleanEvaHours": { "value": 2, "unit": "h", "simplified": true, "note": "EVA to clean the radiator", "src": "PLACEHOLDER", "verified": false }
+        "sol": {
+          "value": 12,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "atSolFraction": {
+          "value": 0.6,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule (afternoon, the warmest time)",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "cleanEvaHours": {
+          "value": 2,
+          "unit": "h",
+          "simplified": true,
+          "note": "EVA to clean the radiator",
+          "src": "PLACEHOLDER",
+          "verified": false
+        }
       },
       "conjunction": {
-        "sol": { "value": 10, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "atSolFraction": { "value": 0, "unit": "sol", "simplified": true, "note": "game schedule", "src": "PLACEHOLDER", "verified": false },
-        "durationSols": { "value": 2, "unit": "sol", "simplified": true, "note": "design doc v2: 2 sols; the real blackout lasts about two weeks", "src": "PLACEHOLDER", "verified": false }
+        "sol": {
+          "value": 10,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "atSolFraction": {
+          "value": 0,
+          "unit": "sol",
+          "simplified": true,
+          "note": "game schedule",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "durationSols": {
+          "value": 2,
+          "unit": "sol",
+          "simplified": true,
+          "note": "design doc v2: 2 sols; the real blackout lasts about two weeks",
+          "src": "PLACEHOLDER",
+          "verified": false
+        }
       }
     },
     "telecom": {
-      "earthMarsDistanceKm": { "value": 225000000, "unit": "km", "simplified": true, "note": "Earth-Mars distance on the mission dates, for the light delay (M7 and the HUD). TEST value: the mean distance; K1 to take it from JPL Horizons (precomputed, D-005 C7)", "src": "PLACEHOLDER", "verified": false }
+      "earthMarsDistanceKm": {
+        "value": 225000000,
+        "unit": "km",
+        "simplified": true,
+        "note": "Earth-Mars distance on the mission dates, for the light delay (M7 and the HUD). TEST value: the mean distance; K1 to take it from JPL Horizons (precomputed, D-005 C7)",
+        "src": "PLACEHOLDER",
+        "verified": false
+      }
     },
     "minigames": {
       "antennaAlign": {
-        "beamWidthDeg": { "value": 12, "unit": "deg", "simplified": true, "note": "K3 draft (stub_samples alignRows): simplified beam, wide enough to find by ear", "src": "PLACEHOLDER", "verified": false },
-        "successPct": { "value": 90, "unit": "%", "simplified": true, "note": "K3 draft", "src": "PLACEHOLDER", "verified": false },
-        "holdSeconds": { "value": 1, "unit": "s", "simplified": true, "note": "K3 draft", "src": "PLACEHOLDER", "verified": false },
-        "timeLimitSeconds": { "value": 20, "unit": "s", "simplified": true, "note": "K3 draft", "src": "PLACEHOLDER", "verified": false }
+        "beamWidthDeg": {
+          "value": 12,
+          "unit": "deg",
+          "simplified": true,
+          "note": "K3 draft (stub_samples alignRows): simplified beam, wide enough to find by ear",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "successPct": {
+          "value": 90,
+          "unit": "%",
+          "simplified": true,
+          "note": "K3 draft",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "holdSeconds": {
+          "value": 1,
+          "unit": "s",
+          "simplified": true,
+          "note": "K3 draft",
+          "src": "PLACEHOLDER",
+          "verified": false
+        },
+        "timeLimitSeconds": {
+          "value": 20,
+          "unit": "s",
+          "simplified": true,
+          "note": "K3 draft",
+          "src": "PLACEHOLDER",
+          "verified": false
+        }
       }
     }
   },
-
   "fill": {
     "rows": {
       "spareKits": {
-        "k0": { "count": { "value": 0, "unit": "kits", "note": "how many spare kits this option carries", "src": "PLACEHOLDER", "verified": false } },
-        "k1": { "count": { "value": 1, "unit": "kits", "src": "PLACEHOLDER", "verified": false } },
-        "k2": { "count": { "value": 2, "unit": "kits", "src": "PLACEHOLDER", "verified": false } }
+        "k0": {
+          "count": {
+            "value": 0,
+            "unit": "kits",
+            "note": "how many spare kits this option carries",
+            "src": "PLACEHOLDER",
+            "verified": false
+          }
+        },
+        "k1": {
+          "count": {
+            "value": 1,
+            "unit": "kits",
+            "src": "PLACEHOLDER",
+            "verified": false
+          }
+        },
+        "k2": {
+          "count": {
+            "value": 2,
+            "unit": "kits",
+            "src": "PLACEHOLDER",
+            "verified": false
+          }
+        }
       }
     }
   }
