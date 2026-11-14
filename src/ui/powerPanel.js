@@ -12,6 +12,8 @@
 //
 // Load names come from t(`power.load.<id>`). Pinned loads (life support) cannot move and are never shed.
 
+import { icon, watchIconErrors } from './icons.js';
+
 // ---- pure helpers ---------------------------------------------------------------
 
 /**
@@ -65,6 +67,7 @@ export function mountPowerPanel(el, opts) {
   let timer = 0;
 
   el.classList.add('power-panel');
+  watchIconErrors(el);
 
   function render() {
     const s = getStatus();
@@ -103,7 +106,7 @@ export function mountPowerPanel(el, opts) {
           <li class="dl-item pw-item ${l.on ? '' : 'off'} ${l.pinned ? 'pinned' : ''}" ${l.pinned ? '' : 'draggable="true"'} data-id="${l.id}">
             <span class="dl-grip" aria-hidden="true">${l.pinned ? '🔒' : '⋮⋮'}</span>
             <span class="pw-rank">${i + 1}</span>
-            <span class="dl-name">${t(`power.load.${l.id}`)}<small>${l.pinned ? t('power.pinned') : !l.on ? t('power.shed') : preview.has(l.id) ? t('power.wouldShed') : t('power.on')}</small></span>
+            <span class="dl-name"><span>${icon(`load_${l.id}`)} ${t(`power.load.${l.id}`)}</span><small>${l.pinned ? t('power.pinned') : !l.on ? t('power.shed') : preview.has(l.id) ? t('power.wouldShed') : t('power.on')}</small></span>
             <span class="chip">${fmt(l.watts)} W</span>
             <span class="dl-move">${l.pinned ? '' : `
               <button class="dl-btn" data-up="${l.id}" ${i <= pinnedCount ? 'disabled' : ''} aria-label="${t('downlink.up')}">↑</button>

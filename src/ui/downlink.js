@@ -132,7 +132,10 @@ export function connectDownlink(bus, getState) {
 
 // ---- panel ------------------------------------------------------------------
 
-const ICONS = { photo: '📷', report: '📄', experiment: '🧪', family: '✉' };
+import { icon, watchIconErrors } from './icons.js';
+
+const ICONS = { photo: '📷', report: '📄', experiment: '🧪', family: '✉' }; // fallbacks for K4's pkt_* icons
+const pktIcon = (type, size) => icon(`pkt_${type}`, { size, fallback: ICONS[type] || '•' });
 
 /**
  * opts: { state, bus, t, passes, lightDelaySec, locale?, now?() -> T }
@@ -149,6 +152,7 @@ export function mountDownlink(el, opts) {
   let dragId = null;
 
   el.classList.add('downlink');
+  watchIconErrors(el);
 
   function upcoming() {
     const T = now();
@@ -185,7 +189,7 @@ export function mountDownlink(el, opts) {
               const pct = p.mbit > 0 ? Math.round(((p.sentMbit || 0) / p.mbit) * 100) : 0;
               return `<li class="dl-item ${goes ? '' : 'late'}" draggable="true" data-id="${p.id}">
                 <span class="dl-grip" aria-hidden="true">⋮⋮</span>
-                <span class="dl-icon" aria-hidden="true">${ICONS[p.type] || '•'}</span>
+                <span class="dl-icon" aria-hidden="true">${pktIcon(p.type, 24)}</span>
                 <span class="dl-name">${t(`downlink.type.${p.type}`)}<small>${p.labelKey ? t(p.labelKey) : p.id}</small></span>
                 <span class="chip">${fmt(p.mbit)} Mbit</span>
                 ${p.points ? `<span class="chip">★ ${fmt(p.points, 0)}</span>` : ''}
@@ -213,7 +217,7 @@ export function mountDownlink(el, opts) {
               </li>`;
             }).join('')}
           </ul>
-          ${lastSent.length ? `<p class="dl-sent">✔ ${t('downlink.sentNow')} ${lastSent.map((p) => `${ICONS[p.type] || '•'} ${p.labelKey ? t(p.labelKey) : p.id}`).join(', ')}</p>` : ''}
+          ${lastSent.length ? `<p class="dl-sent">✔ ${t('downlink.sentNow')} ${lastSent.map((p) => `${pktIcon(p.type, 16)} ${p.labelKey ? t(p.labelKey) : p.id}`).join(', ')}</p>` : ''}
           <p class="dl-rule">${t('downlink.rule')}</p>
         </section>
       </div>`;

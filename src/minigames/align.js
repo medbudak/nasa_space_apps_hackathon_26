@@ -48,7 +48,10 @@ export function alignScore(config, secondsUsed) {
   return Math.max(10, Math.round(100 * (1 - secondsUsed / config.timeLimitSeconds)));
 }
 
-const ICON = { panel: '☀', antenna: '📡', photo: '📷' };
+import { svgIcon } from '../ui/icons.js';
+
+const ICON = { panel: '☀', antenna: '📡', photo: '📷' }; // fallbacks for K4's mg_dial_* icons
+const DIAL_ICO = { panel: 'mg_dial_panel', antenna: 'mg_dial_antenna', photo: 'mg_dial_camera' };
 
 export const align = {
   mount(el, { config, t, locale, done }) {
@@ -80,7 +83,7 @@ export const align = {
           ${Array.from({ length: 12 }, (_, i) => `<line class="al-tick" x1="0" y1="-96" x2="0" y2="-84" transform="rotate(${i * 30})"></line>`).join('')}
           <g data-needle><line x1="0" y1="0" x2="0" y2="-78" class="al-needle"></line><circle cy="-78" r="7" class="al-tip"></circle></g>
           <circle r="26" class="al-hub"></circle>
-          <text class="al-icon" y="9" text-anchor="middle">${ICON[mode] || '◎'}</text>
+          ${svgIcon(DIAL_ICO[mode], { cx: 0, cy: 0, size: 32, fallback: ICON[mode] || '◎', className: 'al-icon' })}
         </svg>
         <div class="al-readout">
           <div class="al-row"><span>${t(`align.measure.${mode}`)}</span><b data-pct></b></div>

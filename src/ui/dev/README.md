@@ -165,6 +165,6 @@ runs out ("SOLAR CONJUNCTION — SIGNAL LOST"); then "Design the next mission" c
 # UI icons (K4)
 
 `src/ui/icons.js` draws K4's pixel-art icons from `assets/ui/`. Only names in its `AVAILABLE` set are requested, so missing files
-never produce 404s; a listed icon that fails to load falls back to the emoji. Delivered (P1): `hud_*` (16×16, HUD bars) and
-`instr_*` (48×48, Sol 0 instrument cards). When K4 delivers P2/P3 (`obj_*`, `lv_*`, `pwr_*`, `comms_*`, `traj_*`, `ins_*`, `pkt_*`, `fx_*`,
-`load_*`, `mg_*`), add the names to `AVAILABLE`; Sol 0 already looks them up by group (`ICON_PREFIX` in `design.js`).
+never produce 404s; a listed icon that fails to load falls back to the emoji. All 56 icons from K4's list are delivered and in use: `hud_*` (HUD bars), `instr_*`, `obj_*`, `lv_*`, `traj_*`, `pwr_*`, `comms_*`,
+`ins_*`, `battery`, `spare_kit` (Sol 0 cards), `pkt_*` (downlink), `fx_*` (decision-card costs), `load_*` (power panel) and `mg_*`
+(mini-game scenes, drawn as SVG `<image>` through `svgIcon`). A new icon only needs its name added to `AVAILABLE`.

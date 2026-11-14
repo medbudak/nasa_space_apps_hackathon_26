@@ -44,6 +44,8 @@ export function measureResult(trialsSeconds, expectedSeconds, tolerance) {
   };
 }
 
+import { svgIcon, setIconY } from '../ui/icons.js';
+
 export const qte = {
   mount(el, { config, t, locale, done }) {
     return config.mode === 'stopwatch' ? mountStopwatch(el, config, t, locale, done) : mountCatch(el, config, t, locale, done);
@@ -106,12 +108,18 @@ function mountCatch(el, c, t, locale, done) {
   let result = null;
   let pressedShare = null;
 
+  // Centre of the falling object: resting on the shelf -> resting on the ground. The green zone is the
+  // last `catchWindow` share of that height, the same share catchResult() counts as a catch.
+  const TOP = SHELF - 6 - 16;
+  const BOTTOM = 206 - 16;
+  const yAt = (share) => TOP + (BOTTOM - TOP) * share;
+  const zoneTop = yAt(1 - c.catchWindow) - 16;
   ui.svg.innerHTML = `
     <rect x="60" y="${SHELF - 6}" width="90" height="6" class="qte-shelf"></rect>
-    <rect x="0" y="${HAND - (HAND - SHELF) * c.catchWindow}" width="300" height="${(HAND - SHELF) * c.catchWindow + 4}" class="qte-zone"></rect>
-    <text x="230" y="${HAND + 4}" class="qte-hand">✋</text>
+    <rect x="0" y="${zoneTop}" width="300" height="${206 - zoneTop}" class="qte-zone"></rect>
+    ${svgIcon('mg_hand', { cx: 246, cy: BOTTOM - 8, fallback: '✋', className: 'qte-hand' })}
     <rect x="0" y="206" width="300" height="14" class="qte-ground"></rect>
-    <text x="96" y="${SHELF - 10}" class="qte-obj" data-obj>🔧</text>`;
+    ${svgIcon('mg_wrench', { cx: 106, cy: TOP, fallback: '🔧', className: 'qte-obj', attrs: 'data-obj' })}`;
   ui.action.textContent = t('qte.catch.now');
 
   function side() {
@@ -158,14 +166,14 @@ function mountCatch(el, c, t, locale, done) {
     const s = (now - t0) / 1000;
     const delay = (c.delaysSeconds || [])[round] ?? 1;
     if (phase === 'wait') {
-      obj.setAttribute('y', SHELF - 10);
+      setIconY(obj, yAt(0));
       if (s >= delay) { phase = 'fall'; t0 = now; }
     } else if (phase === 'fall') {
       const share = Math.min(1, (s / c.eventSeconds) ** 2);
-      obj.setAttribute('y', SHELF - 10 + (206 - SHELF + 4) * share);
+      setIconY(obj, yAt(share));
       if (share >= 1) endRound(false);
     } else if (phase === 'result' && pressedShare != null) {
-      obj.setAttribute('y', SHELF - 10 + (206 - SHELF + 4) * pressedShare);
+      setIconY(obj, yAt(pressedShare));
     }
     raf = requestAnimationFrame(frame);
   }
@@ -198,9 +206,9 @@ function mountStopwatch(el, c, t, locale, done) {
                <line x1="150" y1="20" x2="150" y2="200" class="qte-mid"></line>
                <rect x="110" y="14" width="80" height="6" class="qte-shelf"></rect>`,
     drop: `<rect x="60" y="24" width="60" height="6" class="qte-shelf"></rect>
-           <text x="80" y="20" class="qte-obj" data-obj>🪨</text>
+           ${svgIcon('mg_rock', { cx: 90, cy: 8, fallback: '🪨', className: 'qte-obj', attrs: 'data-obj' })}
            <rect x="0" y="206" width="300" height="14" class="qte-ground"></rect>`,
-    sound: `<text x="14" y="130" class="qte-obj">🧨</text><text x="250" y="130" class="qte-obj">🎧</text>
+    sound: `${svgIcon('mg_blast', { cx: 30, cy: 120, fallback: '🧨', className: 'qte-obj' })}${svgIcon('mg_headphones', { cx: 266, cy: 120, fallback: '🎧', className: 'qte-obj' })}
             <circle cx="40" cy="120" r="0" class="qte-wave" data-wave></circle>
             <circle cx="40" cy="120" r="0" class="qte-flash" data-flash></circle>
             <text x="230" y="90" class="qte-bang" data-bang></text>`,
@@ -262,7 +270,7 @@ function mountStopwatch(el, c, t, locale, done) {
       const e = s - delay; // time since the event started
       if (c.scene === 'drop') {
         const share = e <= 0 ? 0 : Math.min(1, (e / c.eventSeconds) ** 2);
-        el.querySelector('[data-obj]').setAttribute('y', 20 + 186 * share);
+        setIconY(el.querySelector('[data-obj]'), 8 + (190 - 8) * share); // shelf -> ground
       } else if (c.scene === 'sound') {
         const share = e <= 0 ? 0 : Math.min(1, e / c.eventSeconds);
         el.querySelector('[data-flash]').setAttribute('r', e > 0 && e < 0.12 ? 26 : 0);

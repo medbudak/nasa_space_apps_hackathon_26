@@ -23,7 +23,8 @@ const ICON_PREFIX = {
   instruments: 'instr_', objectives: 'obj_', launchVehicles: 'lv_', trajectories: 'traj_',
   powerSources: 'pwr_', comms: 'comms_', insulation: 'ins_',
 };
-const iconName = (g, id) => (ICON_PREFIX[g] ? `${ICON_PREFIX[g]}${id}` : null);
+const ONE_ICON = { batteries: 'battery', spareKits: 'spare_kit' }; // groups whose options share one icon
+const iconName = (g, id) => ONE_ICON[g] || (ICON_PREFIX[g] ? `${ICON_PREFIX[g]}${id}` : null);
 
 const STEPS = [
   { id: 'objective', groups: ['objectives'] },

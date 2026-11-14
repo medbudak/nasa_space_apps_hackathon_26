@@ -24,21 +24,23 @@
 // `worseWhenUp` marks stats where a rise is bad (used for colouring only).
 // Units are SI symbols and stay the same in both languages; words come from t(`effect.<stat>`).
 // Both K2's current names (energy_kWh, ...) and the older ones are listed until the names are final.
+import { icon, watchIconErrors } from './icons.js';
+
 export const STATS = {
-  energy_kWh: { icon: '⚡', unit: 'kWh' },
-  oxygen_kg: { icon: 'O₂', unit: 'kg' },
-  suitO2Kg: { icon: '🧑‍🚀O₂', unit: 'kg' },
+  energy_kWh: { icon: '⚡', ico: 'fx_energy', unit: 'kWh' },
+  oxygen_kg: { icon: 'O₂', ico: 'fx_o2', unit: 'kg' },
+  suitO2Kg: { icon: '🧑‍🚀O₂', ico: 'fx_suitO2', unit: 'kg' },
   water_kg: { icon: '💧', unit: 'kg' },
   food_kg: { icon: '🥫', unit: 'kg' },
-  radiation_mSv: { icon: '☢', unit: 'mSv', worseWhenUp: true },
-  batteryWh: { icon: '⚡', unit: 'kWh', scale: 1 / 1000 },
-  o2Kg: { icon: 'O₂', unit: 'kg' },
+  radiation_mSv: { icon: '☢', ico: 'fx_radiation', unit: 'mSv', worseWhenUp: true },
+  batteryWh: { icon: '⚡', ico: 'fx_energy', unit: 'kWh', scale: 1 / 1000 },
+  o2Kg: { icon: 'O₂', ico: 'fx_o2', unit: 'kg' },
   waterKg: { icon: '💧', unit: 'kg' },
   foodKg: { icon: '🥫', unit: 'kg' },
-  radiationMSv: { icon: '☢', unit: 'mSv', worseWhenUp: true },
+  radiationMSv: { icon: '☢', ico: 'fx_radiation', unit: 'mSv', worseWhenUp: true },
   sanity: { icon: '🧠', unit: '%' },
   dataMbit: { icon: '📡', unit: 'Mbit' },
-  score: { icon: '★', unitKey: 'unit.points' },
+  score: { icon: '★', ico: 'fx_score', unitKey: 'unit.points' },
 };
 const UNKNOWN_STAT = { icon: '•', unit: '' };
 
@@ -63,6 +65,7 @@ function statPart(key, value, { t, locale, approx = false }) {
   const v = (Number(value) || 0) * (stat.scale ?? 1);
   return {
     icon: stat.icon,
+    ico: stat.ico,
     amount: `${approx ? '≈ ' : ''}${amountText(v, stat, t, locale)}`,
     tone: toneOf(v, stat),
     label: t(`effect.${key}`),
@@ -88,7 +91,7 @@ export function effectParts(effect, { t = (k) => k, locale = 'tr-TR' } = {}) {
       .filter(([, v]) => typeof v === 'number')
       .map(([k, v]) => { const p = statPart(k, v, o); return `≈ ${p.icon} ${p.amount}`; })
       .join(' ');
-    return [{ icon: '⏱', amount, tone: 'bad', label: t('effect.wait'), approx: false, note }];
+    return [{ icon: '⏱', ico: 'fx_time', amount, tone: 'bad', label: t('effect.wait'), approx: false, note }];
   }
   return []; // flag, eva and unknown types are internal
 }
@@ -109,6 +112,7 @@ export function mountDecisionCards(root, opts) {
 
   const layer = document.createElement('div');
   layer.className = 'decision-layer';
+  watchIconErrors(layer);
   root.appendChild(layer);
 
   function onOpen(card) {
@@ -166,7 +170,7 @@ export function mountDecisionCards(root, opts) {
     const parts = effects.flatMap((e) => effectParts(e, { t: opts.t, locale: locale() }));
     if (parts.length === 0) return `<span class="effect neutral">${opts.t('decision.noCost')}</span>`;
     return parts.map((f) => `<span class="effect ${f.tone} ${f.approx ? 'approx' : ''}" title="${f.label}${f.approx ? ` (${opts.t('decision.estimate')})` : ''}">`
-      + `<i aria-hidden="true">${f.icon}</i><span class="sr-only">${f.label} </span>${f.amount}`
+      + `${f.ico ? icon(f.ico, { fallback: f.icon }) : `<i aria-hidden="true">${f.icon}</i>`}<span class="sr-only">${f.label} </span>${f.amount}`
       + `${f.note ? ` <small>${f.note}</small>` : ''}</span>`).join('');
   }
 

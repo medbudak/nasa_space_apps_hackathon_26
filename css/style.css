@@ -104,6 +104,9 @@ button { font: inherit; color: inherit; }
 .card.has-ico { padding-left: 74px; }
 .card-ico { position: absolute; left: 14px; top: 14px; width: 48px; height: 48px; }
 .ico { image-rendering: pixelated; vertical-align: -3px; }
+.svg-ico { image-rendering: pixelated; }
+.dl-icon .ico { vertical-align: middle; }
+.dl-name > span .ico, .effect .ico { vertical-align: -3px; }
 .ico-fallback { font-style: normal; }
 .card-real { font-size: 14px; color: var(--sunset-blue); font-weight: 600; letter-spacing: .02em; }
 .card-stats { display: flex; flex-wrap: wrap; gap: 5px; }
