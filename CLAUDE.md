@@ -114,6 +114,10 @@ REFERENCES.md is the running log for all of this. Keep it current so the submiss
 - Keep the README's run instructions up to date so any teammate, or a judge, can start the project.
 - The final project link must open for a judge without setup problems. Test it from a clean machine or a private browser window before submitting.
 
+## Game dev skills (team plugins)
+
+`.claude/settings.json` adds the `awesome-gamedev-agent-skills` marketplace (github.com/gamedev-skills/awesome-gamedev-agent-skills, Apache-2.0) and enables its `workflows` and `disciplines` plugins. Claude Code offers to install them when you open the repo; accept, or run `/plugin` to review. Useful ones: `game-jam`, `game-ui-ux`, `game-feel`, `level-design`, `save-systems`, `performance-optimization`. They are plain instruction files with no hooks or scripts. Use them for UX, feel and pacing; real-world numbers still come only from sourced data (D-009).
+
 ## Optional: i-have-adhd skill
 
 `.claude/skills/i-have-adhd/` makes Claude answer action-first: the next step first, numbered steps, no filler. It is off by default. Turn it on with `/i-have-adhd` and off with "stop adhd mode". Source: github.com/ayghri/i-have-adhd (MIT License).
