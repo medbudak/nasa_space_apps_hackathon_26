@@ -30,6 +30,10 @@ export function createState(seed = Math.floor(Math.random() * 2 ** 32)) {
     env: null, // { outsideC, insideC }
     life: null, // { o2Kg, radiationMSv, ... }
     events: null, // { fired, pending, flags }
+    // EVA, body and loss, also filled by K2 (survival.js):
+    eva: null, // { outside, distanceM, suitO2Kg, jointsFrozen, thawed, speedFactor, requiredO2Kg, noReturn, nearWreck, cardShown }
+    body: null, // { cold, coldHours }
+    loss: null, // set once when a loss condition is met: { reasonKey, sol, solFraction, values }
     inventory: { scrap: 0, ice: 0, fertilizer: 0, rhu: 0, roverParts: [] },
     decisionLog: [], // { sol, eventId, choice, effects: [...] }
     dataBudget: { perSol: 0, used: 0, queue: [] }, // queue items: { type, id, mbit, points }

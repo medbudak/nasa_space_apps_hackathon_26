@@ -40,9 +40,13 @@ export function surfaceTemp({ minC, maxC, solFraction }) {
   return minC + ((maxC - minC) * (1 - Math.cos(Math.PI * progress))) / 2;
 }
 
-/** Heater power in W to hold the habitat at insideC. P = G · factor · max(0, Tin − Tout). */
-export function heatingPower({ insideC, outsideC, conductanceWK, factor = 1 }) {
-  return Math.max(0, insideC - outsideC) * (conductanceWK ?? 0) * factor;
+/**
+ * Habitat air temperature in °C after dtHours without heating (Newton's law of cooling):
+ * the inside moves toward the outside with time constant coolingTimeH.
+ * Heating is part of the habitat power load, so this only applies while that load is cut.
+ */
+export function habitatTemp({ insideC, outsideC, dtHours, coolingTimeH }) {
+  return outsideC + (insideC - outsideC) * Math.exp(-dtHours / coolingTimeH);
 }
 
 /** Tsiolkovsky rocket equation in m/s. Δv = Isp · g0 · ln(m0 / mf) */
@@ -97,24 +101,33 @@ export function withinTolerance(measured, expected, tolerance) {
 
 // --- Sol 0 design evaluation -------------------------------------------------
 
-const NIGHT_STEPS = 96; // integration steps over one sol
+const SOL_STEPS = 96; // integration steps over one sol
 
 const find = (list, id) => list?.find((x) => x.id === id);
 const v = (rowObj, field) => rowObj?.[field]?.value ?? 0;
 
 /**
- * Night energy in kWh for one sol at a site: habitat load + heating − continuous power,
+ * Night energy in kWh for one sol at a site: habitat load − continuous power,
  * integrated over the hours the Sun is down. Uses the same functions as the surface simulation.
  */
-export function nightEnergyKWh({ latitudeDeg, minC, maxC, insideC, loadW, conductanceWK, factor, continuousW, solHours }) {
-  const dtHours = solHours / NIGHT_STEPS;
+export function nightEnergyKWh({ latitudeDeg, loadW, continuousW, solHours }) {
+  const dtHours = solHours / SOL_STEPS;
   let wh = 0;
-  for (let i = 0; i < NIGHT_STEPS; i++) {
-    const f = (i + 0.5) / NIGHT_STEPS;
+  for (let i = 0; i < SOL_STEPS; i++) {
+    const f = (i + 0.5) / SOL_STEPS;
     if (sunCos(f, latitudeDeg) > 0) continue;
-    const outsideC = surfaceTemp({ minC, maxC, solFraction: f });
-    const heaterW = heatingPower({ insideC, outsideC, conductanceWK, factor });
-    wh += Math.max(0, loadW + heaterW - continuousW) * dtHours;
+    wh += Math.max(0, loadW - continuousW) * dtHours;
+  }
+  return wh / 1000;
+}
+
+/** Solar energy in kWh over one clear sol at a site (no dust). */
+export function solarEnergyKWh({ latitudeDeg, irradiance, area, efficiency, solHours, dust = 0 }) {
+  const dtHours = solHours / SOL_STEPS;
+  let wh = 0;
+  for (let i = 0; i < SOL_STEPS; i++) {
+    const cosZ = sunCos((i + 0.5) / SOL_STEPS, latitudeDeg);
+    wh += solarPower({ irradiance, area, efficiency, cosZ, dust }) * dtHours;
   }
   return wh / 1000;
 }
@@ -135,7 +148,6 @@ export function evaluateDesign(design, data) {
   const comms = find(data.comms, design.commsId);
   const kits = find(data.spareKits, design.spareKitsId);
   const instruments = (design.instrumentIds ?? []).map((id) => find(data.instruments, id)).filter(Boolean);
-  const thin = find(data.insulation, 'thin');
 
   const parts = [traj, power, battery, insulation, comms, kits, ...instruments];
   const unresearched = [];
@@ -156,20 +168,34 @@ export function evaluateDesign(design, data) {
   const mass = v(data.rules, 'baseMassKg') + parts.reduce((sum, p) => sum + v(p, 'massKg') + v(p, 'rtgMassKg'), 0);
   const instrumentDayW = instruments.reduce((sum, p) => sum + v(p, 'powerW'), 0);
 
+  const solHours = v(data.mars, 'solHours');
+  const latitudeDeg = v(site, 'latitudeDeg');
+  const habitatW = v(data.rules, 'habitatPowerW');
+  const continuousW = v(power, 'continuousW');
   const nightNeedKWh = site
     ? nightEnergyKWh({
-        latitudeDeg: v(site, 'latitudeDeg'),
-        minC: v(site, 'nightMinC'),
-        maxC: v(site, 'dayMaxC'),
-        insideC: v(data.thermal, 'habitatTargetC'),
-        loadW: v(data.rules, 'habitatPowerW') + (data.rules.instrumentsAtNight?.value ? instrumentDayW : 0),
-        conductanceWK: thin?.conductanceWK?.value ?? 0,
-        factor: insulation ? v(insulation, 'heatingFactor') : 1,
-        continuousW: v(power, 'continuousW'),
-        solHours: v(data.mars, 'solHours'),
+        latitudeDeg,
+        loadW: habitatW + (data.rules.instrumentsAtNight?.value ? instrumentDayW : 0),
+        continuousW,
+        solHours,
       })
     : 0;
-  if (site) track(thin, 'conductanceWK', 'thin');
+  // A whole clear sol: what the panels and continuous sources make versus what the habitat uses.
+  // Negative means the battery runs down a little more every sol, even without dust.
+  const solarKWhPerSol = site
+    ? solarEnergyKWh({
+        latitudeDeg,
+        irradiance: v(data.mars, 'solarIrradianceWm2'),
+        area: v(power, 'panelAreaM2'),
+        efficiency: v(power, 'panelEfficiency'),
+        solHours,
+      })
+    : 0;
+  // Instruments run in daylight only (half a sol at equinox) unless rules.instrumentsAtNight.
+  const instrumentHours = data.rules.instrumentsAtNight?.value ? solHours : solHours / 2;
+  const netKWhPerSol = site
+    ? solarKWhPerSol + ((continuousW - habitatW) * solHours - instrumentDayW * instrumentHours) / 1000
+    : 0;
 
   return {
     cost,
@@ -177,6 +203,9 @@ export function evaluateDesign(design, data) {
     mass,
     capacity: v(rocket, 'capacityKg'),
     nightNeedKWh,
+    solarKWhPerSol,
+    netKWhPerSol,
+    coolingTimeH: v(insulation, 'coolingTimeH'),
     batteryKWh: v(battery, 'capacityKWh'),
     instrumentDayW,
     transitDays: v(traj, 'transitDays'),

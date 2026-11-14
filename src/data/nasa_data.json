@@ -12,6 +12,13 @@
       "unit": "km/s",
       "src": "https://physics.nist.gov/cgi-bin/cuu/Value?c",
       "verified": true
+    },
+    "solarIrradianceEarthWm2": {
+      "value": 1361,
+      "unit": "W/m^2",
+      "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "verified": true,
+      "note": "Earth column of the Mars Fact Sheet comparison table"
     }
   },
   "mars": {
@@ -135,11 +142,11 @@
       "note": "\"Food Solids; Mass (without packaging) kg/CM-d 0.800\""
     },
     "o2StartKg": {
-      "value": null,
+      "value": 15.4,
       "unit": "kg",
-      "src": "PLACEHOLDER",
-      "verified": false,
-      "todo": "starting O2 reserve: team sets the planned days, then o2KgPerCrewPerDay × days"
+      "src": "game: K1 decision: 14 sols of BVAD O2 (0.895 kg/day × 14 × 24.6597/24 = 12.9 kg) + 20% reserve",
+      "verified": true,
+      "simplified": true
     },
     "suitO2Kg": {
       "value": 0.77,
@@ -177,6 +184,13 @@
       "src": "https://ntrs.nasa.gov/api/citations/20210024855/downloads/BVAD_2.15.22-final.pdf",
       "verified": true,
       "note": "BVAD Rev 2 Table 4-1 nominal cabin temperature 296 K; NASA-STD-3001 comfort zone 20–25 °C"
+    },
+    "cabinMinC": {
+      "value": 18,
+      "unit": "C",
+      "src": "https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf",
+      "verified": true,
+      "note": "NASA-STD-3001 Vol 2 [V2 6012]: allowed cabin range \"anchored at 18°C\"; below this counts as dangerous cold"
     },
     "actuatorMinC": {
       "value": -55,
@@ -369,11 +383,11 @@
       "note": "DRA 5.0 Addendum: \"Estimated power requirement for the habitat is 12 kWe during both day and night\", habitat for a crew of four"
     },
     "budgetMUSD": {
-      "value": null,
+      "value": 500,
       "unit": "M$",
-      "src": "PLACEHOLDER",
-      "verified": false,
-      "todo": "team decision; reference: Mars 2020 \"$2.4 billion to build and launch\" (https://www.jpl.nasa.gov/news/press_kits/mars_2020/launch/quick_facts/), InSight $813.8M"
+      "src": "game: K1 balance: a solar design fits, a fission design must drop instruments; reference costs Mars 2020 $2.4B, InSight $813.8M",
+      "verified": true,
+      "simplified": true
     },
     "baseMassKg": {
       "value": null,
@@ -402,6 +416,22 @@
       "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
       "verified": true,
       "note": "\"reference 40-t useful payload on the surface of Mars\" per lander"
+    }
+  },
+  "loss": {
+    "coldHours": {
+      "value": 2,
+      "unit": "h",
+      "src": "game: D-006: body temperature below the threshold for 2 game-hours",
+      "verified": true,
+      "simplified": true
+    },
+    "radiationLimitMSv": {
+      "value": null,
+      "unit": "mSv",
+      "src": "PLACEHOLDER",
+      "verified": false,
+      "todo": "NASA-STD-3001 Vol 1 career effective dose limit; verify the 600 mSv figure on the standard"
     }
   },
   "events": {
@@ -588,11 +618,11 @@
         "todo": "extra propellant: rocket equation with Δv for both transfers (Trajectory Browser)"
       },
       "costMUSD": {
-        "value": null,
+        "value": 60,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "cost of the extra propellant/stage, official source"
+        "src": "game: K1 balance: extra propellant and stage",
+        "verified": true,
+        "simplified": true
       }
     }
   ],
@@ -705,25 +735,32 @@
         "note": "\"nominal efficiency of 30% and a high of 34%\" (3- to 5-junction cells)"
       },
       "panelAreaM2": {
-        "value": null,
+        "value": 250,
         "unit": "m²",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "team decides the panel-area option; then mass from SST SoA specific power"
+        "src": "game: K1 decision: ~17% above the ~214 m² a 12 kWe habitat needs at the equator on a clear sol",
+        "verified": true,
+        "simplified": true
       },
       "massKg": {
-        "value": null,
+        "value": 3402.5,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "array mass from SST SoA specific power (W/kg)"
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "derived: 250 m² × 1361 W/m² (1 AU rating) × 0.30 / 30 W/kg; SST SoA specific power \"strongly clustered around ~30 W/kg\""
+      },
+      "arraySpecificPowerWkg": {
+        "value": 30,
+        "unit": "W/kg",
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "\"strongly clustered around ~30 W/kg\""
       },
       "costMUSD": {
-        "value": null,
+        "value": 60,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       },
       "continuousW": {
         "value": 0,
@@ -757,25 +794,25 @@
         "note": "\"nominal efficiency of 30%\""
       },
       "panelAreaM2": {
-        "value": null,
+        "value": 250,
         "unit": "m²",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "same panel option as solar"
+        "src": "game: K1 decision: ~17% above the ~214 m² a 12 kWe habitat needs at the equator on a clear sol",
+        "verified": true,
+        "simplified": true
       },
       "massKg": {
-        "value": null,
+        "value": 3402.5,
         "unit": "kg",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "panel mass + MMRTG 45 kg"
+        "src": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems",
+        "verified": true,
+        "note": "derived: 250 m² × 1361 W/m² (1 AU rating) × 0.30 / 30 W/kg; SST SoA specific power \"strongly clustered around ~30 W/kg\""
       },
       "costMUSD": {
-        "value": null,
+        "value": 60,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "solar panel cost, official source"
+        "src": "game: K1 balance: panels only; the RTG cost is rtgCostMUSD",
+        "verified": true,
+        "simplified": true
       },
       "rtgCostMUSD": {
         "value": 77,
@@ -850,11 +887,11 @@
         "note": "150 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
       },
       "costMUSD": {
-        "value": null,
+        "value": 30,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -874,11 +911,11 @@
         "note": "200 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
       },
       "costMUSD": {
-        "value": null,
+        "value": 40,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -898,30 +935,23 @@
         "note": "300 kWh at 150 Wh/kg, the low end of \"150-270 Wh/kg\" for Li-ion cells (cells only, no packaging)"
       },
       "costMUSD": {
-        "value": null,
+        "value": 60,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       }
     }
   ],
   "insulation": [
     {
       "id": "thin",
-      "heatingFactor": {
-        "value": 1,
-        "unit": "",
-        "src": "game: design doc v2, baseline insulation",
+      "coolingTimeH": {
+        "value": 10,
+        "unit": "h",
+        "src": "game: K1 decision: heating is part of the 12 kWe habitat load; with power cut the habitat cools toward outside air with this time constant (simplified)",
         "verified": true,
         "simplified": true
-      },
-      "conductanceWK": {
-        "value": null,
-        "unit": "W/K",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "habitat heat loss from a NASA habitat thermal study; note DRA 5.0: Mars air \"inhibit[s] vacuum-dependent thermal management schemes\" like MLI"
       },
       "massKg": {
         "value": null,
@@ -931,19 +961,19 @@
         "todo": "insulation areal density × habitat area"
       },
       "costMUSD": {
-        "value": null,
+        "value": 5,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
       "id": "thick",
-      "heatingFactor": {
-        "value": 0.5,
-        "unit": "",
-        "src": "game: design doc v2: thick insulation halves night heating",
+      "coolingTimeH": {
+        "value": 20,
+        "unit": "h",
+        "src": "game: K1 decision: thick insulation doubles the cooling time (design doc v2: thick halves heat loss) (simplified)",
         "verified": true,
         "simplified": true
       },
@@ -955,11 +985,11 @@
         "todo": "insulation areal density × habitat area"
       },
       "costMUSD": {
-        "value": null,
+        "value": 15,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       }
     }
   ],
@@ -990,11 +1020,11 @@
       },
       "usePer": "sol",
       "costMUSD": {
-        "value": null,
+        "value": 20,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1023,11 +1053,11 @@
       },
       "usePer": "sol",
       "costMUSD": {
-        "value": null,
+        "value": 10,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1056,11 +1086,11 @@
       },
       "usePer": "sol",
       "costMUSD": {
-        "value": null,
+        "value": 30,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1089,11 +1119,11 @@
       },
       "usePer": "sol",
       "costMUSD": {
-        "value": null,
+        "value": 5,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1122,11 +1152,11 @@
       },
       "usePer": "sounding",
       "costMUSD": {
-        "value": null,
+        "value": 10,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1155,11 +1185,11 @@
       },
       "usePer": "experiment",
       "costMUSD": {
-        "value": null,
+        "value": 25,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1195,11 +1225,11 @@
       },
       "usePer": "none",
       "costMUSD": {
-        "value": null,
+        "value": 35,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1228,11 +1258,11 @@
       },
       "usePer": "sol",
       "costMUSD": {
-        "value": null,
+        "value": 15,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1261,11 +1291,11 @@
       },
       "usePer": "flight",
       "costMUSD": {
-        "value": null,
+        "value": 40,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (instrument costs are not published per unit)",
+        "verified": true,
+        "simplified": true
       }
     }
   ],
@@ -1301,11 +1331,11 @@
         "note": "Electra-Lite radio 3000 g (radio only, no antenna)"
       },
       "costMUSD": {
-        "value": null,
+        "value": 10,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1346,11 +1376,11 @@
         "todo": "X-band radio + high-gain antenna mass, official source"
       },
       "costMUSD": {
-        "value": null,
+        "value": 35,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "official cost source"
+        "src": "game: K1 balance (no public unit cost)",
+        "verified": true,
+        "simplified": true
       }
     }
   ],
@@ -1382,11 +1412,11 @@
         "todo": "spare parts kit mass, source or team decision"
       },
       "costMUSD": {
-        "value": null,
+        "value": 10,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "source or team decision"
+        "src": "game: K1 balance",
+        "verified": true,
+        "simplified": true
       }
     },
     {
@@ -1399,11 +1429,11 @@
         "todo": "spare parts kit mass, source or team decision"
       },
       "costMUSD": {
-        "value": null,
+        "value": 20,
         "unit": "M$",
-        "src": "PLACEHOLDER",
-        "verified": false,
-        "todo": "source or team decision"
+        "src": "game: K1 balance",
+        "verified": true,
+        "simplified": true
       }
     }
   ],

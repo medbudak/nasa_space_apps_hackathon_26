@@ -43,11 +43,12 @@ test('surface temperature: coldest at sunrise, warmest at noon', () => {
   for (let f = 0; f < 1; f += 0.01) assert.ok(at(f) >= -83 - 1e-9 && at(f) <= -23 + 1e-9);
 });
 
-test('heating power follows the temperature difference', () => {
-  close(eng.heatingPower({ insideC: 20, outsideC: -80, conductanceWK: 10 }), 1000);
-  close(eng.heatingPower({ insideC: 20, outsideC: -80, conductanceWK: 10, factor: 0.5 }), 500);
-  assert.equal(eng.heatingPower({ insideC: 20, outsideC: 25, conductanceWK: 10 }), 0);
-  assert.equal(eng.heatingPower({ insideC: 20, outsideC: -80, conductanceWK: null }), 0, 'unresearched conductance adds nothing');
+test('habitat cools toward the outside air without power', () => {
+  const after = (dtHours, coolingTimeH) => eng.habitatTemp({ insideC: 22, outsideC: -78, dtHours, coolingTimeH });
+  close(after(0, 10), 22);
+  close(after(10, 10), -78 + 100 / Math.E); // one time constant: 63% of the way
+  assert.ok(after(5, 20) > after(5, 10), 'thick insulation keeps it warmer for longer');
+  assert.ok(after(1000, 10) - -78 < 1e-6);
 });
 
 test('rocket equation: mass ratio e gives Isp · g0', () => {
@@ -89,16 +90,16 @@ test('mass margin and tolerance', () => {
 });
 
 test('night energy: only the hours without Sun count', () => {
-  const kwh = eng.nightEnergyKWh({
-    latitudeDeg: 0, minC: -70, maxC: 0, insideC: 20, loadW: 1000,
-    conductanceWK: 0, factor: 1, continuousW: 0, solHours: 24,
-  });
+  const kwh = eng.nightEnergyKWh({ latitudeDeg: 0, loadW: 1000, continuousW: 0, solHours: 24 });
   close(kwh, 12, 0.01); // 1 kW for the 12 dark hours of an equinox sol
-  const withRtg = eng.nightEnergyKWh({
-    latitudeDeg: 0, minC: -70, maxC: 0, insideC: 20, loadW: 1000,
-    conductanceWK: 0, factor: 1, continuousW: 110, solHours: 24,
-  });
+  const withRtg = eng.nightEnergyKWh({ latitudeDeg: 0, loadW: 1000, continuousW: 110, solHours: 24 });
   close(withRtg, 12 * 0.89, 0.01);
+});
+
+test('solar energy per sol: S · A · η · sol/π at the equator, less at 41°N', () => {
+  const at = (latitudeDeg) => eng.solarEnergyKWh({ latitudeDeg, irradiance: 586.2, area: 1, efficiency: 0.3, solHours: 24 });
+  close(at(0), (586.2 * 0.3 * 24) / Math.PI / 1000, 0.002);
+  close(at(41) / at(0), Math.cos((41 * Math.PI) / 180), 0.01);
 });
 
 test('evaluateDesign sums the chosen rows and flags unresearched values', () => {
@@ -114,5 +115,20 @@ test('evaluateDesign sums the chosen rows and flags unresearched values', () => 
   assert.equal(s.transitDays, 288);
   assert.ok(s.mass >= 45 + 1333.3, 'RTG and battery mass are counted');
   assert.ok(s.nightNeedKWh > 0);
+  assert.equal(s.coolingTimeH, 20);
   assert.ok(s.unresearched.includes('rules.baseMassKg'), 'base mass is still unresearched');
+});
+
+test('landing site changes the solar balance: 250 m² is enough at the equator, not at 41°N', () => {
+  const base = {
+    objectiveId: 'balanced', rocketId: 'falconHeavy', trajectoryId: 'hohmann', powerId: 'solar',
+    batteryId: 'b200', insulationId: 'thin', instrumentIds: [], commsId: 'relay', spareKitsId: 'k0',
+  };
+  const equator = eng.evaluateDesign({ ...base, siteId: 'meridiani' }, data);
+  const north = eng.evaluateDesign({ ...base, siteId: 'arcadia' }, data);
+  assert.ok(equator.netKWhPerSol > 0, `equator net ${equator.netKWhPerSol}`);
+  assert.ok(north.netKWhPerSol < 0, `Arcadia net ${north.netKWhPerSol}`);
+  const fission = eng.evaluateDesign({ ...base, siteId: 'arcadia', powerId: 'fission' }, data);
+  assert.equal(fission.nightNeedKWh, 0);
+  assert.ok(fission.netKWhPerSol > 0);
 });
