@@ -14,6 +14,7 @@ import { loadNasaData, getData } from './core/nasaData.js';
 import { loadStory, t, getLang, setLang } from './core/i18n.js';
 import { getState, newGame, load, save } from './core/state.js';
 import { evaluateDesign } from './core/engineering.js';
+import { backdrop } from './core/backdrop.js';
 
 const locale = () => (getLang() === 'tr' ? 'tr-TR' : 'en-US');
 const shared = []; // mounted shared panels, refreshed after a language switch
@@ -47,13 +48,66 @@ const titleScene = {
   enter({ goTo }) {
     const heading = document.createElement('h1');
     heading.textContent = t('title.name');
+    heading.style.cssText = 'font-size:48px;margin:0;text-shadow:0 2px 12px rgba(0,0,0,.8);';
     const start = button(t('title.newMission'), () => {
       newGame(seedFromUrl());
       goTo('design');
     });
+    start.className = 'btn';
     const items = [heading, start];
-    if (load()) items.push(button(t('title.continue'), () => goTo(getState().scene === 'title' ? 'design' : getState().scene)));
-    ui.append(panel(...items));
+    if (load()) {
+      const resume = button(t('title.continue'), () => goTo(getState().scene === 'title' ? 'design' : getState().scene));
+      resume.className = 'btn ghost';
+      items.push(resume);
+    }
+    ui.append(backdrop('assets/ending/cover_thumbnail.png', 0.25), panel(...items));
+  },
+};
+
+// Launch and transit cutscene between Sol 0 and Sol 1 (C1: the cruise is not playable).
+// Each slide shows K4's artwork for a few seconds; a click, Enter or Space moves on.
+const SLIDE_MS = 3500;
+const launchScene = {
+  timer: 0,
+  onKey: null,
+  enter({ state, data, t, goTo, ui }) {
+    const rocket = data.launchVehicles.find((r) => r.id === state.design.rocketId);
+    const slides = [
+      { path: 'assets/screens/scr_launch.png', text: t('cutscene.launch', { rocket: rocket?.realName ?? '' }) },
+      { path: 'assets/screens/scr_transit.png', text: t('cutscene.transit', { days: state.designSummary?.transitDays ?? '' }) },
+    ];
+    let i = -1;
+    const next = () => {
+      clearTimeout(this.timer);
+      i += 1;
+      if (i >= slides.length) {
+        goTo('surface');
+        return;
+      }
+      const caption = document.createElement('p');
+      caption.textContent = slides[i].text;
+      caption.style.cssText = 'position:absolute;left:0;right:0;bottom:8%;margin:0;text-align:center;font-size:22px;text-shadow:0 2px 8px #000;';
+      const skip = button(t('cutscene.skip'), (e) => {
+        e.stopPropagation();
+        i = slides.length - 1;
+        next();
+      });
+      skip.className = 'btn ghost';
+      skip.style.cssText = 'position:absolute;right:16px;bottom:16px;';
+      const slide = backdrop(slides[i].path, 0.15);
+      slide.addEventListener('click', next);
+      ui.replaceChildren(slide, caption, skip);
+      this.timer = setTimeout(next, SLIDE_MS);
+    };
+    this.onKey = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') next();
+    };
+    window.addEventListener('keydown', this.onKey);
+    next();
+  },
+  exit() {
+    clearTimeout(this.timer);
+    window.removeEventListener('keydown', this.onKey);
   },
 };
 
@@ -87,7 +141,7 @@ function designScene(mountDesign) {
         onLaunch: (design, summary) => {
           Object.assign(state.design, design);
           state.designSummary = summary;
-          goTo('surface');
+          goTo('launch');
         },
       });
     },
@@ -124,6 +178,7 @@ function withHud(scene) {
 
 async function loadScene(name) {
   if (name === 'title') return titleScene;
+  if (name === 'launch') return launchScene;
   const info = SCENES[name];
   if (!info) throw new Error(`unknown scene "${name}"`);
   try {

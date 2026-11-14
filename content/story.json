@@ -379,6 +379,11 @@
     "cause.design.instrumentIds": "Instruments: {value}",
     "surface.error.cannotStart": "The surface simulation could not start: {detail}",
     "surface.dev.testData": "DEV: test values fill the gaps in nasa_data.json",
+    "cutscene.launch": "Liftoff on {rocket}",
+    "cutscene.transit": "Cruise to Mars: {days} days",
+    "cutscene.skip": "Skip",
+    "surface.hint.exit": "E: go outside (EVA)",
+    "surface.hint.enter": "E: go back inside",
     "consequence.massMarginKept": "kept a 10% mass margin"
   },
   "tr": {
@@ -760,6 +765,11 @@
     "cause.design.instrumentIds": "Aletler: {value}",
     "surface.error.cannotStart": "Yüzey simülasyonu başlatılamadı: {detail}",
     "surface.dev.testData": "GELİŞTİRME: nasa_data.json boşlukları test değerleriyle dolduruldu",
+    "cutscene.launch": "{rocket} ile kalkış",
+    "cutscene.transit": "Mars yolculuğu: {days} gün",
+    "cutscene.skip": "Geç",
+    "surface.hint.exit": "E: dışarı çık (EVA)",
+    "surface.hint.enter": "E: içeri gir",
     "consequence.massMarginKept": "%10 kütle marjı bırakıldı"
   }
 }

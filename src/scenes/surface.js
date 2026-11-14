@@ -140,7 +140,11 @@ function walk(dt) {
   const metres = walkSpeedMs(state, ctx.data) * gameSeconds;
   scene.astronautX += right ? metres : -metres;
   scene.facing = right ? 1 : -1;
-  setEvaPosition(state, { distanceM: Math.abs(scene.astronautX) });
+  // A lander with RHUs close by can shelter the astronaut (K2's no-return card, option C).
+  const nearWreck = (ctx.data.wrecks ?? []).some(
+    (w) => w.salvage === 'rhu' && Math.abs((w.corridorM?.value ?? Infinity) - scene.astronautX) <= WRECK_RADIUS_M,
+  );
+  setEvaPosition(state, { distanceM: Math.abs(scene.astronautX), nearWreck });
 }
 
 function toggleEva(state, data) {
@@ -162,6 +166,19 @@ const BACKGROUNDS = {
   meridiani: 'assets/backgrounds/bg_meridiani_day.png',
   jezero: 'assets/backgrounds/bg_jezero_sunset.png',
   arcadia: 'assets/backgrounds/bg_arcadia_day.png',
+  storm: 'assets/backgrounds/bg_storm.png',
+};
+const SCREENS = { habitat: 'assets/screens/scr_habitat_cutaway.png' };
+const VFX = { storm: 'assets/vfx/vfx_dust_storm.png', frost: 'assets/vfx/vfx_frost_1.png' };
+const STORM_DUST = 0.5; // panel dust share drawn as a storm (display only, no game rule)
+const WRECK_RADIUS_M = 10; // how close counts as "at the wreck" (shelter by its RHUs)
+// Spirit and Opportunity were twin rovers, so Opportunity uses Spirit's sprite.
+const WRECK_SPRITES = {
+  opportunity: { file: 'assets/sprites/rover_spirit.png', w: 96, h: 64 },
+  spirit: { file: 'assets/sprites/rover_spirit.png', w: 96, h: 64 },
+  phoenix: { file: 'assets/sprites/lander_phoenix.png', w: 96, h: 64 },
+  insight: { file: 'assets/sprites/lander_insight.png', w: 96, h: 64 },
+  beagle2: { file: 'assets/sprites/lander_beagle2.png', w: 48, h: 48 },
 };
 const SPRITES = {
   walk: { file: 'assets/sprites/astronaut_walk.png', w: 48, h: 64 },
@@ -197,6 +214,45 @@ function drawSprite(g, sprite, x, groundY, flip = false) {
 }
 
 function draw() {
+  if (scene.state.life.eva.outside) drawOutside();
+  else drawInside();
+}
+
+// Inside: K4's habitat cutaway. Lights dim when the habitat is unpowered, blue tint when it is cold.
+function drawInside() {
+  const { g, canvas, state, ctx } = scene;
+  const W = canvas.width;
+  const H = canvas.height;
+  const cutaway = image(SCREENS.habitat);
+  if (cutaway) g.drawImage(cutaway, 0, 0, W, H);
+  else {
+    g.fillStyle = '#2a2230';
+    g.fillRect(0, 0, W, H);
+  }
+  if (state.power.deficitW > 0) {
+    g.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    g.fillRect(0, 0, W, H);
+  }
+  if (state.env.insideC <= val(ctx.data.thermal.cabinMinC, 'thermal.cabinMinC')) {
+    g.fillStyle = 'rgba(120, 170, 255, 0.25)';
+    g.fillRect(0, 0, W, H);
+  }
+  drawSprite(g, SPRITES.walk, W * 0.5, H * 0.9, scene.facing < 0);
+  if (!state.events.pending) hint(scene.t('surface.hint.exit'), W / 2, H * 0.97);
+}
+
+function hint(text, x, y) {
+  const { g } = scene;
+  g.font = '16px system-ui, sans-serif';
+  g.textAlign = 'center';
+  g.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  const w = (g.measureText(text)?.width ?? 0) + 20;
+  g.fillRect(x - w / 2, y - 18, w, 26);
+  g.fillStyle = '#f2e8e4';
+  g.fillText(text, x, y);
+}
+
+function drawOutside() {
   const { g, canvas, state, ctx, astronautX } = scene;
   const W = canvas.width;
   const H = canvas.height;
@@ -204,11 +260,12 @@ function draw() {
   const pxPerM = W / VIEW_WIDTH_M;
   const cameraX = astronautX; // keep the astronaut in the middle
   const toScreen = (m) => W / 2 + (m - cameraX) * pxPerM;
+  const dust = state.power.dust ?? 0;
 
-  // Sky and ground: K4's background for the site, darkened at night (brightness follows the Sun).
+  // Sky and ground: K4's background for the site (or the storm sky), darkened at night.
   const site = ctx.data.landingSites.find((r) => r.id === state.design.siteId);
   const sun = ctx.eng.sunCos(state.time.solFraction, site?.latitudeDeg?.value ?? 0);
-  const bg = image(BACKGROUNDS[state.design.siteId] ?? BACKGROUNDS.meridiani);
+  const bg = image(dust > STORM_DUST ? BACKGROUNDS.storm : BACKGROUNDS[state.design.siteId] ?? BACKGROUNDS.meridiani);
   if (bg) {
     g.drawImage(bg, 0, 0, W, H);
     g.fillStyle = `rgba(8, 6, 20, ${(0.75 * (1 - Math.min(1, sun * 2))).toFixed(3)})`;
@@ -220,8 +277,17 @@ function draw() {
     g.fillRect(0, groundY, W, H - groundY);
   }
 
+  // Lost landers along the corridor (nasa_data.json wrecks[].corridorM), named when close.
+  for (const wreck of ctx.data.wrecks ?? []) {
+    const x = wreck.corridorM?.value;
+    const sprite = WRECK_SPRITES[wreck.id];
+    if (x == null || !sprite || Math.abs(x - cameraX) > VIEW_WIDTH_M) continue;
+    drawSprite(g, sprite, toScreen(x), groundY);
+    if (Math.abs(x - astronautX) <= WRECK_RADIUS_M * 3) hint(wreck.realName, toScreen(x), groundY - sprite.h - 12);
+  }
+
   // Base layout: panels and greenhouse left of the habitat, the ascent vehicle (MAV) to the right.
-  const dusty = (state.power.dust ?? 0) > 0.3;
+  const dusty = dust > 0.3;
   if (state.design.powerId !== 'fission') drawSprite(g, dusty ? SPRITES.solarDusty : SPRITES.solarClean, toScreen(-30), groundY);
   if (state.design.instrumentIds?.includes('plantChamber')) drawSprite(g, SPRITES.greenhouse, toScreen(-55), groundY);
   drawSprite(g, SPRITES.mav, toScreen(40), groundY);
@@ -232,22 +298,27 @@ function draw() {
   g.fillStyle = '#222';
   g.fillRect(toScreen(-0.6), groundY - 2.2 * pxPerM, 0.6 * pxPerM, 2.2 * pxPerM);
 
-  // Astronaut (inside: drawn at the door, dimmed).
+  // Astronaut.
   const eva = state.life.eva;
-  g.globalAlpha = eva.outside ? 1 : 0.35;
   const sprite = eva.jointsFrozen ? SPRITES.frozen : SPRITES.walk;
   if (!drawSprite(g, sprite, toScreen(astronautX), groundY, scene.facing < 0)) {
     g.fillStyle = eva.jointsFrozen ? '#9fd3ff' : '#f2e8e4';
     g.fillRect(toScreen(astronautX) - 0.4 * pxPerM, groundY - 1.8 * pxPerM, 0.8 * pxPerM, 1.8 * pxPerM);
   }
-  g.globalAlpha = 1;
+
+  // K4's effects: blowing dust in a storm, frost on the visor when the suit joints freeze.
+  const storm = dust > STORM_DUST ? image(VFX.storm) : null;
+  if (storm) {
+    g.globalAlpha = Math.min(1, dust);
+    g.drawImage(storm, 0, 0, W, H);
+    g.globalAlpha = 1;
+  }
+  const frost = eva.jointsFrozen ? image(VFX.frost) : null;
+  if (frost) g.drawImage(frost, 0, 0, W, H);
 
   // EVA prompt at the door.
   if (Math.abs(astronautX) <= DOOR_RADIUS_M && !state.events.pending) {
-    g.fillStyle = '#f2e8e4';
-    g.font = '16px system-ui, sans-serif';
-    g.textAlign = 'center';
-    g.fillText(scene.t(eva.outside ? 'surface.hint.enter' : 'surface.hint.exit'), W / 2, groundY - 2.6 * pxPerM);
+    hint(scene.t('surface.hint.enter'), W / 2, groundY - SPRITES.walk.h - 16);
   }
 }
 
