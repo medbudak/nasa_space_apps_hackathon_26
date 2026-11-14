@@ -33,7 +33,7 @@ test('engine-freeze card opens on a cold night, not in the day', () => {
   const open = bus.emitted.find((e) => e.name === 'decision:open');
   assert.equal(open.payload.eventId, 'engineFreeze');
   assert.equal(open.payload.sol, s.time.sol);
-  assert.equal(open.payload.options.length, 3);
+  assert.deepEqual(open.payload.options.map((o) => o.id), ['batteryHeat', 'manualHeat', 'wait', 'askEarth']);
   assert.equal(typeof open.payload.choose, 'function');
 });
 

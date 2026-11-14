@@ -27,7 +27,7 @@ import {
   gameSecondsPerRealSecond,
 } from '../systems/survival.js';
 import {
-  createEventState, checkEvents, reopenPending, resolveDecision, commsBlackout, minigameOpen,
+  createEventState, checkEvents, reopenPending, resolveDecision, commsBlackout, minigameOpen, lightDelaySeconds,
 } from '../systems/events.js';
 import { getPowerStatus, setOrder } from '../systems/power.js';
 import { finaleDue, startFinale, updateFinale, finalePaused, finaleDone } from '../systems/finale.js';
@@ -109,7 +109,7 @@ export default {
     const { state, ctx, telemetry, passes } = scene;
     return {
       telemetry,
-      downlink: { passes, lightDelaySec: null }, // light-delay table: requested from K1
+      downlink: { passes, lightDelaySec: () => lightDelaySeconds(ctx) }, // null until the distance is in the data
       power: { getStatus: () => getPowerStatus(state, ctx), setOrder: (ids) => setOrder(state, ids) },
       // The player's answer on K3's alarm band: sanity +/- for a false alarm (sanity.js).
       onAlarmResolve: (result) => resolveAlarm(state, ctx, result),

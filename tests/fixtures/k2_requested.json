@@ -74,6 +74,9 @@
         "durationSols": { "value": 2, "unit": "sol", "simplified": true, "note": "design doc v2: 2 sols; the real blackout lasts about two weeks", "src": "PLACEHOLDER", "verified": false }
       }
     },
+    "telecom": {
+      "earthMarsDistanceKm": { "value": 225000000, "unit": "km", "simplified": true, "note": "Earth-Mars distance on the mission dates, for the light delay (M7 and the HUD). TEST value: the mean distance; K1 to take it from JPL Horizons (precomputed, D-005 C7)", "src": "PLACEHOLDER", "verified": false }
+    },
     "minigames": {
       "antennaAlign": {
         "beamWidthDeg": { "value": 12, "unit": "deg", "simplified": true, "note": "K3 draft (stub_samples alignRows): simplified beam, wide enough to find by ear", "src": "PLACEHOLDER", "verified": false },

@@ -175,7 +175,7 @@ test('the UI only receives options it may choose; the rest are listed as unavail
   frozenFarOut(s, ctx, { suitFractionOfNeed: 0.5, nearWreck: false });
   checkEvents(s, ctx);
   const payload = bus.emitted.find((e) => e.name === 'decision:open').payload;
-  assert.deepEqual(payload.options.map((o) => o.id), ['suitHeater']);
+  assert.deepEqual(payload.options.map((o) => o.id), ['suitHeater', 'askEarth']);
   assert.deepEqual(payload.unavailable.map((o) => o.id), ['slowWalk', 'shelterWreck']);
   assert.ok(payload.unavailable.every((o) => o.disabledKey));
 });

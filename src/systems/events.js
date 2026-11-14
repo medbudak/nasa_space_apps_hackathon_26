@@ -142,7 +142,7 @@ export function checkEvents(state, ctx) {
     event.effect?.(state, ctx);
 
     // decision() may return null: this time the event needs no choice (e.g. the storm was announced).
-    const card = event.decision?.(state, ctx);
+    const card = buildCard(state, event, ctx);
     if (card) {
       ev.pending = { eventId: event.id, sol: state.time.sol, card };
       ctx.bus?.emit('decision:open', cardPayload(state, event.id, card, ctx));
@@ -171,6 +171,69 @@ export function reopenPending(state, ctx) {
  * Disabled options are left out of `options` so a UI that cannot grey them out never offers
  * a choice that would be refused; they are listed in `unavailable` for a UI that can show why.
  */
+// ---------------------------------------------------------------------------
+// Delayed Mission Control (M7). A crisis card can offer "ask Mission Control": the question and
+// the answer each travel at the speed of light, so the answer comes 2 x the one-way light delay
+// later (engineering.lightDelaySec over telecom.earthMarsDistanceKm). That much game time passes
+// while the crew waits, and the crisis goes on (suit O2, cold, battery). Then the card opens
+// again with Mission Control's advice marked. The lesson of the design doc: on Mars the crew
+// has to decide for itself. Not offered during a solar conjunction, or without the distance.
+
+/** One-way light delay Earth–Mars in seconds, or null while the distance is not in the data. */
+export function lightDelaySeconds(ctx) {
+  const d = ctx.data.telecom?.earthMarsDistanceKm?.value;
+  if (typeof d !== 'number') return null;
+  return ctx.eng.lightDelaySec(d, val(ctx.data.constants.speedOfLightKms, 'constants.speedOfLightKms'));
+}
+
+function askEarthOption(state, ctx) {
+  const oneWay = lightDelaySeconds(ctx);
+  if (oneWay == null || commsBlackout(state)) return null;
+  const hours = (2 * oneWay) / 3600;
+  return {
+    id: 'askEarth',
+    labelKey: 'missionControl.ask',
+    effects: [{ type: 'wait', hours, sols: hours / val(ctx.data.mars.solHours, 'mars.solHours'), estimate: { minutes: Math.round(hours * 60) } }],
+  };
+}
+
+/** The event's card, with the "ask Mission Control" option when the event can be advised. */
+function buildCard(state, event, ctx, { asked = false } = {}) {
+  const card = event.decision?.(state, ctx);
+  if (!card) return null;
+  if (event.advise && !asked) {
+    const ask = askEarthOption(state, ctx);
+    if (ask) card.options = [...card.options, ask];
+  }
+  return card;
+}
+
+function findEvent(id, ctx) {
+  return (ctx.events ?? EVENTS).find((e) => e.id === id);
+}
+
+/** The crew asked: wait for the answer, then reopen the card with the advice marked. */
+function askMissionControl(state, ctx, pending, option) {
+  for (const effect of option.effects) applyEffect(state, effect, ctx); // the round-trip wait
+  const entry = { sol: pending.sol, eventId: pending.eventId, choice: 'askEarth', effects: option.effects };
+  state.decisionLog.push(entry);
+  ctx.bus?.emit('decision:made', entry);
+  if (state.life.loss) {
+    state.events.pending = null; // the answer came too late
+    return entry;
+  }
+  const event = findEvent(pending.eventId, ctx);
+  const card = buildCard(state, event, ctx, { asked: true });
+  if (!card) {
+    state.events.pending = null;
+    return entry;
+  }
+  card.advice = { optionId: event.advise(state, ctx), key: 'missionControl.advice' };
+  state.events.pending = { eventId: pending.eventId, sol: state.time.sol, card, asked: true };
+  ctx.bus?.emit('decision:open', cardPayload(state, pending.eventId, card, ctx));
+  return entry;
+}
+
 function cardPayload(state, eventId, card, ctx) {
   return {
     eventId,
@@ -191,6 +254,7 @@ export function resolveDecision(state, choiceId, ctx) {
   const option = pending.card.options.find((o) => o.id === choiceId);
   if (!option) throw new Error(`events: unknown choice "${choiceId}" for ${pending.eventId}`);
   if (option.disabled) throw new Error(`events: choice "${choiceId}" is not available right now`);
+  if (choiceId === 'askEarth') return askMissionControl(state, ctx, pending, option);
 
   for (const effect of option.effects) applyEffect(state, effect, ctx);
 
@@ -248,6 +312,15 @@ function stormWindow(state, data) {
   const start = val(cfg.sol, 'events.storm.sol') + val(cfg.atSolFraction, 'events.storm.atSolFraction');
   const end = start + val(cfg.durationSols, 'events.storm.durationSols');
   return { start, end: state.events.active?.storm?.untilT ?? end };
+}
+
+/** Mission Control's storm advice: switch off the installed load that saves the most power. */
+function stormAdvice(state, ctx) {
+  const choices = [['holdGreenhouse', 'greenhouse'], ['holdExperiments', 'experiments'], ['holdMoxie', 'moxie']]
+    .map(([id, load]) => ({ id, w: instrumentWatts(state, ctx.data, load) }))
+    .filter((c) => c.w > 0)
+    .sort((a, b) => b.w - a.w);
+  return choices[0]?.id ?? 'keepAll';
 }
 
 function stormCard(state, ctx, { warning }) {
@@ -382,6 +455,7 @@ export const EVENTS = [
     // Design doc M4 / operations card 1: "Joints froze outside, speed 40%, O2 31%, habitat 900 m".
     // Opens when suit O2 drops below the O2 needed to walk back (with the safety factor).
     id: 'noReturn',
+    advise: () => 'suitHeater', // keeps the safety margin
     once: false, // can happen on any EVA; eva.cardShown limits it to once per EVA
     trigger: (state) => {
       const eva = state.life.eva;
@@ -461,6 +535,10 @@ export const EVENTS = [
     // C waits: the MAV then fires only once the day warms it to ascent.mavMinOperatingC, before
     // sunset; where the day never gets that warm (the landing site, design.siteId), the crew stays.
     id: 'engineFreeze',
+    advise: (state, ctx) =>
+      state.power.batteryWh >= val(ctx.data.events.engineFreeze.batteryHeatKWh, 'events.engineFreeze.batteryHeatKWh') * 1000
+        ? 'batteryHeat'
+        : 'manualHeat',
     trigger: (state, ctx) => {
       const cfg = ctx.data.events.engineFreeze;
       return (
@@ -533,6 +611,7 @@ export const EVENTS = [
     // MEDA sees the storm coming: the card opens warnSols before it, so loads can be switched
     // off while the battery is still full.
     id: 'stormWarning',
+    advise: (state, ctx) => stormAdvice(state, ctx),
     trigger: (state, ctx) => {
       if (!hasInstrument(state, 'meda') || !ctx.data.events?.storm) return false;
       const { start } = stormWindow(state, ctx.data);
@@ -544,6 +623,7 @@ export const EVENTS = [
 
   {
     id: 'storm',
+    advise: (state, ctx) => stormAdvice(state, ctx),
     trigger: (state, ctx) => due(state, ctx.data.events?.storm, 'events.storm'),
     effect: (state, ctx) => {
       const cfg = ctx.data.events.storm;
@@ -581,6 +661,7 @@ export const EVENTS = [
   {
     // RAD sees the solar particle event coming.
     id: 'speWarning',
+    advise: () => 'shelter',
     trigger: (state, ctx) => {
       if (!hasInstrument(state, 'rad') || !ctx.data.events?.spe) return false;
       const start = speStart(ctx.data);
@@ -592,6 +673,7 @@ export const EVENTS = [
 
   {
     id: 'spe',
+    advise: () => 'shelter',
     trigger: (state, ctx) => due(state, ctx.data.events?.spe, 'events.spe'),
     effect: (state, ctx) => {
       const { data } = ctx;
@@ -616,6 +698,7 @@ export const EVENTS = [
   {
     // SEIS feels the first tremor: a moment to strap the shelves down.
     id: 'quakeWarning',
+    advise: () => 'secure',
     trigger: (state, ctx) => {
       if (!hasInstrument(state, 'seis') || !ctx.data.events?.quake) return false;
       const start = quakeStart(ctx.data);
@@ -664,6 +747,7 @@ export const EVENTS = [
     // Clean it on an EVA (O2 and time), or run with less heat: MOXIE and the experiments off
     // for the rest of the mission.
     id: 'radiator',
+    advise: () => 'cleanRadiator',
     trigger: (state, ctx) => due(state, ctx.data.events?.radiator, 'events.radiator'),
     decision: (state, ctx) => {
       const { data } = ctx;
