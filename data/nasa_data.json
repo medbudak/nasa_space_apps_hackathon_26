@@ -169,6 +169,26 @@
       "diagnoseMin": 10,
       "sleepMorale": 6
     },
+    "transit": {
+      "simplified": true,
+      "simplifiedNote": "Transit task chain (Earth -> Mars cruise). Real: the Mars 2020 cruise stage was solar-powered, and the spacecraft flew trajectory correction manoeuvres (TCMs) during cruise and approach (JPL Mars 2020 launch press kit). Everything below is a game value: okScore is the minigame quality needed for a nominal result; a degraded task costs, at landing, battery charge (okChargeFrac 0.9 vs degradedChargeFrac 0.6 of capacity), habitat O2 lost to the micrometeoroid leak (leakO2LossKg 3 ≈ 3 sols of habitat use at constants.lifeSupport.o2KgPerSol 0.92), MAV fuel spent on extra correction burns (tcmMavFuelLossPct 8; in reality TCM propellant comes from the cruise stage's own tanks, not from the ascent vehicle) and morale after a cold cruise (thermalMoraleLoss 10). scorePerTask and the time limits are game values; day and dose advance in equal chunks per task up to the orbit's transitDays.",
+      "okScore": 0.75,
+      "scorePerTask": 5,
+      "tasks": [
+        { "id": "arrays", "minigame": "align", "timeLimitSec": 20 },
+        { "id": "leak", "minigame": "wires", "timeLimitSec": 25 },
+        { "id": "tcm", "minigame": "qte", "timeLimitSec": 25 },
+        { "id": "thermal", "minigame": "converter", "timeLimitSec": 30 }
+      ],
+      "effects": {
+        "okChargeFrac": 0.9,
+        "degradedChargeFrac": 0.6,
+        "leakO2LossKg": 3,
+        "tcmMavFuelLossPct": 8,
+        "thermalMoraleLoss": 10
+      },
+      "src": "https://www.jpl.nasa.gov/news/press_kits/mars_2020/launch/mission/"
+    },
     "src": "https://www.spaceappschallenge.org/"
   },
   "horizons": {

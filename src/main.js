@@ -156,8 +156,9 @@
     }
     S.bus.emit('audio:play', 'launch');
     Game.setScene('transit');
-    S.Cutscenes.playTransit((repair) => {
-      S.Sim.land(S.getState(), repair);
+    // Transit görev sonuçları { arrays, leak, tcm, thermal } -> iniş kaynakları (Sim.transitOutcome)
+    S.Cutscenes.playTransit((transit) => {
+      S.Sim.land(S.getState(), transit);
       S.saveGame();
       Game.enterWorld();
       S.UI.toast(t('toast.landed', { site: t('site.' + s.design.landingSiteId + '.name') }), 'ok', 4200);

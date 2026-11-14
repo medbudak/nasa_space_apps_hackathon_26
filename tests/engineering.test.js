@@ -210,3 +210,49 @@ test('calcDesignTotals: kütle aşımı ve 5\'ten fazla alet hata verir', () => 
   assert.ok(tot.errors.includes('design.err_mass'));
   assert.equal(tot.canLaunch, false);
 });
+
+test('Transit görev zinciri: sonuçlar iniş kaynaklarına eşlenir, geçilen görev BOZUK sayılır (ux-plan #6)', () => {
+  const tr = D.gameplay.transit;
+  const fx = tr.effects;
+  const good = { success: true, score: 0.95, skipped: false };
+  const skipped = { success: true, score: 0.6, skipped: true }; // runMinigame ESC sonucu
+  const all = (r) => Object.fromEntries(tr.tasks.map((tk) => [tk.id, r]));
+  // Bekleyen görev cezasızdır (kart önizlemesi); nominal görevler puan verir
+  const none = S.Sim.transitOutcome(null);
+  assert.equal(none.okCount, 0);
+  assert.equal(none.chargeFrac, fx.okChargeFrac);
+  const ok = S.Sim.transitOutcome(all(good));
+  assert.deepEqual([ok.chargeFrac, ok.o2LossKg, ok.mavFuelLossPct, ok.moraleLoss], [fx.okChargeFrac, 0, 0, 0]);
+  assert.equal(ok.score, tr.tasks.length * tr.scorePerTask);
+  // Düşük kalite, başarısızlık ve geçme ayrı ayrı BOZUK; her görev yalnızca kendi kaynağını etkiler
+  const mixed = S.Sim.transitOutcome({
+    arrays: { success: true, score: tr.okScore - 0.01, skipped: false },
+    leak: skipped,
+    tcm: { success: false, score: 0.9, skipped: false },
+    thermal: good
+  });
+  assert.deepEqual(Object.assign({}, mixed.status), { arrays: 'degraded', leak: 'degraded', tcm: 'degraded', thermal: 'ok' });
+  assert.deepEqual([mixed.chargeFrac, mixed.o2LossKg, mixed.mavFuelLossPct, mixed.moraleLoss], [fx.degradedChargeFrac, fx.leakO2LossKg, fx.tcmMavFuelLossPct, 0]);
+
+  // Sim.land: hepsi geçilirse başlangıç kaynakları düşer ve her görev günlüğe puansız yazılır
+  const land = (transit) => {
+    const s = S.State.reset({});
+    S.Sim.launch(s);
+    S.Sim.land(s, transit);
+    return s;
+  };
+  const a = land(all(good));
+  const b = land(all(skipped));
+  assert.equal(a.res.energyKwh, Math.round(a.design.batteryKwh * fx.okChargeFrac * 10) / 10);
+  assert.equal(b.res.energyKwh, Math.round(b.design.batteryKwh * fx.degradedChargeFrac * 10) / 10);
+  assert.equal(Math.round((a.res.o2ReserveKg - b.res.o2ReserveKg) * 100) / 100, fx.leakO2LossKg);
+  assert.equal(a.res.mavFuel - b.res.mavFuel, fx.tcmMavFuelLossPct);
+  assert.equal(a.res.morale - b.res.morale, fx.thermalMoraleLoss);
+  const logs = (s) => s.decisionLog.filter((l) => l.titleKey.startsWith('transit.'));
+  assert.equal(logs(a).length, tr.tasks.length);
+  assert.equal(logs(a).reduce((n, l) => n + l.score, 0), tr.tasks.length * tr.scorePerTask);
+  assert.ok(logs(b).every((l) => l.score === 0 && l.choiceKey === 'log.transit.auto' && l.resultKey.endsWith('.degraded')));
+  // Kart/günlük metinleri Sim.land ile aynı sayıları gösterir
+  const v = S.Sim.transitVars(b, S.Sim.transitOutcome(all(skipped)));
+  assert.deepEqual([v.o2, v.fuel, v.morale], [b.res.o2ReserveKg, b.res.mavFuel, b.res.morale]);
+});

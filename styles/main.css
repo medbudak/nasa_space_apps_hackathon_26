@@ -593,7 +593,7 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .transit-track { position: absolute; top: 4.6em; left: 2em; right: 2em; display: flex; align-items: center; gap: 0.8em; font-weight: 800; font-size: 0.8em; text-transform: uppercase; }
 .tt-earth { color: var(--blue); }
 .tt-mars { color: var(--orange2); }
-.tt-line { position: relative; flex: 1; height: 0.35em; background: rgba(255,255,255,0.15); border-radius: 1em; }
+.tt-line { position: relative; flex: 1; margin: 0 0.9em; height: 0.35em; background: rgba(255,255,255,0.15); border-radius: 1em; }
 .tt-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--orange)); border-radius: 1em; }
 .tt-ship { position: absolute; top: 50%; transform: translate(-50%, -50%) rotate(90deg); color: #fff; }
 .tt-ship .ico { width: 1.6em; height: 1.6em; filter: drop-shadow(0 0 0.4em #fff); }
@@ -611,7 +611,44 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .edl small { font-size: 0.75em; color: #ffd2bb; }
 .edl-on .cs-bg { filter: sepia(0.6) saturate(2) hue-rotate(-20deg) brightness(0.9); }
 .cs-skip { position: absolute; top: 4.2em; right: 1.2em; z-index: 3; }
-.transit-track ~ .cs-skip { top: 6.6em; }
+/* Transit görev zinciri: solda sorun kartı, sağda Geç + gemi durumu; çubuk yalnızca görev bitince ilerler */
+.tt-mark { position: absolute; top: 50%; width: 0.7em; height: 0.7em; margin: -0.35em 0 0 -0.35em; border-radius: 50%; background: #1b1d24; border: 2px solid var(--line2); }
+.tt-mark.ok { background: var(--green); border-color: #a6f5cb; }
+.tt-mark.degraded { background: var(--red); border-color: #ffb0a8; }
+.tk-card { width: 30em; max-height: calc(100% - 9em); overflow: auto; display: flex; flex-direction: column; gap: 0.45em; }
+.tk-card.tk-in { animation: popIn 0.25s ease-out; }
+.tk-card h2 { display: flex; align-items: center; gap: 0.4em; margin: 0; }
+.tk-card h2 .ico { color: var(--orange2); flex: none; }
+.tk-row { display: grid; grid-template-columns: 8.2em 1fr; gap: 0.6em; align-items: baseline; }
+.tk-row span { font-size: 0.64em; font-weight: 900; letter-spacing: 0.12em; color: var(--cyan); }
+.cs-panel .tk-row p { margin: 0; font-size: 0.8em; }
+.tk-stake, .tk-result { font-weight: 600; line-height: 1.4; }
+.tk-stake b { color: #fff; }
+.tk-start { align-self: flex-start; margin-top: 0.2em; }
+.tk-side { position: absolute; top: 6.4em; right: 1.5em; width: 17em; display: flex; flex-direction: column; gap: 0.45em; z-index: 3; }
+.tk-skip { align-self: flex-end; }
+.tk-skip.armed { border-color: var(--amber); color: var(--amber); }
+.tk-skipnote { align-self: flex-end; text-align: right; font-size: 0.66em; font-weight: 700; color: #ffd27a; text-shadow: 0 0.1em 0.3em #000; }
+.cs-ship { padding: 0.75em 0.9em; background: rgba(14,14,18,0.86); border: 1px solid var(--line); border-radius: 0.55em; }
+.cs-ship h4 { display: flex; align-items: center; gap: 0.4em; margin: 0 0 0.5em; font-size: 0.68em; font-weight: 900; letter-spacing: 0.15em; color: var(--orange2); }
+.cs-ship .cs-tlm { grid-template-columns: 1fr 1fr; }
+.cs-ship .cs-tlm div:last-child { grid-column: 1 / -1; }
+.tk-sys { display: flex; flex-direction: column; gap: 0.3em; margin-bottom: 0.6em; }
+.tk-sys-row { display: grid; grid-template-columns: auto 1fr auto; column-gap: 0.45em; align-items: center; padding-bottom: 0.3em; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.tk-sys-row .ico { color: var(--muted); }
+.tk-sys-row.ok .ico { color: var(--green); }
+.tk-sys-row.degraded .ico { color: var(--red); }
+.tk-sys-row span { font-size: 0.78em; font-weight: 700; }
+.tk-sys-row small { grid-column: 2 / 4; font-size: 0.66em; color: var(--muted); }
+.tk-sys-row.degraded small { color: #ffb0a8; }
+/* Retro daktilo alt yazısı: tek aralıklı, harf harf, yanıp sönen imleç. Ortası sağdaki panelin solunda kalır (5.6em × 1.7 ≈ 9.5em) */
+.cs-type { position: absolute; left: calc(50% - 5.6em); top: 40%; transform: translate(-50%, -50%); z-index: 2; padding: 0.45em 0.9em; white-space: nowrap; font: 700 1.7em/1.2 'Courier New', Consolas, monospace; letter-spacing: 0.12em; color: var(--cyan); text-shadow: 0 0 0.45em rgba(63,224,230,0.75); background: repeating-linear-gradient(0deg, rgba(5,6,10,0.78) 0 2px, rgba(5,6,10,0.62) 2px 4px); border: 1px solid rgba(63,224,230,0.35); border-radius: 0.2em; display: grid; }
+/* EDL kutusu daktilonun yerine, ortaya gelir (sağdaki gemi paneliyle çakışmaz) */
+.transit .edl { right: auto; bottom: auto; left: calc(50% - 9.5em); top: 40%; transform: translate(-50%, -50%); align-items: center; z-index: 2; }
+.cs-type > span { grid-area: 1 / 1; }
+.cs-type-ghost { visibility: hidden; }
+.cs-caret { display: inline-block; width: 0.55em; height: 1em; margin-left: 0.12em; vertical-align: -0.12em; background: currentColor; animation: caretBlink 0.9s steps(1) infinite; }
+@keyframes caretBlink { 50% { opacity: 0; } }
 .cs-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 .cs-flash.on { animation: flash 0.9s; }
 @keyframes flash { 0% { opacity: 0.95; } 100% { opacity: 0; } }

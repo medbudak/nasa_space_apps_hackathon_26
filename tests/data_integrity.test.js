@@ -123,8 +123,12 @@ function expectedDynamicKeys() {
   for (const r of ['suit_o2', 'o2_reserve', 'hypothermia', 'radiation', 'morale']) add(`gameover.${r}`, `gameover.${r}.desc`);
   for (const c of ['heating', 'greenhouse_shed', 'greenhouse_off']) add(`gh.cause_${c}`, `log.greenhouse_frozen.cause_${c}`, `chain.gh_lost.effect_${c}`);
   for (const m of ['wires', 'align', 'qte', 'converter']) add(`mg.${m}.title`, `mg.${m}.desc`, `mg.${m}.label`, `mg.${m}.hint`, `cc.minigame.${m}`);
-  for (const th of ['sabatier', 'perchlorate', 'moxie']) add(...[1, 2, 3].map((n) => `mg.converter.${th}.s${n}`), `mg.converter.${th}.eq`);
+  for (const th of ['sabatier', 'perchlorate', 'moxie', 'thermal']) add(...[1, 2, 3].map((n) => `mg.converter.${th}.s${n}`), `mg.converter.${th}.eq`);
   for (const env of ['habitat', 'surface']) add(`lab.env_${env}`);
+  // Transit görev zinciri (gameplay.transit.tasks): kart, mini oyun, sonuç ve gemi durumu metinleri
+  for (const tk of d.gameplay.transit.tasks) add(...['sys', 'title', 'what', 'why', 'do', 'stake', 'mg_title', 'mg_desc', 'fx', 'ok', 'degraded'].map((p) => `transit.${tk.id}.${p}`));
+  for (const st of ['pending', 'ok', 'degraded']) add(`transit.st_${st}`);
+  for (const l of ['what', 'why', 'do', 'stake']) add(`transit.lbl_${l}`);
 
   // Adli inceleme
   for (const cat of f.categories) add(`cat.${cat}`);

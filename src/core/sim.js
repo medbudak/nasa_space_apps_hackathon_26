@@ -108,22 +108,74 @@
     return { ok: true };
   };
 
-  /** Transit bitti: iniş, Sol 1 başlangıç kaynakları */
-  Sim.land = function (s, repair) {
+  /**
+   * Transit görev zinciri -> iniş etkileri (saf; arayüz önizlemesi, Sim.land ve testler kullanır).
+   * results: { arrays, leak, tcm, thermal } her biri runMinigame sonucu; eksik görev 'pending' sayılır ve ceza vermez.
+   * Nominal = geçilmedi + başarılı + kalite >= okScore; aksi hâlde 'degraded' ve gameplay.transit.effects cezası.
+   */
+  Sim.transitOutcome = function (results) {
+    const c = D().gameplay.transit;
+    const fx = c.effects;
+    const status = {};
+    let okCount = 0;
+    for (const tk of c.tasks) {
+      const r = results && results[tk.id];
+      status[tk.id] = !r ? 'pending' : r.success && !r.skipped && r.score >= c.okScore ? 'ok' : 'degraded';
+      if (status[tk.id] === 'ok') okCount++;
+    }
+    const bad = (id) => status[id] === 'degraded';
+    return {
+      status,
+      okCount,
+      chargeFrac: bad('arrays') ? fx.degradedChargeFrac : fx.okChargeFrac,
+      o2LossKg: bad('leak') ? fx.leakO2LossKg : 0,
+      mavFuelLossPct: bad('tcm') ? fx.tcmMavFuelLossPct : 0,
+      moraleLoss: bad('thermal') ? fx.thermalMoraleLoss : 0,
+      score: okCount * c.scorePerTask
+    };
+  };
+
+  /** İniş değerleri + metin değişkenleri: görev kartı önizlemesi, Sim.land ve karar günlüğü aynı sayıları kullanır */
+  Sim.transitVars = function (s, out) {
+    const d = D();
+    const fx = d.gameplay.transit.effects;
+    const orbit = E().findById(d.orbits, s.design.orbitType);
+    const o2Start = d.habitat.base.o2ReserveStartKg;
+    const fuelStart = s.demoMode ? 92 : orbit.mavFuelStartPct;
+    const moraleStart = s.design.launchWindowCaught ? 90 : 80;
+    return {
+      days: orbit.transitDays,
+      charge: Math.round(out.chargeFrac * 100),
+      okCharge: Math.round(fx.okChargeFrac * 100),
+      badCharge: Math.round(fx.degradedChargeFrac * 100),
+      o2: round2(o2Start - out.o2LossKg),
+      o2Start,
+      o2Bad: round2(o2Start - fx.leakO2LossKg),
+      fuel: Math.max(0, fuelStart - out.mavFuelLossPct),
+      fuelLoss: fx.tcmMavFuelLossPct,
+      morale: clamp(moraleStart - out.moraleLoss, 0, 100),
+      moraleLoss: fx.thermalMoraleLoss
+    };
+  };
+
+  /** Transit bitti: iniş, Sol 1 başlangıç kaynakları. transit: Sim.transitOutcome girdisi ya da null (test/debug: cezasız) */
+  Sim.land = function (s, transit) {
     const d = D();
     const site = Sim.site(s);
     const orbit = E().findById(d.orbits, s.design.orbitType);
     const pwr = Sim.powerCfg(s);
+    const out = Sim.transitOutcome(transit);
+    const v = Sim.transitVars(s, out);
     s.scene = 'surface';
     s.sol = 1;
     s.minute = d.gameplay.solStartMinute;
     s.totalMinutes = 0;
     s.res.batteryKwh = s.design.batteryKwh;
-    s.res.energyKwh = round1(s.design.batteryKwh * 0.9);
-    s.res.o2ReserveKg = d.habitat.base.o2ReserveStartKg;
+    s.res.energyKwh = round1(s.design.batteryKwh * out.chargeFrac);
+    s.res.o2ReserveKg = v.o2;
     s.res.waterL = site.waterStartL;
-    s.res.mavFuel = s.demoMode ? 92 : orbit.mavFuelStartPct;
-    s.res.morale = s.design.launchWindowCaught ? 90 : 80;
+    s.res.mavFuel = v.fuel;
+    s.res.morale = v.morale;
     s.res.radiationMsv = round1(orbit.transitDays * d.constants.radiation.transitDailyMsv);
     s.res.panelDust = 0.04;
     s.res.habTempC = d.gameplay.habitatTargetC;
@@ -136,23 +188,25 @@
     if (s.demoMode) {
       s.forensics.opportunity.discovered = true;
     }
-    if (repair) {
-      const good = repair.success && !repair.skipped && repair.score >= 0.85;
-      if (!good) {
-        s.res.energyKwh = Math.max(0, round1(s.res.energyKwh - 4));
+    if (transit) {
+      // Her görev karar günlüğüne ayrı satır: rapor kartı neden-sonuç zincirini gösterir
+      for (const tk of d.gameplay.transit.tasks) {
+        const r = transit[tk.id];
+        if (!r) continue;
+        const ok = out.status[tk.id] === 'ok';
+        S.logDecision(
+          {
+            sol: 0,
+            category: 'design',
+            titleKey: 'transit.' + tk.id + '.title',
+            choiceKey: r.skipped ? 'log.transit.auto' : 'log.transit.manual',
+            resultKey: 'transit.' + tk.id + (ok ? '.ok' : '.degraded'),
+            vars: Object.assign({ pct: Math.round((r.skipped ? 0 : r.score || 0) * 100) }, v),
+            score: ok ? d.gameplay.transit.scorePerTask : 0
+          },
+          s
+        );
       }
-      S.logDecision(
-        {
-          sol: 0,
-          category: 'design',
-          titleKey: 'log.transit.title',
-          choiceKey: repair.skipped ? 'log.transit.auto' : 'log.transit.manual',
-          resultKey: good ? 'log.transit.res_good' : 'log.transit.res_auto',
-          vars: { pct: Math.round((repair.score || 0) * 100) },
-          score: good ? 20 : 0
-        },
-        s
-      );
     }
     Sim.snapshotSolStart(s);
     Sim.prepareWarnings(s);

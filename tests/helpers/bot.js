@@ -56,7 +56,9 @@ function play(design, { demoMode = false, policy = {} } = {}) {
   const log = [];
   const launch = S.Sim.launch(s);
   if (!launch.ok) return { S, s, log, launchErrors: launch.errors };
-  S.Sim.land(s, { success: true, score: 0.95, skipped: false });
+  // Transit: dört seyir görevi de iyi oynandı (Sim.transitOutcome -> nominal iniş)
+  const good = { success: true, score: 0.95, skipped: false };
+  S.Sim.land(s, Object.fromEntries(S.DATA.gameplay.transit.tasks.map((tk) => [tk.id, good])));
 
   const mg = { success: true, score: 0.95 };
   const casesByDistance = S.Forensics.cases().slice().sort((a, b) => a.distanceM - b.distanceM);
