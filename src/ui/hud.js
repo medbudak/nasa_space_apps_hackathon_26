@@ -8,6 +8,8 @@
   const UI = () => S.UI;
   const t = (k, v) => S.t(k, v);
   const HUD = { refs: {}, mode: null, lastFrozen: false, lastNotch: 0, prompt: null };
+  /** [E] balonunun üst kenarı, 640×360 tasarım alanında (zemin y=300'ün 174 px üstü; 16:9'da sahnenin %35'i) */
+  const PROMPT_BASE_Y = 126;
 
   function ref(name) {
     return HUD.refs[name];
@@ -46,6 +48,7 @@
           '<div class="vital"><div class="vital-head">' + I('battery') + '<span>' + t('hud.suit_battery') + '</span><b data-ref="sbat"></b></div>' +
           '<div class="bar amber"><div class="bar-fill" data-ref="sbatfill"></div></div></div>' +
           '<div class="vital"><div class="vital-head">' + I('suit') + '<span>' + t('hud.suit_temp') + '</span><b data-ref="stemp"></b></div>' +
+          '<div class="vital-sub" data-ref="heat"></div>' +
           '<div class="vital-sub" data-ref="speed"></div></div>' +
           '<div class="vital"><div class="vital-head">' + I('power') + '<span>' + t('hud.hab_battery') + '</span><b data-ref="hbat"></b></div>' +
           '<div class="bar amber"><div class="bar-fill" data-ref="hbatfill"></div></div></div>' +
@@ -156,10 +159,17 @@
       : '';
     ref('ponrtxt').classList.toggle('danger', ponr.critical);
 
+    const heat = HUD.suitHeat(s, amb);
     ref('sbat').textContent = Math.round(suit.battery) + '%';
     ref('sbatfill').style.width = suit.battery + '%';
+    ref('sbatfill').parentElement.classList.toggle('critical', heat.state !== 'heater');
     ref('stemp').textContent = Math.round(suit.tempC) + ' °C';
-    ref('stemp').classList.toggle('danger', suit.frozen);
+    ref('stemp').classList.toggle('danger', suit.frozen || suit.battery <= 0);
+    const heatHtml = '<span class="' + heat.tone + '">' + S.util.escape(heat.text) + '</span>';
+    if (ref('heat')._html !== heatHtml) {
+      ref('heat').innerHTML = heatHtml;
+      ref('heat')._html = heatHtml;
+    }
     ref('speed').innerHTML = suit.frozen
       ? '<span class="danger">' + t('hud.joints_frozen', { pct: ponr.speedPct }) + '</span>'
       : S.Surface.inSandPit(s.player.x)
@@ -171,6 +181,31 @@
 
     HUD.updateMinimap(s, ponr);
     HUD.updatePrompt(s);
+  };
+
+  /** Oyun dakikası → "3 sa 20 dk" / "45 dk" (geri sayım tahminleri; aşağı yuvarlanır) */
+  HUD.duration = function (minutes) {
+    const total = Math.max(0, Math.floor(minutes));
+    if (total < 60) return t('hud.dur_m', { m: total });
+    return t('hud.dur_hm', { h: Math.floor(total / 60), m: total % 60 });
+  };
+
+  /**
+   * Elbise sıcaklığı satırı: sıcaklığın NEDENİNİ gösterir (ısıtıcı bataryadan çalışıyor / batarya azalıyor /
+   * batarya bitti, elbise soğuyor). Süreler o anki dış sıcaklıkla hesaplanan tahminlerdir (S.Sim.suitThermal).
+   */
+  HUD.suitHeat = function (s, amb) {
+    const th = S.Sim.suitThermal(s, amb);
+    const dur = HUD.duration;
+    if (th.state === 'heater') return { state: th.state, tone: '', text: t('hud.heat_on', { time: dur(th.batteryMinutes) }) };
+    if (th.state === 'low') return { state: th.state, tone: 'warn', text: t('hud.heat_low', { time: dur(th.batteryMinutes) }) };
+    if (th.state === 'cooling') {
+      const text = isFinite(th.freezeMinutes) ? t('hud.heat_cooling', { time: dur(th.freezeMinutes) }) : t('hud.heat_cooling_mild');
+      return { state: th.state, tone: 'danger', text };
+    }
+    if (s.suit.battery > 0) return { state: th.state, tone: 'warn', text: t('hud.heat_thawing') };
+    const text = isFinite(th.hypothermiaMinutes) ? t('hud.heat_hypothermia', { time: dur(th.hypothermiaMinutes) }) : t('hud.heat_cooling_mild');
+    return { state: th.state, tone: 'danger', text };
   };
 
   /** RIT-02 — Hedef kartı. Ana hedef değişince 'goal:changed' yayınlanır (oyuncu testi günlüğü + kısa vurgu) */
@@ -232,7 +267,10 @@
     if (ponr.beyond) list.push(['danger', 'alert', t('hud.alert_ponr_beyond'), 'ponr_beyond']);
     else if (ponr.critical) list.push(['danger', 'alert', t('hud.alert_ponr'), 'ponr']);
     if (s.suit.frozen && HUD.mode === 'surface') list.push(['cold', 'temp', t('hud.alert_frozen'), 'frozen']);
+    const heat = HUD.mode === 'surface' && S.Sim.isOutside(s) ? S.Sim.suitThermal(s, amb).state : null;
+    if (heat === 'cooling') list.push(['cold', 'battery', t('hud.alert_suit_cooling'), 'suit_cooling']);
     if (s.suit.leak) list.push(['danger', 'suit', t('hud.alert_leak'), 'leak']);
+    if (heat === 'low') list.push(['warn', 'battery', t('hud.alert_suit_battery_low'), 'suit_battery_low']);
     if (s.weather.stormTau > 0) list.push(['warn', 'alert', t('hud.alert_storm', { tau: s.weather.stormTau, sols: s.weather.stormSolsLeft }), 'storm']);
     for (const w of s.weather.warnings || []) {
       if (w.sol === s.sol + 1 || (w.sol === s.sol && S.Sim.clockMinute(s) < w.minute)) {
@@ -254,6 +292,8 @@
     if (html !== HUD._alertsHtml) {
       ref('alerts').innerHTML = html;
       HUD._alertsHtml = html;
+      // Bildirimler (toast) uyarı bantlarının altından başlasın: üst üste binmesinler (styles: --hud-alerts-h)
+      UI().hudLayer().parentElement.style.setProperty('--hud-alerts-h', ref('alerts').offsetHeight + 'px');
       const ids = new Set(shown.map((a) => a[3]));
       for (const id of ids) if (!HUD._alertIds || !HUD._alertIds.has(id)) S.bus.emit('warning:shown', { id, sol: s.sol });
       HUD._alertIds = ids;
@@ -304,15 +344,31 @@
       el.hidden = true;
       return;
     }
-    const x = (S.FX.worldToScreen(it.px) / 640) * 100;
     el.hidden = false;
-    el.style.left = Math.max(8, Math.min(92, x)) + '%';
     const html = '<kbd>E</kbd><span>' + S.util.escape(HUD.promptText(s, it)) + '</span>';
     if (el._html !== html) {
       el.innerHTML = html;
       el._html = html;
     }
     el.classList.toggle('wreck', it.kind === 'wreck');
+    // Tuval pencere oranına göre genişler/uzar: konum tuval → sahne yüzdesi olarak çevrilir, balon nesnenin üstünde kalır.
+    // Yatayda pencere kenarına ve aynı yükseklikteki yan panellere (yaşamsallar / hedef kartı) taşmayacak şekilde sınırlanır.
+    const pos = S.FX.toStagePct(S.FX.worldToScreen(it.px), PROMPT_BASE_Y);
+    el.style.top = pos.top + '%';
+    const stageW = el.offsetParent ? el.offsetParent.clientWidth : 0;
+    const half = el.offsetWidth / 2;
+    const gap = 8;
+    let minX = half + gap;
+    let maxX = stageW - half - gap;
+    const top = el.offsetTop;
+    const bottom = top + el.offsetHeight;
+    const overlapsY = (p) => p && !p.hidden && p.offsetTop < bottom && p.offsetTop + p.offsetHeight > top;
+    const vit = el.parentElement.querySelector('.vitals');
+    const goalCard = ref('goal');
+    if (overlapsY(vit)) minX = Math.max(minX, vit.offsetLeft + vit.offsetWidth + gap + half);
+    if (overlapsY(goalCard)) maxX = Math.min(maxX, goalCard.offsetLeft - gap - half);
+    const x = (pos.left / 100) * stageW;
+    el.style.left = (minX <= maxX ? Math.max(minX, Math.min(maxX, x)) : (minX + maxX) / 2) + 'px';
   };
 
   S.HUD = HUD;

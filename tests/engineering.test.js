@@ -75,12 +75,12 @@ test('calcFreeFallTime: 2 m düşüş Mars ≈ 1.04 s, Dünya ≈ 0.64 s', () =>
 test('calcPointOfNoReturnO2 (M4): 900 m mesafede donmuş eklem çentiği 2.5× sıçrar', () => {
   const normal = E.calcPointOfNoReturnO2({ distanceM: 900 });
   const frozen = E.calcPointOfNoReturnO2({ distanceM: 900, jointFrozen: true });
-  // (900 / 45) · 0.5 · 1.2 = 12 %
-  assert.equal(normal, 12);
-  assert.equal(frozen, 30);
+  // (900 / 45) · 0.2083 · 1.2 = 5.0 %   (0.2083 %/dk = %100 / 480 dk, xEVA 8 sa)
+  assert.equal(normal, 5);
+  assert.equal(frozen, 12.5);
   assert.ok(Math.abs(frozen / normal - 1 / D.constants.eva.frozenSpeedFactor) < 0.01);
   const leak = E.calcPointOfNoReturnO2({ distanceM: 900, leak: true });
-  assert.equal(leak, 24, 'sızıntı O₂ tüketimini 2× yapar');
+  assert.equal(leak, 10, 'sızıntı O₂ tüketimini 2× yapar');
   assert.equal(E.calcPointOfNoReturnO2({ distanceM: 0 }), 0);
   assert.equal(E.calcPointOfNoReturnO2({ distanceM: 1e6 }), 100, 'çentik %100 ile sınırlı');
 });
@@ -91,7 +91,7 @@ test('M4: donmuş eklemle uzakta dönüşsüzlük noktası aşılır ve HUD duru
   S.Sim.land(s, null);
   s.player.inside = false;
   s.player.x = 1200;
-  s.suit.o2 = 35; // normal hızla gereken %16, donmuş eklemle %40
+  s.suit.o2 = 12; // normal hızla gereken %6.7, donmuş eklemle %16.7
   s.suit.frozen = false;
   assert.equal(S.Sim.ponr(s).beyond, false);
   s.suit.frozen = true;
@@ -99,6 +99,83 @@ test('M4: donmuş eklemle uzakta dönüşsüzlük noktası aşılır ve HUD duru
   assert.equal(p.beyond, true);
   assert.equal(p.speedPct, 40);
   assert.ok(p.jumpFactor >= 2.4);
+});
+
+test('Elbise O₂: dolu elbise xEVA\'nın 8 saatlik çıkışı kadar dayanır (%100 / 480 dk)', () => {
+  const minutes = 100 / D.constants.eva.suitO2PctPerMin;
+  assert.ok(Math.abs(minutes - 480) <= 1, `dolu elbise ${minutes.toFixed(1)} dk dayanmalı (8 sa)`);
+  assert.match(D.constants.eva.src, /xeva/, 'kaynak xEVA System ConOps olmalı (D-009)');
+  assert.equal(D.constants.eva.simplified, true);
+});
+
+test('Elbise bataryası: −80 °C\'de dolu batarya ısıtıcıyı ~8 sa çalıştırır; soğukta daha hızlı biter', () => {
+  const at = (c) => 100 / E.calcSuitBatteryDrainPctPerMin({ ambientC: c });
+  assert.ok(at(-80) >= 450 && at(-80) <= 510, `−80 °C: ${at(-80).toFixed(0)} dk`);
+  assert.ok(at(-95) < at(-80) && at(-80) < at(0), 'ısıtıcı yükü dış sıcaklıkla artar');
+  const worn = 100 / E.calcSuitBatteryDrainPctPerMin({ ambientC: -80, integrity: 30 });
+  assert.ok(worn < at(-80), 'hasarlı elbise bataryayı daha hızlı tüketir');
+});
+
+test('Batarya bitince: eklem donmasına −80 °C\'de 45–60 dk uyarılı pencere, hipotermi eşiği çok daha sonra', () => {
+  const eva = D.constants.eva;
+  for (const site of D.landingSites) {
+    const freeze = E.calcSuitCoolingMinutes({ fromC: eva.suitNominalC, toC: eva.jointFreezeSuitC, ambientC: site.nightMinC });
+    assert.ok(freeze >= 45 && freeze <= 60, `${site.id} (${site.nightMinC} °C): eklem donması ${freeze.toFixed(1)} dk`);
+    const hypo = E.calcSuitCoolingMinutes({ fromC: eva.suitNominalC, toC: eva.hypothermiaSuitC, ambientC: site.nightMinC });
+    assert.ok(hypo > freeze * 1.8, `${site.id}: hipotermi eşiği ${hypo.toFixed(0)} dk`);
+  }
+  assert.equal(E.calcSuitCoolingMinutes({ fromC: 22, toC: 2, ambientC: 5 }), Infinity, 'dış hava eşikten sıcaksa donma yok');
+  assert.equal(E.calcSuitCoolingMinutes({ fromC: 0, toC: 2, ambientC: -80 }), 0);
+});
+
+test('Elbise ısıl modeli: simülasyon formülle aynı sürede donar ve kare hızından bağımsızdır', () => {
+  const eva = D.constants.eva;
+  const run = (stepMin) => {
+    const s = S.State.reset({});
+    S.Sim.launch(s);
+    S.Sim.land(s, null);
+    s.player.inside = false;
+    s.player.x = 300;
+    s.minute = 1480 + 200; // gece, en soğuk saate yakın
+    s.suit.battery = 0;
+    const amb = S.Sim.ambient(s);
+    const expected = E.calcSuitCoolingMinutes({ fromC: s.suit.tempC, toC: eva.jointFreezeSuitC, ambientC: amb });
+    const th = S.Sim.suitThermal(s);
+    assert.equal(th.state, 'cooling');
+    assert.ok(Math.abs(th.freezeMinutes - expected) < 0.01, 'HUD geri sayımı formülle aynı');
+    let t = 0;
+    while (!s.suit.frozen && t < 240 && !s.gameOver) {
+      S.Sim.step(s, stepMin);
+      t += stepMin;
+    }
+    return { t, expected };
+  };
+  const coarse = run(1);
+  const frame = run(2 / 60); // 60 fps'de bir kare (normal oyun saati 2 oyun dk / s)
+  assert.ok(Math.abs(coarse.t - coarse.expected) < 3, `1 dk adım: ${coarse.t} dk ≈ ${coarse.expected.toFixed(1)} dk`);
+  assert.ok(Math.abs(frame.t - coarse.t) < 1, `kare adımı ${frame.t.toFixed(1)} dk ≈ 1 dk adımı ${coarse.t} dk`);
+  assert.ok(frame.t >= 45 && frame.t <= 60, `uyarılı pencere ${frame.t.toFixed(1)} dk`);
+});
+
+test('Habitat ısıl modeli: ısıtma kesilince kare boyutunda adımlarla da soğur (yuvarlama soğumayı durdurmaz)', () => {
+  // RTG'siz + kalın yalıtım: ısı kaybı ~150 W → bir karede ~0.004 °C; eskiden her adımda yuvarlanınca sıfırlanıyordu
+  const s = S.State.reset({ design: Object.assign({}, S.State.DEFAULT_DESIGN, { powerSource: 'solar_only', insulation: 'thick' }) });
+  assert.equal(S.Sim.launch(s).ok, true);
+  S.Sim.land(s, null);
+  s.player.inside = true;
+  s.minute = 1480 + 200;
+  s.loads.find((l) => l.id === 'heating').on = false;
+  const start = s.res.habTempC;
+  for (let i = 0; i < 60 * 30; i++) S.Sim.step(s, 2 / 60); // 30 gerçek saniye, 60 fps
+  const coarse = S.State.reset({ design: Object.assign({}, S.State.DEFAULT_DESIGN, { powerSource: 'solar_only', insulation: 'thick' }) });
+  S.Sim.launch(coarse);
+  S.Sim.land(coarse, null);
+  coarse.player.inside = true;
+  coarse.minute = 1480 + 200;
+  coarse.loads.find((l) => l.id === 'heating').on = false;
+  S.Sim.advance(coarse, 60); // aynı 60 oyun dakikası, 5 dk'lık adımlarla
+  assert.ok(s.res.habTempC < start - 3, `habitat ${start} → ${s.res.habTempC.toFixed(2)} °C`);
+  assert.ok(Math.abs(s.res.habTempC - coarse.res.habTempC) < 0.3, `kare adımı ${s.res.habTempC.toFixed(2)} ≈ 5 dk adımı ${coarse.res.habTempC.toFixed(2)} °C`);
 });
 
 test('ambientTempAt: gece en düşük ≈ nightMinC (−80 °C civarı), gündüz-gece farkı 70–100 °C', () => {

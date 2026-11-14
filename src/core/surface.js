@@ -82,6 +82,13 @@
     if (typeof s.player.ix === 'number') body.ix = s.player.ix;
   };
 
+  /**
+   * Ekrandaki yürüme hızı ayrı bir sayı değildir, veriden türetilir:
+   * px/s = eva.speedMPerMin [m/oyun dk] × oyun saati [oyun dk/gerçek s] ÷ metersPerPixel [m/px]
+   * Böylece koridorda yürünen metre / oyun dakikası her modda eva.speedMPerMin'e eşittir (O₂-metre hesabı dürüst kalır).
+   */
+  Surf.walkPxPerSecond = (s) => (S.DATA.constants.eva.speedMPerMin * S.Sim.gameMinutesPerRealSecond(s)) / G().metersPerPixel;
+
   Surf.speedFactor = function (s) {
     let f = s.suit.frozen ? S.DATA.constants.eva.frozenSpeedFactor : 1;
     // Sarkaç deneyi ödülü: 0.38g yürüyüş kalibrasyonu kum tuzağındaki hız kaybını azaltır
@@ -91,7 +98,7 @@
 
   /** Dış dünya güncellemesi. input: { dir: -1|0|1, jump: bool } */
   Surf.update = function (s, dt, input) {
-    const speed = G().walkPxPerSecond * Surf.speedFactor(s);
+    const speed = Surf.walkPxPerSecond(s) * Surf.speedFactor(s);
     body.moving = input.dir !== 0;
     if (input.dir !== 0) s.player.facing = input.dir;
     body.px = Math.max(Surf.worldLeftPx(), Math.min(Surf.worldRightPx(), body.px + input.dir * speed * dt));
@@ -157,7 +164,7 @@
     const I = Surf.INTERIOR;
     body.moving = input.dir !== 0;
     if (input.dir !== 0) s.player.facing = input.dir;
-    body.ix = Math.max(I.left, Math.min(I.right, body.ix + input.dir * G().walkPxPerSecond * 0.7 * dt));
+    body.ix = Math.max(I.left, Math.min(I.right, body.ix + input.dir * G().interiorWalkPxPerSecond * dt));
     s.player.ix = body.ix;
     if (body.moving) {
       body.stepT -= dt;

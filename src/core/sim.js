@@ -29,6 +29,35 @@
   Sim.isOutside = (s) => s.scene === 'surface' && !s.player.inside;
   Sim.horizons = (s) => E().getHorizons(s.sol, s.maxSols);
 
+  /** Oyun saatinin hızı [oyun dakikası / gerçek saniye]: normal oyun keşfe zaman tanır, jüri hızlı modu (?demo) daha çabuktur */
+  Sim.gameMinutesPerRealSecond = (s) => (s && s.demoMode ? D().gameplay.demoGameMinutesPerRealSecond : D().gameplay.gameMinutesPerRealSecond);
+
+  /**
+   * Elbise ısıl durumu (HUD + hedef kartı): ısıtıcı bataryadan mı çalışıyor, bu sıcaklıkta kaç dakika kalır,
+   * batarya bittiyse eklem donmasına / hipotermiye ne kadar var. Tahminler o anki dış sıcaklıkla yapılır.
+   * state: 'heater' | 'low' (ısıtıcı yakında durur) | 'cooling' (batarya bitti) | 'frozen'
+   */
+  Sim.suitThermal = function (s, ambientC = Sim.ambient(s)) {
+    const eva = D().constants.eva;
+    const suit = s.suit;
+    const drain = E().calcSuitBatteryDrainPctPerMin({ ambientC, integrity: suit.integrity });
+    const batteryMinutes = suit.battery > 0 ? suit.battery / drain : 0;
+    const cooling = suit.battery <= 0;
+    const freezeMinutes = cooling ? E().calcSuitCoolingMinutes({ fromC: suit.tempC, toC: eva.jointFreezeSuitC, ambientC }) : Infinity;
+    const toHypothermia = cooling ? E().calcSuitCoolingMinutes({ fromC: suit.tempC, toC: eva.hypothermiaSuitC, ambientC }) : Infinity;
+    let state = 'heater';
+    if (suit.frozen) state = 'frozen';
+    else if (cooling) state = 'cooling';
+    else if (batteryMinutes <= eva.suitBatteryLowWarnMinutes) state = 'low';
+    return {
+      state,
+      drainPctPerMin: drain,
+      batteryMinutes,
+      freezeMinutes,
+      hypothermiaMinutes: toHypothermia + Math.max(0, eva.hypothermiaMinutes - suit.coldMinutes)
+    };
+  };
+
   /** M4 — Dönüşsüzlük noktası durumu (normal hız vs. donmuş eklem hızı) */
   Sim.ponr = function (s) {
     const dist = Sim.distanceFromHab(s);
@@ -261,13 +290,15 @@
   Sim.stepThermal = function (s, dt, ambientC) {
     const d = D();
     const target = d.gameplay.habitatTargetC;
+    // Sıcaklıklar tam hassasiyetle saklanır (yalnızca ekranda yuvarlanır): gerçek zamanlı oyunda bir karede
+    // oyun saati ~0.03 dk ilerler; her adımda yuvarlamak küçük değişimleri sıfırlar ve soğumayı durdururdu.
     if (Sim.loadSupplied(s, 'heating')) {
-      s.res.habTempC = round1(Math.min(target, s.res.habTempC + dt * 0.5));
+      s.res.habTempC = Math.min(target, s.res.habTempC + dt * 0.5);
     } else {
       const waste = Sim.powerCfg(s).rtgWasteHeatW + s.inventory.rhuUnits * d.constants.rhu.thermalW;
       const lossW = Sim.insulationCfg(s).uaWPerK * (s.res.habTempC - ambientC);
       const dT = ((waste - lossW) * dt * 60) / d.gameplay.habitatHeatCapacityJPerK;
-      s.res.habTempC = round2(Math.min(target, s.res.habTempC + dT));
+      s.res.habTempC = Math.min(target, s.res.habTempC + dT);
     }
 
     const gh = s.greenhouse;
@@ -350,18 +381,17 @@
     if (outside) {
       const o2Factor = (suit.leak ? eva.suitLeakO2Multiplier : 1) * (s.rewards.evaO2Factor || 1);
       suit.o2 = Math.max(0, suit.o2 - eva.suitO2PctPerMin * o2Factor * dt);
-      const heater = (eva.suitHeaterPctPerMinPer100C * Math.max(0, -ambientC)) / 100;
-      const integrityPenalty = suit.integrity < 50 ? 1.5 : 1;
-      suit.battery = Math.max(0, suit.battery - (eva.suitBatteryBasePctPerMin + heater) * integrityPenalty * dt);
+      suit.battery = Math.max(0, suit.battery - E().calcSuitBatteryDrainPctPerMin({ ambientC, integrity: suit.integrity }) * dt);
       if (suit.battery > 0) {
-        suit.tempC = round1(Math.min(eva.suitNominalC, suit.tempC + dt * 0.4));
+        suit.tempC = Math.min(eva.suitNominalC, suit.tempC + eva.suitHeaterWarmCPerMin * dt);
       } else {
-        suit.tempC = round1(suit.tempC + (ambientC - suit.tempC) * Math.min(1, eva.suitCoolingFracPerMin * dt));
+        // Isıtıcı durdu: elbise dış sıcaklığa üstel yaklaşır (adım boyundan bağımsız; HUD geri sayımıyla aynı formül)
+        suit.tempC = ambientC + (suit.tempC - ambientC) * Math.exp(-eva.suitCoolingFracPerMin * dt);
       }
       s.stats.minutesOutside += dt;
       s.stats.maxDistanceM = Math.max(s.stats.maxDistanceM, Sim.distanceFromHab(s));
     } else {
-      suit.tempC = round1(Math.min(eva.suitNominalC, suit.tempC + dt * 2));
+      suit.tempC = Math.min(eva.suitNominalC, suit.tempC + eva.suitHabitatWarmCPerMin * dt);
       suit.frozen = false;
       suit.coldMinutes = 0;
     }

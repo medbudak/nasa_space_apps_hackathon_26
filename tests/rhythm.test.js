@@ -80,8 +80,14 @@ test('RIT-02: hedef önceliği — hayati tehlike > son Sol > yarım inceleme > 
   assert.equal(S_main(ctx), 'wreck_diagnose');
   // Hayati tehlike her şeyin önünde
   s.player.x = 1400;
-  s.suit.o2 = 20;
+  s.suit.o2 = 10; // 1400 m'den dönüş %7.8 O₂ ister: +%5 güvenlik payının içinde → kritik
   assert.equal(S_main(ctx), 'return');
+  // Elbise bataryası bitince (O₂ yeterli olsa da) ısıtıcı durur: önce eve dönüş
+  s.suit.o2 = 100;
+  s.suit.battery = 0;
+  assert.equal(S_main(ctx), 'return_cold');
+  assert.equal(S.Objectives.compute(s).optional, null, 'kritik hedefte isteğe bağlı hedef gösterilmez');
+  s.suit.battery = 100;
   // İçeride sızıntı
   s.suit.o2 = 100;
   s.player.inside = true;
@@ -112,6 +118,33 @@ test('RIT-06: sarkaç deneyi ödülü sonraki kararı değiştirir (kum tuzağı
   assert.equal(r.success, true);
   const after = S.Surface.speedFactor(s);
   assert.ok(after > before, `kum tuzağı hızı ${before} → ${after}`);
+});
+
+test('Tempo: normal oyunda 12 saatlik gündüz ~6 gerçek dk sürer, jüri hızlı modu daha çabuk; dolu elbise birkaç gerçek dakika keşif verir', () => {
+  const full = landed();
+  const demo = landed({ demoMode: true });
+  const rate = full.S.Sim.gameMinutesPerRealSecond(full.s);
+  const demoRate = demo.S.Sim.gameMinutesPerRealSecond(demo.s);
+  const dayRealMin = (12 * 60) / rate / 60;
+  assert.ok(dayRealMin >= 5 && dayRealMin <= 7, `12 sa gündüz ${dayRealMin.toFixed(1)} gerçek dk`);
+  assert.ok(demoRate > rate, 'hızlı mod daha hızlı akmalı');
+  const eva = full.S.DATA.constants.eva;
+  const suitRealMin = 100 / eva.suitO2PctPerMin / rate / 60;
+  assert.ok(suitRealMin >= 3, `dolu elbise ${suitRealMin.toFixed(1)} gerçek dk`);
+});
+
+test('Tempo: ekranda yürüme hızı oyun saatinden türer — yürünen metre / oyun dakikası her modda eva.speedMPerMin', () => {
+  for (const demoMode of [false, true]) {
+    const { S, s } = landed({ demoMode });
+    s.player.inside = false;
+    s.player.x = 20;
+    S.Surface.syncFromState(s);
+    const x0 = s.player.x;
+    for (let i = 0; i < 60; i++) S.Surface.update(s, 1 / 60, { dir: 1, jump: false }); // 1 gerçek saniye
+    const metres = s.player.x - x0;
+    const gameMin = 1 * S.Sim.gameMinutesPerRealSecond(s);
+    assert.ok(Math.abs(metres / gameMin - S.DATA.constants.eva.speedMPerMin) < 0.01, `${demoMode ? 'demo' : 'normal'}: ${(metres / gameMin).toFixed(2)} m/oyun dk`);
+  }
 });
 
 test('RIT-07: uyarı aleti olmasa da toz fırtınası kısa süre önceden görünür ön işaret verir', () => {

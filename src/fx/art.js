@@ -102,14 +102,17 @@
     // Yıldızlar ve Phobos
     if (dark > 0.3) {
       const t = performance.now() / 1000;
-      for (const st of stars) {
-        const tw = 0.5 + 0.5 * Math.sin(t * 1.3 + st.b * 20);
-        ctx.globalAlpha = (dark - 0.3) * (0.4 + 0.6 * tw * st.b);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(Math.round(st.x), Math.round(st.y), st.s, st.s);
+      // Yıldız alanı 640 px'lik bloklar hâlinde döşenir (geniş pencerede de gökyüzü dolu)
+      for (let ox = 0; ox < w; ox += 640) {
+        for (const st of stars) {
+          const tw = 0.5 + 0.5 * Math.sin(t * 1.3 + st.b * 20);
+          ctx.globalAlpha = (dark - 0.3) * (0.4 + 0.6 * tw * st.b);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(Math.round(ox + st.x), Math.round(st.y), st.s, st.s);
+        }
       }
       ctx.globalAlpha = dark;
-      const px = ((m * 0.9) % 760) - 60;
+      const px = ((m * 0.9) % (w + 120)) - 60;
       ctx.fillStyle = '#9a8f88';
       ctx.fillRect(Math.round(px), 52, 7, 4);
       ctx.fillRect(Math.round(px) + 1, 51, 5, 6);
@@ -305,21 +308,29 @@
     ctx.fillRect(x, y, w, h);
   }
 
-  Art.drawInterior = function (ctx, state, highlightId, t) {
+  /**
+   * view: { w, h, ox, oy } — gerçek tuval boyutu ve 640×360 kesitin tuval içindeki ötelemesi.
+   * Dış manzara tüm tuvali kaplar; kesit ve istasyonlar (ox, oy) kadar ötelenmiş tasarım koordinatında çizilir.
+   */
+  Art.drawInterior = function (ctx, state, highlightId, t, view = { w: 640, h: 360, ox: 0, oy: 0 }) {
     const I = S.Surface.INTERIOR;
     const minute = state.minute;
     const { dark } = Art.lighting(minute);
     const lifeShed = (state.loads.find((l) => l.id === 'life_support') || {}).shed;
     const cold = state.res.habTempC < S.DATA.gameplay.habitatComfortMinC;
     const site = state.design.landingSiteId;
+    const { w, h, ox, oy } = view;
 
     // Dış manzara (kesitin arkası)
-    Art.drawSky(ctx, site, minute, 640, 240, { horizonY: 170 });
+    Art.drawSky(ctx, site, minute, w, 240 + oy, { horizonY: 170 + oy });
     ctx.save();
-    ctx.translate(0, -70);
-    Art.drawRidges(ctx, site, minute, 200, 640);
+    ctx.translate(0, oy - 70);
+    Art.drawRidges(ctx, site, minute, 200 - ox, w);
     ctx.restore();
-    Art.drawGround(ctx, site, minute, 0, 640, 240, 200, {});
+    Art.drawGround(ctx, site, minute, -ox, w, h, 200 + oy, {});
+
+    ctx.save();
+    ctx.translate(ox, oy);
 
     // Gövde kabuğu
     const x0 = 44;
@@ -506,6 +517,7 @@
         ctx.globalAlpha = 1;
       }
     }
+    ctx.restore();
   };
 
   S.Art = Art;

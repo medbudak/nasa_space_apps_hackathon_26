@@ -77,6 +77,28 @@
     return Math.min(100, round1((distanceM / v) * rate * eva.pointOfNoReturnSafetyFactor));
   };
 
+  /**
+   * Elbise bataryası tüketimi: (taban + ısıtıcı · max(0, −T_dış) / 100) · bütünlük cezası   [%/dk]
+   * Veri, dolu bataryanın −80 °C'de 8 saatlik xEVA çıkışını ısıtacağı şekilde ayarlıdır (D-009 oyun değeri).
+   */
+  E.calcSuitBatteryDrainPctPerMin = function ({ ambientC, integrity = 100 }) {
+    const eva = D().constants.eva;
+    const penalty = integrity < eva.suitLowIntegrityPct ? eva.suitLowIntegrityBatteryFactor : 1;
+    return (eva.suitBatteryBasePctPerMin + (eva.suitHeaterPctPerMinPer100C * Math.max(0, -ambientC)) / 100) * penalty;
+  };
+
+  /**
+   * Bataryası bitmiş elbisenin soğuma süresi (Newton soğuması):
+   * T(t) = T_dış + (T0 − T_dış) · e^(−k·t)  →  t = ln((T0 − T_dış) / (T_hedef − T_dış)) / k   [oyun dakikası]
+   * Dış hava hedeften sıcaksa elbise o sıcaklığa hiç inmez: Infinity.
+   */
+  E.calcSuitCoolingMinutes = function ({ fromC, toC, ambientC }) {
+    const k = D().constants.eva.suitCoolingFracPerMin;
+    if (fromC <= toC) return 0;
+    if (ambientC >= toC || !(k > 0)) return Infinity;
+    return Math.log((fromC - ambientC) / (toC - ambientC)) / k;
+  };
+
   /** Habitat ısıtma ihtiyacı: max(0, UA·(T_hedef − T_dış) − RTG atık ısısı − RHU)   [W] */
   E.calcHeatingW = function ({ uaWPerK, targetC, ambientC, wasteHeatW = 0 }) {
     return Math.max(0, Math.round(uaWPerK * (targetC - ambientC) - wasteHeatW));
