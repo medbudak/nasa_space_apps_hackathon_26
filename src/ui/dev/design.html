@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOL 14 · Sol 0 design (dev page)</title>
+  <link rel="stylesheet" href="../../../css/style.css">
+</head>
+<body>
+  <!-- DEV PAGE (owner: K3). Open with: python3 -m http.server 8000  ->  http://localhost:8000/src/ui/dev/design.html
+       Uses placeholder data and a stub evaluate() until K1's core files exist. Not part of the game build. -->
+  <div id="app" style="height: 100vh"></div>
+  <div class="dev-bar">
+    <span>DEV</span>
+    <button data-lang="tr" class="on">TR</button>
+    <button data-lang="en">EN</button>
+    <button data-reset>reset</button>
+  </div>
+  <script type="module">
+    import { mountDesign } from '../../scenes/design.js';
+    import { stubData } from './stub_data.js';
+    import { evaluateDesign } from './stub_evaluate.js';
+
+    const texts = await (await fetch('./design_texts.json')).json();
+    let lang = 'tr';
+    const t = (key) => (texts[key] ? texts[key][lang] : key);
+
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('sol14.dev.design') || 'null'); } catch { saved = null; }
+
+    let screen;
+    function mount() {
+      screen?.destroy();
+      screen = mountDesign(document.getElementById('app'), {
+        data: stubData, t, evaluate: evaluateDesign, design: saved, locale: lang === 'tr' ? 'tr-TR' : 'en-US',
+        onChange: (d) => { saved = d; try { localStorage.setItem('sol14.dev.design', JSON.stringify(d)); } catch {} },
+        onLaunch: (d, summary) => { console.log('[design] launch', d, summary); alert('Launch!\n' + JSON.stringify(d, null, 2)); },
+      });
+    }
+    document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
+      lang = b.dataset.lang;
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-lang]').forEach((x) => x.classList.toggle('on', x === b));
+      mount();
+    }));
+    document.querySelector('[data-reset]').addEventListener('click', () => {
+      saved = null; try { localStorage.removeItem('sol14.dev.design'); } catch {}
+      mount();
+    });
+    mount();
+  </script>
+</body>
+</html>
