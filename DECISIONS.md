@@ -137,3 +137,16 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Decision: Real-world numbers are researched first; when no official value is published, K1 sets a game value and labels it in `nasa_data.json` with `src: "game: K1 decision D-009 ..."` and `simplified: true`. Set this way: costs without a public unit price (budget 500 M$), panel area 250 m², battery options 150/200/300 kWh, O2 reserve 15.4 kg (14 sols of BVAD use + 20%), habitat cooling time 10/20 h, base mass 0 (DRA 5.0 pre-deploys habitat and ascent vehicle), insulation and spare-kit masses, fast-transfer propellant, some instrument data volumes, X-band hardware mass, engine-heating energy. Every such value is listed under "Simplified values" in REFERENCES.md. No estimate is ever presented as a measured value.
 - Why: The game needs a number to run, the team rule forbids passing estimates off as real data, and the judges score Validity.
 - Affects: `src/data/nasa_data.json`, REFERENCES.md, project page
+
+### D-010: Mission outcome follows the player's choices; score is written as things happen
+- Status: Proposed
+- Date: 2026-11-14
+- Agreed by: (pending; proposed by Sude, K2)
+- Decision: The run ends with one of four outcomes in `state.outcome`, decided by the player's choices, never by chance:
+  - `lost`: the astronaut dies (D-006 loss conditions). E.g. a small battery with thin insulation (the habitat freezes at night), no loads switched off in a storm, an EVA too far for the suit O2, no RAD and no shelter in a solar particle event, or sanity neglected.
+  - `colonist`: alive, but the ascent vehicle (MAV) did not launch. On the last sol the engine card's "wait a sol" leaves the engine to the Sun: at a warm site (Meridiani, day 0 °C) it reaches `ascent.mavMinOperatingC` and the MAV flies; at a cold one (Arcadia, day −30 °C) it never does and the window closes at sunset. The report card gives the cause as the landing site (`design.siteId`).
+  - `explorer`: the MAV launched, but fewer than the D-006 minimum (2 reports + 2 experiments) reached Earth: e.g. the data budget spent on photos, the comms choice, nothing sent before the solar conjunction.
+  - `hero`: the MAV launched and the minimum reached Earth.
+  Score entries (`addScore` shape, D-003) are written when things happen, each with the choice that caused it (`design.<field>` or `decision.<eventId>`): survival per sol, launch, missed launch, lost systems (greenhouse froze, quake damage, antenna lost). Amounts come from `nasa_data.json` (D-009).
+- Why: The challenge asks to show how each choice shapes mission success; outcomes and points tied to named choices let K1's report card (M5) draw the chain choice → consequence → points. Rejected: an outcome from launch alone (a player who skips science would still be a hero), and scoring only at the end (the report card could not show when or why).
+- Affects: K2 (`src/systems/finale.js`, `survival.js`, `events.js`), K1 (`src/scenes/ending.js` report card), K6 (reports and experiments sent), K3 (downlink), K5 (`ending.title.*`, `consequence.*` texts)
