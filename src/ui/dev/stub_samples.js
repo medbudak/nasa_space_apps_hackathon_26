@@ -182,7 +182,7 @@ export const qteRows = {
   earthGravity: { value: 9.80665, src: 'nasa_data.json constants.g0 (NIST)', verified: true },
   tolerance: { value: 0.1, src: 'nasa_data.json rules.experimentTolerance (D-006)', verified: true },
   shelfHeightM: P(1.5, 'game tuning: shelf above the hand'),
-  catchWindow: P(0.15, 'game tuning: share of the drop counted as in the hand'),
+  catchWindow: P(0.3, 'game tuning: share of the drop height counted as in the hand (0.3 = about the last 150 ms of a 0.9 s fall)'),
   pendulumLengthM: P(1, 'K6: experiment setting'),
   dropHeightM: { value: 2, src: 'experiments_config.json freefall.dropHeightM (K6)', verified: false },
   soundDistanceM: { value: 50, src: 'experiments_config.json speed_of_sound.distanceM (K6)', verified: false },
