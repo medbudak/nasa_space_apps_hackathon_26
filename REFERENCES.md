@@ -7,6 +7,16 @@ Running log of everything external the project uses. The submission form asks fo
 | Resource | URL | Used for |
 |---|---|---|
 | NASA Mars Fact Sheet (NSSDCA) | https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html | Mars gravity, solar irradiance, sol length, pressure, CO2 share, temperatures, Earth-Mars distance, synodic period (`src/data/nasa_data.json` → `mars`) |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/what-sounds-captured-by-nasas-perseverance-rover-reveal-about-mars/ | nasa_data.json: science |
+| nist.gov | https://www.nist.gov/si-redefinition/kelvin/kelvin-present-realization | nasa_data.json: science |
+| ntrs.nasa.gov | https://ntrs.nasa.gov/citations/20120016793 | nasa_data.json: science |
+| ntrs.nasa.gov | https://ntrs.nasa.gov/citations/20190028297 | nasa_data.json: science |
+| nasa.gov | https://www.nasa.gov/wp-content/uploads/2015/10/pom_workshopbooklet.pdf | nasa_data.json: science |
+| journals.plos.org | https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0103138 | nasa_data.json: science |
+| nasa.gov | https://www.nasa.gov/wp-content/uploads/2020/10/2022-01-05_nasa-std-3001_vol.1_rev._b_final_draft_with_signature_010522.pdf | nasa_data.json: loss |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/phoenix-mission-status-report/ | nasa_data.json: wrecks |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/nasas-insight-still-hunting-marsquakes-as-power-levels-diminish/ | nasa_data.json: wrecks |
+| science.nasa.gov | https://science.nasa.gov/blogs/insight/2022/12/12/nasa-insights-power-level-as-of-dec-12-2022/ | nasa_data.json: wrecks |
 | nasa.gov | https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf | nasa_data.json: thermal |
 | ntrs.nasa.gov | https://ntrs.nasa.gov/api/citations/20170009505/downloads/20170009505.pdf | nasa_data.json: life |
 | nasa.gov | https://www.nasa.gov/wp-content/uploads/2017/02/eva-exp-0042_xeva_system_con_ops_rev_b_final_dtd_10192020_ref_doc.pdf | nasa_data.json: life |
