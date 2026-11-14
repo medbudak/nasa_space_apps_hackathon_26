@@ -2,16 +2,19 @@
 //
 // Runs the game loop: survival.step() + events.checkEvents() every frame, pauses while a
 // decision card is open, saves at each new sol, and moves to the ending on a loss or when
-// the last sol is over. Draws a placeholder view (sky, ground, habitat, astronaut) until
-// K4's sprites and K3's HUD are wired in.
+// the last sol is over. Draws K4's images (wired by K1), with plain shapes as a fallback.
+//
+// For K3's HUD (mounted over this scene by main.js): the loop samples the telemetry and runs
+// the relay passes (K3's downlink logic), and hudOptions() hands the HUD the telemetry, the
+// passes and the power panel hooks. Relay passes come from nasa_data.json `relayPasses`
+// (requested from K1: rows { id, name, atSolFraction, mbit }); none means no passes yet.
 //
 // Controls: ← / → (or A / D) walk, E at the habitat door: go out / come back in.
 //
 // Dev options (URL):
 //   ?devData=k2  fill values still missing in nasa_data.json with K2's TEST values
 //                (tests/fixtures/k2_requested.json). Shown on screen. Never for a real run.
-//   ?debug=1     text panel with the simulation numbers, and buttons to answer decision
-//                cards while K3's card UI is not wired into main.js yet.
+//   ?debug=1     text panel with the simulation numbers, and buttons to answer decision cards.
 //
 // Time (D-008): inside, 1 sol is about 2 minutes; outside, 1 real second = 1 game minute, so a
 // 900 m walk takes about 15 s on screen. Walking uses the real suit speed in game time, so the
@@ -24,7 +27,10 @@ import {
   gameSecondsPerRealSecond,
 } from '../systems/survival.js';
 import { createEventState, checkEvents, reopenPending, resolveDecision } from '../systems/events.js';
+import { getPowerStatus, setOrder } from '../systems/power.js';
 import { val, withRequested } from '../systems/simData.js';
+import { createTelemetry } from '../ui/telemetry.js';
+import { runDuePasses } from '../ui/downlink.js';
 
 // Engine settings (not gameplay values): frame cap after a tab switch, view and door size.
 const MAX_FRAME_SEC = 0.25;
@@ -71,12 +77,29 @@ export default {
       lastSol: state.time.sol,
       last: performance.now(),
       raf: 0,
+      telemetry: createTelemetry({ maxSols: 3 }), // in memory: starts empty after a reload
+      passes: relayPasses(runData),
       debugEl: DEBUG ? addDebugPanel(ui) : null,
       devNote: DEV_DATA ? addDevNote(ui, t) : null,
     };
 
     reopenPending(state, ctx); // a card that was open before a reload
     scene.raf = requestAnimationFrame(frame);
+  },
+
+  /**
+   * Extra options for K3's mountHud(), which main.js mounts over this scene:
+   * the telemetry history, the relay passes for the Downlink tab, and the power panel hooks.
+   * Call after enter(); returns {} if the scene did not start.
+   */
+  hudOptions() {
+    if (!scene) return {};
+    const { state, ctx, telemetry, passes } = scene;
+    return {
+      telemetry,
+      downlink: { passes, lightDelaySec: null }, // light-delay table: requested from K1
+      power: { getStatus: () => getPowerStatus(state, ctx), setOrder: (ids) => setOrder(state, ids) },
+    };
   },
 
   exit() {
@@ -99,11 +122,17 @@ function frame(now) {
 
   const paused = Boolean(state.events.pending);
   if (!paused) {
+    const fromT = state.time.sol + state.time.solFraction;
     walk(dt);
     step(state, dt, ctx);
+    const toT = state.time.sol + state.time.solFraction;
+    // Relay passes due in this step send the downlink queue (K3's M1 logic).
+    if (s.passes.length) runDuePasses(state, s.passes, fromT, toT, ctx.bus);
+    s.telemetry.sample(state);
     checkEvents(state, ctx);
     if (state.time.sol !== s.lastSol) {
       s.lastSol = state.time.sol;
+      state.dataBudget.used = 0; // "used this sol" starts again with each new sol
       save();
     }
   }
@@ -327,6 +356,17 @@ function drawOutside() {
   if (Math.abs(astronautX) <= DOOR_RADIUS_M && !state.events.pending) {
     hint(scene.t('surface.hint.enter'), W / 2, groundY - SPRITES.walk.h - 16);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Relay passes
+
+/** Relay passes from nasa_data.json `relayPasses` (rows of entries), in K3's downlink shape. */
+function relayPasses(data) {
+  const rows = Array.isArray(data.relayPasses) ? data.relayPasses : [];
+  return rows
+    .filter((r) => typeof r.atSolFraction?.value === 'number' && typeof r.mbit?.value === 'number')
+    .map((r) => ({ id: r.id, name: r.name ?? r.id, atSolFraction: r.atSolFraction.value, mbit: r.mbit.value }));
 }
 
 // ---------------------------------------------------------------------------

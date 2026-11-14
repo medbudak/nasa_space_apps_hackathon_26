@@ -41,17 +41,52 @@ function press(key) {
   for (const fn of listeners.keydown ?? []) fn({ key });
 }
 
-async function enterScene(design = {}) {
+async function enterScene(design = {}, runData = data) {
   const { default: surface } = await import('../src/scenes/surface.js');
   const state = createState(1);
   Object.assign(state.design, DEFAULT_DESIGN, design);
   const bus = fakeBus();
   const scenes = [];
   await surface.enter({
-    state, data, bus, t: (k) => k, goTo: (name) => scenes.push(name), canvas: fakeCanvas, ui: fakeEl(),
+    state, data: runData, bus, t: (k) => k, goTo: (name) => scenes.push(name), canvas: fakeCanvas, ui: fakeEl(),
   });
   return { surface, state, bus, scenes };
 }
+
+test('hudOptions gives K3\'s HUD the telemetry, the relay passes and the power hooks', async () => {
+  const { surface, state } = await enterScene();
+  try {
+    for (let i = 0; i < 20; i++) tick(100);
+    const opts = surface.hudOptions();
+    assert.ok(opts.telemetry.points.length > 0, 'telemetry was not sampled');
+    assert.ok(Array.isArray(opts.downlink.passes));
+    const status = opts.power.getStatus();
+    assert.equal(status.batteryWh, state.power.batteryWh);
+    assert.equal(status.loads[0].id, 'lifeSupport');
+    const order = ['lifeSupport', 'comms', 'heating', 'greenhouse', 'moxie', 'experiments'];
+    assert.equal(opts.power.setOrder(order), true);
+    assert.deepEqual(state.power.order, order);
+  } finally {
+    surface.exit();
+  }
+  assert.deepEqual(surface.hudOptions(), {}, 'after exit there is nothing to hand over');
+});
+
+test('a relay pass in the data sends the queued packet when its time comes', async () => {
+  const withPass = structuredClone(data);
+  withPass.relayPasses = [{ id: 'mro', name: 'MRO', atSolFraction: { value: 0.3 }, mbit: { value: 100 } }];
+  const { surface, state, bus } = await enterScene({}, withPass);
+  try {
+    state.dataBudget.queue.push({ type: 'photo', id: 'p1', mbit: 40, points: 10 });
+    for (let i = 0; i < 400 && state.time.solFraction < 0.31; i++) tick(100);
+    const sent = bus.emitted.filter((e) => e.name === 'downlink:sent');
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].payload.id, 'p1');
+    assert.equal(sent[0].payload.passId, 'mro');
+  } finally {
+    surface.exit();
+  }
+});
 
 test('entering the scene starts a run and the loop moves the clock', async () => {
   const { surface, state } = await enterScene();

@@ -36,6 +36,20 @@ test('a new surface run starts on sol 1 at the data start time, battery full', (
   assert.equal(s.env.insideC, data.thermal.habitatTargetC.value);
 });
 
+test('landing sets the data budget per sol from the comms choice', () => {
+  const relay = data.comms.find((r) => r.id === 'relay');
+  const s = newState({ commsId: 'relay' });
+  assert.equal(s.dataBudget.perSol, relay.mbitPerSol.value);
+  assert.equal(s.dataBudget.used, 0);
+});
+
+test('an unresearched comms figure leaves the data budget unknown, not zero', () => {
+  const noFigure = structuredClone(data);
+  noFigure.comms.find((r) => r.id === 'relay').mbitPerSol.value = null;
+  const s = newState({ commsId: 'relay' }, noFigure);
+  assert.equal(s.dataBudget.perSol, null);
+});
+
 test('one sol of real time advances the sol counter by one', () => {
   const s = newState();
   runOneSol(s);

@@ -26,8 +26,16 @@ import { initPower, computeLoads, sumOn, updateShedding, isOn } from './power.js
  * Call once when the surface scene starts a new run (not on a reload: they exist then).
  */
 export function createSurvivalState(state, data) {
-  const { battery } = designRows(state, data);
+  const { battery, comms } = designRows(state, data);
   const capacityWh = rowVal(battery, 'capacityKWh') * 1000;
+
+  // Data that can reach Earth per sol, from the comms choice made on Sol 0 (D-003 dataBudget).
+  // An unresearched figure stays null so the HUD shows "?" instead of a false 0.
+  if (state.dataBudget) {
+    const perSol = comms?.mbitPerSol?.value;
+    state.dataBudget.perSol = typeof perSol === 'number' ? perSol : null;
+    state.dataBudget.used = 0;
+  }
 
   state.time = { sol: 1, solFraction: val(data.time.startSolFraction, 'time.startSolFraction') };
   state.power = {
