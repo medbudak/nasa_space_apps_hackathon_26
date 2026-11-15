@@ -74,7 +74,7 @@ Running log of everything external the project uses. The submission form asks fo
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/right-front-wheel-rotations/ | forensics_cases.json: Spirit salvageChoice (right-front wheel actuator failed March 2006) — D-012 |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/nasas-spirit-rover-completes-mission-on-mars/ | forensics_cases.json: Spirit salvageChoice (dusty arrays, last winter) — D-012 |
 | science.nasa.gov | https://science.nasa.gov/mission/phoenix/ | nasa_data.json: terrain.westRegion (Phoenix found water ice under the surface, frost and ice-rich polygons: basis of the glacier route, K2) |
-| jpl.nasa.gov | https://www.jpl.nasa.gov/news/steep-slopes-on-mars-reveal-structure-of-buried-ice/ | nasa_data.json: westRegion.iceCave, glacier (buried ice exposed at scarps) |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/steep-slopes-on-mars-reveal-structure-of-buried-ice/ | nasa_data.json: westRegion.iceCave, shelterCave, glacier (buried ice exposed at scarps; the walk-in shelter cave is fiction, D-014) |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/nasa-mars-lander-sees-falling-snow-soil-data-suggest-liquid-past/ | nasa_data.json: westRegion.blizzard (Phoenix lidar saw snow; the ground blizzard is labelled fiction) |
 | science.nasa.gov | https://science.nasa.gov/missions/mars-polar-lander | nasa_data.json: westRegion.finalProbe (Deep Space 2 microprobes, lost 1999; placement fictional) |
 
@@ -174,6 +174,7 @@ Real-world values that were changed or rounded for gameplay.
 | `explore.ice` (4 clusters, relic rewards, report points, minutes) | Game values (D-012) | see `data/explore_config.json` | Pacing and rewards |
 | `terrain.map` widened (west to −5350 m, east to +1400 m, zones) | 2026-11-15 merge; compressed, fictional layout | glacier route west, lava-plain route east | Walking time and suit O₂ pacing |
 | `terrain.westRegion` (ice field, cold, blizzard, ice barriers, cave, probe) | K2 trial values, labelled fiction in the data | see `data/nasa_data.json` | Cold-route challenge |
+| `terrain.westRegion.shelterCave` (position −1920…−2020 m, 2 L bottle, 15 min to fill, 80% walking speed while carrying) | game values, fiction (D-014, proposed) | see `data/nasa_data.json` | Shelter and water-carrying trade-off |
 | `explore.dig` (dig sites, hits, minutes per hit, scanner and RIMFAX ranges) | Game values | see `data/explore_config.json` | Wrecks are found by digging, not by walking past |
 | `explore.cave.scout` (SCOUT-1 rover, fictional) and `explore.westFinds` | Game values; SCOUT-1 and the cargo lander are fictional | see `data/explore_config.json` | Vehicle finds in the tube and on the glacier |
 | `explore.fieldCam` | Game values | 40 s, focus tolerance 0.04 | FIELD CAM photo minigame |

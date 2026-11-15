@@ -1757,7 +1757,22 @@ window.SOL14.STORY = {
   "ev.beagle2.env.title": "Röle geçişini dinle",
   "ev.beagle2.env.desc": "İnişten sonra Beagle 2, Mars Express ve Mars Odyssey geçişlerinde dinlendi; sinyal hiç gelmedi. Röle geçiş penceresinde dinle.",
   "ev.beagle2.env.mg_title": "Röle geçişi dinleme",
-  "ev.beagle2.env.mg_desc": "Yörünge aracı tepedeyken (imleç yeşil bölgede) dinle."
+  "ev.beagle2.env.mg_desc": "Yörünge aracı tepedeyken (imleç yeşil bölgede) dinle.",
+  "prompt.fill_bottle": "Buzu kır, şişeyi doldur",
+  "prompt.fill_bottle_full": "Şişe dolu: seraya götür",
+  "prompt.fill_bottle_none": "Temiz buz: şişen yok",
+  "prompt.water_gh": "Seraya su dök",
+  "shelter.enter": "Buz mağarası (kurgu): buzulun ek soğuğu buraya giremez",
+  "bottle.rack_take": "Şişe al",
+  "bottle.rack_put": "Şişeyi bırak",
+  "bottle.taken": "Boş şişeyi aldın. Batıdaki buz mağarasında doldurabilirsin.",
+  "bottle.returned": "Şişeyi rafa bıraktın.",
+  "bottle.returned_full": "Şişeyi rafa bıraktın; içindeki su habitat deposuna gitti.",
+  "bottle.filled": "Şişe doldu: {l} L su (dolu şişeyle daha yavaş yürürsün)",
+  "bottle.watered": "Seraya {l} L buz suyu döktün. Bitkiler sulandı: moral +{morale}.",
+  "bottle.watered_tank": "Sera bugün zaten sulanmıştı; {l} L su habitat deposuna gitti.",
+  "bottle.err_full": "Şişe zaten dolu: seraya götür.",
+  "bottle.err_none": "Şişen yok. Habitatta hava kilidinin yanındaki raftan al."
  },
  "en": {
   "ui.back": "Back",
@@ -3515,6 +3530,21 @@ window.SOL14.STORY = {
   "ev.beagle2.env.title": "Listen during a relay pass",
   "ev.beagle2.env.desc": "After landing Beagle 2 was listened for during Mars Express and Mars Odyssey passes; no signal ever came. Listen in the relay window.",
   "ev.beagle2.env.mg_title": "Relay pass listening",
-  "ev.beagle2.env.mg_desc": "Listen while the orbiter is overhead (cursor in the green band)."
+  "ev.beagle2.env.mg_desc": "Listen while the orbiter is overhead (cursor in the green band).",
+  "prompt.fill_bottle": "Chip the ice, fill the bottle",
+  "prompt.fill_bottle_full": "Bottle full: take it to the greenhouse",
+  "prompt.fill_bottle_none": "Clean ice: you have no bottle",
+  "prompt.water_gh": "Pour water into the greenhouse",
+  "shelter.enter": "Ice cave (fiction): the ice field's extra cold cannot reach in here",
+  "bottle.rack_take": "Take a bottle",
+  "bottle.rack_put": "Put the bottle back",
+  "bottle.taken": "You took an empty bottle. Fill it in the ice cave out west.",
+  "bottle.returned": "You put the bottle back on the rack.",
+  "bottle.returned_full": "You put the bottle back; its water went into the habitat tank.",
+  "bottle.filled": "Bottle filled: {l} L of water (you walk slower with a full bottle)",
+  "bottle.watered": "You poured {l} L of ice water into the greenhouse. The plants are watered: morale +{morale}.",
+  "bottle.watered_tank": "The greenhouse was already watered today; the {l} L went into the habitat tank.",
+  "bottle.err_full": "The bottle is already full: take it to the greenhouse.",
+  "bottle.err_none": "You have no bottle. Take one from the rack by the airlock in the habitat."
  }
 };

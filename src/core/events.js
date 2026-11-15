@@ -31,7 +31,8 @@
     }
   };
 
-  Ev.isCalm = (s) => Boolean(s.calmUntil && s.totalMinutes < s.calmUntil && s.player.inside);
+  // D-014 (proposed): inside the glacier ice cave crises wait too, for as long as the astronaut stays
+  Ev.isCalm = (s) => Boolean((s.calmUntil && s.totalMinutes < s.calmUntil && s.player.inside) || (S.Sim.inShelter && S.Sim.inShelter(s)));
 
   /**
    * RIT-07 — Bugün yaklaşan (henüz tetiklenmemiş) planlı krizler. Uyarı aleti olmasa bile görsel ön işareti

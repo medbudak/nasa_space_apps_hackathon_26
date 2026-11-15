@@ -376,6 +376,8 @@
       // Elbise tarayıcısı: gerçek bir gömülü noktanın yanında "!" (sahte tümsek tepki vermez)
       if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, ay - img.height, t);
     }
+    // D-014 (K2 Sude): glacier ice cave front layer, the water bottle in hand and the pour into the greenhouse
+    if (S.Westlands && S.Westlands.drawFront && !hideAstro) S.Westlands.drawFront(ctx, s, FX.camX, W, GY, t, landingAstro ? null : { x: ax, y: ay, pose });
     // Kayaya takılınca kısa zıplama ipucu
     if (body.blockedT > 0 && !hideAstro) {
       ctx.save();
@@ -972,6 +974,8 @@
     // böylece alttaki habitat paneliyle (em ölçülü) ilişkisi her pencere oranında 16:9'daki gibi kalır.
     const ox = Math.round((W - BASE_W) / 2);
     S.Art.drawInterior(ctx, s, st ? st.id : null, t, { w: W, h: H, ox, oy: OFF_Y });
+    // D-014 (K2 Sude): water bottle rack by the airlock
+    if (S.Westlands && S.Westlands.drawInteriorRack) S.Westlands.drawInteriorRack(ctx, s, ox, OFF_Y, t, st ? st.id : null);
     const body = S.Surface.body;
     const pose = body.moving ? 'walk' : 'idle';
     const img = S.Sprites.get('astronaut_' + pose);
@@ -982,6 +986,7 @@
         if (body.moving && Math.abs(Math.sin(t * 9)) > 0.5) y -= 1;
         drawSprite(ctx, 'astronaut_' + pose, ox + body.ix - img.width / 2, OFF_Y + y, s.player.facing < 0);
       }
+      if (S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, ox + body.ix, floor, t, body.moving);
     }
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);

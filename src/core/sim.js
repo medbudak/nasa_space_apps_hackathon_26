@@ -46,6 +46,79 @@
   Sim.clockMinute = (s) => s.minute % 1480;
   Sim.ambient = (s) => E().ambientTempAt(Sim.site(s), Sim.clockMinute(s));
 
+  /* ------------------------------------------------------------------ */
+  /* D-014 (proposed): glacier ice cave shelter and the water bottle      */
+  /* ------------------------------------------------------------------ */
+  Sim.shelterCfg = () => (D().terrain.westRegion && D().terrain.westRegion.shelterCave) || null;
+  /**
+   * How far inside the ice cave the astronaut stands: 0 outside, 1 well inside (smooth over edgeM
+   * at both mouths). Only on the surface route, never in the habitat or the lava tube.
+   */
+  Sim.shelterK = function (s) {
+    const c = Sim.shelterCfg();
+    if (!c || s.player.inside || s.player.zone === 'cave') return 0;
+    const d = -s.player.x;
+    const x = Math.min(1, Math.max(0, Math.min(d - c.fromM, c.toM - d) / c.edgeM));
+    return x * x * (3 - 2 * x);
+  };
+  /** In the shelter: no blizzard, no extra cold of the ice field, crises wait. Suit O2 still drains. */
+  Sim.inShelter = (s) => Sim.shelterK(s) >= 0.5;
+
+  /** The bottle in the astronaut's hand: null (none), 'empty' or 'full'. Old saves have none. */
+  Sim.bottle = (s) => (s.carry && s.carry.bottle) || null;
+  Sim.setBottle = function (s, v) {
+    s.carry = s.carry || {};
+    s.carry.bottle = v;
+  };
+  /** Walking speed factor while carrying: a full bottle slows the walk (the M4 notch uses it too). */
+  Sim.carrySpeedFactor = (s) => (Sim.bottle(s) === 'full' && Sim.shelterCfg() ? Sim.shelterCfg().carrySpeedFactor : 1);
+
+  /** The rack by the airlock: take an empty bottle, or put one back (a full one is emptied into the tank). */
+  Sim.toggleBottle = function (s) {
+    const b = Sim.bottle(s);
+    if (!b) {
+      Sim.setBottle(s, 'empty');
+      return { ok: true, taken: true };
+    }
+    if (b === 'full') s.res.waterL = round1(s.res.waterL + Sim.shelterCfg().bottleL);
+    Sim.setBottle(s, null);
+    return { ok: true, taken: false, poured: b === 'full' };
+  };
+
+  /** Chip the cave's ice into the empty bottle: costs game minutes (and so suit O2). */
+  Sim.fillBottle = function (s) {
+    const c = Sim.shelterCfg();
+    if (!c) return { ok: false };
+    if (Sim.bottle(s) !== 'empty') return { ok: false, errKey: Sim.bottle(s) ? 'bottle.err_full' : 'bottle.err_none' };
+    Sim.advance(s, c.fillMinutes);
+    if (s.gameOver) return { ok: false };
+    Sim.setBottle(s, 'full');
+    return { ok: true, l: c.bottleL };
+  };
+
+  /**
+   * Pour the bottle into the greenhouse. If it was not tended today this counts as tending it
+   * (morale, as tend_greenhouse) without using habitat water; otherwise the water goes to the
+   * habitat tank that feeds it.
+   */
+  Sim.waterGreenhouse = function (s) {
+    const c = Sim.shelterCfg();
+    const g = D().habitat.greenhouse;
+    if (!c || Sim.bottle(s) !== 'full') return { ok: false };
+    if (!s.greenhouse.installed) return { ok: false, errKey: 'action.err_no_veggie' };
+    if (s.greenhouse.frozen) return { ok: false, errKey: 'action.err_gh_frozen' };
+    Sim.setBottle(s, 'empty');
+    s.stats.iceWaterL = round1((s.stats.iceWaterL || 0) + c.bottleL);
+    if (s.greenhouse.tendedSol !== s.sol) {
+      const before = s.res.morale;
+      s.res.morale = clamp(s.res.morale + g.tendMorale * (s.greenhouse.yieldPct / 100), 0, 100);
+      s.greenhouse.tendedSol = s.sol;
+      return { ok: true, tended: true, l: c.bottleL, morale: Math.round(s.res.morale - before) };
+    }
+    s.res.waterL = round1(s.res.waterL + c.bottleL);
+    return { ok: true, tended: false, l: c.bottleL };
+  };
+
   /**
    * Extra cold in the western ice field (FICTIONAL game values, data terrain.westRegion.cold).
    * extraC: added to the ambient temperature, growing with the ice (same ramp as the visuals).
@@ -54,7 +127,7 @@
   Sim.westCold = function (s) {
     const w = D().terrain.westRegion;
     const none = { extraC: 0, bleedCPerMin: 0 };
-    if (!w || !w.cold || s.player.inside) return none;
+    if (!w || !w.cold || s.player.inside || Sim.inShelter(s)) return none;
     const d = -s.player.x;
     if (d <= w.frostStartM) return none;
     const ramp = (a, b) => {
@@ -114,6 +187,7 @@
       const x = Math.min(1, Math.max(0, (-s.player.x - bz.fromM) / (bz.fullM - bz.fromM)));
       sandFactor = 1 - (1 - bz.tailwindSpeedFactor) * x * x * (3 - 2 * x);
     }
+    sandFactor *= Sim.carrySpeedFactor(s); // D-014: a full bottle slows the walk home
     const normal = E().calcPointOfNoReturnO2({ distanceM: dist, jointFrozen: false, leak: s.suit.leak, speedFactor: sandFactor });
     const required = E().calcPointOfNoReturnO2({ distanceM: dist, jointFrozen: s.suit.frozen, leak: s.suit.leak, speedFactor: sandFactor });
     return {
