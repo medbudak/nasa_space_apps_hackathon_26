@@ -23,7 +23,8 @@
     quake: { file: 'quake_rumble', vol: 0.8 },
     launch: { file: 'rocket_rumble', vol: 0.7, maxSec: 10 },
     static: { file: 'radio_static', vol: 0.25, maxSec: 2 },
-    shutter: { file: 'camera_shutter', vol: 0.6 }
+    shutter: { file: 'camera_shutter', vol: 0.6 },
+    cheer: { file: 'crowd_cheer', vol: 0.7, maxSec: 13, fadeSec: 2.5 } // açılış: kalkış sonrası alkış/tezahürat
   };
   const LOOPS = { wind: { file: 'wind_loop', vol: 0.35 }, storm: { file: 'storm_loop', vol: 0.6 } };
   const failed = new Set(); // açılamayan kayıtlar: bir daha denenmez, sentez sesi çalar
@@ -36,7 +37,20 @@
     el.volume = spec.vol * VOLUME;
     el.addEventListener('error', () => failed.add(name));
     el.play().catch(() => failed.add(name));
-    if (spec.maxSec) setTimeout(() => el.pause(), spec.maxSec * 1000);
+    if (spec.maxSec && spec.fadeSec) {
+      // son fadeSec saniyede sesi yavaşça kıs, sonra durdur
+      const start = el.volume;
+      setTimeout(() => {
+        const t0 = performance.now();
+        const id = setInterval(() => {
+          const f = 1 - (performance.now() - t0) / (spec.fadeSec * 1000);
+          if (f <= 0) {
+            clearInterval(id);
+            el.pause();
+          } else el.volume = start * f;
+        }, 50);
+      }, (spec.maxSec - spec.fadeSec) * 1000);
+    } else if (spec.maxSec) setTimeout(() => el.pause(), spec.maxSec * 1000);
     return true;
   }
 
