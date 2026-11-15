@@ -1335,3 +1335,4 @@ body[data-scene='world'] .screen-layer { display: none; }
 .gh-art-zinnia-mature { background-image: radial-gradient(circle at 50% 30%, #ffd23a 0 3px, #ff6a2a 4px 8px, transparent 9px), linear-gradient(#4c9a3a, #4c9a3a), radial-gradient(ellipse at 30% 70%, #6fcf4f 0 5px, transparent 6px), radial-gradient(ellipse at 70% 70%, #6fcf4f 0 5px, transparent 6px), linear-gradient(#7a4a2c, #7a4a2c);
   background-size: 32px 32px, 2px 16px, 24px 20px, 24px 20px, 28px 6px; background-position: center, center 10px, center 8px, center 8px, center bottom; }
 .gh-plant.sel small { color: inherit !important; opacity: 0.85; } /* genel ".sel small" kuralı açık zemin için; burada zemin koyu */
+.ws-mats li .min-ico { vertical-align: middle; margin-right: 0.3em; } /* Kişi 6: yükseltme tariflerinde mineral ikonu adın yanında */

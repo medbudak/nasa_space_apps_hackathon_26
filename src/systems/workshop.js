@@ -16,10 +16,30 @@
   const stationBuilt = (s, r) => (s.station && s.station.built[r.module]) || null;
   W.recipe = (id) => W.recipes().find((r) => r.id === id);
   W.items = (s) => (s.inventory && s.inventory.items) || {};
-  const isMineral = (id) => Boolean(S.Explore && S.Explore.mineralTypes().some((m) => m.id === id));
-  /** Malzeme adedi: envanter eşyası ya da mineral (Kişi 5, inventory.minerals) */
-  W.count = (s, item) => (isMineral(item) ? S.Explore.mineralCount(s, item) : W.items(s)[item] || 0);
-  W.matNameKey = (id) => (isMineral(id) ? 'mineral.' : 'item.') + id + '.name';
+  W.count = (s, item) => W.items(s)[item] || 0;
+  W.mineralCount = (s, m) => (S.Explore && S.Explore.mineralCount ? S.Explore.mineralCount(s, m) : 0);
+  /** Malzeme adı: kit/parça (item.<id>) ya da mineral (mineral:<id> → mineral.<id>) */
+  W.itemName = (key) => (key.startsWith('mineral:') ? S.t('mineral.' + key.slice(8) + '.name') : S.t('item.' + key + '.name'));
+
+  /**
+   * MAV tamiri için ayrılan mineraller: hasarlı (ya da göktaşıyla hasar alacak) parçaların tamir parçası henüz
+   * üretilmediyse, onu üreten tarifin mineralleri yükseltmelere harcanamaz. Haritadaki mineraller kıt olduğu için
+   * (oyuncu yükseltmeleri seçer) bu ayırma olmadan güvenli dönüş kilitlenebilirdi.
+   */
+  W.repairReserve = function (s) {
+    const reserve = {};
+    if (!S.Rocket) return reserve;
+    const willHit = (id) => D().rocket.meteorDamage.includes(id) && S.Station && !S.Station.impacted(s) && D().station.impactSol <= (s.maxSols || Infinity);
+    for (const p of S.Rocket.parts()) {
+      if (!S.Rocket.state(s).damage[p.id] && !willHit(p.id)) continue;
+      for (const [item, n] of Object.entries(p.needs)) {
+        const short = n - W.count(s, item);
+        const maker = short > 0 && W.recipes().find((r) => r.makes === item);
+        if (maker) for (const [m, k] of Object.entries(maker.minerals || {})) reserve[m] = (reserve[m] || 0) + k * short;
+      }
+    }
+    return reserve;
+  };
   /** Alet var mı? Tamir kiti mevcut repairKits stoğudur (Kişi 4 kartı) */
   W.hasTool = (s, id) => (id === 'repair_kit' ? (s.inventory.repairKits || 0) > 0 : Boolean(s.inventory.tools && s.inventory.tools[id]));
 
@@ -55,7 +75,15 @@
     if (r.onlyIfPartial && (s.base.solarFrac || 1) >= 1) return { state: 'built' };
     if (r.instrument && !S.Sim.has(s, r.instrument)) return { state: 'locked', reasonKey: 'ws.err_needs_inst', vars: { inst: S.t('inst.' + r.instrument + '.short') } };
     const missing = Object.entries(r.needs || {}).filter(([item, n]) => W.count(s, item) < n).map(([item]) => item);
-    if (missing.length) return { state: 'locked', reasonKey: 'ws.err_missing', vars: { list: missing.map((i) => S.t(W.matNameKey(i))).join(', ') }, missing };
+    // Kişi 5'in mineralleri (inventory.minerals): yükseltme ve tamir parçası tarifleri bunlarla ödenir
+    for (const [m, n] of Object.entries(r.minerals || {})) if (W.mineralCount(s, m) < n) missing.push('mineral:' + m);
+    if (missing.length) return { state: 'locked', reasonKey: 'ws.err_missing', vars: { list: missing.map(W.itemName).join(', ') }, missing };
+    // Tamir parçası olmayan tarif, MAV tamirine ayrılan minerali harcayamaz
+    if (r.minerals && !r.makes) {
+      const reserve = W.repairReserve(s);
+      const held = Object.entries(r.minerals).filter(([m, n]) => W.mineralCount(s, m) - n < (reserve[m] || 0)).map(([m]) => 'mineral:' + m);
+      if (held.length) return { state: 'locked', reasonKey: 'ws.err_reserved', vars: { list: held.map(W.itemName).join(', ') }, missing: held };
+    }
     if (r.upgrade) {
       const cost = W.upgradeCost(s, r);
       if (cost.energyKwh && s.res.energyKwh < cost.energyKwh) return { state: 'locked', reasonKey: 'ws.err_energy', vars: { kwh: cost.energyKwh } };
@@ -165,10 +193,9 @@
     if (!s.player.inside) return { ok: false, errKey: 'ws.err_inside' };
     const opt = W.option(r, optId);
     const rows = W.effects(s, id, opt && opt.id);
-    for (const [item, n] of Object.entries(r.needs || {})) {
-      if (isMineral(item)) S.Explore.spendMinerals(s, { [item]: n });
-      else s.inventory.items[item] -= n;
-    }
+    // önce mineraller (yetmezse hiçbir şey harcanmaz), sonra kitler
+    if (r.minerals && !S.Explore.spendMinerals(s, r.minerals)) return { ok: false, errKey: 'ws.err_missing', vars: { list: '' } };
+    for (const [item, n] of Object.entries(r.needs || {})) s.inventory.items[item] -= n;
     if (r.makes) s.inventory.items[r.makes] = (s.inventory.items[r.makes] || 0) + 1;
     if (r.builds) {
       if (r.builds === 'solar') s.base.solarFrac = opt ? opt.solarFrac : 1;

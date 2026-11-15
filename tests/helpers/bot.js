@@ -4,15 +4,34 @@
  */
 'use strict';
 
-/** D-015: kalkıştan önce MAV'ı tamir et; gövde paneli için göktaşının saçtığı ilk sandığı topla */
+/**
+ * D-015: kalkıştan önce MAV'ı tamir et. Tamir parçası (rakor / gövde yaması) atölyede üretilir:
+ * eksik minerali haritadaki noktadan kaz, sandığı göktaşının saçtığı yerden topla, sonra mekikte üret.
+ */
+function makeRepairPart(S, s, item) {
+  const W = S.Workshop;
+  const r = W.recipes().find((x) => x.makes === item);
+  if (r.needs.cargo_crate && W.count(s, 'cargo_crate') < r.needs.cargo_crate) {
+    const crate = S.DATA.station.pickups.find((p) => p.item === 'cargo_crate' && p.place === 'ground' && !s.station.picked[p.id]);
+    s.player.inside = false;
+    s.player.x = crate.m;
+    S.Station.collect(s, 0);
+  }
+  for (const [m, n] of Object.entries(r.minerals || {})) {
+    for (const site of S.Explore.mineralSites('surface').filter((st) => st.mineral === m)) {
+      if (W.mineralCount(s, m) >= n) break;
+      s.player.inside = false;
+      s.player.x = site.atM;
+      while (!S.Explore.mineralDone(s, site)) S.Explore.digMineral(s, site.id);
+    }
+  }
+  s.player.inside = true;
+  return W.build(s, r.id);
+}
+
 function repairRocket(S, s) {
   for (const id of S.Rocket.damaged(s)) {
-    if (S.Rocket.part(id).needs.cargo_crate && !S.Workshop.count(s, 'cargo_crate')) {
-      const crate = S.DATA.station.pickups.find((p) => p.item === 'cargo_crate' && p.place === 'ground' && !s.station.picked[p.id]);
-      s.player.inside = false;
-      s.player.x = crate.m;
-      S.Station.collect(s, 0);
-    }
+    for (const [item, n] of Object.entries(S.Rocket.part(id).needs)) if (S.Workshop.count(s, item) < n) makeRepairPart(S, s, item);
     S.Rocket.repair(s, id, true);
   }
   s.player.inside = true;
