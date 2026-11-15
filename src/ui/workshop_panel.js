@@ -34,12 +34,10 @@
     const r = W().recipe(id);
     const st = W().status(s, id);
     const opt = W().option(r, WP.opt[id]);
-    const needs = Object.entries(r.needs || {});
+    const needs = Object.entries(r.needs || {}).map(([item, n]) => ({ name: t('item.' + item + '.name'), have: W().count(s, item), n, icon: '' }))
+      .concat(Object.entries(r.minerals || {}).map(([m, n]) => ({ name: t('mineral.' + m + '.name'), have: W().mineralCount(s, m), n, icon: WP.mineralIcon(m, 16) })));
     const mats = needs.length
-      ? needs.map(([item, n]) => {
-          const have = W().count(s, item);
-          return '<li class="' + (have >= n ? 'ok' : 'miss') + '">' + I(have >= n ? 'check' : 'x') + '<span>' + t('item.' + item + '.name') + '</span><b>' + have + ' / ' + n + '</b></li>';
-        }).join('')
+      ? needs.map((x) => '<li class="' + (x.have >= x.n ? 'ok' : 'miss') + '">' + I(x.have >= x.n ? 'check' : 'x') + '<span>' + x.icon + x.name + '</span><b>' + x.have + ' / ' + x.n + '</b></li>').join('')
       : '<li class="ok">' + I('check') + '<span>' + t('ws.no_materials') + '</span></li>';
     const opts = r.options
       ? '<h5>' + t('ws.choice') + '</h5><div class="ws-opts" role="radiogroup">' +

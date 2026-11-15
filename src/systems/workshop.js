@@ -17,6 +17,9 @@
   W.recipe = (id) => W.recipes().find((r) => r.id === id);
   W.items = (s) => (s.inventory && s.inventory.items) || {};
   W.count = (s, item) => W.items(s)[item] || 0;
+  W.mineralCount = (s, m) => (S.Explore && S.Explore.mineralCount ? S.Explore.mineralCount(s, m) : 0);
+  /** Malzeme adı: kit/parça (item.<id>) ya da mineral (mineral:<id> → mineral.<id>) */
+  W.itemName = (key) => (key.startsWith('mineral:') ? S.t('mineral.' + key.slice(8) + '.name') : S.t('item.' + key + '.name'));
   /** Alet var mı? Tamir kiti mevcut repairKits stoğudur (Kişi 4 kartı) */
   W.hasTool = (s, id) => (id === 'repair_kit' ? (s.inventory.repairKits || 0) > 0 : Boolean(s.inventory.tools && s.inventory.tools[id]));
 
@@ -52,7 +55,9 @@
     if (r.onlyIfPartial && (s.base.solarFrac || 1) >= 1) return { state: 'built' };
     if (r.instrument && !S.Sim.has(s, r.instrument)) return { state: 'locked', reasonKey: 'ws.err_needs_inst', vars: { inst: S.t('inst.' + r.instrument + '.short') } };
     const missing = Object.entries(r.needs || {}).filter(([item, n]) => W.count(s, item) < n).map(([item]) => item);
-    if (missing.length) return { state: 'locked', reasonKey: 'ws.err_missing', vars: { list: missing.map((i) => S.t('item.' + i + '.name')).join(', ') }, missing };
+    // Kişi 5'in mineralleri (inventory.minerals): yükseltme tarifleri bunlarla ödenir
+    for (const [m, n] of Object.entries(r.minerals || {})) if (W.mineralCount(s, m) < n) missing.push('mineral:' + m);
+    if (missing.length) return { state: 'locked', reasonKey: 'ws.err_missing', vars: { list: missing.map(W.itemName).join(', ') }, missing };
     if (r.upgrade) {
       const cost = W.upgradeCost(s, r);
       if (cost.energyKwh && s.res.energyKwh < cost.energyKwh) return { state: 'locked', reasonKey: 'ws.err_energy', vars: { kwh: cost.energyKwh } };
@@ -160,6 +165,8 @@
     if (!s.player.inside) return { ok: false, errKey: 'ws.err_inside' };
     const opt = W.option(r, optId);
     const rows = W.effects(s, id, opt && opt.id);
+    // önce mineraller (yetmezse hiçbir şey harcanmaz), sonra kitler
+    if (r.minerals && !S.Explore.spendMinerals(s, r.minerals)) return { ok: false, errKey: 'ws.err_missing', vars: { list: '' } };
     for (const [item, n] of Object.entries(r.needs || {})) s.inventory.items[item] -= n;
     if (r.builds) {
       if (r.builds === 'solar') s.base.solarFrac = opt ? opt.solarFrac : 1;

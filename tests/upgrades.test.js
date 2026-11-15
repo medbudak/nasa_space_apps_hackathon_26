@@ -1,7 +1,7 @@
 /**
  * Kişi 6 — Seviye 1-2-3: sera, istasyon, roket. Her seviye bir takas: kazanç + bedel aynı anda.
  * Sera: verim ↑, güç yükü ↑ · İstasyon: ısı kaybı ↓, mineral + dış çalışma (elbise O₂) · Roket: parti yakıtı ↑, mineral + enerji.
- * Seviye sırayla açılır (3 için önce 2). Mineral maliyetleri Kişi 5'in adları gelene kadar yer tutucu (regolit torbası).
+ * Seviye sırayla açılır (3 için önce 2). Maliyet Kişi 5'in mineralleriyle ödenir; haritadaki mineral hepsine yetmez (seçim zorunlu).
  */
 'use strict';
 
@@ -18,6 +18,7 @@ function ready() {
   s.greenhouse.installed = true;
   s.player.inside = true;
   s.inventory.items = { regolith_bag: 30, cable_spool: 10 };
+  s.inventory.minerals = { basalt: 9, hematite: 9, olivine: 9, meteorite: 9 };
   s.res.energyKwh = 30;
   s.suit.o2 = 100;
   s.suit.battery = 100;
@@ -40,11 +41,11 @@ test('Sera 2: daha çok verim ama daha çok güç (gece de)', () => {
   const { S, s } = ready();
   const y0 = S.Sim.ghYieldPct(s);
   const w0 = S.Sim.loadDemandW(s, 'greenhouse', -80);
-  const bags = s.inventory.items.regolith_bag;
+  const basalt = s.inventory.minerals.basalt;
   S.Workshop.build(s, 'greenhouse_l2');
   assert.ok(S.Sim.ghYieldPct(s) > y0, 'verim arttı');
   assert.ok(S.Sim.loadDemandW(s, 'greenhouse', -80) > w0, 'güç yükü arttı');
-  assert.ok(s.inventory.items.regolith_bag < bags, 'mineral harcandı');
+  assert.equal(s.inventory.minerals.basalt, basalt - 1, 'bazalt harcandı');
   // tohum deneyi ödülü seviye bonusunu silmez
   s.greenhouse.yieldPct = 130;
   assert.equal(S.Sim.ghYieldPct(s), 130 + S.DATA.workshop.upgrades.greenhouse.yieldBonusPct[1]);
@@ -87,4 +88,20 @@ test('Her yükseltmenin önizlemesi kazancı ve bedeli birlikte gösterir; metin
     }
     for (const row of rows) assert.notEqual(S.t('ws.fx.' + row.key), 'ws.fx.' + row.key);
   }
+});
+
+test('Mineral yoksa yükseltme kilitli; haritadaki mineraller altı yükseltmenin hepsine yetmez (oyuncu seçer)', () => {
+  const { S, s } = ready();
+  s.inventory.minerals = {};
+  const st = S.Workshop.status(s, 'greenhouse_l2');
+  assert.equal(st.state, 'locked');
+  assert.equal(st.reasonKey, 'ws.err_missing');
+  assert.ok(st.missing.includes('mineral:basalt'));
+  // haritadaki toplam mineral vs tüm yükseltmelerin istediği
+  const found = {};
+  for (const site of S.DATA.explore.minerals.sites) found[site.mineral] = (found[site.mineral] || 0) + site.amount;
+  const need = {};
+  for (const r of S.Workshop.recipes().filter((x) => x.upgrade)) for (const [m, n] of Object.entries(r.minerals)) need[m] = (need[m] || 0) + n;
+  for (const m of Object.keys(need)) assert.ok(S.Explore.mineralType(m), m + ' Kişi 5 mineral listesinde');
+  assert.ok(Object.keys(need).some((m) => need[m] > (found[m] || 0)), 'en az bir mineral kıt: her şey yükseltilemez');
 });

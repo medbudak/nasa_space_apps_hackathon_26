@@ -1143,8 +1143,10 @@ window.SOL14.DATA = {
     "level": 2,
     "requiresBuilt": "greenhouse",
     "needs": {
-     "regolith_bag": 2,
      "cable_spool": 1
+    },
+    "minerals": {
+     "basalt": 1
     },
     "minutes": 40
    },
@@ -1154,8 +1156,11 @@ window.SOL14.DATA = {
     "level": 3,
     "requiresBuilt": "greenhouse",
     "needs": {
-     "regolith_bag": 4,
      "cable_spool": 1
+    },
+    "minerals": {
+     "basalt": 1,
+     "hematite": 1
     },
     "minutes": 60
    },
@@ -1163,8 +1168,9 @@ window.SOL14.DATA = {
     "id": "station_l2",
     "upgrade": "station",
     "level": 2,
-    "needs": {
-     "regolith_bag": 3
+    "needs": {},
+    "minerals": {
+     "olivine": 1
     },
     "minutes": 60
    },
@@ -1172,8 +1178,10 @@ window.SOL14.DATA = {
     "id": "station_l3",
     "upgrade": "station",
     "level": 3,
-    "needs": {
-     "regolith_bag": 5
+    "needs": {},
+    "minerals": {
+     "olivine": 1,
+     "basalt": 1
     },
     "minutes": 90
    },
@@ -1183,8 +1191,10 @@ window.SOL14.DATA = {
     "level": 2,
     "requiresBuilt": "mav",
     "needs": {
-     "regolith_bag": 2,
      "cable_spool": 1
+    },
+    "minerals": {
+     "meteorite": 1
     },
     "minutes": 45
    },
@@ -1194,16 +1204,18 @@ window.SOL14.DATA = {
     "level": 3,
     "requiresBuilt": "mav",
     "needs": {
-     "regolith_bag": 4,
      "cable_spool": 1
+    },
+    "minerals": {
+     "meteorite": 1,
+     "hematite": 1
     },
     "minutes": 60
    }
   ],
   "upgrades": {
    "simplified": true,
-   "placeholder": true,
-   "note": "Level 1-2-3 upgrades (Kişi 6). Every level is a trade-off, never only 'better'. All numbers are game values. PLACEHOLDER: the mineral costs use regolith bags until Kişi 5's mineral names are agreed; swap the item ids in the recipes above.",
+   "note": "Level 1-2-3 upgrades (Kişi 6). Every level is a trade-off, never only 'better'. All numbers are game values. Mineral costs use Kişi 5's minerals (explore_config.minerals) by their in-game use: basalt = build, hematite = iron, olivine = shield, meteorite = metal. The map holds fewer minerals than all six upgrades need (basalt 3 needed, 2 found), so the player has to choose what to upgrade.",
    "src": "https://www.spaceappschallenge.org/",
    "greenhouse": {
     "yieldBonusPct": [
