@@ -2,7 +2,7 @@
  * SOL 14: RED HORIZON — İstasyon hikâyesi (K3 Medine'nin prototipinden; D-014 önerisi)
  * Sol 2'de üssün doğusuna bir göktaşı düşer (kurgu) ve kargoyu etrafa saçar. MAV sağlam kalır, dönüş değişmez.
  * Saçılan malzeme yerde ve kayaların üstünde (zıpla) durur; iki sahte tümsekte gömülü kit vardır; açık zeminde
- * S/↓ ile regolit torbası doldurulur. Beş istasyon modülü mekikteki atölyede üretilir (workshop.recipes, module).
+ * E ile (yakında etkileşim yokken) regolit torbası doldurulur. Beş istasyon modülü mekikteki atölyede üretilir (workshop.recipes, module).
  * Sondaki istasyon, sonraki ekibe ne bırakıldığını söyler (endingId). Başarı ve karne kuralları değişmez.
  * DOM'a dokunmaz; durum s.station + s.inventory.items. Sayılar data/nasa_data.json → station.
  */
@@ -67,7 +67,7 @@
   };
 
   /**
-   * S/↓: açık zeminde regolit torbası doldur (radyasyon kalkanı için). Kazı noktasının, mekiğin ve istasyon
+   * E (yakında etkileşim yokken): açık zeminde regolit torbası doldur (radyasyon kalkanı için). Kazı noktasının, mekiğin ve istasyon
    * alanının yanında olmaz. Oyun dakikası harcar (elbise O₂ ve bataryası sürer).
    */
   ST.digRegolith = function (s) {

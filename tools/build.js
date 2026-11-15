@@ -245,6 +245,8 @@ const ASSETS = [
   { src: 'sprites/astronaut_walk.png', mode: 'flood', size: { h: 58 } },
   // 6 karelik yürüme şeridi: kareler kaynakta ortak kutuya hizalı (151x266), kırpılmaz; 6 x 33 = 198 px
   { src: 'sprites/astronaut_walk_sheet.png', mode: 'flood', size: { w: 198, h: 58 }, noCrop: true },
+  // Çömelme: 4 kare (ayakta → tam çömelme), ekibin GIF'inden; ayaklar ortak zemine hizalı (35 px/kare)
+  { src: 'sprites/astronaut_crouch_sheet.png', mode: 'none', size: { w: 140, h: 58 }, noCrop: true },
   { src: 'sprites/astronaut_jump.png', mode: 'flood', size: { h: 60 } },
   // Mekik içinde kasksız mürettebat (K4 Sedef): kaynak 2048×2048 şeffaf; içeriğe kırpılıp küçültülür
   { src: 'sprites/astronaut_indoor.png', mode: 'none', size: { h: 132 } },

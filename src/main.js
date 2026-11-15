@@ -303,7 +303,7 @@
     Game.afterAction();
   };
 
-  /** D-014: S/↓ ile açık zeminde regolit torbası doldur (istasyonun radyasyon kalkanı) */
+  /** D-014: E ile açık zeminde regolit torbası doldur (istasyonun radyasyon kalkanı) */
   Game.digRegolith = function () {
     const s = S.getState();
     const body = S.Surface.body;
@@ -562,7 +562,8 @@
     }
     if (S.Lander.active) return;
     const it = S.HUD.prompt;
-    if (!it) return;
+    // Yakında etkileşim yoksa E açık zeminde regolit torbası kazar (göktaşından sonra; S / ↓ artık çömelme)
+    if (!it) return S.Station.impacted(s) ? Game.digRegolith() : undefined;
     S.bus.emit('audio:play', 'click');
     if (it.kind === 'ice_cluster') return Game.iceAction(it.id);
     if (it.action === 'descend') return Game.caveTransition(true);
@@ -690,7 +691,7 @@
       const busy = S.Lander.active || Game.processPending();
       if (!busy && Game.scene === 'world') {
         Playtest.activeSec += dt; // aktif oyun süresi: menü/kart açıkken sayılmaz
-        const input = { dir: Input.dir(), jump: Input.consumeJump() };
+        const input = { dir: Input.dir(), jump: Input.consumeJump(), crouch: Input.keys.has('KeyS') || Input.keys.has('ArrowDown') };
         if (s.player.inside) S.Surface.updateInterior(s, dt, input);
         else S.Surface.update(s, dt, input);
         S.Sim.step(s, dt * S.Sim.gameMinutesPerRealSecond(s));
@@ -752,7 +753,7 @@
       if (!e.repeat) Input.jumpQueued = true;
       e.preventDefault();
     }
-    if (['ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+    if (['ArrowLeft', 'ArrowRight', 'ArrowDown'].includes(e.code)) e.preventDefault();
     if (e.repeat) return;
     if (e.code === 'KeyE') Game.interact();
     // Veri / sistemler / günlük yalnızca mekiğin içinden (istasyonlar); dışarıda kısayol yok
@@ -762,10 +763,6 @@
     else if (e.code === 'KeyI') S.getState().player.inside ? Game.openPanel('inventory') : S.Hotbar.toggle();
     else if (/^Digit[1-9]$/.test(e.code)) S.Hotbar.select(Number(e.code.slice(5)) - 1);
     else if (e.code === 'KeyF') Game.useItem();
-    else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && S.Station.impacted(S.getState())) {
-      e.preventDefault();
-      Game.digRegolith();
-    }
   }
 
   /**
