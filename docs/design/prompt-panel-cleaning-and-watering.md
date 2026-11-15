@@ -1,29 +1,29 @@
-# SOL 14 — Panel Temizleme ve Bitki Sulama Mini Görevleri
+# SOL 14 — Panel Cleaning and Plant Watering Mini Tasks
 
-Mevcut SOL 14: RED HORIZON projesine iki kısa, etkileşimli bakım mini görevi ekle: mouse ile güneş paneli temizleme ve kök bölgesine elle sulama. Önce mevcut projeyi incele, sonra mevcut mimariyi kullanarak uygula. Kullanıcıdan rutin uygulama kararları için tekrar onay isteme.
+Add two short, interactive maintenance mini tasks to the existing SOL 14: RED HORIZON project: cleaning a solar panel with the mouse and watering the root zone by hand. Study the project first, then build on the existing architecture. Don't ask the user to approve routine implementation choices.
 
-## 1. Önce projeyi incele
+## 1. Study the project first
 
-- AGENTS.md ve mevcut proje kurallarını oku.
-- Framework, render motoru, sahne yönetimi, envanter/kaynak sistemi, kayıt sistemi, menüler ve duraklatma mantığını bul.
-- Asset klasörünü tara; aşağıdaki dosyaları mevcutsa kullan. Gerçekte bulunmayan dosyaların var olduğunu varsayma.
-- Var olan oyun döngüsünü veya UI mimarisini yeniden yazma. Mevcut bileşenleri genişlet.
-- Projede farklı asset dizini kullanılıyorsa yolları ona uyarla ve eşlemeyi bildir.
+- Read AGENTS.md and the existing project rules.
+- Find the framework, render engine, scene management, inventory/resource system, save system, menus and pause logic.
+- Scan the asset folder; use the files below if they exist. Don't assume files exist that don't.
+- Don't rewrite the existing game loop or UI architecture. Extend the existing components.
+- If the project uses a different asset folder, adapt the paths and report the mapping.
 
-## 2. Deneyim hedefi
+## 2. Experience goal
 
-Oyuncu kısa bir fiziksel eylem yapmalı, sonucunu anında görmeli ve oyunun sisteminde anlamlı bir iyileşme yaşamalı. Bu bir biyolojik dopamin ölçümü değildir. Süreler test edilecek tasarım hedefleridir.
+The player does a short physical action, sees the result at once and gets a meaningful improvement in the game's systems. This is not a measurement of biological dopamine. The times are design targets to test.
 
-- Temizleme: yaklaşık 8–15 saniye aktif etkileşim.
-- Sulama: yaklaşık 5–10 saniye aktif etkileşim.
-- Normal bakımda geri sayım veya başarısızlık baskısı yok.
-- Menü açıkken dünya zamanı, kaynak tüketimi ve dış tehditler durur. Mini görev input'u ve görsel animasyonları çalışmaya devam eder.
-- Tekrar açıp kapamak fazladan ödül veya ücretsiz kaynak üretmez.
-- Her habitat ziyaretinde zorunlu bakım üretme. Bakım ihtiyacı gerçek sistem durumuna bağlı olsun.
+- Cleaning: about 8–15 seconds of active interaction.
+- Watering: about 5–10 seconds of active interaction.
+- No countdown or failure pressure during normal maintenance.
+- While the menu is open, world time, resource use and outside threats stop. Mini-task input and visual animation keep running.
+- Opening and closing again gives no extra reward or free resources.
+- Don't create mandatory maintenance on every habitat visit. The need for maintenance follows the real system state.
 
-## 3. Görsel dosyaları
+## 3. Image files
 
-Aşağıdaki isimler hedef sözleşmedir; varlıkları önce doğrula. Arka plan hariç PNG dosyaları gerçek alpha transparan olmalı. Beyaz/yeşil fon veya çizilmiş dama deseni kabul edilmez.
+The names below are the target contract; check the assets first. Except for the background, the PNG files must have real alpha transparency. White/green backgrounds or a drawn checkerboard are not acceptable.
 
 ```text
 assets/minigames/
@@ -41,118 +41,118 @@ assets/minigames/
     maintenance_bg.png
 ```
 
-### Zorunlu asset teknik sözleşmesi
+### Required asset specification
 
-| Dosya | Boyut | İçerik |
+| File | Size | Content |
 |---|---|---|
-| solar_clean_base.png | 1024×640 | Önden görülen temiz dikdörtgen panel, ince metal çerçeve; dışı transparan |
-| solar_dust_overlay.png | 1024×640 | Yalnızca panelin hücre alanına oturan turuncu toz; çerçeve ve dışı transparan |
-| brush_cursor.png | 128×128 | Tek fırça; kıllar alt tarafta, temas noktası yaklaşık (64,104); transparan |
-| planter_base.png | 512×512 | Beyaz-gri, turuncu detaylı yetiştirme kabı; bitki ve toprak yok; transparan |
-| soil_dry.png | 512×512 | Kabın üst açıklığına oturan kuru yetiştirme ortamı; başka nesne yok |
-| soil_wet.png | 512×512 | Kuru katmanla aynı geometri ve konumda, daha koyu ıslak ortam |
-| lettuce_plant.png | 512×512 | Yalnızca marul; kök başlangıcı kabın üst açıklığına hizalı; saksısız, transparan |
-| watering_can.png | 256×256 | Tek sulama kabı; ağzı sol alta bakıyor; transparan |
-| maintenance_bg.png | 1600×900 | Sade karanlık habitat bakım alanı; merkez boş, yazısız; opak |
+| solar_clean_base.png | 1024×640 | A clean rectangular panel seen from the front, thin metal frame; transparent outside |
+| solar_dust_overlay.png | 1024×640 | Orange dust that sits only on the panel's cell area; frame and outside transparent |
+| brush_cursor.png | 128×128 | One brush; bristles at the bottom, contact point about (64,104); transparent |
+| planter_base.png | 512×512 | White-grey growing tray with orange details; no plant or soil; transparent |
+| soil_dry.png | 512×512 | Dry growing medium that fits the tray's top opening; nothing else |
+| soil_wet.png | 512×512 | Darker wet medium, same geometry and position as the dry layer |
+| lettuce_plant.png | 512×512 | Only the lettuce; the root start aligned with the tray's top opening; no pot, transparent |
+| watering_can.png | 256×256 | One watering can; spout pointing bottom-left; transparent |
+| maintenance_bg.png | 1600×900 | A plain, dark habitat maintenance area; empty centre, no text; opaque |
 
-Görsellerde UI yazıları, ilerleme çubukları veya butonlar bulunmaz. Bunları kodla çiz. Su akışı, damlalar, toz parçacıkları ve göstergeler kodla oluşturulabilir; ayrı görsel zorunlu değildir.
+The images contain no UI text, progress bars or buttons; draw those in code. The water stream, drops, dust particles and gauges may be drawn in code; separate images are not required.
 
-### Katman ve koordinat kuralları
+### Layer and coordinate rules
 
-- Pixel art görünümünü koru; uygun yerlerde image-rendering: pixelated ve filtre kapatma kullan.
-- Eşleşen katmanları bağımsız kırpma veya farklı oranlarda ölçekleme.
-- Panel tabanı ile toz katmanı aynı tuval, perspektif ve hücre sınırlarını paylaşmalı.
-- Önerilen panel aktif alanı kaynak görsel koordinatlarında x=64, y=64, genişlik=896, yükseklik=512. Görsel farklıysa gerçek alanı inceleyip yapılandırmayı değiştir.
-- Sera katmanları aynı 512×512 kaynak tuvalini paylaşmalı. Önerilen kabın üst açıklığı x=96–416, y=310–380; bitki kök başlangıcı yaklaşık (256,350).
-- Sera çizim sırası: kap → kuru ortam → ıslak ortam → bitki → sulama aracı → su efekti. Görselin ön kenarı için gerekirse maske kullan.
-- Mouse noktalarını ekran pikselinden sahne ve kaynak görsel koordinatlarına dönüştür; CSS ölçeği ve devicePixelRatio etkisini dikkate al.
+- Keep the pixel-art look; use `image-rendering: pixelated` and turn smoothing off where it fits.
+- Don't crop matching layers separately or scale them at different ratios.
+- The panel base and the dust layer share the same canvas, perspective and cell boundaries.
+- Suggested active panel area in source-image coordinates: x=64, y=64, width=896, height=512. If the image differs, inspect the real area and change the configuration.
+- The greenhouse layers share the same 512×512 source canvas. Suggested tray opening: x=96–416, y=310–380; the plant's root start at about (256,350).
+- Greenhouse draw order: tray → dry medium → wet medium → plant → watering can → water effect. Use a mask for the image's front edge if needed.
+- Convert mouse points from screen pixels to scene and source-image coordinates; account for CSS scale and devicePixelRatio.
 
-## 4. Panel temizleme uygulaması
+## 4. Panel cleaning
 
-1. Görev ekranında gerçek panel durumunu yükle: mevcut kir oranı, üretim ve önceki temizlik ilerlemesi.
-2. Temiz panel tabanı üzerine silinebilir toz katmanı koy.
-3. Sol tuşa basılı sürükleme, fırça temas alanındaki tozu silsin. Canvas, render texture veya mevcut motorun maske sistemini kullan.
-4. Hızlı hareketlerde noktalar arasını örnekle; çizgide boşluk kalmasın.
-5. Temizlenen alanı benzersiz alan olarak hesapla. Aynı noktayı tekrar temizlemek ilerlemeyi artırmasın.
-6. İlerleme, görev başında temizlenebilir kir alanına göre hesaplanır. Arka plan ve çerçeve üzerinden puan kazanılmaz. Kullanılan maske ile ilerleme ölçümü tutarlı olsun.
-7. Yaklaşık %90 temizlikte tamamla; kalan çok küçük lekeleri otomatik temizle. Eşik yapılandırılabilir olsun.
-8. Panel üretimini mevcut enerji modelinin kir–verim ilişkisiyle güncelle. Oyunda olmayan sabit enerji ödülü uydurma.
-9. Tamamlama etkisi bir kez çalışır: kısa ses/animasyon ve gerçek önce/sonra üretim bilgisi.
-10. Tamamlandıktan sonra sonuç görünür kalsın; otomatik kapanma oyuncunun kontrolünü elinden almasın.
+1. On the task screen, load the real panel state: current dust level, output and any earlier cleaning progress.
+2. Put an erasable dust layer over the clean panel base.
+3. Dragging with the left button pressed erases the dust under the brush. Use a canvas, render texture or the engine's mask system.
+4. Sample between points on fast moves so the stroke has no gaps.
+5. Count cleaned area as unique area. Cleaning the same spot again doesn't add progress.
+6. Progress is measured against the cleanable dust area at the start of the task. The background and frame give no points. Keep the mask and the progress measurement consistent.
+7. Complete at about 90% clean; clear the tiny leftover spots automatically. The threshold is configurable.
+8. Update panel output with the existing energy model's dust–efficiency relation. Don't invent a fixed energy reward the game doesn't have.
+9. The completion effect runs once: a short sound/animation and the real before/after output.
+10. The result stays visible after completion; an automatic close must not take control away from the player.
 
-Önerilen durumlar: ready → cleaning → completed. Yarıda kapatma, cleaning durumunun ilerlemesini kaydeder. Yeniden açılış bunu geri yükler. Zaten temiz panel için tekrar ödül üretilmez.
+Suggested states: ready → cleaning → completed. Closing halfway saves the cleaning progress; reopening restores it. A panel that is already clean gives no reward again.
 
-## 5. Elle sulama uygulaması
+## 5. Watering by hand
 
-1. Seçilen bitkinin mevcut nemi, hedef nem aralığı ve kullanılabilir suyu yükle.
-2. Sulama kabı mouse'u takip etsin. Basılı tutunca ağızdan kök bölgesine su akışı çiz.
-3. Su akışının yetiştirme ortamına ulaştığı durumda nem artsın; yaprağa veya boşluğa yapılan hareket ilerleme sayılmasın.
-4. İlk sürümde hedef dışındayken akışı ve tüketimi durdur; hedef bölgesini yumuşak vurguyla göster. Gizli su cezası uygulama.
-5. Akış zamanı boyunca su tüketimini delta-time ile hesapla. Tüketim ve nem kazanımı aynı işlemde uygulanmalı; ikisi farklı güncellemelerde ayrışmamalı.
-6. Kuru ortam üzerine ıslak ortam katmanını kademeli göster. Bitki anında büyümesin veya hasada dönüşmesin.
-7. Hedef nem aralığına ulaşınca akışı otomatik durdur. İlk sürümde taşırma cezası yok.
-8. Su biterse işlemi durdur ve açıklama göster; nem ve su negatife düşmesin.
-9. Ekran yarıda kapatılırsa tüketilmiş su ve mevcut nem korunur. Yeniden açmak suyu geri vermez.
-10. Uygun nemdeki bitki için “Sulama gerekmiyor” durumu göster; tekrar ödül verme.
+1. Load the chosen plant's current moisture, its target moisture range and the water available.
+2. The watering can follows the mouse. Holding the button draws a water stream from the spout to the root zone.
+3. Moisture rises only while the stream reaches the growing medium; pouring on leaves or into empty space doesn't count.
+4. In the first version, stop the stream and the water use while off target; show the target area with a soft highlight. No hidden water penalty.
+5. Compute water use over the pouring time with delta time. Apply water use and moisture gain in the same step; don't let them drift apart in different updates.
+6. Fade the wet layer in gradually over the dry one. The plant doesn't grow at once or turn into a harvest.
+7. Stop the stream automatically when the target moisture range is reached. No overwatering penalty in the first version.
+8. If the water runs out, stop and explain why; moisture and water never go negative.
+9. If the screen is closed halfway, the water used and the current moisture are kept. Reopening doesn't give the water back.
+10. For a plant at the right moisture show "No watering needed"; give no reward again.
 
-Besin ekleme, hasat, bitki ölümü veya yeni moral sistemi bu iki mini görevin kapsamına dahil değildir. Sulama ve besleme terimlerini birbirinin yerine kullanma.
+Adding nutrients, harvesting, plant death or a new morale system are out of scope for these two mini tasks. Don't use watering and feeding as interchangeable terms.
 
-## 6. Input, erişilebilirlik ve duraklatma
+## 6. Input, accessibility and pausing
 
-- Mouse ve mümkünse touch için ortak pointer input kullan.
-- Pointer capture, pointerup, pointercancel, pencere odağı kaybı ve ekran kapanışında temizleme/sulama eylemini güvenli biçimde durdur.
-- Basılı tutmaya alternatif tıkla-başlat/tıkla-durdur modu sun.
-- Klavye için hedefler arasında geçiş ve eylem başlat/durdur alternatifi ekle; mevcut erişilebilirlik düzeniyle uyumlu tut.
-- ESC kapatır; kısmi ilerleme korunur.
-- Menü için tek bool yerine mevcut pause sistemi destekliyorsa pause token/reference-count kullan; başka menü açıkken dünyayı yanlışlıkla devam ettirme.
-- UI efektleri için gerçek UI zamanı, dünya simülasyonu için durdurulabilir dünya zamanı kullan. Menü kapanışında birikmiş süreyi tüketim olarak uygulama.
-- Renk yanında metin veya simgeyle durum bildir; ses kapalıyken de sonuç anlaşılır olsun.
-- Hareket azaltma seçeneğinde parçacıkları ve ekran sallanmasını azalt.
+- Use one pointer input for mouse and, where possible, touch.
+- Stop cleaning/watering safely on pointer capture loss, pointerup, pointercancel, window blur and screen close.
+- Offer a click-to-start / click-to-stop mode as an alternative to holding.
+- Add a keyboard alternative to move between targets and start/stop the action; keep it consistent with the existing accessibility setup.
+- ESC closes; partial progress is kept.
+- If the pause system supports it, use a pause token/reference count instead of one boolean, so another open menu doesn't resume the world by mistake.
+- Use real UI time for UI effects and pausable world time for the world simulation. Don't apply the time spent in the menu as resource use when it closes.
+- Show state with text or an icon as well as colour; the result is clear with sound off too.
+- With reduced motion on, reduce particles and screen shake.
 
-## 7. Kayıt ve sistem bağlantıları
+## 7. Saves and system links
 
-- Temizlik maskesini veya yeterli çözünürlükte hücre durumunu mevcut kayıt sistemine ekle. Yalnız yüzde kaydetmek görsel maskeyi geri kurmaya yetmez.
-- Bitki nemi ve su rezervini mevcut veri kaynağında güncelle; ayrı çelişen state oluşturma.
-- Kayıt şeması değişiyorsa eski kayıtlar için güvenli varsayılan/migrasyon ekle.
-- Kaynak güncelleme ve tamamlanma event'i tekrar çağrılmaya dayanıklı olsun.
-- Temizlenme ve yeniden kirlenme, mevcut dünya simülasyonuna bağlı olsun. Ekranı yeniden açınca kir rastgele sıfırlanmasın.
-- Genel günlükte tamamlanan ilk bakım öğretimi hatırlansın; her açılışta eğitim tekrarlanmasın.
+- Add the cleaning mask, or a cell state at a high enough resolution, to the existing save. A percentage alone can't rebuild the visual mask.
+- Update plant moisture and the water reserve in the existing data source; don't create a separate, conflicting state.
+- If the save schema changes, add safe defaults/migration for old saves.
+- Resource updates and the completion event are safe to call more than once.
+- Cleaning and dust building up again follow the existing world simulation. Reopening the screen doesn't reset the dust at random.
+- The general log remembers the first maintenance tutorial; the tutorial doesn't repeat on every open.
 
-## 8. UI metinleri
+## 8. UI text
 
-Panel: “PANEL BAKIMI”, “Fırçayı tozlu alanlarda gezdir”, “Temizlik”, “Panel temizlendi”, “Enerji üretimi”, “GERİ”.
+Panel: "PANEL MAINTENANCE", "Move the brush over the dusty areas", "Cleaned", "Panel cleaned", "Power output", "BACK".
 
-Sera: “BİTKİ SULAMA”, “Suyu kök bölgesine ver”, “Nem”, “Su rezervi”, “Nem uygun”, “Su yetersiz”, “Sulama gerekmiyor”, “GERİ”.
+Greenhouse: "WATER THE PLANT", "Pour the water at the root zone", "Moisture", "Water reserve", "Moisture OK", "Not enough water", "No watering needed", "BACK".
 
-Durum değerlerini gerçek sistemden al. Mockup değerlerini çalışan sisteme sabit gömme.
+Take state values from the real system. Don't hard-code mockup values into the working system. All text goes into `content/story.json` in EN and TR.
 
-## 9. Test ve kabul kriterleri
+## 9. Tests and acceptance criteria
 
-- Panelin aynı yeri tekrar tekrar ovulduğunda ilerleme artmıyor.
-- Çerçeve ve boş alanda temizlik kazanılmıyor.
-- Farklı ekran boyutu/DPR'da fırçanın görsel temas noktası silinen yerle eşleşiyor.
-- Hızlı sürüklemede boşluk bırakmıyor.
-- %90 eşiğinde tamamlanma ve sistem iyileşmesi yalnız bir kez uygulanıyor.
-- Kapat/aç ve kaydet/yükle, temizlik maskesini geri getiriyor.
-- Hedef dışında veya tuş bırakıldığında su tüketilmiyor.
-- Aynı akış süresinde farklı FPS'ler yaklaşık aynı tüketim ve nem kazanımı üretiyor.
-- Su sıfırın altına, nem izin verilen sınırın üstüne çıkmıyor.
-- Pointercancel ve odak kaybı akışı durduruyor.
-- Menüde 60 saniye beklemek dünya kaynaklarını veya tehditleri ilerletmiyor; mini görev animasyonu ise çalışıyor.
-- İç içe menü kapatılması oyunu erken devam ettirmiyor.
-- İşlem iptali ve tekrar açma ücretsiz su veya tekrar ödül sağlamıyor.
-- Temiz veya yeterince sulanmış nesneler doğru tamamlanmış durumu gösteriyor.
-- Gerçek oyuncu testinde süre ve anlaşılabilirlik gözleniyor; hedef süre tutmuyor diye yapay bekleme eklenmiyor.
+- Rubbing the same spot of the panel again doesn't raise progress.
+- No cleaning credit on the frame or empty space.
+- At different screen sizes/DPR the brush's visual contact point matches where dust is erased.
+- Fast dragging leaves no gaps.
+- Completion at the 90% threshold and the system improvement apply only once.
+- Close/reopen and save/load restore the cleaning mask.
+- No water is used off target or when the button is released.
+- The same pouring time gives about the same water use and moisture gain at different FPS.
+- Water never goes below zero and moisture never above the allowed limit.
+- pointercancel and focus loss stop the stream.
+- Waiting 60 seconds in the menu doesn't advance world resources or threats; the mini-task animation still runs.
+- Closing nested menus doesn't resume the game early.
+- Cancelling and reopening gives no free water or repeated reward.
+- Clean or sufficiently watered objects show the correct completed state.
+- Real player tests watch the time and clarity; don't add artificial waiting because a target time isn't met.
 
-Mevcut test araçlarıyla mantık testleri ve en az bir gerçek etkileşim kontrolü yap. Test edemediğin koşulları açıkça belirt.
+Run logic tests with the existing test tools and at least one real interaction check. State clearly which conditions you couldn't test.
 
-## 10. Teslim
+## 10. Hand-over
 
-Çalışan uygulamayı tamamla. Sonuçta:
-1. Eklenen davranışları kısa anlat.
-2. Değiştirilen dosyaları ve asset eşlemesini belirt.
-3. Yapılan testleri ve sonuçlarını paylaş.
-4. Eksik/uyumsuz asset varsa açık dosya adı ve gereken düzeltmeyi yaz.
-5. Sonradan ayarlanabilir süre, fırça çapı, hedef nem ve akış değerlerinin yerini göster.
+Finish a working implementation. At the end:
+1. Briefly describe the behaviour added.
+2. List the files changed and the asset mapping.
+3. Share the tests run and their results.
+4. For a missing/incompatible asset, give the exact file name and the fix needed.
+5. Show where the brush size, target moisture, flow and timing values can be tuned later.
 
-Eksik görseller varsa geri kalan uygulamayı tamamla; geçici görselleri açıkça işaretle. Geçici asset'leri nihai sanat olarak sunma. Projenin mevcut kapsamını aşan yeni ekonomi, ödül sistemi veya bağımlılık kurma.
+If images are missing, finish the rest and mark the placeholders clearly. Don't present placeholder assets as final art. Don't build a new economy, reward system or dependency beyond the project's current scope.

@@ -2,91 +2,92 @@
 
 **NASA Space Apps Challenge 2026 (Sakarya) — Space Mission Design Game**
 
-> **Tek Cümlelik Özet:** Oyuncu bir insanlı Mars görevini sınırlı bütçe, kütle, güç ve veri bant genişliğiyle kendisi tasarlar (`Sol 0`); sonra Mars'ta `14 Sol` boyunca o tasarımın sonuçlarını yaşar ve oyun sonunda her mühendislik kararının görevi nasıl etkilediğini gösteren gerçek NASA verileriyle kıyaslamalı bir **Neden-Sonuç Karnesi** alır.
+> **In one sentence:** The player designs a crewed Mars mission under a limited budget, mass, power and data bandwidth (`Sol 0`), then lives with the consequences of that design for `14 sols` on Mars, and at the end receives a **cause-and-effect report card** that compares every engineering decision with real NASA data.
 
 ---
 
-## 🎯 Oyun Konsepti ve Üç Aşamalı Döngü
+## 🎯 Game concept: a three-stage loop
 
-1. **TASARLA (`Sol 0` - 5 Ekran):**
-   - **Görev Hedefi Seçimi:** Adli İnceleme Ağırlıklı, Deney Ağırlıklı veya Dengeli (Asgari ve Tam Başarı kriterlerini belirler).
-   - **Roket, Yörünge ve Fırlatma Penceresi:** 3 roket seçeneği × 2 transfer yörüngesi (Hohmann ~8 ay / Hızlı ~6 ay) ve 26 aylık fırlatma penceresi takası.
-   - **İniş Bölgesi ve Habitat Sistemleri:** Meridiani Planum (Ekvator), Jezero Krateri (18°K) veya Arcadia Planitia (~40°K) seçimi; Güneş Paneli / Panel + RTG, Batarya (20/40/60 kWh) ve Yalıtım (İnce/Kalın) kararları.
-   - **Bilimsel Alet Seçimi (Payload Selection):** 9 gerçek NASA aletinden en fazla 5'inin seçimi (`Mastcam-Z`, `MEDA`, `SEIS`, `RAD`, `RIMFAX`, `SuperCam/PIXL`, `MOXIE`, `Veggie`, `Ingenuity`).
-   - **İletişim Mimarisi ve Yedeklilik:** Sadece UHF Röle (`MRO`/`MAVEN`) veya Röle + Doğrudan Dünya (`X-band`), Tamir Kitleri (0/1/2) ve `%10+` Kütle Marjı.
+1. **DESIGN (`Sol 0`, 5 screens):**
+   - **Mission objective:** forensics-heavy, experiment-heavy or balanced (sets the minimum and full success criteria).
+   - **Rocket, trajectory and launch window:** 3 rockets × 2 transfer trajectories (Hohmann ~8 months / fast ~6 months) and the 26-month launch window trade-off.
+   - **Landing site and habitat systems:** Meridiani Planum (equator), Jezero Crater (18°N) or Arcadia Planitia (~40°N); solar panels or panels + RTG, battery (20/40/60 kWh) and insulation (thin/thick).
+   - **Payload selection:** up to 5 of 9 real NASA instruments (`Mastcam-Z`, `MEDA`, `SEIS`, `RAD`, `RIMFAX`, `SuperCam/PIXL`, `MOXIE`, `Veggie`, `Ingenuity`).
+   - **Communications and redundancy:** UHF relay only (`MRO`/`MAVEN`) or relay + direct-to-Earth (`X-band`), repair kits (0/1/2) and a `10%+` mass margin.
 
-2. **YÖNET (`Sol 1–14` - Mars Yüzey Operasyonu ve Uzay Yaklaşımı):**
-   - **Ana Görev 1 — Kayıp Araçların Adli İncelemesi (Forensics):** `Opportunity`, `Spirit`, `Phoenix`, `InSight` ve bonus `Beagle 2` enkazlarını bulma, 3 tip kanıt toplama (fotoğraf, kara kutu telemetrisi, spektrometre/çevre ölçümü), 5 arıza kategorisinden (`Güç/Toz`, `Termal`, `Mekanik`, `Yazılım/Sensör`, `İletişim`) teşhis koyma, Dünya'ya rapor gönderme ve parça sökme.
-   - **Ana Görev 2 — Mars Laboratuvarı (6 Bilimsel Deney):** Hipotez → Ortam Seçimi (Habitat İçi vs. Dış Ortam) → Kontrol Grubu → Ölçüm Mini-Oyunu → Sonuç Kartı döngüsüyle çalışan 6 deney (*Sarkaçla Yerçekimi Ölçümü, Serbest Düşüş/Zıplama, Tohum Çimlenmesi, Suyun Üçlü Noktada Kaynaması, Ses Hızı, MOXIE Gece/Gündüz Verimi*).
-   - **Kriz Kartları ve Mühendislik Mekanikleri:**
-     - **Veri Bütçesi / Downlink Kuyruğu (`Mbit/sol`):** Çekilen fotoğraf ve deney sonuçları Dünya'ya gönderilmedikçe puan sayılmaz.
-     - **Güç Yük Önceliklendirme Paneli (Load Shedding):** Yaşam desteği, ısıtma, sera, MOXIE, deneyler ve iletişim sırasını belirleme.
-     - **Dönüşsüzlük Noktası Göstergesi (Point of No Return):** EVA sırasında eklem donması ve mesafe bazlı anlık $O_{2,\text{gerekli}}$ çentiği.
-     - **Gecikmeli Görev Kontrol:** Dünya-Mars tek yön ışık gecikmesi (~3–22 dk) nedeniyle acil kararların astronot tarafından verilmesi.
+2. **MANAGE (`Sol 1–14`, surface operations and approach):**
+   - **Main task 1 — forensics on lost vehicles:** find the `Opportunity`, `Spirit`, `Phoenix`, `InSight` and bonus `Beagle 2` wrecks, collect 3 kinds of evidence (photo, black-box telemetry, spectrometer/environment reading), diagnose one of 5 failure categories (`Power/Dust`, `Thermal`, `Mechanical`, `Software/Sensor`, `Communication`), send the report to Earth and salvage parts.
+   - **Main task 2 — the Mars lab (6 experiments):** each runs hypothesis → environment (inside vs. outside) → control group → measurement minigame → result card (*pendulum gravity, free fall/jump, seed germination, water boiling at the triple point, speed of sound, MOXIE night/day output*).
+   - **Crisis cards and engineering mechanics:**
+     - **Data budget / downlink queue (`Mbit/sol`):** photos and results only score once they reach Earth.
+     - **Power load prioritisation (load shedding):** order life support, heating, greenhouse, MOXIE, experiments and comms.
+     - **Point of no return:** a live $O_{2,\text{needed}}$ notch during an EVA, based on distance and frozen joints.
+     - **Delayed Mission Control:** the one-way Earth–Mars light delay (~3–22 min) means the astronaut makes urgent calls alone.
 
-3. **DEĞERLENDİR (`Sol 14+` - Karne ve UFO Stinger Finali):**
-   - **Neden-Sonuç Karnesi:** `decisionLog[]` kayıtlarından her tasarım ve kriz kararının sayısal etkisini gösteren analiz + gerçek NASA görevleriyle kıyaslama.
-   - **UFO Finali (~40 sn Stinger):** MAV kalkışı sırasında ufukta beliren anomalinin, oyuncunun seçtiği kamera çözünürlüğü (`Mastcam-Z` vs. el kamerası) ve kalan veri bütçesi (`Mbit`) doğrultusunda `%80` net veya `%30` bulanık indirilmesi ve Güneş Kavuşumu (`Solar Conjunction`) ile sinyalin kesilmesi (*Viking 1976 "Mars'taki Yüz" bilimsel göndermesi*).
+3. **EVALUATE (`Sol 14+`, report card and UFO stinger):**
+   - **Cause-and-effect report card:** built from `decisionLog[]`, it shows the measured effect of each design and crisis decision and compares the run with real NASA missions.
+   - **UFO finale (~40 s stinger):** an anomaly on the horizon during the MAV launch downloads `80%` sharp or `30%` blurred depending on the chosen camera (`Mastcam-Z` vs. hand camera) and the data budget left (`Mbit`), then the signal is cut by solar conjunction (*a nod to the Viking 1976 "Face on Mars"*).
 
 ---
 
-## 📊 NASA Space Apps Challenge Gereksinim Matrisi
+## 📊 NASA Space Apps requirement matrix
 
-| Challenge Kavramı | Oyundaki Karşılığı | Göründüğü Ekran | NASA Veri Kaynağı |
+| Challenge concept | In the game | Screen | NASA data source |
 | :--- | :--- | :--- | :--- |
-| **Mission objectives** | Birincil (Adli İnceleme) + İkincil (Deneyler) hedef seçimi; Asgari ve Tam Başarı kriterleri | Sol 0 Ekran 1 | NSSDCA Master Catalog |
-| **Spacecraft design** | Habitat, Yükselme Aracı (MAV), Rover, Sera, Yalıtım ve Güç modülü seçimi | Sol 0 Ekran 3 | NSSDCA, SST SoA |
-| **Scientific instruments** | 9 aletten en fazla 5 seçim; her alet spesifik bir oynanış kilidi açar | Sol 0 Ekran 4 | NSSDCA (Perseverance / InSight) |
-| **Launch vehicles** | 3 roket seçeneği: Kütle kapasitesi (kg), maliyet ($) ve $\Delta v$ sınırı | Sol 0 Ekran 2 | NASA ELV Performance |
-| **Budgets** | `$` Bütçe, Kütle (`kg`), Güç (`W`) ve Veri (`Mbit/sol`) bütçe çubukları | Tüm Sol 0 + HUD | Gerçek görev maliyetleriyle kalibre |
-| **Power** | $P = S \cdot A \cdot \eta \cdot \cos Z \cdot (1 - d_{\text{toz}})$; Batarya (20/40/60 kWh); RTG/RHU | HUD Enerji Çubuğu + Güç Paneli | Planetary Fact Sheet, SST SoA |
-| **Mass** | Roket kapasitesine karşı canlı kütle çubuğu + `%10` kütle marjı bonusu | Sol 0 Tüm Ekranlar | NASA ELV Performance |
-| **Communication** | Veri bütçesi (`Mbit/sol`), MRO/MAVEN röle geçişleri, ışık gecikmesi, kavuşum karartması | HUD Downlink Sekmesi | DSN Now, JPL Horizons |
-| **Orbit constraints** | Fırlatma penceresi (26 ay), Hohmann (~8 ay) vs. Hızlı (~6 ay) transfer, MAV yörünge kenetlenmesi | Sol 0 Ekran 2 + Sol 14 | Trajectory Browser, JPL Horizons |
-| **Concept → Operation** | Sol 0 tasarım kararlarının Sol 1–14 yüzey operasyonunu doğrudan şekillendirmesi | Tüm Oyun Akışı | — |
-| **Evaluate how choices shape success** | `decisionLog[]` tabanlı Neden-Sonuç Karnesi + Gerçek NASA görevleriyle karşılaştırma | Final Karne Ekranı | NSSDCA Görev Arşivleri |
+| **Mission objectives** | Primary (forensics) + secondary (experiments) objective; minimum and full success criteria | Sol 0 screen 1 | NSSDCA Master Catalog |
+| **Spacecraft design** | Habitat, ascent vehicle (MAV), rover, greenhouse, insulation and power module | Sol 0 screen 3 | NSSDCA, SST SoA |
+| **Scientific instruments** | Up to 5 of 9 instruments; each unlocks specific gameplay | Sol 0 screen 4 | NSSDCA (Perseverance / InSight) |
+| **Launch vehicles** | 3 rockets: mass capacity (kg), cost ($) and $\Delta v$ limit | Sol 0 screen 2 | NASA ELV Performance |
+| **Budgets** | `$` budget, mass (`kg`), power (`W`) and data (`Mbit/sol`) bars | All of Sol 0 + HUD | Calibrated against real mission costs |
+| **Power** | $P = S \cdot A \cdot \eta \cdot \cos Z \cdot (1 - d_{\text{dust}})$; battery (20/40/60 kWh); RTG/RHU | HUD energy bar + power panel | Planetary Fact Sheet, SST SoA |
+| **Mass** | Live mass bar against rocket capacity + `10%` mass-margin bonus | All Sol 0 screens | NASA ELV Performance |
+| **Communication** | Data budget (`Mbit/sol`), MRO/MAVEN relay passes, light delay, conjunction blackout | HUD downlink tab | DSN Now, JPL Horizons |
+| **Orbit constraints** | Launch window (26 months), Hohmann (~8 months) vs. fast (~6 months) transfer, MAV orbital rendezvous | Sol 0 screen 2 + Sol 14 | Trajectory Browser, JPL Horizons |
+| **Concept → operation** | Sol 0 design decisions shape the Sol 1–14 surface operations directly | Whole game | — |
+| **Evaluate how choices shape success** | Cause-and-effect report card from `decisionLog[]` + comparison with real NASA missions | Final report screen | NSSDCA mission archives |
 
 ---
 
-## 🚀 Hızlı Başlangıç ve Çalıştırma
+## 🚀 Quick start
 
-Proje sıfır kurulum karmaşasıyla tarayıcıda doğrudan çalışacak şekilde tasarlanmıştır:
+The project runs straight in the browser with no setup:
 
 ```bash
-# Yerel geliştirme sunucusunu başlatmak için:
+# Start a local development server:
 npx serve .
-# veya Python ile:
+# or with Python:
 python -m http.server 8080
 
-# Veri paketini derleyip tüm testleri çalıştırmak için:
+# Build the data bundle and run all tests:
 npm test
 ```
 
-* **Normal Oyun Modu:** `http://localhost:8080/`
-* **Jüri Hızlı Görev / Demo Modu (5 Sol / 3 Dakika):** `http://localhost:8080/?demo=1`
-* **Dil Seçeneği:** Oyun içi sağ üst köşeden **TR / EN** anlık dil geçişi desteklenir.
+* **Normal game:** `http://localhost:8080/`
+* **Judges' quick mission / demo (5 sols, about 3 minutes):** `http://localhost:8080/?demo=1`
+* **Language:** the game starts in English; switch between **EN / TR** from the main menu (or add `?lang=tr`).
+* The game also runs by double-clicking `index.html` (`file://`).
 
 ---
 
-## 📁 Dokümantasyon Haritası
+## 📁 Documentation map
 
-* [AGENTS.md](AGENTS.md) — 6 Kişilik (`K1–K6`) ekip rolleri, dosya sahipliği ve AI ajan çalışma protokolleri
-* [RULES.md](RULES.md) — Bilimsel doğruluk kuralları, kod standartları, görsel/ses kısıtları ve Git kuralları
-* [REQUIREMENTS.md](REQUIREMENTS.md) — Fonksiyonel (M1–M9), bilimsel ve NASA Space Apps teslim gereksinimleri
-* [PLAN.md](PLAN.md) — 30 saatlik (`S0–S30`) geliştirme takvimi, kilometre taşları, kesim kararları ve adım adım uygulama sırası
-* [ARCHITECTURE.md](ARCHITECTURE.md) — Teknik mimari, merkezi `gameState`, olay veri yolu (`bus`), klasör yapısı ve varlık eşlemesi
-* [DESIGN.md](DESIGN.md) — 16-bit Pixel Art görsel tasarım, renk paleti, UI/HUD düzeni, ses ve sahne akışları
-* [API.md](API.md) — `engineering.js` formülleri, `gameState` şeması, mini-oyun sözleşmesi ve JSON veri şemaları
-* [TESTING.md](TESTING.md) — `node --test` doğrulama testleri, QA senaryoları, debug konsolu ve Bitti Tanımı (DoD)
-* [DEPLOYMENT.md](DEPLOYMENT.md) — GitHub Pages yayını, `?demo` modu ve Space Apps global teslim kontrol listesi
-* [CONTRIBUTING.md](CONTRIBUTING.md) — Katkı rehberi, commit mesaj şablonları ve modül sınırları
-* [SECURITY.md](SECURITY.md) — Güvenlik, telif/lisans (`CC0`) uyumluluğu ve istemci tarafı veri güvenliği
-* [CHANGELOG.md](CHANGELOG.md) — Tasarım v1'den v2'ye geçiş ve sürüm geçmişi
-* [docs/decisions/0001-teknik-karar.md](docs/decisions/0001-teknik-karar.md) — ADR 0001: Vanilla ES Modules + HTML5 Canvas + DOM/CSS UI ve Tekil `gameState` Mimari Kararı
+* [AGENTS.md](AGENTS.md) — team roles (`K1–K6`), file ownership and the AI agent working protocol
+* [RULES.md](RULES.md) — scientific accuracy rules, code standards, art/audio constraints and Git rules
+* [REQUIREMENTS.md](REQUIREMENTS.md) — functional (M1–M9), scientific and NASA Space Apps submission requirements
+* [PLAN.md](PLAN.md) — the 30-hour (`S0–S30`) schedule, milestones, cut decisions and build order
+* [ARCHITECTURE.md](ARCHITECTURE.md) — technical architecture, central `gameState`, event bus, folder layout and asset mapping
+* [DESIGN.md](DESIGN.md) — pixel-art visual design, colour palette, UI/HUD layout, audio and scene flow
+* [API.md](API.md) — `engineering.js` formulas, `gameState` schema, minigame contract and JSON data schemas
+* [TESTING.md](TESTING.md) — `node --test` checks, QA scenarios, debug console and Definition of Done
+* [DEPLOYMENT.md](DEPLOYMENT.md) — GitHub Pages hosting, `?demo` mode and the Space Apps submission checklist
+* [CONTRIBUTING.md](CONTRIBUTING.md) — contribution guide, commit message templates and module boundaries
+* [SECURITY.md](SECURITY.md) — security, copyright/licence (`CC0`) compliance and client-side data safety
+* [CHANGELOG.md](CHANGELOG.md) — design v1 → v2 and version history
+* [docs/decisions/0001-technical-decision.md](docs/decisions/0001-technical-decision.md) — ADR 0001: vanilla JS + HTML5 Canvas + DOM/CSS UI and a single `gameState`
 
 ---
 
-## ⚖️ Lisans ve Beyanlar
+## ⚖️ Licence and statements
 
-* **Görsel ve Ses Varlıkları:** Tüm 16-bit pixel art görseller projeye özel üretilmiştir; ses efektleri `CC0` (kamu malı) lisanslıdır veya Web Audio API ile prosedürel sentezlenir. Hiçbir telifli film/oyun materyali veya resmi NASA logosu izinsiz kullanılmamıştır.
-* **Bilimsel Kurgu Notu:** Oyun sonundaki ~40 saniyelik *UFO Stinger* sahnesi, Viking 1976 *"Mars'taki Yüz"* (Pareidolia) olayına atıfta bulunan ve kamera çözünürlüğü ile veri bant genişliğinin bilimsel keşifteki rolünü vurgulayan sanatsal bir kurgudur.
+* **Art and audio:** the pixel art was made for this project (AI tool use is disclosed in [REFERENCES.md](REFERENCES.md)); sound effects are `CC0` (public domain) or synthesised with the Web Audio API. No copyrighted film or game material and no official NASA logos are used without permission.
+* **Fiction note:** the ~40 s *UFO stinger* at the end is an artistic fiction that refers to the Viking 1976 *"Face on Mars"* (pareidolia) and highlights the role of camera resolution and data bandwidth in scientific discovery.

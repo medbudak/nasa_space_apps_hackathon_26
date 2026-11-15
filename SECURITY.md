@@ -1,27 +1,27 @@
-# SECURITY.md — Güvenlik, Veri Bütünlüğü ve Telif/Lisans Politikası
+# SECURITY.md — Security, Data Integrity and Copyright/Licence Policy
 
-Bu belge, **SOL 14: RED HORIZON** projesinin istemci tarafı güvenlik önlemlerini, üçüncü taraf bağımlılık politikasını ve NASA Space Apps Challenge telif/lisans uyumluluğunu tanımlar.
-
----
-
-## 1. İstemci Tarafı Güvenlik (Client-Side Security)
-
-1. **Sıfır Harici Çalışma Zamanı Bağımlılığı ve API Anahtarı Yokluğu:**
-   - Uygulama tamamen statik HTML5, CSS3, Vanilla ES Modules ve yerel JSON (`data/nasa_data.json`, `content/story.json`) dosyalarıyla çalışır.
-   - Kod içinde hiçbir gizli API anahtarı, kimlik bilgisi veya dış sunucuya veri gönderen izleyici (tracker) bulunmaz.
-2. **XSS (Cross-Site Scripting) Koruması:**
-   - Oyun içi metinler yalnızca güvenilir yerel `content/story.json` sözlüğünden okunur.
-   - Kullanıcı veya URL parametrelerinden (`?demo=1`, `?lang=en`) gelen girdiler doğrudan DOM `innerHTML` içine yazılmaz; yalnızca beyaz listedeki (`whitelist`) sabit mod anahtarlarıyla eşleştirilir.
-3. **Güvenli `localStorage` Kullanımı:**
-   - Oyun kayıt verileri (`sol14_save_v2`) `JSON.parse` edilirken `try / catch` bloğu içinde şema doğrulamasından geçirilir; bozuk veya uyumsuz bir kayıt tespit edildiğinde oyun çökmeden varsayılan temiz duruma (`resetState()`) döner.
+This document describes the client-side security measures of **SOL 14: RED HORIZON**, its third-party dependency policy and its copyright/licence compliance for the NASA Space Apps Challenge.
 
 ---
 
-## 2. Telif Hakkı, NASA Görsel Yönergesi ve Yapay Zekâ Şeffaflığı
+## 1. Client-side security
 
-1. **NASA Logosu ve Kurumsal Kimlik Kuralları:**
-   - NASA Space Apps kuralları gereği resmi NASA "Meatball" veya "Worm" logoları oyun arayüzünde kurumsal onay izlenimi verecek şekilde kullanılmaz; bunun yerine açık veri kaynaklarına (`NSSDCA`, `JPL Horizons`, `Planetary Fact Sheet`) metinsel atıf yapılır.
-2. **Özgün 16-Bit Pixel Art Görseller:**
-   - Oyundaki tüm arka plan, astronot, enkaz (`Opportunity`, `Spirit`, `Phoenix`, `InSight`, `Beagle 2`), yapı ve VFX görselleri projeye özel hazırlanan prompt kütüphanesiyle üretilmiştir; hiçbir ticari oyundan veya filmden sprite kopyalanmamıştır.
-3. **Ses ve Müzik Lisansı (`CC0` / Web Audio API):**
-   - Tüm ses efektleri (rüzgâr ambiyansı, kask alarmı, arayüz tıklamaları, radar taraması ve UFO sinyal darbeleri) tarayıcı yerleşik **Web Audio API** sentezleyicisi ile gerçek zamanlı üretilir; telif hakkı sorunu yaratacak hiçbir MP3/WAV örneği içermez.
+1. **No runtime dependencies and no API keys:**
+   - The app runs entirely on static HTML5, CSS3, vanilla classic scripts and pre-built local data (`src/data/*.js`, built from `data/*.json` and `content/story.json`).
+   - The code holds no secret API keys or credentials and no tracker that sends data to an outside server. The optional playtest log stays in the browser and is only exported when the player asks.
+2. **XSS protection:**
+   - In-game text is read only from the trusted local `content/story.json` dictionary; values inserted into HTML go through `S.util.escape`.
+   - URL parameters (`?demo=1`, `?lang=en`) are never written into the DOM; they are matched against a fixed whitelist of mode keys.
+3. **Safe `localStorage` use:**
+   - Save data is parsed with `JSON.parse` inside `try / catch` and filled in by `S.ensureExploreState`; a broken or incompatible save falls back to a clean state instead of crashing the game.
+
+---
+
+## 2. Copyright, NASA visual guidelines and AI transparency
+
+1. **NASA logos and identity:**
+   - Under the Space Apps rules, the official NASA "meatball" and "worm" logos are not used in the interface in any way that suggests endorsement; open data sources (`NSSDCA`, `JPL Horizons`, `Planetary Fact Sheet`) are credited in text instead.
+2. **Original pixel art:**
+   - The backgrounds, astronaut, wrecks (`Opportunity`, `Spirit`, `Phoenix`, `InSight`, `Beagle 2`), structures and VFX were made for this project (including with AI tools from the project's own prompt library); no sprite is copied from a commercial game or film. AI use is listed in [REFERENCES.md](REFERENCES.md), and AI-generated images need a visible watermark.
+3. **Sound licence (`CC0` / Web Audio API):**
+   - Sound effects are `CC0` recordings (`assets/audio/`, listed in REFERENCES.md) or are synthesised in real time with the browser's built-in **Web Audio API**; no copyrighted MP3/WAV is included.

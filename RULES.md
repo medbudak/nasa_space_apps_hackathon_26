@@ -1,55 +1,55 @@
-# RULES.md — Proje Kuralları, Bilimsel Doğruluk ve Kod Standartları
+# RULES.md — Project Rules, Scientific Accuracy and Code Standards
 
-Bu belge, **SOL 14: RED HORIZON** geliştirilirken uyulması zorunlu olan bilimsel doğruluk düzeltmelerini, teknik kuralları, görsel/sanat standartlarını ve takım işleyiş ilkelerini içerir.
-
----
-
-## 1. Bilimsel Doğruluk Kuralları (Jüri "Validity" Kriteri)
-
-NASA Space Apps jürisinin **Validity (Bilimsel Geçerlilik)** puanını en üst düzeye çıkarmak için aşağıdaki 6 bilimsel kural ve düzeltme kesinlikle uygulanır:
-
-1. **Mars Gece Sıcaklığı (`-80 °C`):**
-   - `-60 °C` Mars'ın küresel ortalama sıcaklığıdır; ekvator ve orta enlemlerde gece sıcaklığı **`-80 °C` ve altına** iner, gündüz ise ekvator yakınında **`+20 °C`**'ye kadar çıkabilir. Gece-gündüz sıcaklık farkı `70–100 °C` olarak modellenir.
-2. **"Sıcak Hava" Yerine "Isı Atma (Radyatör) Arızası":**
-   - Mars'ta bunaltıcı "sıcak hava dalgası" olamaz çünkü atmosfer çok incedir (`~0.6 kPa`, Dünya'nın `%1`'inden az). Bunun yerine ince atmosferde konveksiyonla soğutma yapılamadığı için **"Radyatör Tıkanması / Elektronik ve Habitat Isı Atma Arızası"** kurgulanır.
-3. **"Şiddetli Deprem ve Boşlukta Savrulma" Yerine "Orta Şiddette Sarsıntı + Heyelan":**
-   - InSight'ın kaydettiği en büyük Mars depremi (Marsquake) **`~M4.7`** büyüklüğündedir ve Mars'ta **`0.38g` (`3.73 m/s²`)** yerçekimi vardır; astronot boşlukta savrulmaz. Olay **"Yakın Meteor Çarpması + M4.7 Sarsıntı / Rafların Devrilmesi ve Denge Kaybı"** olarak kurgulanır.
-4. **"Radyoaktif İzotoptan Yakıt Sentezi" Yerine "RHU Isısı + Sabatier Reaktörü (ISRU)":**
-   - Radyoaktif izotop (`Pu-238`) kimyasal yakıt üretmez; yalnızca **RTG** (elektrik + ısı) veya **RHU** (`1 W` radyoizotop ısıtıcı ünite) olarak kullanılır. Dönüş yakıtı üretimi (ISRU), **Sabatier Reaksiyonu** ($\text{CO}_2 + 4\text{H}_2 \rightarrow \text{CH}_4 + 2\text{H}_2\text{O}$) ve su elektrolizi ile modellenir.
-5. **Sera Hasadı Sıkıştırılmış Süreyle, Açıkça Etiketli (D-017):**
-   - Patates ve domates 14 Sol içinde hasat vermez (aylar sürer). Oyunda yalnızca uzay istasyonunda gerçekten yetiştirilmiş hızlı bitkiler var: turp (27 gün), marul (~33 gün), zinya (~60 günde çiçek). Bu süreler aynı sırayla **2–4 bakımlı sole sıkıştırılmıştır**; sera panelinde gerçek süreler ve sıkıştırma yazılıdır (`simplified`). **Tohum Çimlenme Deneyi** (perklorat yıkanmış regolit) ayrıca sürer ve sera verimini artırır.
-6. **Gerçek İletişim ve Yörünge Kısıtları:**
-   - Dünya-Mars tek yön ışık gecikmesi yörünge konumuna göre **`~3 ile 22 dakika`** arasındadır.
-   - Güneş Kavuşumu (**Solar Conjunction**) sırasında Güneş, Dünya ile Mars arasına girer ve veri iletişimi tamamen kesilir.
-   - Mars'ta gün batımı Rayleigh/toz saçılımı nedeniyle **mavidir**, gündüz gökyüzü ise pas/kehribar rengindedir.
+This document lists the scientific corrections, technical rules, art standards and team practices that are mandatory while building **SOL 14: RED HORIZON**.
 
 ---
 
-## 2. Kod ve Mimari Kuralları
+## 1. Scientific accuracy rules (judging criterion "Validity")
 
-1. **Tek Dosya Sahipliği:** Her geliştirici/ajan yalnızca `AGENTS.md` içinde kendisine atanan dosyaları düzenler.
-2. **Merkezi `gameState`:** Oyun durumu yalnızca `src/core/state.js` içinde tutulur; `localStorage` kayıt/yükleme işlemleri tek noktadan yapılır.
-3. **Veri Kaynağı Zorunluluğu (`src` Alanı):** `data/nasa_data.json` içindeki her sayısal değerin yanında mutlaka doğrulandığı resmi NASA/ESA kaynağını belirten bir `src` alanı bulunmalıdır (Örn: `"src": "https://nssdc.gsfc.nasa.gov/..."`).
-4. **Çift Dilli Metin (`TR` / `EN`):** Kod içinde sabit Türkçe veya İngilizce kullanıcı metni bulunamaz. Tüm metinler `content/story.json` içinde hem `tr` hem `en` anahtarlarıyla yer almalı ve `t('key')` fonksiyonuyla çağrılmalıdır.
-5. **Birim Test Zorunluluğu:** `src/core/engineering.js` içindeki tüm fizik ve mühendislik formülleri (`calcSolarPower`, `calcDeltaV`, `calcLightDelay`, `calcPendulumPeriod`, `calcPointOfNoReturnO2`) `node --test tests/` ile otomatik test edilmelidir.
-6. **Hata Toleransı (Fail-Safe):** Eksik bir ses dosyası (`404`) veya tamamlanmamış bir mini-oyun asla ana oyun döngüsünü kilitlememelidir. Her mini-oyunda bir kaçış/iptal (`ESC`) yolu bulunmalıdır.
+To score as high as possible on the NASA Space Apps **Validity** criterion, these 6 scientific rules and corrections are always applied:
+
+1. **Mars night temperature (`-80 °C`):**
+   - `-60 °C` is Mars' global average; at the equator and mid-latitudes nights drop to **`-80 °C` and below**, while days near the equator can reach **`+20 °C`**. The day–night swing is modelled as `70–100 °C`.
+2. **"Heat rejection (radiator) failure" instead of "hot weather":**
+   - Mars cannot have a stifling "heat wave" because the atmosphere is very thin (`~0.6 kPa`, under `1%` of Earth's). Instead, convective cooling barely works in the thin air, so the game uses a **"clogged radiator / electronics and habitat heat-rejection failure"**.
+3. **"Moderate quake + rockslide" instead of "violent quake and being thrown into the air":**
+   - The largest marsquake InSight recorded was **`~M4.7`**, and Mars has **`0.38 g` (`3.73 m/s²`)** gravity; the astronaut is not thrown around. The event is a **"nearby meteorite impact + M4.7 shaking / shelves tipping over and loss of balance"**.
+4. **"RHU heat + Sabatier reactor (ISRU)" instead of "fuel made from a radioactive isotope":**
+   - A radioactive isotope (`Pu-238`) does not make chemical fuel; it is used only as an **RTG** (electricity + heat) or an **RHU** (`1 W` radioisotope heater unit). Return-fuel production (ISRU) is modelled with the **Sabatier reaction** ($\text{CO}_2 + 4\text{H}_2 \rightarrow \text{CH}_4 + 2\text{H}_2\text{O}$) and water electrolysis.
+5. **Greenhouse harvest on a compressed, clearly labelled timescale (D-017):**
+   - Potatoes and tomatoes do not give a harvest within 14 sols (it takes months). The game only has fast crops that were really grown on a space station: radish (27 days), lettuce (~33 days), zinnia (~60 days to flower). In the same order these are **compressed to 2–4 tended sols**; the greenhouse panel shows the real times and the compression (`simplified`). The **seed germination experiment** (perchlorate-rinsed regolith) runs separately and raises greenhouse output.
+6. **Real communication and orbit constraints:**
+   - The one-way Earth–Mars light delay is **`~3 to 22 minutes`**, depending on the planets' positions.
+   - During **solar conjunction** the Sun sits between Earth and Mars and data links are cut completely.
+   - Sunsets on Mars are **blue** because of dust scattering, while the daytime sky is rust/butterscotch.
 
 ---
 
-## 3. Görsel ve Sanat Kuralları (`K4`)
+## 2. Code and architecture rules
 
-1. **16-Bit Pixel Art Stili:** Tüm görseller `image-rendering: pixelated` CSS/Canvas ayarıyla keskin piksellerle çizilir; bulanık (bilinear) ölçekleme kapalıdır.
-2. **HUD ve Metin Yasağı (Asset İçi):** Arka plan ve ekran görsellerinin (`assets/backgrounds/`, `assets/screens/`) içinde çizilmiş sabit yazı veya HUD çubuğu bulunmaz; tüm arayüz `K3` tarafından HTML/CSS veya Canvas katmanı olarak dinamik bindirilir.
-3. **Beyaz Zemin Şeffaflığı (`#FFFFFF` Chroma-Key):** İzole üretilen sprite ve yapı görsellerinin (`assets/sprites/`, `assets/structures/`) saf beyaz (`#FFFFFF`) arka planları yükleme anında otomatik olarak şeffaf (`alpha = 0`) hale getirilir.
-4. **Telif ve Özgünlük:** Hiçbir ticari film/oyun karakteri veya resmi NASA etüd logosu (Meatball/Worm) izinsiz kopyalanmaz. UFO sahnesinde klasik film uçan dairesi yerine bilimsel sensör anomalisi (parlak ışık + açısal iz) kullanılır.
+1. **One owner per file:** each developer or agent edits only the files assigned to them in `AGENTS.md`.
+2. **Central `gameState`:** game state lives only in `src/core/state.js`; `localStorage` save/load happens in one place.
+3. **Every number has a source (`src` field):** each numeric value in `data/nasa_data.json` carries a `src` field naming the official NASA/ESA source it was checked against (e.g. `"src": "https://nssdc.gsfc.nasa.gov/..."`).
+4. **Bilingual text (`EN` / `TR`):** no English or Turkish player-facing string is hard-coded. All text sits in `content/story.json` under both `en` and `tr` keys and is read with `t('key')`. The game starts in English.
+5. **Unit tests are required:** every physics and engineering formula in `src/core/engineering.js` (`calcSolarPower`, `calcDeltaV`, `calcLightDelay`, `calcPendulumPeriod`, `calcPointOfNoReturnO2`) is tested automatically with `node --test "tests/*.test.js"`.
+6. **Fail-safe:** a missing sound file (`404`) or an unfinished minigame never locks the main game loop. Every minigame has an escape/cancel path (`ESC`).
 
 ---
 
-## 4. Süreç, Git ve Kapsam Kuralları
+## 3. Art rules (`K4`)
 
-1. **Saatlik Senkronizasyon:** Ekip çalışmasında her saat başı `git pull --rebase` yapılır; küçük ve anlamlı commit'ler atılır (`[K2] feat: dönüşsüzlük noktası O2 hesabı eklendi`).
-2. **Takılma Kuralı (15–20 Dakika):** Bir soruna 20 dakikadan fazla tek başına takılan kişi/ajan sorunu blokaj olarak bildirir ve alternatif çözüme geçer.
-3. **İçerik ve Özellik Kilidi:**
-   - **S20 (İçerik Kilidi):** Yeni metin veya yeni mekanik eklenmez.
-   - **S24 (Özellik Dondurma / Feature Freeze):** Yalnızca hata düzeltmesi (bug fix) yapılır.
-4. **UFO Sahnesi Beyanı:** Proje sayfasında ve oyun sonunda UFO sahnesinin *Viking 1976 Pareidolia* olayından esinlenen bir kurgu olduğu açıkça belirtilir.
+1. **Pixel-art style:** all images are drawn with sharp pixels through `image-rendering: pixelated` in CSS/Canvas; blurry (bilinear) scaling is off.
+2. **No text or HUD inside assets:** background and screen images (`assets/backgrounds/`, `assets/screens/`) contain no baked-in text or HUD bars; all UI is layered on top by `K3` as HTML/CSS or Canvas.
+3. **White-background transparency (`#FFFFFF` chroma key):** the pure white (`#FFFFFF`) backgrounds of isolated sprites and structures (`assets/sprites/`, `assets/structures/`) are made transparent (`alpha = 0`) by the asset build.
+4. **Copyright and originality:** no commercial film or game character and no official NASA logo (meatball/worm) is copied without permission. The UFO scene uses a scientific sensor anomaly (a bright light + an angular trail) instead of a classic movie flying saucer.
+
+---
+
+## 4. Process, Git and scope rules
+
+1. **Hourly sync:** pull from `main` every hour during team work; make small, meaningful commits (`[K2] feat: Add the point-of-no-return O2 check`).
+2. **Stuck rule (15–20 minutes):** anyone stuck on a problem for more than 20 minutes reports it as a blocker and switches to an alternative.
+3. **Content and feature lock:**
+   - **S20 (content lock):** no new text or new mechanics.
+   - **S24 (feature freeze):** bug fixes only.
+4. **UFO scene statement:** the project page and the end of the game state clearly that the UFO scene is fiction inspired by the *Viking 1976 pareidolia* case.
