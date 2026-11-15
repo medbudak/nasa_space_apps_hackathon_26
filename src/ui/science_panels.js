@@ -53,9 +53,7 @@
         '<h4>' + t('fr.nasa_finding') + '</h4><p>' + t('case.' + id + '.finding') + '</p>' +
         '<h4>' + t('fr.lesson') + '</h4><p>' + t('case.' + id + '.lesson') + '</p>' +
         '<p class="pv-note">' + I('signal') + t('fr.queued', { mbit: c.reportMbit }) + '</p>' +
-        (rec.salvaged
-          ? '<p class="pv-note ok">' + I('wrench') + t('salvage.' + id) + '</p>'
-          : '<button class="btn btn-primary btn-block" data-salvage>' + I('wrench') + t('fr.salvage', { min: S.DATA.gameplay.actions.salvageMin }) + '</button>') +
+        SP.salvageHtml(c, rec) +
         '<a class="src-link" href="' + c.src + '" target="_blank" rel="noopener">' + t('fr.source') + '</a></div>';
     }
 
@@ -68,6 +66,24 @@
       '<span class="' + (ponr.critical ? 'danger' : '') + '">' + I('o2') + t('fr.o2_now', { o2: Math.round(s.suit.o2), req: ponr.requiredO2 }) + '</span></div>' +
       '<p class="fr-brief">' + t('case.' + id + '.brief') + '</p>' +
       '<div class="fr-grid"><div class="ev-cards">' + evCards + '</div>' + diag + '</div></div>'
+    );
+  };
+
+  /** Parça sökme; Enkaz Sahası vakasında (salvageChoice) önce "hangi parça sağlam?" mühendislik kararı (D-012) */
+  SP.salvageHtml = function (c, rec) {
+    const id = c.id;
+    if (rec.salvaged) {
+      if (c.salvageChoice && rec.salvagePick) {
+        const opt = c.salvageChoice.options.find((o) => o.id === rec.salvagePick);
+        return '<p class="pv-note ' + (opt.reusable ? 'ok' : '') + '">' + I(opt.reusable ? 'wrench' : 'alert') + t(opt.reusable ? 'salvage.' + id : 'part.' + id + '.' + opt.id + '.why') + '</p>';
+      }
+      return '<p class="pv-note ok">' + I('wrench') + t('salvage.' + id) + '</p>';
+    }
+    if (!c.salvageChoice) return '<button class="btn btn-primary btn-block" data-salvage>' + I('wrench') + t('fr.salvage', { min: S.DATA.gameplay.actions.salvageMin }) + '</button>';
+    return (
+      '<h4>' + t('fr.salvage_choose') + '</h4><p class="pv-note">' + t('fr.salvage_choose_hint') + '</p><div class="cats">' +
+      c.salvageChoice.options.map((o) => '<button class="cat-btn" data-part="' + o.id + '">' + I('wrench') + t('part.' + id + '.' + o.id) + '</button>').join('') +
+      '</div>'
     );
   };
 
@@ -109,8 +125,54 @@
           S.UI.toast(I('wrench') + t('salvage.' + id), 'ok', 4000);
           S.Game.afterAction(() => SP.openForensic(id));
         });
+      box.querySelectorAll('[data-part]').forEach((b) =>
+        b.addEventListener('click', () => {
+          S.Surface.body.actionT = 1.2;
+          const r = S.Forensics.salvage(S.getState(), id, b.dataset.part);
+          if (!r.ok) return;
+          S.UI.closeModal('forensic', true);
+          S.UI.toast(I(r.correct ? 'wrench' : 'alert') + t(r.rewardKey), r.correct ? 'ok' : 'warn', 5500);
+          S.Game.afterAction(() => SP.openForensic(id));
+        })
+      );
     };
     S.UI.openModal('forensic', SP.forensicHtml(s, id), { cls: 'modal-wide', onMount: mount });
+  };
+
+  /* ================================================================ */
+  /* LAV TÜNELİ — SON KAYA ODASI ÇALIŞMALARI (D-012)                    */
+  /* ================================================================ */
+  SP.caveStudyHtml = function (s, id) {
+    const res = S.Explore.studyResult(s, id);
+    const c = s.explore.cave;
+    let data = '';
+    if (id === 'temp') {
+      data =
+        '<div class="exp-compare"><div><span>' + t('cave.temp_entrance') + '</span><b>' + c.temp.entrance + ' °C</b></div>' +
+        '<div><span>' + t('cave.temp_deep') + '</span><b>' + c.temp.deep + ' °C</b></div></div>';
+    } else if (id === 'distance') {
+      data = '<div class="exp-compare"><div><span>' + t('cave.study.distance') + '</span><b>' + c.distance + ' m</b></div></div>';
+    } else if (c.vibration) {
+      data = c.vibration
+        .map((v) => '<div class="pv-row">' + I('signal') + '<span>' + t('cave.vp.' + v.id) + '</span><b>' + '▮'.repeat(Math.round(v.amplitude * 10)) + ' ' + v.amplitude.toFixed(2) + '</b></div>')
+        .join('');
+    }
+    const p = S.Explore.caveProgress(s);
+    return (
+      '<div class="panel big-panel">' +
+      '<div class="bp-head"><span class="bp-num">' + I('flask') + '</span><h2>' + t('cave.study.' + id) + '</h2><button class="icon-btn" data-close>' + I('x') + '</button></div>' +
+      '<div class="exp-result ok">' + data +
+      (res ? '<p>' + esc(t(res.key, res.vars)) + '</p>' : '') +
+      '<p class="pv-note">' + I('alert') + t('cave.note.' + id) + '</p>' +
+      '<p class="pv-note">' + I('signal') + t('cave.progress', { n: p.done, total: p.total }) + '</p>' +
+      (id === 'temp' ? '<a class="src-link" href="' + S.DATA.explore.cave.skylight.src + '" target="_blank" rel="noopener">' + t('fr.source') + '</a>' : '') +
+      '<p class="pv-note">' + t('hud.cave_fiction') + '</p>' +
+      '<button class="btn btn-primary btn-block" data-close>' + t('ui.continue') + '</button></div></div>'
+    );
+  };
+
+  SP.openCaveStudy = function (id) {
+    S.UI.openModal('cave_study', SP.caveStudyHtml(S.getState(), id), { cls: 'modal-wide' });
   };
 
   /* ================================================================ */

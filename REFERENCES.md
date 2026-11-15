@@ -69,6 +69,10 @@ Running log of everything external the project uses. The submission form asks fo
 | science.nasa.gov | https://science.nasa.gov/photojournal/image-from-mars-orbit-indicates-solar-panels-on-phoenix-lander-may-have-collapsed/ | nasa_data.json: wrecks |
 | nasa.gov | https://www.nasa.gov/press-release/nasa-retires-insight-mars-lander-mission-after-years-of-science | nasa_data.json: wrecks |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/press_kits/mars_2020/launch/mission/ | nasa_data.json: gameplay.transit (solar-powered cruise stage, TCMs during cruise) |
+| science.nasa.gov | https://science.nasa.gov/photojournal/temperature-behavior-of-possible-cave-skylight-on-mars | explore_config.json: cave.skylight (THEMIS: skylight day-night swing ≈ 1/3 of the surrounding surface) — D-012 |
+| science.nasa.gov | https://science.nasa.gov/solar-system/planets/mars/nasa-orbiter-finds-possible-cave-skylights-on-mars/ | Lava-tube fiction label: known skylights ("Seven Sisters", ~100–225 m) are on Arsia Mons — D-012 |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/right-front-wheel-rotations/ | forensics_cases.json: Spirit salvageChoice (right-front wheel actuator failed March 2006) — D-012 |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/nasas-spirit-rover-completes-mission-on-mars/ | forensics_cases.json: Spirit salvageChoice (dusty arrays, last winter) — D-012 |
 
 ## Space Agency Partner and other data
 
@@ -89,6 +93,10 @@ Include open-source and free items too. Note the license.
 |---|---|---|---|
 | awesome-gamedev-agent-skills (`workflows`, `disciplines` plugins) | https://github.com/gamedev-skills/awesome-gamedev-agent-skills | Apache-2.0 | Instructions for the team's AI coding agent (game-jam, UI/UX, game-feel checklists); not shipped in the game |
 | Game artwork in `assets/` (backgrounds, sprites, screens, effects, ending) | this repository | Original work by the team (K4) | All in-game images |
+| `assets/sprites/astronaut_walk_sheet.png` (6-frame walk cycle) | this repository | Supplied by the team as a GIF, converted to a sprite strip (origin to be confirmed) | Astronaut walking animation on the surface and inside the habitat |
+| `docs/design/references/lava-tube-reference.png` | this repository | Supplied by the team as a mock-up (origin to be confirmed; has UI text baked in, so it is a design reference only and is not shipped in the game) | Palette and layout reference for the procedural lava-tube scene (`src/fx/effects.js` `renderCave`) — D-012 |
+| `docs/design/references/lander-reference.png` | this repository | Supplied by the team as the crew-lander mock-up (origin to be confirmed; Mars background baked in, so it is a design reference only and is not shipped in the game) | Art reference for the opening landing cutscene lander — D-012 |
+| Landing cutscene lander and lava-tube scene | this repository | Procedural pixel art drawn in code (`src/fx/lander.js`, `src/fx/effects.js`) | Opening landing sequence and the lava-tube sub-map — D-012 |
 | | | | |
 
 ## Use of AI
@@ -98,6 +106,7 @@ Say which tool was used, and where and how. AI-generated images and videos need 
 | Tool | Used for | Where in the project |
 |---|---|---|
 | Claude (Anthropic), via Claude Code | Wrote the first version of the code skeleton and tests; values were checked against the NASA and NIST pages listed above | `index.html`, `src/main.js`, `src/core/`, `src/scenes/ending.js`, `src/data/nasa_data.json`, `tests/` |
+| Claude (Anthropic), via Claude Code | D-012 map, ice route, lava-tube sub-map, landing cutscene: code, procedural pixel drawing (lander, ice, boulders, cave), TR/EN texts and tests; sources checked against the NASA/JPL pages listed above | `src/systems/explore.js`, `src/fx/lander.js`, `src/fx/effects.js`, `data/explore_config.json`, `content/story.json`, `tests/explore.test.js` |
 
 ## Simplified values
 
@@ -148,3 +157,8 @@ Real-world values that were changed or rounded for gameplay.
 | `spareKits[k1].costMUSD` | K1 balance | 10 M$ | Not published for this case; set by K1 for gameplay |
 | `spareKits[k2].massKg` | K1 decision D-009: not published, game value (K3 proposal) | 300 kg | Not published for this case; set by K1 for gameplay |
 | `spareKits[k2].costMUSD` | K1 balance | 20 M$ | Not published for this case; set by K1 for gameplay |
+| `terrain.map` (−450 m … base … +600 m, zones, landing pad) | D-012 team map; compressed, fictional layout | ice route −450 m, lava-tube skylight +600 m | Walking time and suit O₂ pacing for the first playable version |
+| `explore.cave` (fictional lava tube, 190 m long, chamber span 34 m) | Real Mars skylights are on Arsia Mons, ~100–225 m across (NASA Mars Odyssey) | fictional tube at the map's east end | Short sub-map; labelled fictional in the game |
+| `explore.cave.skylight.tempSwingFraction` | THEMIS: skylight day-night change ≈ 1/3 of the surroundings (NASA photojournal PIA09930) | deep reading = diurnal mean + (surface − mean) × 0.333 | Simplified one-line model of a real observation |
+| `explore.cave.vibrationPoints` | No real data; synthetic relative amplitudes | 0.42 / 0.47 / 0.71 | Interpretation exercise; never shown as a measurement or as a safety verdict |
+| `explore.ice` (4 clusters, relic rewards, report points, minutes) | Game values (D-012) | see `data/explore_config.json` | Pacing and rewards |

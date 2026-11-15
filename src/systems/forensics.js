@@ -8,8 +8,13 @@
   const D = () => S.DATA;
   const F = {};
 
-  F.cases = () => D().forensics.cases;
-  F.get = (id) => F.cases().find((c) => c.id === id);
+  /** Haritadaki vakalar (D-012: yalnızca activeCaseIds); diğer vakalar veride kalır */
+  F.allCases = () => D().forensics.cases;
+  F.cases = function () {
+    const ids = D().forensics.activeCaseIds;
+    return ids ? F.allCases().filter((c) => ids.includes(c.id)) : F.allCases();
+  };
+  F.get = (id) => F.allCases().find((c) => c.id === id);
 
   /** Haritada/ekranda tanımlı mı? (Ingenuity hepsini gösterir; yoksa yaklaşınca tanınır) */
   F.identified = function (s, c) {
@@ -106,10 +111,31 @@
   };
 
   /** Parça sök: RHU ısıtıcılar habitat ısısına eklenir, SEIS sensörü, yedek anten vb. */
-  F.salvage = function (s, caseId) {
+  F.salvage = function (s, caseId, partId) {
     const c = F.get(caseId);
     const rec = s.forensics[caseId];
     if (!c || !rec || rec.salvaged || !rec.diagnosis) return { ok: false };
+    // D-012 Enkaz Sahası mühendislik kararı: hangi parça hâlâ kullanılabilir?
+    const choice = c.salvageChoice;
+    if (choice) {
+      const opt = choice.options.find((o) => o.id === partId);
+      if (!opt) return { ok: false, needChoice: true };
+      rec.salvagePick = opt.id;
+      if (!opt.reusable) {
+        rec.salvaged = true;
+        S.Sim.advance(s, choice.wrongPickMinutes);
+        S.logDecision(
+          { category: 'science', titleKey: 'log.salvage.title', choiceKey: 'part.' + caseId + '.' + opt.id, resultKey: 'part.' + caseId + '.' + opt.id + '.why', vars: { name: c.name }, score: 0 },
+          s
+        );
+        S.bus.emit('audio:play', 'fail');
+        return { ok: true, correct: false, rewardKey: 'part.' + caseId + '.' + opt.id + '.why' };
+      }
+      S.logDecision(
+        { category: 'science', titleKey: 'log.salvage.title', choiceKey: 'part.' + caseId + '.' + opt.id, resultKey: 'part.' + caseId + '.' + opt.id + '.why', vars: { name: c.name }, score: 0 },
+        s
+      );
+    }
     rec.salvaged = true;
     const r = c.salvage || {};
     if (r.rhuUnits) s.inventory.rhuUnits += r.rhuUnits;
@@ -125,7 +151,7 @@
     }
     S.Sim.advance(s, D().gameplay.actions.salvageMin);
     S.bus.emit('audio:play', 'success');
-    return { ok: true, rewardKey: 'salvage.' + caseId };
+    return { ok: true, correct: true, rewardKey: 'salvage.' + caseId };
   };
 
   S.Forensics = F;

@@ -143,11 +143,10 @@ window.SOL14.DATA = {
   "sunsetStartMinute": 1080,
   "nightStartMinute": 1140,
   "metersPerPixel": 1.2,
-  "baseAreaMetersPerPixel": 0.2,
   "spritePxPerMeter": 30,
   "earthJumpHeightM": 0.5,
   "interiorWalkPxPerSecond": 105,
-  "maxEvaRangeM": 1600,
+  "maxEvaRangeM": 600,
   "habitatTargetC": 20,
   "habitatHeatCapacityJPerK": 81000,
   "habitatComfortMinC": 10,
@@ -607,15 +606,72 @@ window.SOL14.DATA = {
   }
  ],
  "terrain": {
-  "iceDepositM": 260,
+  "map": {
+   "simplified": true,
+   "simplifiedNote": "Compressed, fictional map (D-012): base at 0 m, ice route to the left (-450 m), wreck route to the right ending at a lava-tube skylight (+600 m). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
+   "leftLimitM": -450,
+   "baseLeftM": -120,
+   "baseLeftPx": -700,
+   "baseRightM": 100,
+   "landingPadM": 85,
+   "landingExitM": 40,
+   "tubeMouthM": 600,
+   "zones": [
+    {
+     "id": "glacier_edge",
+     "fromM": -450,
+     "toM": -300
+    },
+    {
+     "id": "icy_plain",
+     "fromM": -300,
+     "toM": -120
+    },
+    {
+     "id": "base",
+     "fromM": -120,
+     "toM": 100
+    },
+    {
+     "id": "first_wreck",
+     "fromM": 100,
+     "toM": 250
+    },
+    {
+     "id": "wreck_field",
+     "fromM": 250,
+     "toM": 450
+    },
+    {
+     "id": "rocky_approach",
+     "fromM": 450,
+     "toM": 590
+    },
+    {
+     "id": "tube_mouth",
+     "fromM": 590,
+     "toM": 610
+    }
+   ],
+   "src": "https://www.spaceappschallenge.org/"
+  },
+  "iceDepositM": -140,
   "sandPits": [
    {
-    "fromM": 760,
-    "toM": 820
+    "fromM": 470,
+    "toM": 510
+   }
+  ],
+  "boulders": [
+   {
+    "atM": 530,
+    "heightPx": 18,
+    "widthPx": 16
    },
    {
-    "fromM": 1280,
-    "toM": 1330
+    "atM": 565,
+    "heightPx": 24,
+    "widthPx": 20
    }
   ],
   "sandPitSpeedFactor": 0.5,
@@ -675,6 +731,11 @@ window.SOL14.DATA = {
    }
   ],
   "minEvidenceForDiagnosis": 2,
+  "activeCaseIds": [
+   "opportunity",
+   "spirit"
+  ],
+  "activeCaseNote": "D-012: the compressed map shows two wrecks on the right route (First Wreck, Wreck Field). The other cases stay in the data but are not placed on the map.",
   "src": "https://nssdc.gsfc.nasa.gov/nmc/",
   "cases": [
    {
@@ -683,7 +744,7 @@ window.SOL14.DATA = {
     "agency": "NASA / JPL",
     "lastContact": "2018-06-10 (Sol 5111)",
     "realCoords": "Meridiani Planum 2.05°S 354.47°E",
-    "distanceM": 380,
+    "distanceM": 230,
     "sprite": "rover_opportunity",
     "correctCategory": "power_dust",
     "acceptedSecondary": null,
@@ -725,14 +786,34 @@ window.SOL14.DATA = {
     "agency": "NASA / JPL",
     "lastContact": "2010-03-22 (Sol 2210)",
     "realCoords": "Gusev / Troy 14.57°S 175.47°E",
-    "distanceM": 900,
+    "distanceM": 360,
     "sprite": "rover_spirit",
     "correctCategory": "mechanical",
     "acceptedSecondary": "thermal",
     "reportMbit": 18,
     "salvage": {
-     "rhuUnits": 8,
-     "wheelPart": true
+     "rhuUnits": 8
+    },
+    "salvageChoice": {
+     "note": "Engineering decision: which part is still reusable? RHUs keep giving heat for decades (Pu-238 half-life 87.7 years, constants.rhu); the right-front wheel drive actuator failed in March 2006 and was dragged for the rest of the mission; the solar arrays were dust-covered and could not keep the rover warm in its last winter.",
+     "options": [
+      {
+       "id": "rhu",
+       "reusable": true,
+       "src": "https://science.nasa.gov/mission/mer-spirit/"
+      },
+      {
+       "id": "wheel",
+       "reusable": false,
+       "src": "https://www.jpl.nasa.gov/news/right-front-wheel-rotations/"
+      },
+      {
+       "id": "solar",
+       "reusable": false,
+       "src": "https://www.jpl.nasa.gov/news/nasas-spirit-rover-completes-mission-on-mars/"
+      }
+     ],
+     "wrongPickMinutes": 20
     },
     "telemetry": {
      "wheelSlipPct": 98,
@@ -1582,5 +1663,134 @@ window.SOL14.DATA = {
     ]
    }
   ]
+ },
+ "explore": {
+  "simplified": true,
+  "simplifiedNote": "D-012 exploration content (left ice route, lava-tube sub-map). Positions, minutes, points and rewards are game values for pacing, not measurements. The lava tube is fictional: known Mars skylights/possible caves are on Arsia Mons (Tharsis), not at the landing sites in this game.",
+  "src": "https://www.spaceappschallenge.org/",
+  "ice": {
+   "interactRangeM": 18,
+   "inspectMin": 5,
+   "breakMin": 10,
+   "photoMin": 5,
+   "collectMin": 10,
+   "sampleMin": 10,
+   "sampleWaterL": 4,
+   "photoNoCameraFactor": 0.5,
+   "clusters": [
+    {
+     "id": "ice_1",
+     "atM": -170,
+     "size": 1,
+     "hint": "none",
+     "relic": null
+    },
+    {
+     "id": "ice_2",
+     "atM": -255,
+     "size": 2,
+     "hint": "glint",
+     "relic": "cable"
+    },
+    {
+     "id": "ice_3",
+     "atM": -345,
+     "size": 2,
+     "hint": "none",
+     "relic": null
+    },
+    {
+     "id": "ice_4",
+     "atM": -420,
+     "size": 3,
+     "hint": "silhouette",
+     "relic": "datalog"
+    }
+   ],
+   "relics": [
+    {
+     "id": "cable",
+     "reportMbit": 8,
+     "points": 70,
+     "reward": {
+      "repairKits": 1
+     }
+    },
+    {
+     "id": "datalog",
+     "reportMbit": 12,
+     "points": 90,
+     "reward": {
+      "extraMbit": 10
+     }
+    }
+   ]
+  },
+  "cave": {
+   "scaleNote": "The tube uses the surface scale (gameplay.metersPerPixel), so walking speed, jumping and the metres-per-game-minute rule are identical inside and outside.",
+   "lengthM": 720,
+   "ladderM": 12,
+   "relayM": 44,
+   "interactRangeM": 22,
+   "reportMbit": 24,
+   "pointsPerItem": 25,
+   "pointsBase": 30,
+   "finds": [
+    {
+     "id": "crack",
+     "atM": 170,
+     "minutes": 10
+    },
+    {
+     "id": "basalt",
+     "atM": 320,
+     "minutes": 15
+    },
+    {
+     "id": "room",
+     "atM": 470,
+     "minutes": 5
+    }
+   ],
+   "studies": [
+    {
+     "id": "temp",
+     "atM": 530,
+     "minutes": 10
+    },
+    {
+     "id": "distance",
+     "atM": 590,
+     "minutes": 10
+    },
+    {
+     "id": "vibration",
+     "atM": 650,
+     "minutes": 15
+    }
+   ],
+   "roomSpanM": 34,
+   "roomSpanNote": "Fictional chamber width (game value). Real Arsia Mons skylight openings are about 100-225 m across.",
+   "skylight": {
+    "tempSwingFraction": 0.333,
+    "note": "Mars Odyssey THEMIS: from day to night the Arsia Mons skylight's temperature changes only about one third as much as the surrounding surface. Game model (simplified): deep reading = diurnal mean + (current surface - mean) x this fraction.",
+    "src": "https://science.nasa.gov/photojournal/temperature-behavior-of-possible-cave-skylight-on-mars"
+   },
+   "vibrationPoints": [
+    {
+     "id": "wall",
+     "amplitude": 0.42
+    },
+    {
+     "id": "floor",
+     "amplitude": 0.47
+    },
+    {
+     "id": "ceiling",
+     "amplitude": 0.71
+    }
+   ],
+   "vibrationNote": "Synthetic, relative amplitudes (no unit) for an interpretation exercise: one point rings differently, which needs more data; it never proves the chamber is safe."
+  }
  }
 };

@@ -159,6 +159,28 @@
     return img;
   }
 
+  /** Yürüme döngüsü: astronaut_walk_sheet yatay şeridi (6 kare, kaynak GIF'te kare başına 140 ms). Şerit yoksa false */
+  const WALK_FRAMES = 6;
+  const WALK_FPS = 1 / 0.14;
+  function drawWalk(ctx, cx, bottomY, flip, t, rate) {
+    const img = S.Sprites.get('astronaut_walk_sheet');
+    if (!img) return false;
+    const fw = img.width / WALK_FRAMES;
+    const f = Math.floor(t * WALK_FPS * rate) % WALK_FRAMES;
+    const x = Math.round(cx - fw / 2);
+    const y = Math.round(bottomY - img.height);
+    ctx.save();
+    if (flip) {
+      ctx.translate(x + fw, y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, f * fw, 0, fw, img.height, 0, 0, fw, img.height);
+    } else {
+      ctx.drawImage(img, f * fw, 0, fw, img.height, x, y, fw, img.height);
+    }
+    ctx.restore();
+    return true;
+  }
+
   function drawOnGround(ctx, key, leftPx, groundY, flip) {
     const img = S.Sprites.get(key);
     if (!img) return null;
@@ -173,22 +195,35 @@
       FX.renderInterior(ctx, s, dt, t);
       return;
     }
+    if (s.player.zone === 'cave') {
+      FX.renderCave(ctx, s, dt, t);
+      FX.drawFade(ctx, dt);
+      return;
+    }
     const Surf = S.Surface;
     const body = Surf.body;
     const GY = Surf.GROUND_Y;
     const site = s.design.landingSiteId;
     const minute = s.minute;
     const light = S.Art.lighting(minute);
+    const L = S.Lander;
+    const landingAstro = L && L.active ? L.astronaut() : null;
 
-    // Kamera
-    const target = Math.max(Surf.worldLeftPx(), Math.min(Surf.worldRightPx() - W + 60, body.px - W * CAM_LEAD));
+    // Kamera (iniş sahnesinde önce iniş alanı, sonra kapaktan inen astronot)
+    const focusPx = L && L.active ? (landingAstro ? landingAstro.px : L.padPx()) : body.px;
+    const target = Math.max(Surf.worldLeftPx() - 20, Math.min(Surf.worldRightPx() - W + 60, focusPx - W * CAM_LEAD));
     FX.camX += (target - FX.camX) * Math.min(1, dt * 6);
     if (Math.abs(target - FX.camX) > 400) FX.camX = target;
 
     ctx.save();
+    FX.shakeX = 0;
+    FX.shakeY = 0;
     if (FX.shake > 0) {
       FX.shake -= dt;
-      ctx.translate(Math.round((Math.random() - 0.5) * 6 * Math.min(1, FX.shake)), Math.round((Math.random() - 0.5) * 4 * Math.min(1, FX.shake)));
+      // Sarsıntı kayması saklanır: HUD'un dünyaya bağlı işaretleri aynı karede aynı miktarda kayar
+      FX.shakeX = Math.round((Math.random() - 0.5) * 6 * Math.min(1, FX.shake));
+      FX.shakeY = Math.round((Math.random() - 0.5) * 4 * Math.min(1, FX.shake));
+      ctx.translate(FX.shakeX, FX.shakeY);
     }
 
     // Gökyüzü tuvalin tamamını kaplar; geri kalan her şey tasarım koordinatında, OFF_Y kadar aşağıda çizilir
@@ -198,10 +233,22 @@
 
     // Sırtlar + zemin
     S.Art.drawRidges(ctx, site, minute, FX.camX, W);
+    const map = S.DATA.terrain.map;
     const markers = [];
-    for (let m = 100; m <= S.DATA.gameplay.maxEvaRangeM; m += 100) markers.push({ px: Surf.mToPx(m), label: m + 'm' });
+    // D-012: iki yönlü 100 m işaretleri (sol buz rotası eksi, sağ rota artı)
+    for (let m = Math.ceil(map.leftLimitM / 100) * 100; m <= map.tubeMouthM - 50; m += 100) {
+      if (m === 0 || (m > map.baseLeftM && m < 0)) continue;
+      markers.push({ px: Surf.mToPx(m), label: m + 'm', color: m < 0 ? '#bfe6ff' : undefined });
+    }
     const sandPits = S.DATA.terrain.sandPits.map((p) => ({ x0: Surf.mToPx(p.fromM), x1: Surf.mToPx(p.toM) }));
-    S.Art.drawGround(ctx, site, minute, FX.camX, W, BASE_H, GY, { markers, sandPits, revealSand: S.Sim.has(s, 'ingenuity') });
+    S.Art.drawGround(ctx, site, minute, FX.camX, W, BASE_H, GY, {
+      markers,
+      sandPits,
+      revealSand: S.Sim.has(s, 'ingenuity'),
+      iceFromPx: Surf.mToPx(map.baseLeftM + 20),
+      iceFullPx: Surf.mToPx(map.leftLimitM + 100)
+    });
+    FX.drawRoute(ctx, s, t, GY, light);
 
     // Buz yatağı (RIMFAX)
     if (S.Sim.has(s, 'rimfax')) {
@@ -268,8 +315,14 @@
       }
     }
 
+    // Mekik (iniş sahnesi ya da iniş alanında kalıcı dekor)
+    if (L && (L.active || (s.lander && s.lander.landed))) {
+      L.draw(ctx, GY, FX.worldToScreen, t, light.dark, S.Art.palette(site, minute));
+      if (L.active) L.drawFx(ctx, GY, FX.worldToScreen, t);
+    }
+
     // Ingenuity
-    if (S.Sim.has(s, 'ingenuity')) {
+    if (S.Sim.has(s, 'ingenuity') && !(L && L.active)) {
       const dx = body.px - 30 * s.player.facing;
       FX.droneX = FX.droneX === undefined ? dx : FX.droneX + (dx - FX.droneX) * Math.min(1, dt * 1.5);
       const hover = Math.sin(t * 3) * 3;
@@ -295,21 +348,41 @@
     ctx.globalAlpha = 1;
     FX.particles = FX.particles.filter((p) => p.life > 0);
 
-    // Astronot
-    const pose = Surf.pose(s);
+    // Astronot (iniş sahnesinde kapak açılana kadar içeride, sonra rampadan iner)
+    const hideAstro = L && L.active && !landingAstro;
+    const pose = landingAstro ? (landingAstro.walking ? 'walk' : 'idle') : Surf.pose(s);
     const key = 'astronaut_' + pose;
     const img = S.Sprites.get(key) || S.Sprites.get('astronaut_idle');
-    const ax = FX.worldToScreen(body.px);
-    let ay = GY + 2 - body.y;
-    if (pose === 'walk') ay -= Math.abs(Math.sin(t * 9)) > 0.5 ? 1 : 0;
-    if (img) {
-      drawSprite(ctx, img === S.Sprites.get(key) ? key : 'astronaut_idle', ax - img.width / 2, ay - img.height, s.player.facing < 0);
-      // Gölge
+    const ax = FX.worldToScreen(landingAstro ? landingAstro.px : body.px);
+    let ay = GY + 2 - (landingAstro ? landingAstro.y : body.y);
+    if (img && !hideAstro) {
+      // Kum çukurunda adımlar yavaşlar (hareket hızıyla uyumlu)
+      const walked = pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, Surf.inSandPit(s.player.x) ? 0.5 : 1);
+      if (!walked) {
+        if (pose === 'walk') ay -= Math.abs(Math.sin(t * 9)) > 0.5 ? 1 : 0;
+        drawSprite(ctx, img === S.Sprites.get(key) ? key : 'astronaut_idle', ax - img.width / 2, ay - img.height, s.player.facing < 0);
+      }
+      // Gölge (kayanın üstündeyken kaya yüzeyine düşer)
       ctx.globalAlpha = 0.25;
       ctx.fillStyle = '#000';
-      const sh = Math.max(6, 20 - body.y * 0.2);
-      ctx.fillRect(ax - sh / 2, GY + 1, sh, 2);
+      const floorH = landingAstro ? 0 : Surf.groundAt(body.px);
+      const sh = Math.max(6, 20 - (body.y - floorH) * 0.2);
+      ctx.fillRect(ax - sh / 2, GY + 1 - floorH, sh, 2);
       ctx.globalAlpha = 1;
+    }
+    // Kayaya takılınca kısa zıplama ipucu
+    if (body.blockedT > 0 && !hideAstro) {
+      ctx.save();
+      ctx.font = 'bold 8px "Segoe UI", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(8,10,14,0.75)';
+      const txt = S.t('hint.jump');
+      const tw = ctx.measureText(txt).width + 8;
+      ctx.fillRect(Math.round(ax - tw / 2), ay - 80, Math.round(tw), 12);
+      ctx.fillStyle = '#ffc233';
+      ctx.fillText(txt, ax, ay - 74);
+      ctx.restore();
     }
     // Sızıntı puf'ları
     if (s.suit.leak) {
@@ -410,6 +483,437 @@
     FX.drawVisorFrost(ctx, s);
     FX.drawGlitch(ctx, dt);
     ctx.restore();
+    FX.drawFade(ctx, dt);
+  };
+
+  /** Tünel iniş/çıkış geçişinde kısa kararma */
+  FX.fade = 0;
+  FX.drawFade = function (ctx, dt) {
+    if (FX.fade <= 0) return;
+    ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, FX.fade) + ')';
+    ctx.fillRect(0, 0, W, H);
+    FX.fade = Math.max(0, FX.fade - dt * 2.2);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* D-012 rota dekoru: buz kümeleri, kayalık yaklaşım, lav tüneli ağzı  */
+  /* ------------------------------------------------------------------ */
+  function px1(ctx, c, x, y, w, h) {
+    ctx.fillStyle = c;
+    ctx.fillRect(Math.round(x), Math.round(y), w, h);
+  }
+
+  /** Buz kütlesi: boyut 1–3 (uzaklaştıkça büyür); kırılınca parçalar + ortaya çıkan kalıntı */
+  function drawIce(ctx, s, c, sx, GY, t, dark) {
+    const rec = s.explore.ice[c.id];
+    const step = S.Explore.iceStep(s, c.id);
+    const w = 14 + c.size * 12;
+    const h = 10 + c.size * 11;
+    const shade = (col) => S.Art.mix(col, '#101626', dark * 0.6);
+    if (!rec.broken) {
+      // Üst üste binmiş buz blokları
+      const blocks = [
+        [-w / 2, -h * 0.55, w * 0.55, h * 0.55],
+        [-w * 0.05, -h * 0.75, w * 0.5, h * 0.75],
+        [-w * 0.3, -h, w * 0.45, h * 0.5]
+      ];
+      for (const [bx, by, bw, bh] of blocks) {
+        px1(ctx, shade('#9fc9dc'), sx + bx, GY + by, Math.round(bw), Math.round(bh));
+        px1(ctx, shade('#d8f0fa'), sx + bx, GY + by, Math.round(bw), 2);
+        px1(ctx, shade('#6f9fb8'), sx + bx + bw - 2, GY + by + 2, 2, Math.round(bh) - 2);
+      }
+      px1(ctx, shade('#eaf8ff'), sx - w * 0.2, GY - h * 0.6, 3, 1);
+      // İpuçları: siluet / metal parıltısı / zayıf sinyal (yalnızca kalıntılı buzda)
+      const hint = S.Explore.iceHint(s, c.id);
+      if (hint === 'silhouette' || (hint === 'signal' && c.hint === 'silhouette')) {
+        ctx.globalAlpha = 0.45;
+        px1(ctx, '#3a3f4a', sx - 4, GY - h * 0.45, 9, 5);
+        px1(ctx, '#3a3f4a', sx - 1, GY - h * 0.45 - 4, 3, 4);
+        ctx.globalAlpha = 1;
+      }
+      if (hint === 'glint' || hint === 'signal') {
+        if (Math.sin(t * 5 + c.atM) > 0.6) {
+          px1(ctx, '#ffffff', sx + 2, GY - h * 0.35, 1, 3);
+          px1(ctx, '#ffffff', sx + 1, GY - h * 0.35 + 1, 3, 1);
+        }
+      }
+      if (hint === 'signal') {
+        const pulse = (t * 1.1) % 1;
+        ctx.strokeStyle = 'rgba(63,224,230,' + (1 - pulse) * 0.8 + ')';
+        ctx.beginPath();
+        ctx.arc(sx, GY - h / 2, 5 + pulse * 16, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      if (!rec.inspected) {
+        // Öğretici: ilk küme daha kolay fark edilsin
+        if (c.id === S.Explore.clusters()[0].id && Math.sin(t * 3) > 0) px1(ctx, '#ffc233', sx - 1, GY - h - 8, 3, 3);
+      }
+      return;
+    }
+    // Kırılmış: dağınık parçalar
+    for (let i = 0; i < 6 + c.size * 2; i++) {
+      const ox = Math.round((((i * 37) % 23) / 23 - 0.5) * w * 1.3);
+      const sz = 2 + (i % 3);
+      px1(ctx, shade(i % 2 ? '#a9d3e6' : '#cfeaf6'), sx + ox, GY - sz + 1, sz + 1, sz);
+    }
+    if (c.relic && !rec.collected) {
+      if (c.relic === 'cable') {
+        px1(ctx, '#e8692a', sx - 6, GY - 4, 12, 2);
+        px1(ctx, '#e8692a', sx - 7, GY - 6, 3, 3);
+        px1(ctx, '#b84a18', sx + 3, GY - 7, 4, 3);
+      } else {
+        px1(ctx, '#3b3f4a', sx - 5, GY - 8, 10, 7);
+        px1(ctx, '#5c616e', sx - 5, GY - 8, 10, 1);
+        px1(ctx, Math.sin(t * 4) > 0 ? '#3fe08a' : '#1a5e3c', sx + 2, GY - 6, 2, 1);
+      }
+      if (Math.sin(t * 6) > 0.3) px1(ctx, '#ffffff', sx - 2, GY - 10, 1, 1);
+    }
+    if (step === 'done' || rec.sampled) {
+      px1(ctx, '#2b1a14', sx + w / 2, GY - 12, 1, 12);
+      px1(ctx, '#3fe08a', sx + w / 2 + 1, GY - 12, 5, 3);
+    }
+  }
+
+  /** Zıplanacak kaya: üst yüzeyi groundAt ile aynı (heightPx), gövdesi yuvarlatılmış katmanlı bazalt */
+  function drawBoulder(ctx, sx, GY, b, pal) {
+    const w = b.widthPx;
+    const h = b.heightPx;
+    const base = S.Art.mix(pal.rock, '#8a6a5a', 0.35);
+    const hi = S.Art.mix(base, '#ffd9b0', 0.25);
+    const lo = S.Art.mix(base, '#000000', 0.35);
+    for (let i = 0; i < h; i++) {
+      const inset = i < 3 ? 3 - i : 0;
+      px1(ctx, base, sx - w / 2 + inset, GY - h + i, w - inset * 2, 1);
+    }
+    px1(ctx, hi, sx - w / 2 + 3, GY - h, w - 6, 2);
+    px1(ctx, hi, sx - w / 2, GY - h + 3, 2, h - 4);
+    px1(ctx, lo, sx + w / 2 - 3, GY - h + 3, 3, h - 2);
+    px1(ctx, lo, sx - w / 2 + 3, GY - Math.round(h * 0.45), w - 6, 1);
+    px1(ctx, base, sx - w / 2 - 4, GY - 5, 5, 6);
+    px1(ctx, lo, sx + w / 2, GY - 4, 4, 5);
+  }
+
+  /** Lav tüneli ağzı: zemindeki açıklık, merdiven başı, işaret direği ve iletişim rölesi (uzaktan belirgin siluet) */
+  function drawTubeMouth(ctx, sx, GY, t, pal, dark) {
+    const hw = 26;
+    px1(ctx, '#0d0709', sx - hw, GY, hw * 2, 40);
+    px1(ctx, '#1d0f10', sx - hw + 3, GY, hw * 2 - 6, 3);
+    px1(ctx, pal.rock, sx - hw - 8, GY - 4, 10, 6);
+    px1(ctx, pal.rock, sx + hw - 2, GY - 5, 12, 7);
+    px1(ctx, S.Art.mix(pal.rock, '#ffd9b0', 0.15), sx - hw - 7, GY - 4, 8, 1);
+    // Merdiven başı (iki dikme + tutamak)
+    px1(ctx, '#cfc7bb', sx - 6, GY - 14, 2, 30);
+    px1(ctx, '#cfc7bb', sx + 4, GY - 14, 2, 30);
+    for (let y = GY - 10; y < GY + 16; y += 5) px1(ctx, '#a39c91', sx - 4, y, 8, 1);
+    px1(ctx, '#e8692a', sx - 7, GY - 15, 14, 2);
+    // İşaret direği (yanıp sönen ışık, uzaktan görünür)
+    px1(ctx, '#2b1a14', sx - hw - 14, GY - 46, 2, 46);
+    px1(ctx, '#e8e2d8', sx - hw - 14, GY - 46, 2, 6);
+    px1(ctx, '#e8692a', sx - hw - 14, GY - 40, 2, 6);
+    const on = Math.sin(t * 4) > 0;
+    px1(ctx, on ? '#ff5a3c' : '#5e2015', sx - hw - 15, GY - 50, 4, 4);
+    if (on) {
+      ctx.globalAlpha = 0.25 + dark * 0.4;
+      px1(ctx, '#ff5a3c', sx - hw - 19, GY - 54, 12, 12);
+      ctx.globalAlpha = 1;
+    }
+    // İletişim rölesi: anten + çanak
+    px1(ctx, '#8d8f96', sx + hw + 10, GY - 30, 2, 30);
+    px1(ctx, '#cfc7bb', sx + hw + 5, GY - 34, 12, 3);
+    px1(ctx, '#cfc7bb', sx + hw + 7, GY - 37, 8, 3);
+    px1(ctx, '#3b3d45', sx + hw + 7, GY - 8, 8, 8);
+    px1(ctx, on ? '#3fe08a' : '#1a5e3c', sx + hw + 9, GY - 6, 2, 2);
+  }
+
+  FX.drawRoute = function (ctx, s, t, GY, light) {
+    const Surf = S.Surface;
+    const pal = S.Art.palette(s.design.landingSiteId, s.minute);
+    const vis = (sx) => sx > -80 && sx < W + 80;
+    if (S.Explore && s.explore) {
+      for (const c of S.Explore.clusters()) {
+        const sx = FX.worldToScreen(Surf.mToPx(c.atM));
+        if (vis(sx)) drawIce(ctx, s, c, sx, GY, t, light.dark);
+      }
+    }
+    // Kayalık yaklaşım: dekor taşları + zıplanacak kayalar
+    for (let m = S.DATA.terrain.map.zones.find((z) => z.id === 'rocky_approach').fromM; m < S.DATA.terrain.map.tubeMouthM - 20; m += 17) {
+      const sx = FX.worldToScreen(Surf.mToPx(m));
+      if (!vis(sx)) continue;
+      const k = (m * 7) % 5;
+      px1(ctx, pal.rock, sx, GY - 2 - k, 4 + k, 3 + k);
+    }
+    for (const b of S.DATA.terrain.boulders || []) {
+      const sx = FX.worldToScreen(Surf.mToPx(b.atM));
+      if (vis(sx)) drawBoulder(ctx, sx, GY, b, pal);
+    }
+    const tx = FX.worldToScreen(Surf.mToPx(S.DATA.terrain.map.tubeMouthM));
+    if (vis(tx)) drawTubeMouth(ctx, tx, GY, t, pal, light.dark);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Lav tüneli alt haritası (kurgusal; D-012)                          */
+  /* ------------------------------------------------------------------ */
+  function caveBand(x, seed, amp) {
+    return Math.round(amp * (0.6 * Math.sin(x * 0.021 + seed) + 0.3 * Math.sin(x * 0.057 + seed * 2.1) + 0.1 * Math.sin(x * 0.13 + seed)));
+  }
+
+  FX.renderCave = function (ctx, s, dt, t) {
+    const Surf = S.Surface;
+    const body = Surf.body;
+    const cc = S.DATA.explore.cave;
+    const GY = Surf.GROUND_Y;
+    const endPx = Surf.caveMToPx(cc.lengthM);
+    const roomPx = Surf.caveMToPx(cc.finds.find((f) => f.id === 'room').atM - 8);
+    const ladderPx = Surf.caveMToPx(cc.ladderM);
+
+    const target = Math.max(-60, Math.min(endPx - W + 80, body.cpx - W * CAM_LEAD));
+    FX.camX += (target - FX.camX) * Math.min(1, dt * 6);
+    if (Math.abs(target - FX.camX) > 400) FX.camX = target;
+
+    ctx.save();
+    FX.shakeX = 0;
+    FX.shakeY = 0;
+    if (FX.shake > 0) {
+      FX.shake -= dt;
+      FX.shakeX = Math.round((Math.random() - 0.5) * 6 * Math.min(1, FX.shake));
+      FX.shakeY = Math.round((Math.random() - 0.5) * 4 * Math.min(1, FX.shake));
+      ctx.translate(FX.shakeX, FX.shakeY);
+    }
+    // Arka plan: mor-kahve bazalt (referans: docs/design/references/lava-tube-reference.png)
+    for (let i = 0; i < 12; i++) {
+      ctx.fillStyle = S.Art.mix('#1c1319', '#2e2028', i / 11);
+      ctx.fillRect(0, Math.floor((i * H) / 12), W, Math.ceil(H / 12) + 1);
+    }
+    ctx.translate(0, OFF_Y);
+    // Uzak duvar: katmanlı bazalt (parallax), aşağı indikçe açılan tonlar ve turuncu kenar ışığı
+    const layers = [
+      { c: '#3a2a35', par: 0.3, y: 78, amp: 14, seed: 1.2 },
+      { c: '#46323c', par: 0.35, y: 122, amp: 12, seed: 2.7 },
+      { c: '#523a41', par: 0.42, y: 168, amp: 10, seed: 4.4 },
+      { c: '#5e4245', par: 0.6, y: 212, amp: 9, seed: 6.1 }
+    ];
+    for (const Ly of layers) {
+      ctx.fillStyle = Ly.c;
+      for (let x = 0; x < W; x += 2) {
+        const wx = x + FX.camX * Ly.par;
+        const y = Ly.y + caveBand(wx, Ly.seed, Ly.amp);
+        ctx.fillRect(x, y, 2, GY - y + 4);
+      }
+      ctx.fillStyle = S.Art.mix(Ly.c, '#c58b5f', 0.28);
+      for (let x = 0; x < W; x += 2) {
+        const wx = x + FX.camX * Ly.par;
+        ctx.fillRect(x, Ly.y + caveBand(wx, Ly.seed, Ly.amp), 2, 1);
+      }
+      // Katman içi kırık blok dokusu
+      ctx.fillStyle = S.Art.mix(Ly.c, '#000000', 0.22);
+      for (let x = 0; x < W; x += 6) {
+        const wx = Math.floor(x + FX.camX * Ly.par);
+        if ((((wx * 2654435761) >>> 0) % 7) === 0) ctx.fillRect(x, Ly.y + caveBand(wx, Ly.seed, Ly.amp) + 6 + (wx % 9), 5, 1);
+      }
+    }
+    // Tavan: girintili kaya kütlesi; son odada yükselir; merdivenin üstünde açıklık
+    for (let x = 0; x < W; x += 2) {
+      const wx = x + FX.camX;
+      const roomK = Math.max(0, Math.min(1, (wx - roomPx) / 80));
+      const base = 70 - roomK * 34 + caveBand(wx, 9.3, 10);
+      const skyHole = Math.abs(wx - ladderPx) < 22;
+      if (skyHole) continue;
+      ctx.fillStyle = '#2a1c25';
+      ctx.fillRect(x, -OFF_Y, 2, base + OFF_Y);
+      ctx.fillStyle = '#3d2a33';
+      ctx.fillRect(x, base - 10, 2, 7);
+      // Açıklığa yakın kenarlar sıcak ışık alır
+      const near = Math.max(0, 1 - Math.abs(wx - ladderPx) / 140);
+      ctx.fillStyle = S.Art.mix('#4a3239', '#c47a4e', near * 0.8);
+      ctx.fillRect(x, base - 3, 2, 3);
+    }
+    // Tavandaki açıklık + sıcak ışık huzmesi (merdivenin üstü)
+    const lx = FX.worldToScreen(ladderPx);
+    ctx.fillStyle = '#d99a6c';
+    ctx.fillRect(lx - 20, -OFF_Y, 40, 40 + OFF_Y);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = '#ffcf9a';
+    ctx.beginPath();
+    ctx.moveTo(lx - 18, 40);
+    ctx.lineTo(lx + 18, 40);
+    ctx.lineTo(lx + 46, GY);
+    ctx.lineTo(lx - 46, GY);
+    ctx.fill();
+    ctx.restore();
+    // Zemin
+    ctx.fillStyle = '#6e3a28';
+    ctx.fillRect(0, GY, W, BASE_H - GY);
+    ctx.fillStyle = '#9a5436';
+    ctx.fillRect(0, GY, W, 2);
+    ctx.fillStyle = '#4e281c';
+    ctx.fillRect(0, GY + 2, W, 1);
+    const startTile = Math.floor(FX.camX / 9) - 1;
+    for (let i = startTile; i < startTile + W / 9 + 2; i++) {
+      const r = Math.abs(Math.sin(i * 127.1) * 43758.5453) % 1;
+      const sx = Math.round(i * 9 - FX.camX);
+      if (r > 0.7) px1(ctx, '#2a1a1c', sx, GY - 3 + Math.round(r * 2), 5 + Math.round(r * 4), 4);
+      if (r < 0.3) px1(ctx, '#41231b', sx, GY + 6 + Math.round(r * 30), 3, 1);
+    }
+    // Merdiven
+    for (const side of [-6, 5]) px1(ctx, '#cfc7bb', lx + side, 30, 2, GY - 30);
+    for (let y = 36; y < GY; y += 8) px1(ctx, '#a39c91', lx - 4, y, 9, 1);
+    // Aydınlatma tripodları: kademeli sıcak ışık halesi
+    for (const off of [20, 70, 190]) {
+      const x = lx + off;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const [r, a] of [[26, 0.05], [16, 0.07], [8, 0.1]]) {
+        ctx.globalAlpha = a;
+        ctx.fillStyle = '#ffb070';
+        ctx.fillRect(x - r, GY - 16 - r, r * 2, r * 2);
+      }
+      ctx.restore();
+      px1(ctx, '#e8692a', x - 4, GY - 12, 1, 12);
+      px1(ctx, '#e8692a', x + 3, GY - 12, 1, 12);
+      px1(ctx, '#e8692a', x, GY - 12, 1, 12);
+      px1(ctx, '#3b3d45', x - 4, GY - 19, 9, 7);
+      px1(ctx, '#fff1d0', x - 3, GY - 18, 7, 5);
+    }
+    // İletişim rölesi (merdiven tabanı): kutu + anten + durum ışığı
+    const rx = FX.worldToScreen(Surf.caveMToPx(cc.relayM));
+    px1(ctx, '#9da0a8', rx - 8, GY - 16, 16, 16);
+    px1(ctx, '#c9ccd2', rx - 8, GY - 16, 16, 2);
+    px1(ctx, '#6c6f78', rx + 5, GY - 14, 3, 14);
+    px1(ctx, '#e8692a', rx - 8, GY - 6, 16, 2);
+    px1(ctx, '#8d8f96', rx + 2, GY - 40, 2, 24);
+    px1(ctx, '#cfc7bb', rx - 4, GY - 42, 12, 2);
+    px1(ctx, '#cfc7bb', rx - 2, GY - 45, 8, 2);
+    const rep = s.explore.reports.cave_survey;
+    const lit = rep.queued || rep.sent ? '#3fe08a' : Math.sin(t * 4) > 0 ? '#ffc233' : '#5e4a15';
+    px1(ctx, lit, rx - 5, GY - 12, 3, 3);
+    px1(ctx, '#1b1d22', rx - 1, GY - 12, 5, 3);
+    // Bulgular
+    const done = s.explore.cave.finds;
+    const fpx = (id) => FX.worldToScreen(Surf.caveMToPx(cc.finds.find((f) => f.id === id).atM));
+    // İlk geçit: duvardaki dallanan kaya çatlağı
+    const cx1 = fpx('crack');
+    for (let y = 150; y < GY - 2; y += 5) {
+      const x = cx1 + (((y * 7) % 9) - 4); // çatlak dikey ekseni etrafında zikzak
+      px1(ctx, '#0d080b', x, y, 2, 6);
+      px1(ctx, '#7a5450', x + 2, y + 1, 1, 4);
+      if (y % 25 === 0) px1(ctx, '#0d080b', x - 7, y + 3, 7, 1);
+      if (y % 35 === 0) px1(ctx, '#0d080b', x + 2, y + 4, 6, 1);
+    }
+    const bx = fpx('basalt');
+    for (let i = 0; i < 5; i++) px1(ctx, i % 2 ? '#4a3434' : '#5e403a', bx - 22, GY - 34 + i * 7, 44 - i * 3, 6);
+    px1(ctx, '#7a5248', bx - 22, GY - 34, 40, 1);
+    for (const f of cc.finds) {
+      const fx = fpx(f.id);
+      if (done[f.id]) {
+        px1(ctx, '#2b1a14', fx + 10, GY - 14, 1, 14);
+        px1(ctx, '#3fe08a', fx + 11, GY - 14, 5, 3);
+      } else if (Math.sin(t * 3 + f.atM) > 0) px1(ctx, '#ffc233', fx - 1, GY - 46, 3, 3);
+    }
+    // Son kaya odası: ölçüm noktaları ve cihazlar
+    for (const st of cc.studies) {
+      const x = FX.worldToScreen(Surf.caveMToPx(st.atM));
+      const ok = S.Explore.studyDone(s, st.id);
+      if (st.id === 'temp') {
+        px1(ctx, '#cfc7bb', x, GY - 18, 1, 18);
+        px1(ctx, '#ff5a3c', x - 1, GY - 6, 3, 4);
+      } else if (st.id === 'distance') {
+        px1(ctx, '#e8692a', x - 4, GY - 12, 1, 12);
+        px1(ctx, '#e8692a', x + 3, GY - 12, 1, 12);
+        px1(ctx, '#d6b23a', x - 3, GY - 17, 7, 5);
+        if (ok) {
+          ctx.globalAlpha = 0.6;
+          px1(ctx, '#ff3c3c', x + 4, GY - 15, Math.round(endPx - FX.camX - x - 4), 1);
+          ctx.globalAlpha = 1;
+        }
+      } else {
+        for (const o of [-8, 0, 8]) px1(ctx, '#8d8f96', x + o, GY - 6, 2, 6);
+        if (ok) px1(ctx, '#3fe08a', x - 1, GY - 10, 3, 2);
+      }
+      px1(ctx, ok ? '#3fe08a' : '#ffc233', x - 1, GY - 24, 3, 3);
+    }
+    // Geçilemeyen son duvar
+    const ex = FX.worldToScreen(endPx);
+    for (let y = -OFF_Y; y < GY + 2; y += 4) {
+      const edge = ex + caveBand(y * 3, 3.3, 7); // düzensiz kaya yüzü
+      px1(ctx, '#3a2830', edge, y, W, 4);
+      px1(ctx, '#6a4a4a', edge, y, 2, 4);
+    }
+    for (let y = 40; y < GY; y += 14) {
+      const edge = ex + caveBand(y * 3, 3.3, 7);
+      px1(ctx, '#2a1c24', edge + 6, y + 6, 22 + ((y * 5) % 17), 1);
+    }
+    px1(ctx, '#4e3638', ex - 10, GY - 14, 14, 14);
+    px1(ctx, '#6a4a4a', ex - 10, GY - 14, 12, 2);
+
+    // Tünelin başı: merdivenin solunda kaya duvarı
+    const sx0 = FX.worldToScreen(0);
+    for (let y = -OFF_Y; y < GY + 2; y += 4) {
+      const edge = sx0 - 6 - caveBand(y * 3, 7.7, 5);
+      if (edge > 0) {
+        px1(ctx, '#3a2830', 0, y, edge, 4);
+        px1(ctx, '#6a4a4a', edge - 2, y, 2, 4);
+      }
+    }
+
+    // Ayak tozu / zıplama-iniş puf'ları (yüzeyle aynı parçacık sistemi; px = tünel pikseli)
+    for (const p of FX.particles) {
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 6 * dt;
+      ctx.globalAlpha = Math.max(0, p.life / p.max) * 0.8;
+      ctx.fillStyle = p.c === 'leak' ? '#f2f6ff' : '#a8603e';
+      ctx.fillRect(FX.worldToScreen(p.x), Math.round(p.y), 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    FX.particles = FX.particles.filter((p) => p.life > 0);
+
+    // Astronot: yüzeyle aynı poz mantığı (yürü / zıpla / eylem / donmuş) ve 0.38g zıplama yüksekliği
+    const pose = Surf.pose(s);
+    const key = 'astronaut_' + pose;
+    const img = S.Sprites.get(key) || S.Sprites.get('astronaut_idle');
+    const ax = FX.worldToScreen(body.cpx);
+    let ay = GY + 2 - body.y;
+    if (img) {
+      const walked = pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, 1);
+      if (!walked) {
+        if (pose === 'walk') ay -= Math.abs(Math.sin(t * 9)) > 0.5 ? 1 : 0;
+        drawSprite(ctx, S.Sprites.get(key) ? key : 'astronaut_idle', ax - img.width / 2, ay - img.height, s.player.facing < 0);
+      }
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#000';
+      const sh = Math.max(6, 20 - body.y * 0.2);
+      ctx.fillRect(ax - sh / 2, GY + 1, sh, 2);
+      ctx.globalAlpha = 1;
+    }
+    if (s.suit.leak) {
+      FX.leakPuffT -= dt;
+      if (FX.leakPuffT <= 0) {
+        FX.leakPuffT = 0.15;
+        FX.particles.push({ x: body.cpx - s.player.facing * 8, y: ay - 40, vx: -s.player.facing * 20 + (Math.random() - 0.5) * 10, vy: -8, life: 0.7, max: 0.7, c: 'leak' });
+      }
+    }
+    // Karanlık + kask feneri konisi
+    ctx.fillStyle = 'rgba(4,3,8,0.22)';
+    ctx.fillRect(0, -OFF_Y, W, H);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = '#fff3c4';
+    ctx.beginPath();
+    const hx = ax + s.player.facing * 6;
+    const hy = ay - 48;
+    ctx.moveTo(hx, hy);
+    ctx.lineTo(hx + s.player.facing * 160, GY - 40);
+    ctx.lineTo(hx + s.player.facing * 120, GY + 4);
+    ctx.fill();
+    ctx.restore();
+    FX.drawFloats(ctx, dt, GY);
+    ctx.restore();
+    FX.drawVisorFrost(ctx, s);
+    FX.drawGlitch(ctx, dt);
   };
 
   FX.drawVisorFrost = function (ctx, s) {
@@ -455,9 +959,12 @@
     const pose = body.moving ? 'walk' : 'idle';
     const img = S.Sprites.get('astronaut_' + pose);
     if (img) {
-      let y = S.Surface.INTERIOR.floorY + 1 - img.height;
-      if (body.moving && Math.abs(Math.sin(t * 9)) > 0.5) y -= 1;
-      drawSprite(ctx, 'astronaut_' + pose, ox + body.ix - img.width / 2, OFF_Y + y, s.player.facing < 0);
+      const floor = OFF_Y + S.Surface.INTERIOR.floorY + 1;
+      if (!(body.moving && drawWalk(ctx, ox + body.ix, floor, s.player.facing < 0, t, 1))) {
+        let y = S.Surface.INTERIOR.floorY + 1 - img.height;
+        if (body.moving && Math.abs(Math.sin(t * 9)) > 0.5) y -= 1;
+        drawSprite(ctx, 'astronaut_' + pose, ox + body.ix - img.width / 2, OFF_Y + y, s.player.facing < 0);
+      }
     }
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);

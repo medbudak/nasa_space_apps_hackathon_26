@@ -20,7 +20,7 @@
   /** RIT-09 — Görev durumu / MAV kontrol listesi: finalden önce bilinen tüm koşullar */
   O.progress = function (s) {
     const th = O.thresholds(s);
-    const f = Object.values(s.forensics);
+    const f = S.Score.reportRecords(s).map(([, r]) => r); // D-012: enkaz + kalıntı + mağara raporları
     const e = Object.values(s.experiments);
     return {
       forensicsSent: f.filter((r) => r.sent).length,
@@ -46,13 +46,65 @@
     ];
   };
 
-  const goal = (id, vars = {}) => ({ id, key: 'goal.' + id, vars, hintKey: 'goal.hint.' + id });
+  /** target: { m } yüzey metresi ya da { cx } tünel metresi — HUD yön/mesafe ve dünya işaretini buradan alır */
+  const goal = (id, vars = {}, target = null) => ({ id, key: 'goal.' + id, vars, hintKey: 'goal.hint.' + id, target });
 
   function nextWreck(s) {
     const open = S.Forensics.cases().filter((c) => !s.forensics[c.id].queued);
     if (!open.length) return null;
     // Önce bilinen/keşfedilmiş ve yakın olanlar
     return open.slice().sort((a, b) => Math.abs(a.distanceM - s.player.x) - Math.abs(b.distanceM - s.player.x))[0];
+  }
+
+  const inCave = (s) => s.player.zone === 'cave';
+  /** Habitata dönüş hedefi: mağaradaysa önce merdiven */
+  const homeTarget = (s) => (inCave(s) ? { cx: S.DATA.explore.cave.ladderM } : { m: 0 });
+
+  /**
+   * D-012 — sıradaki rapor kaynağı (en yakın): açık enkaz, kalıntılı buz kümesi, lav tüneli.
+   * Dönüş: { kind: 'wreck'|'ice'|'cave', atM, ref }
+   */
+  function nextReportSource(s) {
+    const list = [];
+    const w = nextWreck(s);
+    if (w) list.push({ kind: 'wreck', atM: w.distanceM, ref: w });
+    if (S.Explore && s.explore) {
+      for (const c of S.Explore.openRelicClusters(s)) if (!s.explore.ice[c.id].collected) list.push({ kind: 'ice', atM: c.atM, ref: c });
+      if (S.Explore.caveOpen(s)) list.push({ kind: 'cave', atM: S.DATA.terrain.map.tubeMouthM, ref: null });
+    }
+    if (!list.length) return null;
+    const here = inCave(s) ? S.DATA.terrain.map.tubeMouthM : s.player.x;
+    return list.sort((a, b) => Math.abs(a.atM - here) - Math.abs(b.atM - here))[0];
+  }
+
+  /** Toplanmış ama henüz üsse raporlanmamış kalıntı var mı? */
+  function unfiledRelic(s) {
+    if (!S.Explore || !s.explore) return false;
+    return S.Explore.clusters().some((c) => c.relic && s.explore.ice[c.id].collected && !s.explore.reports['relic_' + c.id].queued && !s.explore.reports['relic_' + c.id].sent);
+  }
+
+  function sourceGoal(s, src) {
+    const dist = Math.round(Math.abs(src.atM - s.player.x));
+    if (src.kind === 'wreck') {
+      return S.Forensics.identified(s, src.ref) ? goal('wreck_go', { name: src.ref.name, dist }, { m: src.atM }) : goal('wreck_signal', { dist }, { m: src.atM });
+    }
+    if (src.kind === 'ice') {
+      const step = S.Explore.iceStep(s, src.ref.id);
+      return step === 'inspect' ? goal('ice_go', { dist }, { m: src.atM }) : goal('ice_work', { step: S.t('ice.step.' + step) }, { m: src.atM });
+    }
+    return goal('cave_go', { dist }, { m: src.atM });
+  }
+
+  /** Mağara içindeki sıradaki iş */
+  function caveGoal(s) {
+    const task = S.Explore.nextCaveTask(s);
+    const p = S.Explore.caveProgress(s);
+    const vars = { n: p.done, total: p.total };
+    if (task.kind === 'entrance') return goal('cave_entrance', vars, { cx: task.atM });
+    if (task.kind === 'find') return goal('cave_find', Object.assign({ what: S.t('cave.find.' + task.id) }, vars), { cx: task.atM });
+    if (task.kind === 'study') return goal('cave_study', Object.assign({ what: S.t('cave.study.' + task.id) }, vars), { cx: task.atM });
+    if (task.kind === 'report') return goal('cave_report', vars, { cx: task.atM });
+    return goal('cave_exit', {}, { cx: task.atM });
   }
 
   function wreckInProgress(s) {
@@ -76,20 +128,35 @@
     // 1) Hayati: dönüş O₂'si sınırda
     if (outside) {
       const ponr = S.Sim.ponr(s);
-      if (ponr.critical || s.suit.leak) return goal('return', { m: ponr.distanceM });
+      if (ponr.critical || s.suit.leak) return goal('return', { m: ponr.distanceM }, homeTarget(s));
       // Elbise bataryası bitti: ısıtıcı durdu, eklem donmasına kadar uyarılı bir pencere var
-      if (s.suit.battery <= 0) return goal('return_cold', { m: ponr.distanceM });
+      if (s.suit.battery <= 0) return goal('return_cold', { m: ponr.distanceM }, homeTarget(s));
     } else if (s.suit.leak) return goal('repair_suit');
 
     // 2) Son Sol: MAV
-    if (s.sol >= s.maxSols) return p.fuelOk ? goal('mav_launch') : goal('mav_fuel', { fuel: p.fuel });
+    if (s.sol >= s.maxSols) {
+      if (outside && inCave(s)) return goal('cave_exit', {}, homeTarget(s));
+      return p.fuelOk ? goal('mav_launch') : goal('mav_fuel', { fuel: p.fuel });
+    }
 
     // 3) Yarım kalan enkaz incelemesi
     const wip = wreckInProgress(s);
     if (wip) {
       const n = S.Forensics.evidenceCount(s.forensics[wip.id]);
       const enough = n >= D().forensics.minEvidenceForDiagnosis;
-      return goal(enough ? 'wreck_diagnose' : 'wreck_finish', { name: wip.name, n, total: D().forensics.evidenceTypes.length });
+      return goal(enough ? 'wreck_diagnose' : 'wreck_finish', { name: wip.name, n, total: D().forensics.evidenceTypes.length }, { m: wip.distanceM });
+    }
+
+    // 3b) D-012: mağaradaysan (gece değilse) tüneldeki işi bitir, sonra röleden raporla ve çık
+    if (outside && inCave(s) && S.Explore) {
+      const clockLate = clock >= g.sunsetStartMinute || clock < g.sunriseMinute;
+      if (clockLate) return goal('return_night', { temp: Math.round(S.Sim.site(s).nightMinC) }, homeTarget(s));
+      return caveGoal(s);
+    }
+    // 3c) Yarım kalan buz kümesi (kırıldı ama kalıntı alınmadı)
+    if (outside && S.Explore && s.explore) {
+      const half = S.Explore.clusters().find((c) => s.explore.ice[c.id].inspected && S.Explore.iceStep(s, c.id) !== 'done');
+      if (half && Math.abs(half.atM - s.player.x) < 60) return goal('ice_work', { step: S.t('ice.step.' + S.Explore.iceStep(s, half.id)) }, { m: half.atM });
     }
 
     // 4) Veri yolu tıkalıysa (iletişim kapalı / duraklatılmış) önce onu çöz
@@ -97,33 +164,31 @@
     const comms = s.loads.find((l) => l.id === 'comms');
     if (waiting && (s.downlink.paused || (comms && !comms.on))) return goal('downlink_blocked');
 
-    const needF = p.forensicsQueued < p.full.forensicsSent ? nextWreck(s) : null;
+    // D-012: rapor = enkaz + kalıntı + mağara; sıradaki kaynak en yakın olandır
+    const needF = p.forensicsQueued < p.full.forensicsSent ? nextReportSource(s) : null;
     const needE = p.experimentsDone < p.full.experimentsSent ? nextExperiment(s) : null;
     const expVars = { n: p.experimentsDone, total: p.full.experimentsSent };
 
     // 5) Akşam/gece: dışarıdaysan dön, içerideysen deney ya da uyku
     if (late) {
-      if (outside) return goal('return_night', { temp: Math.round(S.Sim.site(s).nightMinC) });
+      if (outside) return goal('return_night', { temp: Math.round(S.Sim.site(s).nightMinC) }, homeTarget(s));
       if (needE) return goal('lab', expVars);
       return goal('sleep');
     }
+
+    // Toplanan kalıntı üsse götürülünce rapor olur
+    if (outside && unfiledRelic(s)) return goal('relic_file', {}, homeTarget(s));
 
     if (!outside) {
       if (needF && (s.suit.o2 < 60 || s.suit.battery < 60)) {
         return goal('prep_suit', { o2: Math.round(s.suit.o2), bat: Math.round(s.suit.battery) });
       }
       if (needE && !needF) return goal('lab', expVars);
-      if (needF) {
-        const dist = Math.round(Math.abs(needF.distanceM - s.player.x));
-        return S.Forensics.identified(s, needF) ? goal('wreck_go', { name: needF.name, dist }) : goal('wreck_signal', { dist });
-      }
+      if (needF) return sourceGoal(s, needF);
       if (needE) return goal('lab', expVars);
     } else {
-      if (needF) {
-        const dist = Math.round(Math.abs(needF.distanceM - s.player.x));
-        return S.Forensics.identified(s, needF) ? goal('wreck_go', { name: needF.name, dist }) : goal('wreck_signal', { dist });
-      }
-      if (needE) return goal('lab_go', expVars);
+      if (needF) return sourceGoal(s, needF);
+      if (needE) return goal('lab_go', expVars, homeTarget(s));
     }
     if (!p.fuelOk) return goal('isru', { fuel: p.fuel });
     return goal('sleep');
@@ -145,7 +210,7 @@
   O.compute = function (s) {
     if (!s || s.sol < 1 || s.ending || s.gameOver) return null;
     const main = O.mainGoal(s);
-    const critical = ['return', 'return_cold', 'repair_suit', 'mav_fuel', 'mav_launch', 'return_night'].includes(main.id);
+    const critical = ['return', 'return_cold', 'repair_suit', 'mav_fuel', 'mav_launch', 'return_night', 'cave_exit'].includes(main.id);
     return { main, optional: critical ? null : O.optionalGoal(s, main), progress: O.progress(s) };
   };
 

@@ -148,6 +148,8 @@
   };
 
   Game.launch = function () {
+    // The opening plays once: a second launch request (double click, key repeat) is ignored
+    if (Game.scene === 'transit') return;
     const s = S.getState();
     const r = S.Sim.launch(s);
     if (!r.ok) {
@@ -156,27 +158,138 @@
     }
     S.bus.emit('audio:play', 'launch');
     Game.setScene('transit');
-    // Transit görev sonuçları { arrays, leak, tcm, thermal } -> iniş kaynakları (Sim.transitOutcome)
-    S.Cutscenes.playTransit((transit) => {
+    // Açılış bir kez: kalkış + yolculuk görevleri → (kayıt: iniş tamamlanmış durum) → oyun dünyasında iniş sahnesi.
+    // Transit görev sonuçları { arrays, leak, tcm, thermal } -> iniş kaynakları (Sim.transitOutcome).
+    // Sim.land kaydı sahneden ÖNCE yazar; sayfa yenilenir ya da kayıt yüklenirse açılış/iniş tekrar oynamaz.
+    S.Cutscenes.playTransit((transit, info) => {
       S.Sim.land(S.getState(), transit);
       S.saveGame();
       Game.enterWorld();
-      S.UI.toast(t('toast.landed', { site: t('site.' + s.design.landingSiteId + '.name') }), 'ok', 4200);
-      if (S.getState().sol === 1 && !Game.tutorialShown) {
-        Game.tutorialShown = true;
-        setTimeout(() => S.UI.toast(t('toast.tutorial'), 'info', 7000), 1200);
-      }
+      if (info && info.skipped) Game.finishLanding(); // Esc: iniş tamamlanmış, astronot çıkış noktasında
+      else Game.startLanding();
     });
+  };
+
+  /* ---------------- Açılış iniş sahnesi (D-012) ---------------- */
+  Game.startLanding = function () {
+    S.Lander.start();
+    S.HUD.hide();
+    // Kamera boş iniş alanına odaklanır; astronot kapaktan inene kadar görünmez
+    S.FX.focusCamera(S.Lander.padPx());
+    const stage = S.UI.hudLayer().parentElement;
+    const hint = document.createElement('div');
+    hint.className = 'landing-skip';
+    hint.innerHTML = t('landing.skip');
+    stage.appendChild(hint);
+    Game.landingHint = hint;
+    S.bus.emit('audio:play', 'launch');
+  };
+
+  Game.finishLanding = function () {
+    if (Game.landingHint) {
+      Game.landingHint.remove();
+      Game.landingHint = null;
+    }
+    const s = S.getState();
+    S.Surface.syncFromState(s);
+    S.HUD.build('surface');
+    S.UI.toast(t('toast.landed', { site: t('site.' + s.design.landingSiteId + '.name') }), 'ok', 4200);
+    if (s.sol === 1 && !Game.tutorialShown) {
+      Game.tutorialShown = true;
+      setTimeout(() => S.UI.toast(t('toast.tutorial'), 'info', 7000), 1200);
+    }
+  };
+
+  Game.skipLanding = function () {
+    if (!S.Lander.active) return;
+    S.Lander.skip();
+    S.FX.focusCamera(S.Surface.body.px);
+    Game.finishLanding();
   };
 
   Game.enterWorld = function () {
     const s = S.getState();
     s.scene = 'surface';
+    S.ensureExploreState(s);
     Game.setScene('world');
     S.Surface.syncFromState(s);
-    S.FX.focusCamera(S.Surface.body.px);
+    S.FX.focusCamera(S.Surface.playerPx(s));
     S.HUD.build(s.player.inside ? 'habitat' : 'surface');
     if (s.player.inside) S.HabitatPanel.show();
+  };
+
+  /* ---------------- D-012 keşif etkileşimleri ---------------- */
+  const ICE_TOAST = { inspect: 'info', break: 'ok', photo: 'ok', collect: 'ok', sample: 'ok' };
+  Game.iceAction = function (id) {
+    const s = S.getState();
+    const step = S.Explore.iceStep(s, id);
+    const r = S.Explore.iceAction(s, id, step);
+    if (!r.ok) return;
+    S.Surface.body.actionT = step === 'break' ? 1.2 : 0.8;
+    const px = S.Surface.mToPx(S.Explore.cluster(id).atM);
+    let msg;
+    if (step === 'inspect') msg = t('ice.inspect.' + (r.hint || 'none'));
+    else if (step === 'break') {
+      S.FX.shake = 0.35;
+      S.bus.emit('fx:puff', { px, size: 2 });
+      msg = r.relic ? t('ice.found', { item: t('relic.' + r.relic) }) : t('ice.no_relic');
+    } else if (step === 'photo') msg = t(r.quality < 1 ? 'ice.photo_low' : 'ice.photo_ok');
+    else if (step === 'collect') msg = t('ice.collected', { item: t('relic.' + r.relic), use: t('relic.' + r.relic + '.use') });
+    else msg = t('ice.sampled', { l: r.waterL });
+    S.bus.emit('fx:float', { px, text: t('ice.step.' + step), tone: 'ok' });
+    S.UI.toast(S.UI.icon(step === 'photo' ? 'camera' : 'target') + msg, ICE_TOAST[step], 4200);
+    Game.afterAction();
+  };
+
+  /** Lav tüneline iniş / yüzeye çıkış: kısa kararma geçişi */
+  Game.caveTransition = function (down) {
+    const s = S.getState();
+    S.FX.fade = 1;
+    S.FX.particles = []; // parçacıklar alt haritanın piksel uzayındadır
+    if (down) S.Explore.descend(s);
+    else S.Explore.ascend(s);
+    S.Surface.syncFromState(s);
+    S.FX.focusCamera(S.Surface.playerPx(s));
+    S.HUD.build('surface');
+    if (down && !s.explore.cave.toastShown) {
+      s.explore.cave.toastShown = true;
+      S.UI.toast(S.UI.icon('map') + t('toast.cave_enter'), 'info', 6500);
+    }
+  };
+
+  Game.relay = function () {
+    const s = S.getState();
+    if (s.explore.cave.temp.entrance === null) {
+      const r = S.Explore.readEntranceTemp(s);
+      S.UI.toast(S.UI.icon('temp') + t('cave.entrance_read', { c: r.c }), 'ok', 4200);
+      return Game.afterAction();
+    }
+    const r = S.Explore.relayReport(s);
+    if (!r.ok) return S.UI.toast(t(r.errKey), 'warn');
+    S.UI.toast(S.UI.icon('signal') + t('toast.cave_reported', { n: r.done, total: r.total, pts: r.score }), 'ok', 5000);
+    Game.afterAction();
+  };
+
+  Game.caveFind = function (id) {
+    const s = S.getState();
+    const first = !s.explore.cave.finds[id];
+    if (first) {
+      S.Explore.recordFind(s, id);
+      S.Surface.body.actionT = 1;
+      S.bus.emit('fx:float', { px: S.Surface.body.cpx, text: t('cave.logged'), tone: 'ok' });
+    }
+    S.UI.toast(S.UI.icon('camera') + t('cave.find.' + id + '.desc'), first ? 'ok' : 'info', 6000);
+    Game.afterAction();
+  };
+
+  Game.caveStudy = function (id) {
+    const s = S.getState();
+    if (!S.Explore.studyDone(s, id)) {
+      const r = S.Explore.runStudy(s, id);
+      if (!r.ok) return S.UI.toast(t(r.errKey || 'cave.err_nothing'), 'warn', 4500);
+      S.Surface.body.actionT = 1.2;
+    }
+    Game.afterAction(() => S.SciencePanels.openCaveStudy(id));
   };
 
   Game.exitHabitat = function () {
@@ -234,9 +347,16 @@
       }
       return;
     }
+    if (S.Lander.active) return;
     const it = S.HUD.prompt;
     if (!it) return;
     S.bus.emit('audio:play', 'click');
+    if (it.kind === 'ice_cluster') return Game.iceAction(it.id);
+    if (it.action === 'descend') return Game.caveTransition(true);
+    if (it.action === 'ascend') return Game.caveTransition(false);
+    if (it.action === 'relay') return Game.relay();
+    if (it.kind === 'cave_find') return Game.caveFind(it.id);
+    if (it.kind === 'cave_study') return Game.caveStudy(it.id);
     if (it.action === 'door') return Game.enterHabitat();
     if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);
     if (it.action === 'greenhouse') return S.HabitatPanel.openGreenhouse();
@@ -329,7 +449,16 @@
     const tSec = now / 1000;
     if (Game.scene === 'world') {
       const s = S.getState();
-      const busy = Game.processPending();
+      if (S.Lander.active) {
+        // Açılış iniş sahnesi: oyun saati ve girdi durur, yalnızca sahne ilerler
+        S.Lander.update(dt);
+        S.Surface.body.moving = false;
+        if (!S.Lander.active) {
+          S.Surface.syncFromState(s);
+          Game.finishLanding();
+        }
+      }
+      const busy = S.Lander.active || Game.processPending();
       if (!busy && Game.scene === 'world') {
         Playtest.activeSec += dt; // aktif oyun süresi: menü/kart açıkken sayılmaz
         const input = { dir: Input.dir(), jump: Input.consumeJump() };
@@ -345,6 +474,8 @@
           Game.lastHud = now;
           S.HUD.update(s);
         }
+        // Dünyaya bağlı HUD işaretleri kamerayla aynı karede konumlanır (10 Hz'lik HUD.update takılma yapıyordu)
+        S.HUD.syncWorld(s);
         if (s.player.inside && now - Game.lastHab > 300) {
           Game.lastHab = now;
           S.HabitatPanel.render(s);
@@ -364,6 +495,12 @@
   /* ================================================================ */
   function onKeyDown(e) {
     if (S.isMinigameOpen()) return; // mini-oyun kendi tuşlarını yönetir
+    // İniş sahnesi: Space / Esc / Enter atlar (Esc burada duraklatma menüsünü açmaz); diğer tuşlar yok sayılır
+    if (Game.scene === 'world' && S.Lander.active) {
+      if (['Space', 'Escape', 'Enter'].includes(e.code)) Game.skipLanding();
+      e.preventDefault();
+      return;
+    }
     const top = S.UI.topModal();
     if (e.key === 'Escape') {
       if (top) {
@@ -445,6 +582,12 @@
     S.bus.on('sol:advance', (sum) => Game.pendingSol.push(sum));
     S.bus.on('forensics:discovered', (p) => S.UI.toast(S.UI.icon('target') + t('toast.discovered', { name: S.Forensics.get(p.id).name }), 'info'));
     S.bus.on('downlink:arrived', (p) => S.UI.toast(S.UI.icon('signal') + t('toast.arrived', { title: t(p.titleKey, p.vars) }), 'ok'));
+    S.bus.on('explore:filed', (p) =>
+      S.UI.toast(S.UI.icon('doc') + t('toast.relic_filed', { items: p.relics.map((r) => t('relic.' + r)).join(', ') }), 'ok', 5000)
+    );
+    Game.canvas.addEventListener('pointerdown', () => {
+      if (Game.scene === 'world' && S.Lander.active) Game.skipLanding();
+    });
     S.bus.on('greenhouse:frozen', () => S.UI.toast(S.UI.icon('leaf') + t('toast.gh_frozen'), 'danger', 5000));
     S.bus.on('eva:frozen', () => S.UI.toast(S.UI.icon('temp') + t('toast.frozen'), 'danger', 4000));
     S.bus.on('power:shed', (p) => {

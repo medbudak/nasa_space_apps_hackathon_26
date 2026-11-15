@@ -10,6 +10,7 @@
   const MANIFEST = {
     astronaut_idle: 'sprites/astronaut_idle.png',
     astronaut_walk: 'sprites/astronaut_walk.png',
+    astronaut_walk_sheet: 'sprites/astronaut_walk_sheet.png',
     astronaut_jump: 'sprites/astronaut_jump.png',
     astronaut_frozen: 'sprites/astronaut_frozen.png',
     astronaut_action: 'sprites/astronaut_action.png',

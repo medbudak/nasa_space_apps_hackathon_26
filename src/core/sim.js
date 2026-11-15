@@ -25,7 +25,10 @@
   Sim.ambient = (s) => E().ambientTempAt(Sim.site(s), Sim.clockMinute(s));
   Sim.tod = (s) => E().timeOfDay(Sim.clockMinute(s));
   Sim.airlockX = 0;
-  Sim.distanceFromHab = (s) => Math.abs(s.player.x - Sim.airlockX);
+  /** Habitata yürüme mesafesi; lav tünelindeyken (D-012) tünel ağzı + tünel içi mesafe */
+  Sim.inCave = (s) => s.player.zone === 'cave';
+  Sim.distanceFromHab = (s) =>
+    Sim.inCave(s) ? Math.abs(D().terrain.map.tubeMouthM - Sim.airlockX) + Math.max(0, s.player.cx || 0) : Math.abs(s.player.x - Sim.airlockX);
   Sim.isOutside = (s) => s.scene === 'surface' && !s.player.inside;
   Sim.horizons = (s) => E().getHorizons(s.sol, s.maxSols);
 
@@ -183,7 +186,10 @@
     s.inventory.rhuUnits = 0;
     s.inventory.spareAntenna = false;
     s.greenhouse.installed = Sim.has(s, 'veggie');
-    s.player = { x: Sim.airlockX + 12, inside: false, facing: 1 };
+    // D-012: mekik üssün iniş alanına (landingPadM) iner; astronot kapaktan iner
+    s.player = { x: d.terrain.map.landingPadM + d.terrain.map.landingExitM, inside: false, facing: 1, zone: 'surface', cx: 0 };
+    s.lander = { landed: true };
+    if (S.ensureExploreState) S.ensureExploreState(s);
     s.power.rtgW = pwr.rtgW;
     if (s.demoMode) {
       s.forensics.opportunity.discovered = true;
@@ -539,6 +545,7 @@
     p.status = 'arrived';
     if (p.kind === 'forensic' && s.forensics[p.refId]) s.forensics[p.refId].sent = true;
     if (p.kind === 'experiment' && s.experiments[p.refId]) s.experiments[p.refId].sent = true;
+    if (p.kind === 'report' && s.explore && s.explore.reports[p.refId]) s.explore.reports[p.refId].sent = true;
     if (p.kind === 'family') s.res.morale = clamp(s.res.morale + D().scoring.familyMessageMorale, 0, 100);
     S.bus.emit('downlink:arrived', p);
   };

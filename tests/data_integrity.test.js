@@ -15,7 +15,7 @@ const { readJson, ROOT } = require('./helpers/load_core.js');
 /** Resmi kaynak alan adları: NASA (+ alt alan adları), ESA ve NASA liderliğindeki Space Apps (oyun dengesi blokları) */
 const OFFICIAL = /^https:\/\/([a-z0-9-]+\.)*(nasa\.gov|esa\.int|spaceappschallenge\.org)(\/|$)/;
 
-const DATA_FILES = ['nasa_data.json', 'forensics_cases.json', 'experiments_config.json', 'events_catalog.json'];
+const DATA_FILES = ['nasa_data.json', 'forensics_cases.json', 'experiments_config.json', 'events_catalog.json', 'explore_config.json'];
 
 /** Doğrudan sayısal alanı olan her nesne için en yakın src'yi kontrol eder; ihlal yollarını döndürür */
 function findUnsourced(node, pathStr, inheritedSrc, out) {
@@ -116,7 +116,15 @@ function expectedDynamicKeys() {
   for (const p of Object.keys(d.habitat.powerSource)) add(`pwr.${p}.name`, `pwr.${p}.desc`);
   for (const i of Object.keys(d.habitat.insulation)) add(`ins.${i}.name`, `ins.${i}.desc`);
   for (const c of Object.keys(d.habitat.comms)) add(`comm.${c}.name`, `comm.${c}.desc`);
-  for (const i of d.instruments) add(`inst.${i.id}.name`, `inst.${i.id}.short`, `inst.${i.id}.desc`, `inst.${i.id}.missing`);
+  for (const i of d.instruments) add(`inst.${i.id}.name`, `inst.${i.id}.short`, `inst.${i.id}.desc`, `inst.${i.id}.missing`, `inst.${i.id}.what`);
+  // Sol 0 mission prep (design_screens.js): objective learning goals, short labels, step titles
+  for (const o of d.objectives) add(`prep.learn.${o.id}`, `obj.${o.id}.short_name`, `obj.${o.id}.short`);
+  for (const o of d.orbits) add(`orbit.${o.id}.short`);
+  for (const p of Object.keys(d.habitat.powerSource)) add(`pwr.${p}.short`);
+  for (const i of Object.keys(d.habitat.insulation)) add(`ins.${i}.short`);
+  for (const c of Object.keys(d.habitat.comms)) add(`comm.${c}.short`, `comm.${c}.sub`);
+  for (const n of [1, 2, 3, 4, 5]) add(`prep.step${n}`, `prep.s${n}_title`, `prep.s${n}_sub`);
+  for (const n of [2, 3, 4, 5]) add(`prep.next${n}`);
   for (const l of ['life_support', 'heating', 'comms', 'greenhouse', 'experiments', 'moxie']) add(`load.${l}`);
   for (const n of [1, 2, 3, 4, 5]) add(`design.tab${n}`);
   for (const t of ['FULL_SUCCESS', 'MIN_SUCCESS', 'PARTIAL', 'FAILED']) add(`tier.${t}`);
@@ -139,7 +147,19 @@ function expectedDynamicKeys() {
   for (const c of f.cases) {
     add(`case.${c.id}.brief`, `case.${c.id}.finding`, `case.${c.id}.lesson`, `salvage.${c.id}`);
     for (const e of f.evidenceTypes) add(`clue.${c.id}.${e.id}`);
+    for (const o of (c.salvageChoice && c.salvageChoice.options) || []) add(`part.${c.id}.${o.id}`, `part.${c.id}.${o.id}.why`);
   }
+
+  // D-012 keşif: bölgeler, buz adımları, kalıntılar, mağara bulguları ve çalışmaları
+  const xp = readJson('data', 'explore_config.json');
+  for (const z of d.terrain.map.zones) add(`zone.${z.id}`);
+  add('zone.cave');
+  for (const st of ['inspect', 'break', 'photo', 'collect', 'sample', 'done']) add(`ice.step.${st}`, `prompt.ice.${st}`);
+  for (const h of ['none', 'glint', 'silhouette', 'signal']) add(`ice.inspect.${h}`);
+  for (const r of xp.ice.relics) add(`relic.${r.id}`, `relic.${r.id}.use`);
+  for (const fd of xp.cave.finds) add(`cave.find.${fd.id}`, `cave.find.${fd.id}.desc`);
+  for (const st of xp.cave.studies) add(`cave.study.${st.id}`, `cave.note.${st.id}`, `cave.res.${st.id}`);
+  for (const v of xp.cave.vibrationPoints) add(`cave.vp.${v.id}`);
 
   // Deneyler
   for (const e of x.experiments) {

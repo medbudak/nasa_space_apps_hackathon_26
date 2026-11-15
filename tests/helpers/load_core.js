@@ -19,8 +19,11 @@ const CORE_SCRIPTS = [
   'src/core/score.js',
   'src/systems/forensics.js',
   'src/systems/experiments.js',
+  'src/systems/explore.js',
   'src/core/objectives.js',
-  'src/core/surface.js'
+  'src/core/surface.js',
+  'src/fx/lander.js',
+  'src/fx/opening.js'
 ];
 
 function readJson(...p) {
@@ -35,6 +38,7 @@ function loadCore({ lang = 'tr' } = {}) {
   data.forensics = readJson('data', 'forensics_cases.json');
   data.experimentsCfg = readJson('data', 'experiments_config.json');
   data.events = readJson('data', 'events_catalog.json');
+  data.explore = readJson('data', 'explore_config.json');
   context.SOL14 = { DATA: data, STORY: readJson('content', 'story.json') };
   for (const rel of CORE_SCRIPTS) {
     const code = fs.readFileSync(path.join(ROOT, rel), 'utf8');
