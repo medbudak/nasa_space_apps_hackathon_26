@@ -412,6 +412,17 @@
     const X = S.Explore;
     if (it.kind === 'ice_cluster') return t('prompt.ice.' + X.iceStep(s, it.id));
     if (it.kind === 'tube') return t('prompt.descend');
+    // Kazı: gerçek ve sahte tümsek aynı yazıyı gösterir (ayırt eden yalnızca elbise tarayıcısı / RIMFAX)
+    if (it.kind === 'dig') {
+      const st = X.site(it.id);
+      const hits = X.siteHits(s, st);
+      return t(st.kind === 'rubble' ? 'prompt.dig_rubble' : hits ? 'prompt.dig_more' : 'prompt.dig.' + st.kind, { n: hits, total: st.hits });
+    }
+    if (it.kind === 'scout') {
+      const shot = s.explore.cave.scout[it.id];
+      return t(shot !== null && shot !== undefined ? 'prompt.scout_done' : 'prompt.scout', { what: t('scout.' + it.id + '.name') });
+    }
+    if (it.kind === 'part') return t('prompt.pick_part', { what: t('salvage.part.' + it.partId) });
     if (it.action === 'ascend') return t('prompt.ascend');
     if (it.action === 'relay') {
       const rep = s.explore.reports.cave_survey;

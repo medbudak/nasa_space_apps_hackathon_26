@@ -144,7 +144,7 @@
     "spritePxPerMeter": 30,
     "earthJumpHeightM": 0.5,
     "interiorWalkPxPerSecond": 105,
-    "maxEvaRangeM": 600,
+    "maxEvaRangeM": 1400,
     "habitatTargetC": 20,
     "habitatHeatCapacityJPerK": 81000,
     "habitatComfortMinC": 10,
@@ -403,40 +403,42 @@
   ],
   "terrain": {
     "simplified": true,
-    "simplifiedNote": "Corridor layout, sand pit positions, the slowdown factor, ice dig values and the drone rules (Ingenuity reveals the wrecks and routes the walker around sand pits) are game values. Real lesson behind the sand pits: Spirit was stuck in soft sand at Troy (NASA Spirit mission page).",
+    "simplifiedNote": "Route layout, sand pit positions, the slowdown factor, ice dig values and the drone rule (Ingenuity scouts the route around sand pits) are game values. Wrecks are not shown until the player uncovers them by digging (explore.dig). Real lesson behind the sand pits: Spirit was stuck in soft sand at Troy (NASA Spirit mission page).",
     "map": {
       "simplified": true,
-      "simplifiedNote": "Compressed, fictional map (D-012): base at 0 m, ice route to the left (-450 m), wreck route to the right ending at a lava-tube skylight (+600 m). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
+      "simplifiedNote": "Compressed, fictional map (D-012, widened in the 2026-11-15 merge): base at 0 m; west, the glacier route to the ice wall (-5000 m, map edge -5350 m, terrain.westRegion); east, the lava-plain route through a dried lake bed, dunes and a crater field to a rubble-sealed lava-tube skylight (+1400 m). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
       "leftLimitM": -5350,
       "baseLeftM": -120,
       "baseLeftPx": -700,
       "baseRightM": 100,
       "landingPadM": 85,
       "landingExitM": 40,
-      "tubeMouthM": 600,
+      "tubeMouthM": 1400,
       "zones": [
-        { "id": "glacier_edge", "fromM": -450, "toM": -300 },
-        { "id": "icy_plain", "fromM": -300, "toM": -120 },
+        { "id": "ice_wall", "fromM": -5350, "toM": -5000 },
+        { "id": "glacier", "fromM": -5000, "toM": -2120 },
+        { "id": "glacier_edge", "fromM": -2120, "toM": -1300 },
+        { "id": "icy_plain", "fromM": -1300, "toM": -120 },
         { "id": "base", "fromM": -120, "toM": 100 },
-        { "id": "first_wreck", "fromM": 100, "toM": 250 },
-        { "id": "wreck_field", "fromM": 250, "toM": 450 },
-        { "id": "rocky_approach", "fromM": 450, "toM": 590 },
-        { "id": "tube_mouth", "fromM": 590, "toM": 610 }
+        { "id": "lakebed", "fromM": 100, "toM": 500 },
+        { "id": "dunes", "fromM": 500, "toM": 850 },
+        { "id": "rocky_approach", "fromM": 850, "toM": 1150 },
+        { "id": "lava_plain", "fromM": 1150, "toM": 1390 },
+        { "id": "tube_mouth", "fromM": 1390, "toM": 1430 }
       ],
       "src": "https://www.spaceappschallenge.org/"
     },
     "iceDepositM": -140,
     "sandPits": [
-      { "fromM": 470, "toM": 510 }
+      { "fromM": 600, "toM": 680 }
     ],
     "boulders": [
-      { "atM": 530, "heightPx": 18, "widthPx": 16 },
-      { "atM": 565, "heightPx": 24, "widthPx": 20 }
+      { "atM": 930, "heightPx": 18, "widthPx": 16 },
+      { "atM": 985, "heightPx": 24, "widthPx": 20 },
+      { "atM": 1060, "heightPx": 20, "widthPx": 18 }
     ],
     "sandPitSpeedFactor": 0.5,
-    "droneRevealAllWrecks": true,
     "droneRoutesAroundSandPits": true,
-    "wreckVisibleWithoutDroneM": 160,
     "iceDigMinutes": 40,
     "iceDigWaterL": 6,
     "src": "https://science.nasa.gov/mission/mer-spirit/",
@@ -444,7 +446,7 @@
       "src": "https://science.nasa.gov/mission/phoenix/",
       "note": "Phoenix found water ice just under the surface and saw frost form on the ground: the basis for an icy area.",
       "simplified": true,
-      "simplifiedNote": "K2 TRIAL. The western ice field, its lost cargo lander, the ice wall and every distance here are FICTIONAL game values on a compressed map, to be labelled as fiction in the game and on the project page. Distances are metres west of the airlock. The ice blocks across the glacier path, the hits needed to dig through them and the game minutes per hit are game values too. The trail signs follow what was really seen: Spirit dragged its broken right-front wheel from 2006 and left a furrow; HiRISE imaged Phoenix's parachute, backshell and heat-shield mark; Beagle 2 landed on airbags.",
+      "simplifiedNote": "The western ice field, its lost cargo lander, the ice wall and every distance here are FICTIONAL game values on a compressed map, to be labelled as fiction in the game and on the project page. Distances are metres west of the airlock. The ice blocks across the glacier path, the hits needed to dig through them and the game minutes per hit are game values too. The trail signs follow what was really seen: Spirit dragged its broken right-front wheel from 2006 and left a furrow; HiRISE imaged Phoenix's parachute, backshell and heat-shield mark; Beagle 2 landed on airbags.",
       "baseEdgeM": 120,
       "endM": 5350,
       "frostStartM": 280,

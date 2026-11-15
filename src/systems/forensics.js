@@ -1,6 +1,6 @@
 /**
  * SOL 14: RED HORIZON — Ana Görev 1: Kayıp Araçların Adli İncelemesi (K6)
- * Döngü: Bul (yürü / Ingenuity) -> 3 kanıt (foto, kara kutu, çevre) -> 5 kategoriden teşhis
+ * Döngü: Bul (izleri takip et, kazı noktasını kaz: S.Explore.dig) -> 3 kanıt (foto, kara kutu, çevre) -> 5 kategoriden teşhis
  *        -> Downlink kuyruğu (M1) -> NASA bulgu kartı + ders -> parça sök.
  */
 (function (S) {
@@ -16,35 +16,31 @@
   };
   F.get = (id) => F.allCases().find((c) => c.id === id);
 
-  /** Haritada/ekranda tanımlı mı? (Ingenuity hepsini gösterir; yoksa yaklaşınca tanınır) */
-  F.identified = function (s, c) {
-    const rec = s.forensics[c.id];
-    if (rec.discovered) return true;
-    if (S.Sim.has(s, 'ingenuity') && D().terrain.droneRevealAllWrecks) return true;
-    return false;
+  /**
+   * Oyuncu aracı buldu mu? Araçlar hazır görünmez ve yaklaşınca kendiliğinden tanınmaz (eski otomatik keşif
+   * kaldırıldı): yalnızca kazı noktası kazılınca ortaya çıkar (rec.discovered = kazılıp çıkarıldı).
+   */
+  F.identified = (s, c) => Boolean(s.forensics[c.id] && s.forensics[c.id].discovered);
+
+  /** Kazı tamamlandı: araç ortaya çıktı (S.Explore.dig çağırır) */
+  F.uncover = function (s, caseId) {
+    const rec = s.forensics[caseId];
+    if (!rec || rec.discovered) return false;
+    rec.discovered = true;
+    S.bus.emit('forensics:discovered', { id: caseId });
+    return true;
   };
 
-  /** Oyuncu konumuna göre yakındaki enkaz (etkileşim mesafesi içinde) */
+  /** Oyuncu konumuna göre yakındaki, ortaya çıkarılmış enkaz (etkileşim mesafesi içinde) */
   F.nearby = function (s) {
     const range = D().gameplay.wreckInteractRangeM;
     let best = null;
     for (const c of F.cases()) {
+      if (!F.identified(s, c)) continue;
       const d = Math.abs(s.player.x - c.distanceM);
       if (d <= range && (!best || d < best.d)) best = { c, d };
     }
     return best ? best.c : null;
-  };
-
-  /** Yürüyerek yaklaşınca keşif (sinyal izi -> tanımlı enkaz) */
-  F.updateDiscovery = function (s) {
-    const vis = D().terrain.wreckVisibleWithoutDroneM;
-    for (const c of F.cases()) {
-      const rec = s.forensics[c.id];
-      if (!rec.discovered && Math.abs(s.player.x - c.distanceM) <= vis) {
-        rec.discovered = true;
-        S.bus.emit('forensics:discovered', { id: c.id });
-      }
-    }
   };
 
   F.evidenceCount = (rec) => ['photo', 'telemetry', 'env'].filter((k) => rec.evidence[k] !== null).length;

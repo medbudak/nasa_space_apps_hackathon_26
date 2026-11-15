@@ -1,13 +1,13 @@
 {
   "categories": ["power_dust", "thermal", "mechanical", "software", "comms"],
   "evidenceTypes": [
-    { "id": "photo", "minigame": "align", "minutes": 10, "instrumentBonus": "mastcam_z" },
+    { "id": "photo", "minigame": "fieldcam", "minutes": 10, "instrumentBonus": "mastcam_z" },
     { "id": "telemetry", "minigame": "wires", "minutes": 20, "instrumentBonus": null },
     { "id": "env", "minigame": "qte", "minutes": 15, "instrumentBonus": "supercam" }
   ],
   "minEvidenceForDiagnosis": 2,
-  "activeCaseIds": ["opportunity", "spirit"],
-  "activeCaseNote": "D-012: the compressed map shows two wrecks on the right route (First Wreck, Wreck Field). The other cases stay in the data but are not placed on the map.",
+  "activeCaseIds": ["opportunity", "insight", "spirit", "phoenix", "beagle2"],
+  "activeCaseNote": "All five cases are on the map and buried: east (lava-plain route) Opportunity under dust and InSight under dust; west (glacier route) Spirit in frozen soft sand, Phoenix under CO2 ice, Beagle 2 under an ice overhang. A wreck appears only after its dig site is dug out (explore.dig). Positions and burial are game fiction; the trail signs follow what NASA reported for each mission.",
   "src": "https://nssdc.gsfc.nasa.gov/nmc/",
   "cases": [
     {
@@ -16,7 +16,7 @@
       "agency": "NASA / JPL",
       "lastContact": "2018-06-10 (Sol 5111)",
       "realCoords": "Meridiani Planum 2.05°S 354.47°E",
-      "distanceM": 230,
+      "distanceM": 330,
       "sprite": "rover_opportunity",
       "correctCategory": "power_dust",
       "acceptedSecondary": null,
@@ -31,7 +31,7 @@
       "agency": "NASA / JPL",
       "lastContact": "2022-12-15 (Sol 1440)",
       "realCoords": "Elysium Planitia 4.50°N 135.62°E",
-      "distanceM": 640,
+      "distanceM": 760,
       "sprite": "lander_insight",
       "correctCategory": "power_dust",
       "acceptedSecondary": null,

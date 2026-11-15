@@ -1,8 +1,13 @@
 /**
- * SOL 14: RED HORIZON — Keşif rotaları (D-012) (K6)
- *  Sol rota: buzu incele -> kır -> (kalıntı varsa) fotoğrafla -> topla; kalıntısız buz bilimsel örnek verir.
- *            Toplanan kalıntılar habitata girince "bulgu raporu" olarak downlink kuyruğuna girer.
- *  Lav tüneli (ayrı alt harita): 3 bulgu + son odada 3 kısa çalışma; rapor yalnızca merdiven tabanındaki röleden.
+ * SOL 14: RED HORIZON — Keşif rotaları (D-012, 2026-11-15 birleştirmesiyle genişletildi) (K6)
+ *  Kazı: araçlar hazır görünmez. Gömülü araçlar (doğuda Opportunity ve InSight, batıda Spirit, Phoenix, Beagle 2)
+ *        kazı noktasında E ile kazılarak ortaya çıkar; sahte tümsekler boş çıkar (elbise tarayıcısı yalnızca gerçek
+ *        bir şeyin yanında tepki verir, RIMFAX daha uzaktan sezer). Doğunun sonunda çökmüş tünel penceresi kazılarak açılır.
+ *  Sol rota (buzul): buzu incele -> kır -> (kalıntı varsa) fotoğrafla -> topla; kalıntısız buz bilimsel örnek verir.
+ *            Toplanan kalıntılar ve batı buluntuları (kargo aracı parçaları, Deep Space 2 sondası) habitata girince
+ *            "bulgu raporu" olarak downlink kuyruğuna girer.
+ *  Lav tüneli (ayrı alt harita): 3 bulgu + kurgusal İZCİ-1 rover'ının 5 parçası + son odada 3 kısa çalışma;
+ *            rapor yalnızca merdiven tabanındaki röleden.
  * DOM'a dokunmaz; tüm durum gameState.explore içinde (kalıcı).
  */
 (function (S) {
@@ -16,6 +21,65 @@
   X.relic = (id) => cfg().ice.relics.find((r) => r.id === id);
   X.caveFinds = () => cfg().cave.finds;
   X.caveStudies = () => cfg().cave.studies;
+  X.scoutParts = () => cfg().cave.scout.parts;
+
+  /* ---------------- Kazı: gömülü araçlar, sahte tümsekler, tünel penceresi ---------------- */
+  X.digCfg = () => cfg().dig;
+  X.digSites = () => cfg().dig.sites;
+  X.site = (id) => X.digSites().find((st) => st.id === id);
+  /** Kazı noktasının konumu (m): araçlı noktalar vakanın distanceM'sinde durur (tek kaynak) */
+  X.siteAt = (st) => (st.case ? S.Forensics.get(st.case).distanceM : st.atM);
+  X.siteSide = (st) => (X.siteAt(st) < 0 ? 'west' : 'east');
+  X.siteHits = (s, st) => (s.explore && s.explore.dig[st.id]) || 0;
+  X.siteDone = (s, st) => X.siteHits(s, st) >= st.hits;
+  /** Altında bir şey var mı (araç ya da tünel)? Sahte tümsek boş çıkar */
+  X.siteReal = (st) => Boolean(st.case || st.opens);
+  X.tubeOpen = (s) => Boolean(s.explore && s.explore.tubeOpen);
+
+  /** Bölgede henüz kazılmamış gerçek nokta (hedef motoru yalnızca yönü bilir, yeri söylemez) */
+  X.hiddenLeft = (s, side) => X.digSites().filter((st) => X.siteReal(st) && X.siteSide(st) === side && !X.siteDone(s, st));
+
+  /**
+   * Elbise tarayıcısı: yakında gerçek bir gömülü nokta var mı? Sahte tümsek tepki vermez.
+   * RIMFAX (yer radarı) varsa sinyal daha uzaktan gelir. Dönüş: { site, d, close } | null
+   */
+  X.scannerPing = function (s) {
+    if (!s.explore || s.player.inside || s.player.zone === 'cave') return null;
+    const dc = X.digCfg();
+    const range = S.Sim.has(s, 'rimfax') ? dc.rimfaxRangeM : dc.reactRangeM;
+    let best = null;
+    for (const st of X.digSites()) {
+      if (!X.siteReal(st) || X.siteDone(s, st)) continue;
+      const d = Math.abs(X.siteAt(st) - s.player.x);
+      if (d <= range && (!best || d < best.d)) best = { site: st, d, close: d <= dc.reactRangeM };
+    }
+    return best;
+  };
+
+  /** Bir kazma vuruşu: oyun dakikası harcar (O₂, batarya, soğuk sürer); yeterli vuruşta araç çıkar / tünel açılır */
+  X.dig = function (s, id) {
+    const st = X.site(id);
+    if (!st || X.siteDone(s, st)) return { ok: false };
+    s.explore.dig[id] = X.siteHits(s, st) + 1;
+    S.Sim.advance(s, st.minutesPerHit);
+    const hits = s.explore.dig[id];
+    const out = { ok: true, id, hits, total: st.hits, done: hits >= st.hits, kind: st.kind };
+    S.bus.emit('dig:hit', { id, m: X.siteAt(st), hits, total: st.hits, kind: st.kind });
+    if (!out.done) {
+      S.bus.emit('audio:play', 'land');
+      return out;
+    }
+    if (st.case) {
+      S.Forensics.uncover(s, st.case);
+      out.caseId = st.case;
+    } else if (st.opens === 'tube') {
+      s.explore.tubeOpen = true;
+      out.tube = true;
+      S.bus.emit('explore:tube_open', {});
+    } else out.empty = true;
+    S.bus.emit('audio:play', out.empty ? 'fail' : 'quake');
+    return out;
+  };
 
   /* ---------------- Sol rota: buz kümeleri ---------------- */
 
@@ -100,6 +164,24 @@
       S.logDecision({ category: 'science', titleKey: 'log.relic.title', choiceKey: 'relic.' + c.relic, resultKey: 'relic.' + c.relic + '.use', vars: {}, score: rep.score }, s);
       filed.push(c.relic);
     }
+    // Batı buluntuları (K2 Sude): kargo aracının üç parçası tamamlanınca ve Deep Space 2 sondası
+    const wf = cfg().westFinds;
+    const sv = s.salvage || { found: [] };
+    const west = D().terrain.westRegion;
+    const landerParts = west ? west.parts.map((pt) => pt.id) : [];
+    const fileWest = (refId, ok, item, mbit, points) => {
+      const rep = s.explore.reports[refId];
+      if (!ok || !rep || rep.queued || rep.sent) return;
+      rep.score = points;
+      rep.queued = true;
+      S.Sim.queuePacket(s, { kind: 'report', refId, titleKey: 'packet.' + refId, vars: {}, sizeMbit: mbit, points });
+      S.logDecision({ category: 'science', titleKey: 'log.' + refId + '.title', choiceKey: 'log.' + refId + '.choice', resultKey: 'log.' + refId + '.result', vars: {}, score: points }, s);
+      filed.push(item);
+    };
+    if (wf) {
+      fileWest('west_lander', landerParts.length > 0 && landerParts.every((id) => sv.found.includes(id)), 'west_lander', wf.landerReportMbit, wf.landerPointsPerPart * landerParts.length);
+      fileWest('west_probe', sv.found.includes('ds2_probe'), 'west_probe', wf.probeReportMbit, wf.probePoints);
+    }
     return filed;
   };
 
@@ -107,7 +189,7 @@
   X.caveLength = () => cfg().cave.lengthM;
 
   X.descend = function (s) {
-    if (s.player.zone === 'cave') return { ok: false };
+    if (s.player.zone === 'cave' || !X.tubeOpen(s)) return { ok: false }; // pencere önce kazılarak açılır
     s.player.zone = 'cave';
     s.player.cx = cfg().cave.ladderM;
     s.player.facing = 1;
@@ -129,6 +211,18 @@
 
   X.entranceTemp = (s) => S.Sim.ambient(s);
   X.deepTemp = (s) => S.Engineering.calcCaveTempC(S.Sim.site(s), S.Sim.clockMinute(s), cfg().cave.skylight.tempSwingFraction);
+
+  /** İZCİ-1 parçası fotoğrafla (FIELD CAM sonucu kalite 0..1) */
+  X.scoutDone = (s) => X.scoutParts().filter((pt) => s.explore.cave.scout[pt.id] !== null && s.explore.cave.scout[pt.id] !== undefined).length;
+  X.photoScout = function (s, id, quality) {
+    const pt = X.scoutParts().find((x) => x.id === id);
+    if (!pt || (s.explore.cave.scout[id] !== null && s.explore.cave.scout[id] !== undefined)) return { ok: false };
+    s.explore.cave.scout[id] = Math.round(Math.max(0.3, quality === undefined ? 1 : quality) * 100) / 100;
+    S.Sim.advance(s, cfg().cave.scout.minutes);
+    S.bus.emit('audio:play', 'scan');
+    const n = X.scoutDone(s);
+    return { ok: true, n, total: X.scoutParts().length, complete: n === X.scoutParts().length };
+  };
 
   X.recordFind = function (s, id) {
     const f = X.caveFinds().find((x) => x.id === id);
@@ -195,12 +289,13 @@
     return a.reduce((x, y) => x + y, 0) / a.length;
   }
 
-  /** Mağara araştırmasının tamamlanma sayısı (bulgu + çalışma) */
+  /** Mağara araştırmasının tamamlanma sayısı (bulgu + İZCİ-1 parçası + çalışma) */
   X.caveProgress = function (s) {
     const c = s.explore.cave;
     const finds = Object.values(c.finds).filter(Boolean).length;
+    const scout = X.scoutDone(s);
     const studies = X.caveStudies().filter((st) => X.studyDone(s, st.id)).length;
-    return { finds, studies, total: X.caveFinds().length + X.caveStudies().length, done: finds + studies };
+    return { finds, scout, studies, total: X.caveFinds().length + X.scoutParts().length + X.caveStudies().length, done: finds + scout + studies };
   };
 
   X.nearRelay = (s) => s.player.zone === 'cave' && Math.abs(s.player.cx - cfg().cave.relayM) <= cfg().cave.interactRangeM + 4;
@@ -229,10 +324,13 @@
     const rep = s.explore.reports.cave_survey;
     if (rep.queued || rep.sent) return { kind: 'exit', atM: cc.ladderM };
     if (c.temp.entrance === null) return { kind: 'entrance', atM: cc.relayM };
-    const f = X.caveFinds().find((x) => !c.finds[x.id]);
-    if (f) return { kind: 'find', id: f.id, atM: f.atM };
-    const st = X.caveStudies().find((x) => !X.studyDone(s, x.id));
-    if (st) return { kind: 'study', id: st.id, atM: st.atM };
+    // Tünel boyunca sırayla: bulgular ve İZCİ-1 parçaları; son odaya varınca (room) ölçümler
+    const todo = X.caveFinds()
+      .filter((x) => !c.finds[x.id])
+      .map((x) => ({ kind: 'find', id: x.id, atM: x.atM }))
+      .concat(X.scoutParts().filter((x) => c.scout[x.id] === null || c.scout[x.id] === undefined).map((x) => ({ kind: 'scout', id: x.id, atM: x.atM })));
+    if (c.finds.room) for (const x of X.caveStudies()) if (!X.studyDone(s, x.id)) todo.push({ kind: 'study', id: x.id, atM: x.atM });
+    if (todo.length) return todo.sort((a, b) => a.atM - b.atM)[0];
     return { kind: 'report', atM: cc.relayM };
   };
 

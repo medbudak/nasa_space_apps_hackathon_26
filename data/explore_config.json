@@ -1,6 +1,6 @@
 {
   "simplified": true,
-  "simplifiedNote": "D-012 exploration content (left ice route, lava-tube sub-map). Positions, minutes, points and rewards are game values for pacing, not measurements. The lava tube is fictional: known Mars skylights/possible caves are on Arsia Mons (Tharsis), not at the landing sites in this game.",
+  "simplifiedNote": "Exploration content (D-012, extended in the 2026-11-15 merge): the west glacier route (ice clusters, frozen wrecks, the cargo lander and the Deep Space 2 probe) and the east lava-plain route (dig sites, the sealed skylight, the lava-tube sub-map). Positions, minutes, hit counts, points and rewards are game values for pacing, not measurements. The lava tube, the cargo lander and the SCOUT-1 rover are fictional: known Mars skylights/possible caves are on Arsia Mons (Tharsis), not at the landing sites in this game.",
   "src": "https://www.spaceappschallenge.org/",
   "ice": {
     "interactRangeM": 18,
@@ -12,19 +12,29 @@
     "sampleWaterL": 4,
     "photoNoCameraFactor": 0.5,
     "clusters": [
-      { "id": "ice_1", "atM": -170, "size": 1, "hint": "none", "relic": null },
-      { "id": "ice_2", "atM": -255, "size": 2, "hint": "glint", "relic": "cable" },
-      { "id": "ice_3", "atM": -345, "size": 2, "hint": "none", "relic": null },
-      { "id": "ice_4", "atM": -420, "size": 3, "hint": "silhouette", "relic": "datalog" }
+      { "id": "ice_1", "atM": -520, "size": 1, "hint": "none", "relic": null },
+      { "id": "ice_2", "atM": -980, "size": 2, "hint": "glint", "relic": "cable" },
+      { "id": "ice_3", "atM": -2470, "size": 2, "hint": "none", "relic": null },
+      { "id": "ice_4", "atM": -3300, "size": 3, "hint": "silhouette", "relic": "datalog" }
     ],
     "relics": [
-      { "id": "cable", "reportMbit": 8, "points": 70, "reward": { "repairKits": 1 } },
-      { "id": "datalog", "reportMbit": 12, "points": 90, "reward": { "extraMbit": 10 } }
+      {
+        "id": "cable",
+        "reportMbit": 8,
+        "points": 70,
+        "reward": { "repairKits": 1 }
+      },
+      {
+        "id": "datalog",
+        "reportMbit": 12,
+        "points": 90,
+        "reward": { "extraMbit": 10 }
+      }
     ]
   },
   "cave": {
     "scaleNote": "The tube uses the surface scale (gameplay.metersPerPixel), so walking speed, jumping and the metres-per-game-minute rule are identical inside and outside.",
-    "lengthM": 720,
+    "lengthM": 820,
     "ladderM": 12,
     "relayM": 44,
     "interactRangeM": 22,
@@ -53,6 +63,51 @@
       { "id": "floor", "amplitude": 0.47 },
       { "id": "ceiling", "amplitude": 0.71 }
     ],
-    "vibrationNote": "Synthetic, relative amplitudes (no unit) for an interpretation exercise: one point rings differently, which needs more data; it never proves the chamber is safe."
+    "vibrationNote": "Synthetic, relative amplitudes (no unit) for an interpretation exercise: one point rings differently, which needs more data; it never proves the chamber is safe.",
+    "scout": {
+      "fiction": true,
+      "note": "SCOUT-1 (TR: IZCI-1) is a fictional rover, not one of the real missions (K3 Medine prototype). Its five parts tell why a rover sent into a cave fails: rock blocks the radio link and no sunlight reaches the solar panel.",
+      "minutes": 5,
+      "parts": [
+        { "id": "wheel", "atM": 95 },
+        { "id": "panel", "atM": 245 },
+        { "id": "mast", "atM": 395 },
+        { "id": "antenna", "atM": 705 },
+        { "id": "body", "atM": 770 }
+      ]
+    }
+  },
+  "dig": {
+    "note": "Buried wrecks and the sealed skylight. A site with \"case\" sits at that case's distanceM; mounds without a reward are decoys that teach the suit scanner (it only reacts near something real). Every hit costs game minutes, so suit O2, battery and cold keep running while digging.",
+    "interactRangeM": 16,
+    "reactRangeM": 30,
+    "rimfaxRangeM": 140,
+    "sites": [
+      { "id": "mound_e1", "atM": 205, "kind": "dust", "hits": 2, "minutesPerHit": 4 },
+      { "id": "opportunity", "case": "opportunity", "kind": "dust", "hits": 4, "minutesPerHit": 4 },
+      { "id": "mound_e2", "atM": 545, "kind": "sand", "hits": 2, "minutesPerHit": 4 },
+      { "id": "insight", "case": "insight", "kind": "dust", "hits": 4, "minutesPerHit": 4 },
+      { "id": "skylight", "atM": 1400, "kind": "rubble", "hits": 6, "minutesPerHit": 5, "opens": "tube" },
+      { "id": "spirit", "case": "spirit", "kind": "frost", "hits": 4, "minutesPerHit": 4 },
+      { "id": "phoenix", "case": "phoenix", "kind": "ice", "hits": 5, "minutesPerHit": 4 },
+      { "id": "beagle2", "case": "beagle2", "kind": "overhang", "hits": 5, "minutesPerHit": 4 }
+    ]
+  },
+  "westFinds": {
+    "note": "Reports for the fictional cargo lander (its three parts) and the Deep Space 2 probe, filed on entering the habitat like the ice relics.",
+    "landerReportMbit": 14,
+    "landerPointsPerPart": 30,
+    "probeReportMbit": 10,
+    "probePoints": 80,
+    "pickMinutes": 5
+  },
+  "fieldCam": {
+    "note": "FIELD CAM photo minigame (K3 Medine): turn the focus ring until the subject is sharp, hold it, then shoot. Game values.",
+    "seconds": 40,
+    "tolerance": 0.04,
+    "holdSeconds": 0.35,
+    "focusSpeed": 0.45,
+    "blurEase": 2.2,
+    "albumSize": 12
   }
 }

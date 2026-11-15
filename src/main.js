@@ -257,6 +257,52 @@
     }
   };
 
+  /* ---------------- Kazı: gömülü araçlar ve tünel penceresi (eski otomatik keşfin yerine) ---------------- */
+  Game.dig = function (id) {
+    const s = S.getState();
+    const r = S.Explore.dig(s, id);
+    if (!r.ok) return;
+    const st = S.Explore.site(id);
+    const px = S.Surface.mToPx(S.Explore.siteAt(st));
+    S.Surface.body.actionT = r.done ? 1 : 0.6;
+    S.FX.shake = Math.max(S.FX.shake || 0, r.done ? 0.5 : 0.15);
+    S.bus.emit('fx:puff', { px, size: r.done ? 2 : 1 });
+    if (!r.done) S.bus.emit('fx:float', { px, text: t('dig.progress', { n: r.hits, total: r.total }), tone: 'ok' });
+    else if (r.tube) S.UI.toast(S.UI.icon('map') + t('dig.tube_open'), 'ok', 6500);
+    else if (r.empty) S.UI.toast(S.UI.icon('target') + t('dig.empty.' + st.kind), 'info', 3800);
+    // Araç çıktıysa forensics:discovered olayı duyurur
+    Game.afterAction();
+  };
+
+  /** Kargo aracı parçasını al (batı buzulu) */
+  Game.pickPart = function (partId) {
+    const s = S.getState();
+    const r = S.Surface.pickPart(s, partId);
+    if (!r.ok) return;
+    S.bus.emit('fx:float', { px: S.Surface.body.px, text: t('salvage.parts', { n: r.n, total: r.total }), tone: 'ok' });
+    S.UI.toast(S.UI.icon('target') + t('salvage.found.' + partId), 'ok', 5000);
+    Game.afterAction();
+  };
+
+  /** Lav tünelindeki İZCİ-1 parçası: FIELD CAM ile fotoğrafla; beşi tamamlanınca aracın hikâyesi */
+  Game.scoutPhoto = async function (id) {
+    const s = S.getState();
+    const shot = s.explore.cave.scout[id];
+    if (shot !== null && shot !== undefined) return S.UI.toast(S.UI.icon('camera') + t('scout.' + id + '.caption'), 'info', 7000);
+    const mg = await S.runMinigame('fieldcam', { scoutPart: id, titleKey: 'scout.' + id + '.name' });
+    const r = S.Explore.photoScout(s, id, mg.skipped ? 0.5 : mg.score);
+    if (!r.ok) return;
+    S.Surface.body.actionT = 0.8;
+    S.bus.emit('fx:float', { px: S.Surface.body.cpx, text: t('scout.found', { n: r.n, total: r.total }), tone: 'ok' });
+    S.UI.toast(S.UI.icon('camera') + t('scout.' + id + '.caption'), 'info', 8000);
+    if (r.complete && !s.explore.cave.storyShown) {
+      s.explore.cave.storyShown = true;
+      Game.afterAction(() => S.SciencePanels.openScoutStory());
+      return;
+    }
+    Game.afterAction();
+  };
+
   Game.relay = function () {
     const s = S.getState();
     if (s.explore.cave.temp.entrance === null) {
@@ -357,6 +403,9 @@
     if (it.action === 'relay') return Game.relay();
     if (it.kind === 'cave_find') return Game.caveFind(it.id);
     if (it.kind === 'cave_study') return Game.caveStudy(it.id);
+    if (it.kind === 'scout') return Game.scoutPhoto(it.id);
+    if (it.kind === 'dig') return Game.dig(it.id);
+    if (it.action === 'pick_part') return Game.pickPart(it.partId);
     if (it.action === 'door') return Game.enterHabitat();
     if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);
     if (it.action === 'greenhouse') return S.HabitatPanel.openGreenhouse();
@@ -586,7 +635,19 @@
     S.FX.init();
     S.bus.on('sol:advance', (sum) => Game.pendingSol.push(sum));
     // K2 trial: wrecks in the western ice field announce themselves with a "!" (core/surface.js)
-    S.bus.on('forensics:discovered', (p) => S.Forensics.get(p.id).distanceM < 0 && S.DATA.terrain.westRegion ? null : S.UI.toast(S.UI.icon('target') + t('toast.discovered', { name: S.Forensics.get(p.id).name }), 'info'));
+    // İlk zıplama (K3 Medine): aynı güçle Mars'ta ne kadar yükseğe ve ne kadar süre (Dünya'yla karşılaştırma)
+    S.bus.on('surface:jump', () => {
+      const s = S.getState();
+      if (!s || !s.explore || s.explore.jumpFactShown) return;
+      s.explore.jumpFactShown = true;
+      const g = S.DATA.constants.marsGravity;
+      const hE = S.DATA.gameplay.earthJumpHeightM;
+      const v = Math.sqrt(2 * g.earthValue * hE);
+      const r2 = (x) => Math.round(x * 100) / 100;
+      S.UI.toast(S.UI.icon('rocket') + t('jump.fact', { r: g.ratioToEarth, h: r2((v * v) / (2 * g.value)), t: r2((2 * v) / g.value), he: hE, te: r2((2 * v) / g.earthValue) }), 'info', 7000);
+    });
+    // Araç kazılıp ortaya çıktı (S.Explore.dig → Forensics.uncover)
+    S.bus.on('forensics:discovered', (p) => S.UI.toast(S.UI.icon('target') + t('toast.uncovered', { name: S.Forensics.get(p.id).name }), 'ok', 5000));
     S.bus.on('downlink:arrived', (p) => S.UI.toast(S.UI.icon('signal') + t('toast.arrived', { title: t(p.titleKey, p.vars) }), 'ok'));
     S.bus.on('explore:filed', (p) =>
       S.UI.toast(S.UI.icon('doc') + t('toast.relic_filed', { items: p.relics.map((r) => t('relic.' + r)).join(', ') }), 'ok', 5000)

@@ -78,6 +78,8 @@
     ];
     for (const f of cc.finds) list.push({ id: f.id, kind: 'cave_find', action: 'cave_find', px: Surf.caveMToPx(f.atM), range: r });
     for (const st of cc.studies) list.push({ id: st.id, kind: 'cave_study', action: 'cave_study', px: Surf.caveMToPx(st.atM), range: r * 0.8 });
+    // Kurgusal İZCİ-1 rover'ının parçaları: E ile FIELD CAM fotoğrafı
+    for (const pt of cc.scout.parts) list.push({ id: pt.id, kind: 'scout', action: 'scout', px: Surf.caveMToPx(pt.atM), range: r * 0.8 });
     return list;
   };
 
@@ -100,7 +102,9 @@
     if (S.Sim.has(s, 'rimfax')) {
       list.push({ id: 'ice', kind: 'ice', px: Surf.mToPx(S.DATA.terrain.iceDepositM), action: 'dig_ice', labelKey: 'world.ice', range: 26 });
     }
+    // Araçlar hazır görünmez: yalnızca kazılıp ortaya çıkarılmış enkaz etkileşime açılır
     for (const c of S.Forensics.cases()) {
+      if (!S.Forensics.identified(s, c)) continue;
       list.push({
         id: c.id,
         kind: 'wreck',
@@ -119,8 +123,16 @@
         list.push({ id: c.id, kind: 'ice_cluster', action: 'ice_cluster', px: Surf.mToPx(c.atM), range: ir + c.size * 3 });
       }
     }
-    // Lav tüneli ağzı (merdiven + röle)
-    list.push({ id: 'tube', kind: 'tube', action: 'descend', px: Surf.mToPx(MAP().tubeMouthM), range: 20 });
+    // Kazı noktaları: gömülü araçlar, sahte tümsekler ve çökmüş tünel penceresi (bitenler listeden çıkar)
+    if (S.Explore && s.explore) {
+      const dr = S.DATA.explore.dig.interactRangeM / G().metersPerPixel;
+      for (const st of S.Explore.digSites()) {
+        if (S.Explore.siteDone(s, st)) continue;
+        list.push({ id: st.id, kind: 'dig', action: 'dig', px: Surf.mToPx(S.Explore.siteAt(st)), range: dr });
+      }
+    }
+    // Lav tüneli ağzı (merdiven + röle): pencere kazılıp açılınca
+    if (S.Explore && S.Explore.tubeOpen(s)) list.push({ id: 'tube', kind: 'tube', action: 'descend', px: Surf.mToPx(MAP().tubeMouthM), range: 20 });
     // the ice sealing the lost lander: break it with repeated E presses
     const w = West();
     if (w && w.iceCave && !Surf.salvage(s).iceBroken) {
@@ -144,6 +156,14 @@
         range: w.finalProbe.rangeM / G().metersPerPixel
       });
     }
+    // Kargo aracının parçaları: görünür olunca E ile alınır (yürürken kendiliğinden toplanmaz)
+    if (w && w.parts) {
+      const sv = Surf.salvage(s);
+      for (const part of w.parts) {
+        if (sv.found.includes(part.id) || (part.hiddenIn === 'cave' && !sv.iceBroken)) continue;
+        list.push({ id: 'part_' + part.id, kind: 'part', partId: part.id, action: 'pick_part', px: Surf.mToPx(-part.atM), range: w.pickupRangeM / G().metersPerPixel });
+      }
+    }
     // ice blocks across the glacier path
     if (w && w.iceBarriers) {
       const open = Surf.salvage(s).barriersOpen || [];
@@ -162,6 +182,20 @@
       });
     }
     return list;
+  };
+
+  /** Kargo aracı parçasını al: oyun dakikası harcar */
+  Surf.pickPart = function (s, partId) {
+    const w = West();
+    const sv = Surf.salvage(s);
+    const part = w && w.parts.find((pt) => pt.id === partId);
+    if (!part || sv.found.includes(partId)) return { ok: false };
+    sv.found.push(partId);
+    body.actionT = 0.5;
+    S.Sim.advance(s, S.DATA.explore.westFinds.pickMinutes);
+    S.bus.emit('audio:play', 'bonus');
+    const parts = w.parts.map((pt) => pt.id);
+    return { ok: true, n: parts.filter((id) => sv.found.includes(id)).length, total: parts.length };
   };
 
   /** One hit on an ice block: costs game time (suit O2, and the cold keeps biting); enough hits open the way. */
@@ -332,6 +366,7 @@
       body.vy = Surf.jumpVelocityPx();
       body.onGround = false;
       S.bus.emit('audio:play', 'jump');
+      S.bus.emit('surface:jump', {});
       S.bus.emit('fx:puff', { px: body[key], size: 1 });
     }
     if (body.blockedT > 0) body.blockedT -= dt;
@@ -362,7 +397,6 @@
       return;
     }
     s.player.x = Surf.pxToM(body.px);
-    S.Forensics.updateDiscovery(s);
     Surf.updateWest(s, dt);
   };
 
@@ -385,7 +419,7 @@
   const MESSAGE_GAP_S = 2.6;
   const messages = { queue: [], wait: 0 };
 
-  /** Pick up parts on the way, and say once what the trail shows as the astronaut walks west. */
+  /** Say once what the trail shows as the astronaut walks west (danger keeps its words; finds get a "!"). */
   Surf.updateWest = function (s, dt = 0) {
     const w = West();
     if (!w || s.player.inside) return;
@@ -418,18 +452,7 @@
       const b0 = w.iceBarriers[0];
       if (dist >= b0.atM - 30) notice('barrier0', Surf.barrierFacePx(b0));
     }
-    // western wrecks: a "!" over the wreck instead of a text toast when it is first identified
-    for (const c of S.Forensics.cases()) {
-      if (c.distanceM < 0 && Math.abs(dist + c.distanceM) < 120) notice('wreck_' + c.id, Surf.mToPx(c.distanceM));
-    }
-    for (const part of w.parts) {
-      if (sv.found.includes(part.id) || Math.abs(dist - part.atM) > w.pickupRangeM) continue;
-      if (part.hiddenIn === 'cave' && !sv.iceBroken) continue; // still sealed in the ice
-      sv.found.push(part.id);
-      body.actionT = 0.5;
-      // a find goes to the front of the queue: it is what the player just did
-      messages.queue.unshift({ key: 'west.notice', px: Surf.mToPx(-part.atM), sound: 'bonus', tone: 'ok' });
-    }
+    // Buried wrecks get no notice here: they show only once dug out (S.Explore.dig); the suit scanner reacts near them.
   };
 
   Surf.pose = function (s) {
@@ -437,6 +460,11 @@
     if (s.suit.frozen) return 'frozen';
     if (!body.onGround) return 'jump';
     if (body.moving) return 'walk';
+    // Elbise tarayıcısı gerçek bir gömülü noktanın yanında öter: astronot diz çöker (sahte tümsekte tepki yok)
+    if (S.Explore && s.explore && !Surf.inCave(s)) {
+      const ping = S.Explore.scannerPing(s);
+      if (ping && ping.close) return 'action';
+    }
     return 'idle';
   };
 

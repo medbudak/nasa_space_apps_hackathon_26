@@ -233,7 +233,10 @@
 
     // Sırtlar + zemin
     S.Art.drawRidges(ctx, site, minute, FX.camX, W);
+    // Doğu rotasının bölge manzarası (göl yatağı, kum tepeleri, krater alanı, lav ovası)
+    if (S.DigFx) S.DigFx.drawBackdrop(ctx, s, FX.camX, W, minute);
     const map = S.DATA.terrain.map;
+    const west = S.DATA.terrain.westRegion;
     const markers = [];
     // D-012: iki yönlü 100 m işaretleri (sol buz rotası eksi, sağ rota artı)
     for (let m = Math.ceil(map.leftLimitM / 100) * 100; m <= map.tubeMouthM - 50; m += 100) {
@@ -245,9 +248,11 @@
       markers,
       sandPits,
       revealSand: S.Sim.has(s, 'ingenuity'),
-      iceFromPx: Surf.mToPx(map.baseLeftM + 20),
-      iceFullPx: Surf.mToPx(map.leftLimitM + 100)
+      // Buzlanma batı buz alanının kırağı çizgisinden başlar (westRegion, K2 Sude)
+      iceFromPx: Surf.mToPx(west ? -west.frostStartM : map.baseLeftM + 20),
+      iceFullPx: Surf.mToPx(west ? -west.iceFullM : map.leftLimitM + 100)
     });
+    if (S.DigFx) S.DigFx.drawGroundDetail(ctx, s, FX.camX, W, BASE_H, GY, minute);
     FX.drawRoute(ctx, s, t, GY, light);
     // Batı buz alanı (K2 Sude): zemin batıya doğru buza döner; izler ve kraterler enkazlara götürür
     if (S.Westlands) S.Westlands.drawLand(ctx, s, FX.camX, W, BASE_H, GY, t);
@@ -288,30 +293,22 @@
       }
     }
 
-    // Enkazlar
+    // Kazı noktaları (tümsek, buz, moloz), yoldaki döküntü, RIMFAX sinyali
+    if (S.DigFx) S.DigFx.drawSites(ctx, s, FX.camX, W, GY, t, light);
+
+    // Enkazlar: hazır görünmez; yalnızca kazılıp ortaya çıkarılınca çizilir (sinyal halkası / soluk siluet yok)
     for (const c of S.Forensics.cases()) {
+      if (!S.Forensics.identified(s, c)) continue;
       const px = Surf.mToPx(c.distanceM);
       const sx = FX.worldToScreen(px);
       if (sx < -140 || sx > W + 140) continue;
       const rec = s.forensics[c.id];
       const img = S.Sprites.get(c.sprite);
-      if (S.Forensics.identified(s, c)) {
-        if (img) drawSprite(ctx, c.sprite, sx - img.width / 2, GY - img.height + 4);
-        if (rec.queued) {
-          ctx.fillStyle = '#3fe08a';
-          ctx.fillRect(sx + 2, GY - (img ? img.height : 40) - 12, 1, 12);
-          ctx.fillRect(sx + 3, GY - (img ? img.height : 40) - 12, 6, 4);
-        }
-      } else {
-        const pulse = (t * 1.2) % 1;
-        ctx.strokeStyle = 'rgba(63,224,230,' + (1 - pulse) + ')';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(sx, GY - 20, 6 + pulse * 18, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#3fe0e6';
-        ctx.fillRect(sx - 1, GY - 22, 3, 3);
-        if (img) drawSprite(ctx, c.sprite, sx - img.width / 2, GY - img.height + 4, false, 0.15);
+      if (img) drawSprite(ctx, c.sprite, sx - img.width / 2, GY - img.height + 4);
+      if (rec.queued) {
+        ctx.fillStyle = '#3fe08a';
+        ctx.fillRect(sx + 2, GY - (img ? img.height : 40) - 12, 1, 12);
+        ctx.fillRect(sx + 3, GY - (img ? img.height : 40) - 12, 6, 4);
       }
     }
 
@@ -371,6 +368,8 @@
       const sh = Math.max(6, 20 - (body.y - floorH) * 0.2);
       ctx.fillRect(ax - sh / 2, GY + 1 - floorH, sh, 2);
       ctx.globalAlpha = 1;
+      // Elbise tarayıcısı: gerçek bir gömülü noktanın yanında "!" (sahte tümsek tepki vermez)
+      if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, ay - img.height, t);
     }
     // Kayaya takılınca kısa zıplama ipucu
     if (body.blockedT > 0 && !hideAstro) {
@@ -649,8 +648,9 @@
       const sx = FX.worldToScreen(Surf.mToPx(b.atM));
       if (vis(sx)) drawBoulder(ctx, sx, GY, b, pal);
     }
+    // Tünel ağzı (merdiven, işaret, röle) yalnızca çökmüş pencere kazılıp açılınca görünür
     const tx = FX.worldToScreen(Surf.mToPx(S.DATA.terrain.map.tubeMouthM));
-    if (vis(tx)) drawTubeMouth(ctx, tx, GY, t, pal, light.dark);
+    if (vis(tx) && S.Explore.tubeOpen(s)) drawTubeMouth(ctx, tx, GY, t, pal, light.dark);
   };
 
   /* ------------------------------------------------------------------ */
@@ -813,6 +813,14 @@
         px1(ctx, '#2b1a14', fx + 10, GY - 14, 1, 14);
         px1(ctx, '#3fe08a', fx + 11, GY - 14, 5, 3);
       } else if (Math.sin(t * 3 + f.atM) > 0) px1(ctx, '#ffc233', fx - 1, GY - 46, 3, 3);
+    }
+    // Kurgusal İZCİ-1 rover'ının parçaları (fotoğraflananlara kanıt etiketi)
+    for (const pt of cc.scout.parts) {
+      const x = FX.worldToScreen(Surf.caveMToPx(pt.atM));
+      if (x < -80 || x > W + 80) continue;
+      const shot = s.explore.cave.scout[pt.id] !== null && s.explore.cave.scout[pt.id] !== undefined;
+      if (S.DigFx) S.DigFx.drawPart(ctx, pt.id, x, GY + 1, pt.id === 'body' ? 1.6 : 1, shot);
+      if (!shot && Math.sin(t * 3 + pt.atM) > 0) px1(ctx, '#ffc233', x - 1, GY - 46, 3, 3);
     }
     // Son kaya odası: ölçüm noktaları ve cihazlar
     for (const st of cc.studies) {

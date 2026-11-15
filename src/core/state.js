@@ -23,7 +23,8 @@
   let gameState = null;
 
   /**
-   * D-012 keşif kaydı: kırılan buz, toplanan kalıntı, mağara bulguları ve bulgu raporları.
+   * D-012 keşif kaydı: kırılan buz, toplanan kalıntı, kazı ilerlemesi (gömülü araçlar, tünel penceresi),
+   * mağara bulguları, İZCİ-1 parça fotoğrafları ve bulgu raporları.
    * Kalıcıdır (kayıtla birlikte saklanır): bölgeye gidip gelince yeniden oluşmaz.
    */
   function blankExplore(D) {
@@ -33,12 +34,20 @@
     const reports = {};
     for (const c of cfg.ice.clusters) if (c.relic) reports['relic_' + c.id] = { queued: false, sent: false, score: 0 };
     reports.cave_survey = { queued: false, sent: false, score: 0 };
+    reports.west_lander = { queued: false, sent: false, score: 0 };
+    reports.west_probe = { queued: false, sent: false, score: 0 };
     const finds = {};
     for (const f of cfg.cave.finds) finds[f.id] = false;
+    const scout = {};
+    for (const p of cfg.cave.scout.parts) scout[p.id] = null; // fotoğraf kalitesi (null = çekilmedi)
+    const dig = {};
+    for (const st of cfg.dig.sites) dig[st.id] = 0; // vuruş sayısı
     return {
       ice,
       reports,
-      cave: { finds, temp: { entrance: null, deep: null }, distance: null, vibration: null, visited: false },
+      dig,
+      tubeOpen: false,
+      cave: { finds, scout, storyShown: false, temp: { entrance: null, deep: null }, distance: null, vibration: null, visited: false },
       zonesSeen: {}
     };
   }
@@ -49,12 +58,16 @@
     const blank = blankExplore(S.DATA);
     if (!s.explore) s.explore = blank;
     else {
-      for (const k of ['ice', 'reports']) {
+      for (const k of ['ice', 'reports', 'dig']) {
         s.explore[k] = s.explore[k] || {};
         for (const id of Object.keys(blank[k])) if (!s.explore[k][id]) s.explore[k][id] = blank[k][id];
       }
       if (!s.explore.cave) s.explore.cave = blank.cave;
       for (const id of Object.keys(blank.cave.finds)) if (s.explore.cave.finds[id] === undefined) s.explore.cave.finds[id] = false;
+      s.explore.cave.scout = s.explore.cave.scout || {};
+      for (const id of Object.keys(blank.cave.scout)) if (s.explore.cave.scout[id] === undefined) s.explore.cave.scout[id] = null;
+      // Kazı öncesi kayıtlar: tünele zaten inilmişse pencere açık sayılır
+      if (typeof s.explore.tubeOpen !== 'boolean') s.explore.tubeOpen = Boolean(s.explore.cave.visited);
       if (!s.explore.zonesSeen) s.explore.zonesSeen = {};
     }
     if (s.player) {

@@ -37,13 +37,23 @@
 
     const sel = SP.selCategory[id] || rec.diagnosis || null;
     const cats = S.DATA.forensics.categories
-      .map((cat) => '<button class="cat-btn' + (sel === cat ? ' sel' : '') + '" data-cat="' + cat + '" ' + (rec.diagnosis ? 'disabled' : '') + '>' + t('cat.' + cat) + '</button>')
+      .map(
+        (cat) =>
+          '<button class="cat-btn' + (sel === cat ? ' sel' : '') + '" data-cat="' + cat + '" ' + (rec.diagnosis ? 'disabled' : '') + '><span>' + t('cat.' + cat) + '</span>' +
+          '<small>' + t('catd.' + cat) + '</small></button>'
+      )
       .join('');
+    // Teşhis hikâyesi (K3 Medine): yeterli kanıt toplanınca ipuçlarının anlattığı olay; öncesinde kilitli
+    const need = S.DATA.forensics.minEvidenceForDiagnosis;
+    const story =
+      n >= need
+        ? '<div class="wr-story"><h5>' + t('wreckstory.title') + '</h5><p>' + t('wreckstory.' + id) + '</p><p class="wr-ask">' + t('wreckstory.ask') + '</p></div>'
+        : '<div class="wr-story locked"><h5>' + t('wreckstory.title') + '</h5><p>' + t('wreckstory.locked', { n: need }) + '</p></div>';
 
     let diag;
     if (!rec.diagnosis) {
       diag =
-        '<div class="diag"><h4>' + t('fr.diagnose_title') + '</h4><div class="cats">' + cats + '</div>' +
+        '<div class="diag"><h4>' + t('fr.diagnose_title') + '</h4>' + story + '<div class="cats">' + cats + '</div>' +
         (n < S.DATA.forensics.minEvidenceForDiagnosis ? '<p class="pv-note">' + I('alert') + t('fr.need_evidence', { n: S.DATA.forensics.minEvidenceForDiagnosis }) + '</p>' : '') +
         '<button class="btn btn-primary btn-block" data-diag ' + (n < S.DATA.forensics.minEvidenceForDiagnosis || !sel ? 'disabled' : '') + '>' + I('doc') + t('fr.submit') + '</button></div>';
     } else {
@@ -95,7 +105,8 @@
         b.addEventListener('click', async () => {
           const ev = S.Forensics.evidenceCfg(b.dataset.ev);
           S.UI.closeModal('forensic', true);
-          const mg = await S.runMinigame(ev.minigame, { titleKey: 'ev.' + ev.id + '.mg_title', descKey: 'ev.' + ev.id + '.mg_desc' });
+          // Fotoğraf kanıtı FIELD CAM ile çekilir (vizörde bu enkaz); caseId vizör sahnesini seçer
+          const mg = await S.runMinigame(ev.minigame, { titleKey: 'ev.' + ev.id + '.mg_title', descKey: 'ev.' + ev.id + '.mg_desc', caseId: id });
           S.Surface.body.actionT = 1;
           S.Forensics.collectEvidence(S.getState(), id, ev.id, mg);
           S.Game.afterAction(() => SP.openForensic(id));
@@ -169,6 +180,18 @@
       '<p class="pv-note">' + t('hud.cave_fiction') + '</p>' +
       '<button class="btn btn-primary btn-block" data-close>' + t('ui.continue') + '</button></div></div>'
     );
+  };
+
+  /** Kurgusal İZCİ-1: beş parça fotoğraflanınca aracın son yolculuğu ve dersi */
+  SP.openScoutStory = function () {
+    const html =
+      '<div class="panel big-panel">' +
+      '<div class="bp-head"><span class="bp-num">' + I('camera') + '</span><h2>' + t('scout.story_title') + '</h2><button class="icon-btn" data-close>' + I('x') + '</button></div>' +
+      '<div class="wr-story"><p>' + t('scout.story_body') + '</p><p class="wr-ask">' + t('scout.story_lesson') + '</p></div>' +
+      '<p class="pv-note">' + t('scout.story_fiction') + '</p>' +
+      '<button class="btn btn-primary btn-block" data-close>' + t('ui.continue') + '</button></div>';
+    S.UI.openModal('scout_story', html, { cls: 'modal-wide' });
+    S.bus.emit('audio:play', 'success');
   };
 
   SP.openCaveStudy = function (id) {

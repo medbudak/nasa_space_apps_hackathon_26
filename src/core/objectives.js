@@ -51,10 +51,10 @@
   /** target: { m } yüzey metresi ya da { cx } tünel metresi — HUD yön/mesafe ve dünya işaretini buradan alır */
   const goal = (id, vars = {}, target = null) => ({ id, key: 'goal.' + id, vars, hintKey: 'goal.hint.' + id, target });
 
+  /** Kazılıp ortaya çıkarılmış, raporu henüz kuyruğa girmemiş en yakın araç (bulunmamış aracın yeri bilinmez) */
   function nextWreck(s) {
-    const open = S.Forensics.cases().filter((c) => !s.forensics[c.id].queued);
+    const open = S.Forensics.cases().filter((c) => S.Forensics.identified(s, c) && !s.forensics[c.id].queued);
     if (!open.length) return null;
-    // Önce bilinen/keşfedilmiş ve yakın olanlar
     return open.slice().sort((a, b) => Math.abs(a.distanceM - s.player.x) - Math.abs(b.distanceM - s.player.x))[0];
   }
 
@@ -63,20 +63,32 @@
   const homeTarget = (s) => (inCave(s) ? { cx: S.DATA.explore.cave.ladderM } : { m: 0 });
 
   /**
-   * D-012 — sıradaki rapor kaynağı (en yakın): açık enkaz, kalıntılı buz kümesi, lav tüneli.
-   * Dönüş: { kind: 'wreck'|'ice'|'cave', atM, ref }
+   * Sıradaki rapor kaynağı (en yakın): bulunmuş araç, kalıntılı buz kümesi, lav tüneli; henüz bulunmamış araçlar için
+   * keşif hedefi. Araçlar hazır görünmez: keşif hedefi yeri söylemez, yalnızca rotayı gösterir (doğu: izleri takip et
+   * ve kaz, rota tünel penceresinde biter; batı: buzula ilerle). Doğudaki araçlar bulununca sıra tünel penceresine gelir.
+   * Dönüş: { kind: 'wreck'|'ice'|'cave'|'tube_dig'|'explore_east'|'explore_west', atM (hedef), sortM (uzaklık), ref }
    */
   function nextReportSource(s) {
     const list = [];
+    const map = S.DATA.terrain.map;
     const w = nextWreck(s);
     if (w) list.push({ kind: 'wreck', atM: w.distanceM, ref: w });
-    if (S.Explore && s.explore) {
-      for (const c of S.Explore.openRelicClusters(s)) if (!s.explore.ice[c.id].collected) list.push({ kind: 'ice', atM: c.atM, ref: c });
-      if (S.Explore.caveOpen(s)) list.push({ kind: 'cave', atM: S.DATA.terrain.map.tubeMouthM, ref: null });
+    const X = S.Explore;
+    if (X && s.explore) {
+      for (const c of X.openRelicClusters(s)) if (!s.explore.ice[c.id].collected) list.push({ kind: 'ice', atM: c.atM, ref: c });
+      const eastHidden = X.hiddenLeft(s, 'east').filter((st) => st.case);
+      const zoneFrom = (id) => (map.zones.find((z) => z.id === id) || { fromM: 0 }).fromM;
+      // Doğu: rota başı (göl yatağı) uzaklığıyla sıralanır, hedef rotanın sonu (tünel penceresi)
+      if (eastHidden.length) list.push({ kind: 'explore_east', atM: map.tubeMouthM, sortM: zoneFrom('lakebed'), ref: null });
+      else if (!X.tubeOpen(s) && X.caveOpen(s)) list.push({ kind: 'tube_dig', atM: map.tubeMouthM, ref: null });
+      if (X.tubeOpen(s) && X.caveOpen(s)) list.push({ kind: 'cave', atM: map.tubeMouthM, ref: null });
+      const west = S.DATA.terrain.westRegion;
+      if (west && X.hiddenLeft(s, 'west').length) list.push({ kind: 'explore_west', atM: zoneFrom('glacier'), sortM: -west.frostStartM, ref: null });
     }
     if (!list.length) return null;
-    const here = inCave(s) ? S.DATA.terrain.map.tubeMouthM : s.player.x;
-    return list.sort((a, b) => Math.abs(a.atM - here) - Math.abs(b.atM - here))[0];
+    const here = inCave(s) ? map.tubeMouthM : s.player.x;
+    const key = (e) => Math.abs((e.sortM !== undefined ? e.sortM : e.atM) - here);
+    return list.sort((a, b) => key(a) - key(b))[0];
   }
 
   /** Toplanmış ama henüz üsse raporlanmamış kalıntı var mı? */
@@ -87,9 +99,8 @@
 
   function sourceGoal(s, src) {
     const dist = Math.round(Math.abs(src.atM - s.player.x));
-    if (src.kind === 'wreck') {
-      return S.Forensics.identified(s, src.ref) ? goal('wreck_go', { name: src.ref.name, dist }, { m: src.atM }) : goal('wreck_signal', { dist }, { m: src.atM });
-    }
+    if (src.kind === 'wreck') return goal('wreck_go', { name: src.ref.name, dist }, { m: src.atM });
+    if (src.kind === 'explore_east' || src.kind === 'explore_west' || src.kind === 'tube_dig') return goal(src.kind, { dist }, { m: src.atM });
     if (src.kind === 'ice') {
       const step = S.Explore.iceStep(s, src.ref.id);
       return step === 'inspect' ? goal('ice_go', { dist }, { m: src.atM }) : goal('ice_work', { step: S.t('ice.step.' + step) }, { m: src.atM });

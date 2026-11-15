@@ -1130,3 +1130,38 @@ body[data-scene='world'] .toast { max-width: 25em; }
 
 /* Sahneye göre görünürlük */
 body[data-scene='world'] .screen-layer { display: none; }
+
+/* Teşhis hikâyesi ve kategori açıklamaları (K3 Medine) */
+.wr-story { border-left: 3px solid var(--amber); background: rgba(240,164,58,0.07); padding: 0.5em 0.7em; border-radius: 0.3em; margin-bottom: 0.5em; }
+.wr-story h5 { margin: 0 0 0.3em; font-size: 0.78em; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber); }
+.wr-story p { margin: 0; font-size: 0.78em; line-height: 1.45; color: #e2ddd5; }
+.wr-story .wr-ask { margin-top: 0.45em; color: var(--cyan); font-style: italic; }
+.wr-story.locked p { color: #a9a39b; }
+.cat-btn small { display: block; font-weight: 400; font-size: 0.86em; line-height: 1.35; opacity: 0.78; margin-top: 0.15em; white-space: normal; }
+
+/* FIELD CAM (K3 Medine): kamera gövdesi görseli, vizörde bulanık sahne, odak halkası */
+.modal-pcam .modal-box > * { max-height: none; overflow: visible; }
+.pcam { width: min(58em, 92vw); display: flex; flex-direction: column; user-select: none; }
+.pcam-stage { position: relative; width: 100%; aspect-ratio: 1008 / 511; }
+.pcam-stage > * { position: absolute; }
+.pcam-body { inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+.pcam-view, .pcam-hud, .pcam-album { left: 26.29%; top: 32.29%; width: 42.26%; height: 51.66%; }
+.pcam-view { z-index: 1; image-rendering: pixelated; background: #000; cursor: ew-resize; }
+.pcam-hud { z-index: 3; pointer-events: none; }
+.pcam-count { position: absolute; right: 3%; top: 5%; background: rgba(10,12,16,0.9); color: #e9eef2; border-radius: 3px; font: 600 0.8em/1.5 ui-monospace, Consolas, monospace; padding: 0 0.9em; letter-spacing: 0.06em; }
+.pcam-status { position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%); min-width: 52%; text-align: center; background: rgba(10,30,26,0.9); color: #e8574a; border-radius: 2px; font: 600 0.66em/1.8 ui-monospace, Consolas, monospace; letter-spacing: 0.06em; }
+.pcam-status.ok { color: #ff6a4f; }
+.pcam-status.saved { color: #7be0a4; }
+.pcam-help { position: absolute; left: 3%; top: 5%; color: rgba(255,255,255,0.75); font-size: 0.6em; line-height: 1.4; text-shadow: 0 1px 2px #000; }
+.pcam-help b { color: #fff; font: 600 1.1em/1.5 ui-monospace, Consolas, monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+.pcam-album { z-index: 4; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px; background: rgba(8,9,12,0.94); align-content: start; overflow: auto; }
+.pcam-album canvas { width: 100%; image-rendering: pixelated; border: 1px solid #3a3d44; }
+.pcam-album p { grid-column: 1 / -1; color: #c9ccd2; text-align: center; font-size: 0.7em; }
+.pcam-bar { display: flex; align-items: center; justify-content: space-between; gap: 1em; background: #15161c; padding: 0.4em 1em; border-radius: 0 0 8px 8px; }
+.pcam-bar button { font-family: inherit; font-size: 0.82em; color: #e9eef2; background: none; border: 0; cursor: pointer; padding: 0.4em 0.2em; }
+.pcam-bar kbd { font: inherit; color: #9aa3ad; margin-right: 0.35em; }
+.pcam-shoot { min-width: 30%; border-radius: 4px; padding: 0.45em 1.2em !important; background: #2c333d !important; color: #cfd6dd !important; }
+.pcam-shoot.ready { background: #e8742e !important; color: #fff !important; box-shadow: 0 0 0 2px rgba(255,160,90,0.35); }
+.pcam-shoot.ready kbd { color: #fff; border: 1px solid rgba(255,255,255,0.7); border-radius: 3px; padding: 0 0.3em; background: rgba(0,0,0,0.15); }
+.pcam-shoot.saved { background: #28473a !important; color: #d8f5e4 !important; }
+.pcam-flash { position: absolute; inset: 0; z-index: 5; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.35s; }

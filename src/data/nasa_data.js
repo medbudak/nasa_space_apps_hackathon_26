@@ -146,7 +146,7 @@ window.SOL14.DATA = {
   "spritePxPerMeter": 30,
   "earthJumpHeightM": 0.5,
   "interiorWalkPxPerSecond": 105,
-  "maxEvaRangeM": 600,
+  "maxEvaRangeM": 1400,
   "habitatTargetC": 20,
   "habitatHeatCapacityJPerK": 81000,
   "habitatComfortMinC": 10,
@@ -621,26 +621,36 @@ window.SOL14.DATA = {
  ],
  "terrain": {
   "simplified": true,
-  "simplifiedNote": "Corridor layout, sand pit positions, the slowdown factor, ice dig values and the drone rules (Ingenuity reveals the wrecks and routes the walker around sand pits) are game values. Real lesson behind the sand pits: Spirit was stuck in soft sand at Troy (NASA Spirit mission page).",
+  "simplifiedNote": "Route layout, sand pit positions, the slowdown factor, ice dig values and the drone rule (Ingenuity scouts the route around sand pits) are game values. Wrecks are not shown until the player uncovers them by digging (explore.dig). Real lesson behind the sand pits: Spirit was stuck in soft sand at Troy (NASA Spirit mission page).",
   "map": {
    "simplified": true,
-   "simplifiedNote": "Compressed, fictional map (D-012): base at 0 m, ice route to the left (-450 m), wreck route to the right ending at a lava-tube skylight (+600 m). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
+   "simplifiedNote": "Compressed, fictional map (D-012, widened in the 2026-11-15 merge): base at 0 m; west, the glacier route to the ice wall (-5000 m, map edge -5350 m, terrain.westRegion); east, the lava-plain route through a dried lake bed, dunes and a crater field to a rubble-sealed lava-tube skylight (+1400 m). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
    "leftLimitM": -5350,
    "baseLeftM": -120,
    "baseLeftPx": -700,
    "baseRightM": 100,
    "landingPadM": 85,
    "landingExitM": 40,
-   "tubeMouthM": 600,
+   "tubeMouthM": 1400,
    "zones": [
     {
+     "id": "ice_wall",
+     "fromM": -5350,
+     "toM": -5000
+    },
+    {
+     "id": "glacier",
+     "fromM": -5000,
+     "toM": -2120
+    },
+    {
      "id": "glacier_edge",
-     "fromM": -450,
-     "toM": -300
+     "fromM": -2120,
+     "toM": -1300
     },
     {
      "id": "icy_plain",
-     "fromM": -300,
+     "fromM": -1300,
      "toM": -120
     },
     {
@@ -649,24 +659,29 @@ window.SOL14.DATA = {
      "toM": 100
     },
     {
-     "id": "first_wreck",
+     "id": "lakebed",
      "fromM": 100,
-     "toM": 250
+     "toM": 500
     },
     {
-     "id": "wreck_field",
-     "fromM": 250,
-     "toM": 450
+     "id": "dunes",
+     "fromM": 500,
+     "toM": 850
     },
     {
      "id": "rocky_approach",
-     "fromM": 450,
-     "toM": 590
+     "fromM": 850,
+     "toM": 1150
+    },
+    {
+     "id": "lava_plain",
+     "fromM": 1150,
+     "toM": 1390
     },
     {
      "id": "tube_mouth",
-     "fromM": 590,
-     "toM": 610
+     "fromM": 1390,
+     "toM": 1430
     }
    ],
    "src": "https://www.spaceappschallenge.org/"
@@ -674,26 +689,29 @@ window.SOL14.DATA = {
   "iceDepositM": -140,
   "sandPits": [
    {
-    "fromM": 470,
-    "toM": 510
+    "fromM": 600,
+    "toM": 680
    }
   ],
   "boulders": [
    {
-    "atM": 530,
+    "atM": 930,
     "heightPx": 18,
     "widthPx": 16
    },
    {
-    "atM": 565,
+    "atM": 985,
     "heightPx": 24,
     "widthPx": 20
+   },
+   {
+    "atM": 1060,
+    "heightPx": 20,
+    "widthPx": 18
    }
   ],
   "sandPitSpeedFactor": 0.5,
-  "droneRevealAllWrecks": true,
   "droneRoutesAroundSandPits": true,
-  "wreckVisibleWithoutDroneM": 160,
   "iceDigMinutes": 40,
   "iceDigWaterL": 6,
   "src": "https://science.nasa.gov/mission/mer-spirit/",
@@ -701,7 +719,7 @@ window.SOL14.DATA = {
    "src": "https://science.nasa.gov/mission/phoenix/",
    "note": "Phoenix found water ice just under the surface and saw frost form on the ground: the basis for an icy area.",
    "simplified": true,
-   "simplifiedNote": "K2 TRIAL. The western ice field, its lost cargo lander, the ice wall and every distance here are FICTIONAL game values on a compressed map, to be labelled as fiction in the game and on the project page. Distances are metres west of the airlock. The ice blocks across the glacier path, the hits needed to dig through them and the game minutes per hit are game values too. The trail signs follow what was really seen: Spirit dragged its broken right-front wheel from 2006 and left a furrow; HiRISE imaged Phoenix's parachute, backshell and heat-shield mark; Beagle 2 landed on airbags.",
+   "simplifiedNote": "The western ice field, its lost cargo lander, the ice wall and every distance here are FICTIONAL game values on a compressed map, to be labelled as fiction in the game and on the project page. Distances are metres west of the airlock. The ice blocks across the glacier path, the hits needed to dig through them and the game minutes per hit are game values too. The trail signs follow what was really seen: Spirit dragged its broken right-front wheel from 2006 and left a furrow; HiRISE imaged Phoenix's parachute, backshell and heat-shield mark; Beagle 2 landed on airbags.",
    "baseEdgeM": 120,
    "endM": 5350,
    "frostStartM": 280,
@@ -866,7 +884,7 @@ window.SOL14.DATA = {
   "evidenceTypes": [
    {
     "id": "photo",
-    "minigame": "align",
+    "minigame": "fieldcam",
     "minutes": 10,
     "instrumentBonus": "mastcam_z"
    },
@@ -886,9 +904,12 @@ window.SOL14.DATA = {
   "minEvidenceForDiagnosis": 2,
   "activeCaseIds": [
    "opportunity",
-   "spirit"
+   "insight",
+   "spirit",
+   "phoenix",
+   "beagle2"
   ],
-  "activeCaseNote": "D-012: the compressed map shows two wrecks on the right route (First Wreck, Wreck Field). The other cases stay in the data but are not placed on the map.",
+  "activeCaseNote": "All five cases are on the map and buried: east (lava-plain route) Opportunity under dust and InSight under dust; west (glacier route) Spirit in frozen soft sand, Phoenix under CO2 ice, Beagle 2 under an ice overhang. A wreck appears only after its dig site is dug out (explore.dig). Positions and burial are game fiction; the trail signs follow what NASA reported for each mission.",
   "src": "https://nssdc.gsfc.nasa.gov/nmc/",
   "cases": [
    {
@@ -897,7 +918,7 @@ window.SOL14.DATA = {
     "agency": "NASA / JPL",
     "lastContact": "2018-06-10 (Sol 5111)",
     "realCoords": "Meridiani Planum 2.05°S 354.47°E",
-    "distanceM": 230,
+    "distanceM": 330,
     "sprite": "rover_opportunity",
     "correctCategory": "power_dust",
     "acceptedSecondary": null,
@@ -918,7 +939,7 @@ window.SOL14.DATA = {
     "agency": "NASA / JPL",
     "lastContact": "2022-12-15 (Sol 1440)",
     "realCoords": "Elysium Planitia 4.50°N 135.62°E",
-    "distanceM": 640,
+    "distanceM": 760,
     "sprite": "lander_insight",
     "correctCategory": "power_dust",
     "acceptedSecondary": null,
@@ -1819,7 +1840,7 @@ window.SOL14.DATA = {
  },
  "explore": {
   "simplified": true,
-  "simplifiedNote": "D-012 exploration content (left ice route, lava-tube sub-map). Positions, minutes, points and rewards are game values for pacing, not measurements. The lava tube is fictional: known Mars skylights/possible caves are on Arsia Mons (Tharsis), not at the landing sites in this game.",
+  "simplifiedNote": "Exploration content (D-012, extended in the 2026-11-15 merge): the west glacier route (ice clusters, frozen wrecks, the cargo lander and the Deep Space 2 probe) and the east lava-plain route (dig sites, the sealed skylight, the lava-tube sub-map). Positions, minutes, hit counts, points and rewards are game values for pacing, not measurements. The lava tube, the cargo lander and the SCOUT-1 rover are fictional: known Mars skylights/possible caves are on Arsia Mons (Tharsis), not at the landing sites in this game.",
   "src": "https://www.spaceappschallenge.org/",
   "ice": {
    "interactRangeM": 18,
@@ -1833,28 +1854,28 @@ window.SOL14.DATA = {
    "clusters": [
     {
      "id": "ice_1",
-     "atM": -170,
+     "atM": -520,
      "size": 1,
      "hint": "none",
      "relic": null
     },
     {
      "id": "ice_2",
-     "atM": -255,
+     "atM": -980,
      "size": 2,
      "hint": "glint",
      "relic": "cable"
     },
     {
      "id": "ice_3",
-     "atM": -345,
+     "atM": -2470,
      "size": 2,
      "hint": "none",
      "relic": null
     },
     {
      "id": "ice_4",
-     "atM": -420,
+     "atM": -3300,
      "size": 3,
      "hint": "silhouette",
      "relic": "datalog"
@@ -1881,7 +1902,7 @@ window.SOL14.DATA = {
   },
   "cave": {
    "scaleNote": "The tube uses the surface scale (gameplay.metersPerPixel), so walking speed, jumping and the metres-per-game-minute rule are identical inside and outside.",
-   "lengthM": 720,
+   "lengthM": 820,
    "ladderM": 12,
    "relayM": 44,
    "interactRangeM": 22,
@@ -1943,7 +1964,116 @@ window.SOL14.DATA = {
      "amplitude": 0.71
     }
    ],
-   "vibrationNote": "Synthetic, relative amplitudes (no unit) for an interpretation exercise: one point rings differently, which needs more data; it never proves the chamber is safe."
+   "vibrationNote": "Synthetic, relative amplitudes (no unit) for an interpretation exercise: one point rings differently, which needs more data; it never proves the chamber is safe.",
+   "scout": {
+    "fiction": true,
+    "note": "SCOUT-1 (TR: IZCI-1) is a fictional rover, not one of the real missions (K3 Medine prototype). Its five parts tell why a rover sent into a cave fails: rock blocks the radio link and no sunlight reaches the solar panel.",
+    "minutes": 5,
+    "parts": [
+     {
+      "id": "wheel",
+      "atM": 95
+     },
+     {
+      "id": "panel",
+      "atM": 245
+     },
+     {
+      "id": "mast",
+      "atM": 395
+     },
+     {
+      "id": "antenna",
+      "atM": 705
+     },
+     {
+      "id": "body",
+      "atM": 770
+     }
+    ]
+   }
+  },
+  "dig": {
+   "note": "Buried wrecks and the sealed skylight. A site with \"case\" sits at that case's distanceM; mounds without a reward are decoys that teach the suit scanner (it only reacts near something real). Every hit costs game minutes, so suit O2, battery and cold keep running while digging.",
+   "interactRangeM": 16,
+   "reactRangeM": 30,
+   "rimfaxRangeM": 140,
+   "sites": [
+    {
+     "id": "mound_e1",
+     "atM": 205,
+     "kind": "dust",
+     "hits": 2,
+     "minutesPerHit": 4
+    },
+    {
+     "id": "opportunity",
+     "case": "opportunity",
+     "kind": "dust",
+     "hits": 4,
+     "minutesPerHit": 4
+    },
+    {
+     "id": "mound_e2",
+     "atM": 545,
+     "kind": "sand",
+     "hits": 2,
+     "minutesPerHit": 4
+    },
+    {
+     "id": "insight",
+     "case": "insight",
+     "kind": "dust",
+     "hits": 4,
+     "minutesPerHit": 4
+    },
+    {
+     "id": "skylight",
+     "atM": 1400,
+     "kind": "rubble",
+     "hits": 6,
+     "minutesPerHit": 5,
+     "opens": "tube"
+    },
+    {
+     "id": "spirit",
+     "case": "spirit",
+     "kind": "frost",
+     "hits": 4,
+     "minutesPerHit": 4
+    },
+    {
+     "id": "phoenix",
+     "case": "phoenix",
+     "kind": "ice",
+     "hits": 5,
+     "minutesPerHit": 4
+    },
+    {
+     "id": "beagle2",
+     "case": "beagle2",
+     "kind": "overhang",
+     "hits": 5,
+     "minutesPerHit": 4
+    }
+   ]
+  },
+  "westFinds": {
+   "note": "Reports for the fictional cargo lander (its three parts) and the Deep Space 2 probe, filed on entering the habitat like the ice relics.",
+   "landerReportMbit": 14,
+   "landerPointsPerPart": 30,
+   "probeReportMbit": 10,
+   "probePoints": 80,
+   "pickMinutes": 5
+  },
+  "fieldCam": {
+   "note": "FIELD CAM photo minigame (K3 Medine): turn the focus ring until the subject is sharp, hold it, then shoot. Game values.",
+   "seconds": 40,
+   "tolerance": 0.04,
+   "holdSeconds": 0.35,
+   "focusSpeed": 0.45,
+   "blurEase": 2.2,
+   "albumSize": 12
   }
  }
 };

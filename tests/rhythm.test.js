@@ -57,13 +57,17 @@ test('RIT-02: her an tek ana hedef + en fazla bir isteğe bağlı hedef; tüm he
   assert.equal(S.debugMissingKeys.size, 0);
 });
 
-test('RIT-02/03: inişten hemen sonra hedef ilk enkaza yönlendirir (Ingenuity yoksa sinyal izi, demoda isimle)', () => {
-  const full = landed();
-  assert.equal(S_main(full), 'wreck_signal');
-  const demo = landed({ demoMode: true });
-  const g = demo.S.Objectives.compute(demo.s).main;
-  assert.equal(g.id, 'wreck_go');
-  assert.equal(g.vars.name, 'MER-B Opportunity');
+test('RIT-02/03: inişten hemen sonra hedef doğu keşfine yönlendirir (araç adı yok); araç kazılınca isimle ona (demoda da)', () => {
+  for (const opts of [{}, { demoMode: true }]) {
+    const ctx = landed(opts);
+    assert.equal(S_main(ctx), 'explore_east');
+    const { S, s } = ctx;
+    s.player.x = S.Forensics.get('opportunity').distanceM;
+    while (!S.Forensics.identified(s, S.Forensics.get('opportunity'))) S.Explore.dig(s, 'opportunity');
+    const g = S.Objectives.compute(s).main;
+    assert.equal(g.id, 'wreck_go');
+    assert.equal(g.vars.name, 'MER-B Opportunity');
+  }
 });
 
 function S_main({ S, s }) {

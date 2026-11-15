@@ -14,12 +14,17 @@
   const ICON = { wires: 'power', align: 'signal', qte: 'clock', converter: 'flask' };
   let active = null;
 
-  S.isMinigameOpen = () => Boolean(active);
+  S.isMinigameOpen = () => Boolean(active) || Boolean(S.FieldCam && S.FieldCam.open);
 
   S.runMinigame = function runMinigame(type = 'qte', config = {}) {
     return new Promise((resolve) => {
       if (!document.getElementById('modal-layer')) {
         resolve({ success: true, score: 1, timeUsed: 0, skipped: true });
+        return;
+      }
+      // FIELD CAM (K3 Medine): kendi vizör ekranı olan fotoğraf mini oyunu (src/ui/field_cam.js)
+      if (type === 'fieldcam' && S.FieldCam) {
+        S.FieldCam.run(config).then(resolve);
         return;
       }
       if (active) active.finish(false, 0, true);

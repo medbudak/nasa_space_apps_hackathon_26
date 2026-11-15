@@ -27,22 +27,54 @@ function handleCrisis(S, s, log) {
   }
 }
 
-/** Oyuncuyu hedef x konumuna yürütür (dakika bazında) */
+/** Batı buzulunda önü kesen, henüz kazılmamış buz bloğu (oyunda Surface.playerLeftPx oyuncuyu durdurur) */
+function barrierBefore(S, s, targetX) {
+  const w = S.DATA.terrain.westRegion;
+  if (!w || !w.iceBarriers) return null;
+  const open = S.Surface.salvage(s).barriersOpen || [];
+  const blocking = w.iceBarriers
+    .map((b, i) => ({ b, i }))
+    .filter(({ b, i }) => !open.includes(i) && -b.atM < s.player.x && -b.atM > targetX)
+    .sort((a, b) => b.b.atM < a.b.atM ? 1 : -1);
+  return blocking.length ? blocking[0] : null;
+}
+
+/** Oyuncuyu hedef x konumuna yürütür (dakika bazında); batıda buz bloklarını kazarak geçer */
 function walkTo(S, s, targetX, log) {
   const eva = S.DATA.constants.eva;
   let guard = 0;
   s.player.inside = false;
+  s.player.zone = 'surface';
   while (Math.abs(s.player.x - targetX) > 1 && !s.gameOver && !s.ending && guard++ < 4000) {
     handleCrisis(S, s, log);
+    const bar = barrierBefore(S, s, targetX);
+    const stopAt = bar ? -bar.b.atM + 1 : targetX;
+    if (bar && Math.abs(s.player.x - stopAt) <= 1) {
+      let hits = 0;
+      while (!(S.Surface.salvage(s).barriersOpen || []).includes(bar.i) && !s.gameOver && hits++ < 20) S.Surface.digBarrier(s, bar.i);
+      log.push(`Sol ${s.sol} buz bloğu ${bar.i} açıldı`);
+      continue;
+    }
     let speed = eva.speedMPerMin * (s.suit.frozen ? eva.frozenSpeedFactor : 1);
     for (const pit of S.DATA.terrain.sandPits) {
       if (s.player.x >= pit.fromM && s.player.x <= pit.toM && !S.Sim.has(s, 'ingenuity')) speed *= S.DATA.terrain.sandPitSpeedFactor;
     }
-    const step = Math.min(speed, Math.abs(targetX - s.player.x));
-    s.player.x += Math.sign(targetX - s.player.x) * step;
+    const step = Math.min(speed, Math.abs(stopAt - s.player.x));
+    s.player.x += Math.sign(stopAt - s.player.x) * step;
     S.Sim.step(s, step / speed);
-    S.Forensics.updateDiscovery(s);
   }
+}
+
+/** Kazı noktasını sonuna kadar kaz (araçlar yalnızca böyle ortaya çıkar) */
+function digSite(S, s, siteId, log) {
+  const st = S.Explore.site(siteId);
+  walkTo(S, s, S.Explore.siteAt(st), log);
+  let guard = 0;
+  while (!S.Explore.siteDone(s, st) && !s.gameOver && guard++ < 20) {
+    handleCrisis(S, s, log);
+    S.Explore.dig(s, siteId);
+  }
+  log.push(`Sol ${s.sol} kazı ${siteId}`);
 }
 
 function enterHabitat(S, s, log) {
@@ -66,8 +98,9 @@ function playIceRoute(S, s, log) {
   log.push(`Sol ${s.sol} buz rotası`);
 }
 
-/** D-012 lav tüneli: in, giriş sıcaklığı, 3 bulgu + 3 çalışma, röleden raporla, çık */
+/** Lav tüneli: pencereyi kaz, in, giriş sıcaklığı, 3 bulgu + İZCİ-1 parçaları + 3 çalışma, röleden raporla, çık */
 function playCave(S, s, log) {
+  if (!S.Explore.tubeOpen(s)) digSite(S, s, 'skylight', log);
   walkTo(S, s, S.DATA.terrain.map.tubeMouthM, log);
   if (s.gameOver) return;
   S.Explore.descend(s);
@@ -83,6 +116,10 @@ function playCave(S, s, log) {
   for (const f of S.Explore.caveFinds()) {
     step(f.atM);
     S.Explore.recordFind(s, f.id);
+  }
+  for (const pt of S.Explore.scoutParts()) {
+    step(pt.atM);
+    S.Explore.photoScout(s, pt.id, 0.9);
   }
   for (const st of S.Explore.caveStudies()) {
     step(st.atM);
@@ -106,7 +143,8 @@ function play(design, { demoMode = false, policy = {} } = {}) {
   S.Sim.land(s, Object.fromEntries(S.DATA.gameplay.transit.tasks.map((tk) => [tk.id, good])));
 
   const mg = { success: true, score: 0.95 };
-  const casesByDistance = S.Forensics.cases().slice().sort((a, b) => a.distanceM - b.distanceM);
+  // Yakından uzağa (doğu ve batı rotası karışık): araç önce kazılıp ortaya çıkarılır
+  const casesByDistance = S.Forensics.cases().slice().sort((a, b) => Math.abs(a.distanceM) - Math.abs(b.distanceM));
   const exps = S.Experiments.list();
   let safety = 0;
 
@@ -124,6 +162,8 @@ function play(design, { demoMode = false, policy = {} } = {}) {
     // 2) Bir enkazı incele (öğleden önce)
     const target = casesByDistance.find((c) => !s.forensics[c.id].queued);
     if (target && S.Sim.clockMinute(s) < 900 && policy.forensics !== false) {
+      const site = S.Explore.digSites().find((st) => st.case === target.id);
+      if (site && !S.Explore.siteDone(s, site)) digSite(S, s, site.id, log);
       walkTo(S, s, target.distanceM, log);
       for (const ev of ['photo', 'telemetry', 'env']) {
         handleCrisis(S, s, log);
