@@ -191,3 +191,13 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
     - The ending adds one slide on what the station leaves behind (six variants). It changes no score.
 - Why: The team chose Medine's prototypes; K1 kept the MAV and the return so the success rules and the report card stay valid. Rejected: the prototype's holed MAV (it removed the return and changed the win condition) and its budget shop (parts bought from Earth would arrive at once, which is not physically sound).
 - Affects: `src/ui/cutscenes.js`, `src/core/sim.js`, `src/minigames/`, `src/systems/station.js` (new), `src/fx/station_fx.js` (new), `src/ui/station_card.js` (new), `src/systems/workshop.js`, `explore.js`, `forensics.js`, `objectives.js`, `data/nasa_data.json` (`gameplay.transit`, `station`, `workshop.recipes`), `data/forensics_cases.json`, `content/story.json`, tests
+
+### D-017: Greenhouse harvest with compressed growth
+- Status: Accepted
+- Date: 2026-11-15
+- Agreed by: K1 (reported by Sude, Kişi 6)
+- Decision: The greenhouse grows lettuce, radish or zinnia through germination → sprout → mature and is harvested (food for the needs system, morale), then replanted. Real growth times keep their order (ISS: radish 27 days, lettuce ~33 days, zinnia ~60 days to flower) but are compressed to 2–4 tended sols. The compression is shown in the greenhouse panel and flagged `simplified` in the data. A skipped sol pauses growth; a frozen greenhouse kills the plant and stays frozen. The seed germination experiment stays and raises the yield.
+- Why: The Kişi 6 task card asks for growth stages and a harvest that gives the player a reason to come back every sol. Rejected: keeping "no harvest within 14 sols" (the card's loop would have no payoff).
+- Replaces: the "no harvest within 14 sols (germination experiment only)" rule in CLAUDE.md and RULES.md §5.
+- Numbering: D-015 (tools and MAV repair, `enes-roket`) and D-016 (ice cave, `sude-v3-west`, renumbered from its draft D-014) are taken by open branches.
+- Affects: `data/nasa_data.json` (habitat.greenhouse.growth), `src/core/sim.js`, `src/ui/habitat_panel.js`, `content/story.json`, `CLAUDE.md`, `RULES.md`, `docs/submission/SPACE_APPS_PROJECT_PAGE_EN.md`, tests
