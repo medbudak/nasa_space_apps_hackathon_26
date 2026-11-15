@@ -246,7 +246,22 @@
     "experiment.moxie_efficiency.option.b": "Yaklaşık 1 kilogram",
     "experiment.moxie_efficiency.option.c": "Hiç, Mars havası buna uygun değil",
     "experiment.moxie_efficiency.result": "Ölçtüğün üretim: saatte {measured} g O₂. Beklenen aralık: {expected}.",
-    "experiment.moxie_efficiency.explanation": "MOXIE, Mars atmosferinin yaklaşık %95'ini oluşturan karbondioksiti elektrokimyasal bir yöntemle ayırarak oksijen üretti. Perseverance'ta 16 kez çalıştı, toplam 122 g oksijen üretti ve en verimli anında saatte 12 g'a ulaştı. Bu, NASA'nın ilk hedefinin iki katı, ama insanların nefes alması için çok daha büyük bir sistem gerekir."
+    "experiment.moxie_efficiency.explanation": "MOXIE, Mars atmosferinin yaklaşık %95'ini oluşturan karbondioksiti elektrokimyasal bir yöntemle ayırarak oksijen üretti. Perseverance'ta 16 kez çalıştı, toplam 122 g oksijen üretti ve en verimli anında saatte 12 g'a ulaştı. Bu, NASA'nın ilk hedefinin iki katı, ama insanların nefes alması için çok daha büyük bir sistem gerekir.",
+    "ufo.launch.hud": "MAV kalkışı · Yörüngeye yükseliyor",
+    "ufo.light.autoPhoto": "Otomatik fotoğraf çekildi.",
+    "ufo.light.delay": "Görüntü Dünya'ya {min} dk {sec} sn içinde ulaşacak.",
+    "ufo.mc.location": "Görev Kontrol · Dünya",
+    "ufo.downlink.progress": "Görüntü iniyor: %{pct}",
+    "ufo.downlink.high": "Yüksek çözünürlüklü kamera: bir şekil seçiliyor ama net değil.",
+    "ufo.downlink.low": "El kamerası ya da veri bütçesi bitti: yalnızca bulanık bir leke.",
+    "ufo.downlink.compare": "Sol 7 anomali fotoğraflarınla yan yana karşılaştırılıyor.",
+    "ufo.cut.conjunction": "GÜNEŞ KAVUŞUMU · SİNYAL KESİLDİ",
+    "ufo.cut.relayLost": "RÖLE GEÇİŞİ BİTTİ · SİNYAL KESİLDİ",
+    "ufo.analyst": "Analist notu: Pareidolia olabilir. Doğrulamak için yeni bir görev gerekiyor.",
+    "ufo.next": "Sonraki görevi sen tasarla.",
+    "ufo.fiction": "Bu sahne kurgudur.",
+    "ufo.fact": "1976'da Viking 1, Mars'ta yüze benzeyen bir tepe fotoğrafladı. Mars Global Surveyor'ın çok daha keskin kamerası, bunun sıradan bir tepe olduğunu gösterdi. Gördüğümüzü kamera çözünürlüğü ve gönderebildiğimiz veri belirler.",
+    "ufo.pareidolia": "Pareidolia: beynin rastgele şekillerde yüz ya da tanıdık nesneler görmesi."
   },
   "en": {
     "forensics.ui.evidence_photo": "Photo",
@@ -495,6 +510,21 @@
     "experiment.moxie_efficiency.option.b": "About 1 kilogram",
     "experiment.moxie_efficiency.option.c": "None, Martian air can't be used",
     "experiment.moxie_efficiency.result": "You measured {measured} g of O₂ per hour. Expected range: {expected}.",
-    "experiment.moxie_efficiency.explanation": "MOXIE made oxygen by splitting carbon dioxide, about 95% of the Martian atmosphere, with an electrochemical process. It ran 16 times on Perseverance, made 122 g of oxygen in total and reached 12 g per hour at its most efficient. That is twice NASA's original goal, but keeping people breathing needs a much bigger system."
+    "experiment.moxie_efficiency.explanation": "MOXIE made oxygen by splitting carbon dioxide, about 95% of the Martian atmosphere, with an electrochemical process. It ran 16 times on Perseverance, made 122 g of oxygen in total and reached 12 g per hour at its most efficient. That is twice NASA's original goal, but keeping people breathing needs a much bigger system.",
+    "ufo.launch.hud": "MAV launch · Ascending to orbit",
+    "ufo.light.autoPhoto": "Automatic photo taken.",
+    "ufo.light.delay": "The image will reach Earth in {min} min {sec} s.",
+    "ufo.mc.location": "Mission Control · Earth",
+    "ufo.downlink.progress": "Image downlinking: {pct}%",
+    "ufo.downlink.high": "High-resolution camera: a shape is visible, but not clearly.",
+    "ufo.downlink.low": "Hand camera or no data budget left: only a blurry smudge.",
+    "ufo.downlink.compare": "Compared side by side with your Sol 7 anomaly photos.",
+    "ufo.cut.conjunction": "SOLAR CONJUNCTION · SIGNAL LOST",
+    "ufo.cut.relayLost": "RELAY PASS ENDED · SIGNAL LOST",
+    "ufo.analyst": "Analyst's note: Could be pareidolia. Confirming it needs a new mission.",
+    "ufo.next": "Design the next mission yourself.",
+    "ufo.fiction": "This scene is fiction.",
+    "ufo.fact": "In 1976 Viking 1 photographed a hill on Mars that looked like a face. Mars Global Surveyor's much sharper camera showed it was an ordinary hill. What we see depends on camera resolution and how much data we can send.",
+    "ufo.pareidolia": "Pareidolia: the brain seeing faces or familiar objects in random shapes."
   }
 }
