@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SOL 14: RED HORIZON — Ara Sahneler (K3 + K4)
  *  1) Transit (Sol 0 -> Sol 1): sıralı görev zinciri (paneller, O₂ sızıntısı, TCM, ısı dengesi) + daktilo yaklaşma + EDL
  *  2) Sol geçişi (M6): mavi Mars gün batımı, SOL X -> SOL X+1 telemetri özeti
@@ -16,6 +16,7 @@
   // Görevler gameplay.transit.tasks'tan gelir: sorun kartı -> mini oyun -> gemi durumu. Çubuk, gün ve doz
   // zamanla değil, yalnızca bir görev bitince ilerler. Son görevden sonra daktilo alt yazısı, ardından EDL.
   const TASK_ICON = { arrays: 'power', leak: 'o2', tcm: 'target', thermal: 'temp' };
+  const TASK_BG = { arrays: 'shuttle_engineering_bay', leak: 'scr_ship_o2_leak', tcm: 'shuttle_cockpit_interior', thermal: 'scr_ship_reactor' };
   const TASK_MG = { thermal: { theme: 'thermal' } };
   const ADVANCE_MS = 1400; // görev sonrası çubuk/gün/doz animasyonu
   const TYPE_MS = 75; // daktilo: harf başına
@@ -165,6 +166,8 @@
 
     /* --- Akış: kart -> mini oyun -> sonuç + ilerleme -> sonraki kart / yaklaşma --- */
     const showCard = (note) => {
+      const bgKey = TASK_BG[tasks[idx].id] || 'scr_ship_interior';
+      root.style.setProperty('--bg', \url('\')\);
       phase = 'card';
       card.innerHTML = cardHtml(note);
       card.querySelector('[data-start]').addEventListener('click', startTask);
@@ -204,6 +207,7 @@
       animateTo(idx / tasks.length, () => (idx < tasks.length ? showCard(note) : approach(note)));
     };
     const approach = (note) => {
+      root.style.setProperty('--bg', \url('\')\);
       phase = 'approach';
       const out = S.Sim.transitOutcome(results);
       card.innerHTML =
@@ -425,3 +429,4 @@
 
   S.Cutscenes = CS;
 })((window.SOL14 = window.SOL14 || {}));
+

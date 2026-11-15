@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SOL 14: RED HORIZON — Görsel Yükleyici (K4)
  * assets/processed/* görselleri tools/build.js tarafından önceden şeffaflaştırılmış (kenardan flood-fill
  * chroma-key; beyaz giysi ve kubbe içi korunur), kırpılmış ve oyun çözünürlüğüne küçültülmüştür.
@@ -42,6 +42,13 @@
     bg_storm: 'backgrounds/bg_storm.png',
     scr_launch: 'screens/scr_launch.png',
     scr_transit: 'screens/scr_transit.png',
+    shuttle_cockpit_interior: 'interior/shuttle_cockpit_interior.jpeg',
+    shuttle_engineering_bay: 'interior/shuttle_engineering_bay.jpeg',
+    scr_ship_interior: 'screens/scr_ship_interior.jpeg',
+    scr_ship_cockpit: 'screens/scr_ship_cockpit.jpeg',
+    scr_ship_o2_leak: 'screens/scr_ship_o2_leak.jpeg',
+    scr_ship_reactor: 'screens/scr_ship_reactor.jpeg',
+    scr_mission_control: 'screens/scr_mission_control.jpeg',
     scr_map_corridor: 'screens/scr_map_corridor.png',
     scr_lab_desk: 'screens/scr_lab_desk.png',
     scr_downlink: 'screens/scr_downlink.png',
@@ -104,3 +111,4 @@
     }
   };
 })((window.SOL14 = window.SOL14 || {}));
+
