@@ -98,7 +98,7 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 - Player-facing text is not hard-coded in code. It lives in `content/story.json`, in both `tr` and `en`, read with `S.t('key')`. `tests/data_integrity.test.js` checks every key used in code and data.
 - State lives only in `gameState` (`src/core/state.js`); modules trigger each other with `S.bus.emit(...)`.
 - Mini-games are called as `await runMinigame(type, config)` → `{ success, score, timeUsed }`, and each needs an ESC/cancel path.
-- Scientific accuracy: night about −80 °C, thin atmosphere (~0.6 kPa, no "hot air" → radiator failure instead), quakes up to ~M4.7, 0.38 g, Pu-238 does not make fuel (RHU + Sabatier), no harvest within 14 sols (germination experiment only), light delay 3–22 min, blue sunset.
+- Scientific accuracy: night about −80 °C, thin atmosphere (~0.6 kPa, no "hot air" → radiator failure instead), quakes up to ~M4.7, 0.38 g, Pu-238 does not make fuel (RHU + Sabatier), crops take weeks (ISS: radish 27 d, lettuce ~33 d, zinnia ~60 d to flower), so the greenhouse harvest is compressed to 2–4 tended sols and labelled simplified in the game (D-017), light delay 3–22 min, blue sunset.
 - Pixel art: `image-rendering: pixelated`, no blurry scaling, no text or HUD baked into images.
 - Anything fictional or compressed for gameplay (a compressed map, a fictional scene) is labeled as such in the game and on the project page.
 - REFERENCES.md is the single log for sources, licenses and AI use. Don't start a separate licenses file.

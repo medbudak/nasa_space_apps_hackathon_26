@@ -217,3 +217,13 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Why: The player asked for a place on the ice route to hide and survive, with a reward worth the risky walk back. Real basis: Phoenix found water ice just under the surface, and buried ice is exposed at scarps (JPL). A walk-in Mars ice cave is FICTIONAL and labelled as such in the game. Options considered: reuse the sealed cave at −1460 m as the shelter (smaller job, but too close to base); a simple ice-overhang shelter (no "hiding" feel).
 - Open: the exact slowdown value. A checkpoint retry returns the bottle to its state that morning (built that way, team to confirm).
 - Affects: `data/nasa_data.json` (terrain.westRegion.shelterCave), `src/core/sim.js`, `events.js`, `surface.js`, `src/main.js` (E actions), `src/fx/westlands.js` (cave, bottle, rack, watering), `effects.js` (three draw hooks), `content/story.json`, `tests/shelter.test.js`
+
+### D-017: Greenhouse harvest with compressed growth
+- Status: Accepted
+- Date: 2026-11-15
+- Agreed by: K1 (reported by Sude, Kişi 6)
+- Decision: The greenhouse grows lettuce, radish or zinnia through germination → sprout → mature and is harvested (food for the needs system, morale), then replanted. Real growth times keep their order (ISS: radish 27 days, lettuce ~33 days, zinnia ~60 days to flower) but are compressed to 2–4 tended sols. The compression is shown in the greenhouse panel and flagged `simplified` in the data. A skipped sol pauses growth; a frozen greenhouse kills the plant and stays frozen. The seed germination experiment stays and raises the yield.
+- Why: The Kişi 6 task card asks for growth stages and a harvest that gives the player a reason to come back every sol. Rejected: keeping "no harvest within 14 sols" (the card's loop would have no payoff).
+- Replaces: the "no harvest within 14 sols (germination experiment only)" rule in CLAUDE.md and RULES.md §5.
+- Numbering: D-015 (tools and MAV repair, `enes-roket`) and D-016 (ice cave, `sude-v3-west`, renumbered from its draft D-014) are taken by open branches.
+- Affects: `data/nasa_data.json` (habitat.greenhouse.growth), `src/core/sim.js`, `src/ui/habitat_panel.js`, `content/story.json`, `CLAUDE.md`, `RULES.md`, `docs/submission/SPACE_APPS_PROJECT_PAGE_EN.md`, tests

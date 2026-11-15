@@ -16,8 +16,8 @@ NASA Space Apps jürisinin **Validity (Bilimsel Geçerlilik)** puanını en üst
    - InSight'ın kaydettiği en büyük Mars depremi (Marsquake) **`~M4.7`** büyüklüğündedir ve Mars'ta **`0.38g` (`3.73 m/s²`)** yerçekimi vardır; astronot boşlukta savrulmaz. Olay **"Yakın Meteor Çarpması + M4.7 Sarsıntı / Rafların Devrilmesi ve Denge Kaybı"** olarak kurgulanır.
 4. **"Radyoaktif İzotoptan Yakıt Sentezi" Yerine "RHU Isısı + Sabatier Reaktörü (ISRU)":**
    - Radyoaktif izotop (`Pu-238`) kimyasal yakıt üretmez; yalnızca **RTG** (elektrik + ısı) veya **RHU** (`1 W` radyoizotop ısıtıcı ünite) olarak kullanılır. Dönüş yakıtı üretimi (ISRU), **Sabatier Reaksiyonu** ($\text{CO}_2 + 4\text{H}_2 \rightarrow \text{CH}_4 + 2\text{H}_2\text{O}$) ve su elektrolizi ile modellenir.
-5. **14 Sol'da "Sebze Hasadı" Yerine "Tohum Çimlenme ve Büyüme Oranı Deneyi":**
-   - Patates ve domates 14 Sol içinde hasat vermez (aylar sürer). Sera modülünde tam hasat yerine **Tohum Çimlenme Oranı, Kök Yönelimi (0.38g) ve Perklorat Yıkama Deneyi** yapılır; başarılı deney seradaki mevcut hidroponik filizlerden besin desteği ve akıl sağlığı (`+Sanity`) bonusu sağlar.
+5. **Sera Hasadı Sıkıştırılmış Süreyle, Açıkça Etiketli (D-017):**
+   - Patates ve domates 14 Sol içinde hasat vermez (aylar sürer). Oyunda yalnızca uzay istasyonunda gerçekten yetiştirilmiş hızlı bitkiler var: turp (27 gün), marul (~33 gün), zinya (~60 günde çiçek). Bu süreler aynı sırayla **2–4 bakımlı sole sıkıştırılmıştır**; sera panelinde gerçek süreler ve sıkıştırma yazılıdır (`simplified`). **Tohum Çimlenme Deneyi** (perklorat yıkanmış regolit) ayrıca sürer ve sera verimini artırır.
 6. **Gerçek İletişim ve Yörünge Kısıtları:**
    - Dünya-Mars tek yön ışık gecikmesi yörünge konumuna göre **`~3 ile 22 dakika`** arasındadır.
    - Güneş Kavuşumu (**Solar Conjunction**) sırasında Güneş, Dünya ile Mars arasına girer ve veri iletişimi tamamen kesilir.
