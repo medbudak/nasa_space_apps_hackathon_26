@@ -117,6 +117,7 @@ Include open-source and free items too. Note the license.
 | "shuttlelaunch.wav" by klangfabrik (Freesound) | https://freesound.org/people/klangfabrik/sounds/220127/ | CC0 | `assets/audio/rocket_rumble` (.mp3) · MAV launch, UFO scene |
 | "Dark Voice Drone 01 - Loop" by kkenny101 (Freesound) | https://freesound.org/people/kkenny101/sounds/871594/ | CC0 | `assets/audio/drone_ambience` (.mp3) · UFO scene |
 | "Camera Shutter Click" by Kodack (Freesound) | https://freesound.org/people/Kodack/sounds/271010/ | CC0 | `assets/audio/camera_shutter` (.mp3) · automatic photo, evidence photo |
+| "Crowd Cheer" by FoolBoyMedia (Freesound) | https://freesound.org/people/FoolBoyMedia/sounds/397434/ | CC0 | `assets/audio/crowd_cheer` (.mp3, Freesound HQ preview) · crowd applause and cheers after the opening launch |
 | Data tick (60 ms, 1.2 kHz beep) | Made by the team with ffmpeg (sine generator), no external source | Own work | `assets/audio/data_tick` (.mp3) · downlink ticks. The Freesound pick (661435, a 7-minute track) did not fit and was not used |
 | VT323 font (`assets/fonts/VT323-Regular.ttf`, embedded in `styles/fonts.css`) | https://github.com/google/fonts/tree/main/ofl/vt323 | SIL Open Font License 1.1 (`assets/fonts/OFL-VT323.txt`) | The single retro UI font for every panel, card, HUD and canvas label |
 | `assets/ui/field_cam.png` (FIELD CAM camera body) | this repository | Supplied by K3 (Medine) with the world prototype (origin to be confirmed) | Photo-evidence minigame frame (`src/ui/field_cam.js`) |
