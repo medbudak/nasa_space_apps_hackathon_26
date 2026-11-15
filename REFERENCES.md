@@ -73,6 +73,10 @@ Running log of everything external the project uses. The submission form asks fo
 | science.nasa.gov | https://science.nasa.gov/solar-system/planets/mars/nasa-orbiter-finds-possible-cave-skylights-on-mars/ | Lava-tube fiction label: known skylights ("Seven Sisters", ~100–225 m) are on Arsia Mons — D-012 |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/right-front-wheel-rotations/ | forensics_cases.json: Spirit salvageChoice (right-front wheel actuator failed March 2006) — D-012 |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/nasas-spirit-rover-completes-mission-on-mars/ | forensics_cases.json: Spirit salvageChoice (dusty arrays, last winter) — D-012 |
+| science.nasa.gov | https://science.nasa.gov/mission/phoenix/ | nasa_data.json: terrain.westRegion (Phoenix found water ice under the surface, frost and ice-rich polygons: basis of the glacier route, K2) |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/steep-slopes-on-mars-reveal-structure-of-buried-ice/ | nasa_data.json: westRegion.iceCave, glacier (buried ice exposed at scarps) |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/nasa-mars-lander-sees-falling-snow-soil-data-suggest-liquid-past/ | nasa_data.json: westRegion.blizzard (Phoenix lidar saw snow; the ground blizzard is labelled fiction) |
+| science.nasa.gov | https://science.nasa.gov/missions/mars-polar-lander | nasa_data.json: westRegion.finalProbe (Deep Space 2 microprobes, lost 1999; placement fictional) |
 
 ## Space Agency Partner and other data
 
@@ -97,6 +101,9 @@ Include open-source and free items too. Note the license.
 | `docs/design/references/lava-tube-reference.png` | this repository | Supplied by the team as a mock-up (origin to be confirmed; has UI text baked in, so it is a design reference only and is not shipped in the game) | Palette and layout reference for the procedural lava-tube scene (`src/fx/effects.js` `renderCave`) — D-012 |
 | `docs/design/references/lander-reference.png` | this repository | Supplied by the team as the crew-lander mock-up (origin to be confirmed; Mars background baked in, so it is a design reference only and is not shipped in the game) | Art reference for the opening landing cutscene lander — D-012 |
 | Landing cutscene lander and lava-tube scene | this repository | Procedural pixel art drawn in code (`src/fx/lander.js`, `src/fx/effects.js`) | Opening landing sequence and the lava-tube sub-map — D-012 |
+| `assets/ui/field_cam.png` (FIELD CAM camera body) | this repository | Supplied by K3 (Medine) with the world prototype (origin to be confirmed) | Photo-evidence minigame frame (`src/ui/field_cam.js`) |
+| `assets/sprites/astronaut_indoor.png` (crew member inside the shuttle) | this repository | Supplied by K4 (Sedef) on branch `nursedef` (see the K4 AI-tool statement under Use of AI) | Shuttle deck walk during the transit tasks |
+| Western ice field, eastern lava-plain scenery, dig mounds, SCOUT-1 parts | this repository | Procedural pixel art drawn in code by the team (K2 `src/fx/westlands.js`, K3 prototype ported to `src/fx/dig_fx.js`) | Glacier and lava-plain routes |
 | | | | |
 
 ## Use of AI
@@ -108,6 +115,7 @@ Say which tool was used, and where and how. AI-generated images and videos need 
 | Claude (Anthropic), via Claude Code | Wrote the first version of the code skeleton and tests; values were checked against the NASA and NIST pages listed above | `index.html`, `src/main.js`, `src/core/`, `src/scenes/ending.js`, `src/data/nasa_data.json`, `tests/` |
 | Gemini, Adobe Firefly (AI-assisted pixel-art tools) and custom pixel-drawing scripts | In-game pixel art and UI icons, adjusted to the SOL 14 palette (statement by K4 on branch `nursedef`, 2026-11-15) | `assets/` (incl. `assets/ui/*.png`, `assets/interior/*`, `assets/screens/scr_ship_*`) |
 | Claude (Anthropic), via Claude Code | D-012 map, ice route, lava-tube sub-map, landing cutscene: code, procedural pixel drawing (lander, ice, boulders, cave), TR/EN texts and tests; sources checked against the NASA/JPL pages listed above | `src/systems/explore.js`, `src/fx/lander.js`, `src/fx/effects.js`, `data/explore_config.json`, `content/story.json`, `tests/explore.test.js` |
+| Claude (Anthropic), via Claude Code | 2026-11-15 merge of the three archives and the git branches: conflict resolution, dig sites and hidden-wreck rules, porting the K3 prototype (FIELD CAM, SCOUT-1, scenery, Mars facts) and the K4 shuttle deck walk and tutorial into the modules, TR/EN texts and tests; real trail details checked against the NASA/JPL pages listed above | `src/systems/explore.js`, `src/fx/dig_fx.js`, `src/ui/field_cam.js`, `src/ui/cutscenes.js`, `src/core/objectives.js`, `content/story.json`, `tests/` |
 
 ## Simplified values
 
@@ -163,3 +171,9 @@ Real-world values that were changed or rounded for gameplay.
 | `explore.cave.skylight.tempSwingFraction` | THEMIS: skylight day-night change ≈ 1/3 of the surroundings (NASA photojournal PIA09930) | deep reading = diurnal mean + (surface − mean) × 0.333 | Simplified one-line model of a real observation |
 | `explore.cave.vibrationPoints` | No real data; synthetic relative amplitudes | 0.42 / 0.47 / 0.71 | Interpretation exercise; never shown as a measurement or as a safety verdict |
 | `explore.ice` (4 clusters, relic rewards, report points, minutes) | Game values (D-012) | see `data/explore_config.json` | Pacing and rewards |
+| `terrain.map` widened (west to −5350 m, east to +1400 m, zones) | 2026-11-15 merge; compressed, fictional layout | glacier route west, lava-plain route east | Walking time and suit O₂ pacing |
+| `terrain.westRegion` (ice field, cold, blizzard, ice barriers, cave, probe) | K2 trial values, labelled fiction in the data | see `data/nasa_data.json` | Cold-route challenge |
+| `explore.dig` (dig sites, hits, minutes per hit, scanner and RIMFAX ranges) | Game values | see `data/explore_config.json` | Wrecks are found by digging, not by walking past |
+| `explore.cave.scout` (SCOUT-1 rover, fictional) and `explore.westFinds` | Game values; SCOUT-1 and the cargo lander are fictional | see `data/explore_config.json` | Vehicle finds in the tube and on the glacier |
+| `explore.fieldCam` | Game values | 40 s, focus tolerance 0.04 | FIELD CAM photo minigame |
+| `gameplay.cargoBonus` | K4 (Sedef) rule; game values | margin > 15% → +4 kg O₂, +10 L water at landing | Free payload mass carries consumables |

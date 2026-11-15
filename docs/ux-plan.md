@@ -10,6 +10,8 @@ Player feedback after the first full playthrough of v3, turned into tasks. Goal:
 | 1 | Window fit: stage fills the viewport, canvas follows the window aspect, no letterbox bars | `116aa65` (`src/main.js` fitStage, `styles/main.css`) |
 | 2 | Clock 4 → 2 game min per real s (demo stays 4); suit O2 0.5 → 0.2083 %/min (xEVA 8 h) | `116aa65` (`data/nasa_data.json` gameplay, constants.eva) |
 | 7 | Suit temperature: battery/heater lasts ~8 h at −80 °C; dead-battery cooling 0.025 → 0.004 /min (~1 h to return) | `116aa65` |
+| 5 | Sol 0 tooltips (What · Why · What changes) on every prep option and instrument; real effects for repair kits, MOXIE, Ingenuity, data volume, launch window | local-wip, merged 2026-11-15 |
+| 9 | Missions by action: no automatic discovery; wrecks are dug out, the skylight is dug open, SCOUT-1 parts and evidence photos need FIELD CAM; goals follow what was done | D-013, merge 2026-11-15 |
 | 6 | Transit: 4-task engineering chain (arrays `align`, O2 leak `wires`, TCM `qte`, thermal `converter`); bar moves only on completion; typewriter "GEZEGENE YAKLAŞILIYOR..."; outcomes feed landing (`gameplay.transit`, `Sim.transitOutcome`); skip asks twice and degrades | transit commit |
 
 ## To do (in this order)
