@@ -302,7 +302,7 @@
   Surf.sandPitAvoided = (s) => Boolean(S.Sim.has(s, 'ingenuity') && S.DATA.terrain.droneRoutesAroundSandPits);
 
   /* ---------------- Oyuncu fiziği (gerçek zaman, saniye) ---------------- */
-  const body = { px: 0, cpx: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560 };
+  const body = { px: 0, cpx: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560, crouchK: 0, crouching: false };
   Surf.body = body;
 
   Surf.gravityPx = () => S.DATA.constants.marsGravity.value * G().spritePxPerMeter;
@@ -341,6 +341,8 @@
     if (!Surf.inCave(s) && Surf.inSandPit(s.player.x) && !Surf.sandPitAvoided(s)) f *= s.rewards.sandPitSpeedFactor || S.DATA.terrain.sandPitSpeedFactor;
     // D-016: a full water bottle slows the walk (same factor as the M4 notch)
     f *= S.Sim.carrySpeedFactor(s);
+    // Çömelerek yürümek yavaştır (gameplay.crouch)
+    f *= 1 - (1 - G().crouch.speedFactor) * body.crouchK;
     // K2 trial: the blizzard (FICTIONAL) slows a walker heading west into it, a little heading home
     const bz = Surf.blizzard(s);
     if (bz.k > 0) {
@@ -349,6 +351,18 @@
       f *= 1 - (1 - into) * bz.k * bz.gust;
     }
     return f;
+  };
+
+  /**
+   * Açılmış buz bloklarının tünelleri (westlands.js çizer): astronot ayakta sığmaz, ancak çömelerek geçer.
+   * px: yüzey pikseli. Tünel bloğun ortasında ±TUNNEL_HALF_PX genişliğindedir.
+   */
+  Surf.TUNNEL_HALF_PX = 15;
+  Surf.inTunnel = function (s, px) {
+    const w = West();
+    if (!w || !w.iceBarriers || s.player.inside) return false;
+    const open = Surf.salvage(s).barriersOpen || [];
+    return w.iceBarriers.some((b, i) => open.includes(i) && Math.abs(px - Surf.mToPx(-b.atM)) <= Surf.TUNNEL_HALF_PX);
   };
 
   /**
@@ -381,18 +395,30 @@
     const speed = Surf.walkPxPerSecond(s) * Surf.speedFactor(s);
     body.moving = input.dir !== 0;
     if (input.dir !== 0) s.player.facing = input.dir;
+    // Çömelme: S / ↓ basılıyken (zıplama W / ↑ gibi; ← / → ile birlikte çömelerek yürür); havadayken çömelinmez
+    // Tünelin içinde ayağa kalkılmaz: tavan alçak (içeri çömelerek girildi)
+    body.crouching = body.onGround && (Boolean(input.crouch) || (!cave && Surf.inTunnel(s, body.px)));
+    const ck = dt / G().crouch.seconds;
+    body.crouchK = body.crouching ? Math.min(1, body.crouchK + ck) : Math.max(0, body.crouchK - ck);
     let nx = Math.max(minPx, Math.min(maxPx, body[key] + input.dir * speed * dt));
     // Kayalık yaklaşım: yerdeyken yüksek kayaya yürüyerek çıkılmaz (zıpla); kayanın üstünde durulabilir
     const stepUp = groundAt(nx) - body.y;
+    body.blockHint = null;
     if (stepUp > 3) {
       nx = body[key];
       body.blockedT = 0.6;
+    }
+    // Açılmış buz bloğu tüneli alçak: ayakta girilmez, ↓ ile eğilip sürünerek geçilir
+    if (!cave && Surf.inTunnel(s, nx) && !Surf.inTunnel(s, body[key]) && body.crouchK < 0.9) {
+      nx = body[key];
+      body.blockedT = 0.6;
+      body.blockHint = 'hint.crouch';
     }
     body[key] = nx;
     const floor = groundAt(body[key]);
     if (body.onGround && body.y > floor) body.onGround = false; // kayadan düştü
 
-    if (input.jump && body.onGround && !s.suit.frozen) {
+    if (input.jump && body.onGround && !s.suit.frozen && body.crouchK < 0.3) {
       body.vy = Surf.jumpVelocityPx();
       body.onGround = false;
       S.bus.emit('audio:play', 'jump');
@@ -415,7 +441,7 @@
     if (body.moving && body.onGround) {
       body.stepT -= dt;
       if (body.stepT <= 0) {
-        body.stepT = s.suit.frozen ? 0.6 : 0.32;
+        body.stepT = s.suit.frozen ? 0.6 : body.crouching ? 0.55 : 0.32; // çömelikken sürünür: seyrek, hafif ses
         S.bus.emit('audio:play', 'step');
         if (Math.random() < 0.5) S.bus.emit('fx:puff', { px: body[key] - s.player.facing * 6, size: 0 });
       }
@@ -496,6 +522,7 @@
     if (body.actionT > 0) return 'action';
     if (s.suit.frozen) return 'frozen';
     if (!body.onGround) return 'jump';
+    if (body.crouchK > 0.05) return 'crouch';
     if (body.moving) return 'walk';
     // Elbise tarayıcısı gerçek bir gömülü noktanın yanında öter: astronot diz çöker (sahte tümsekte tepki yok)
     if (S.Explore && s.explore && !Surf.inCave(s)) {

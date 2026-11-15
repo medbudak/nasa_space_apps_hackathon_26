@@ -136,6 +136,7 @@
     const keys = [
       ['A / D · ← →', 'help.move'],
       ['W · Space · ↑', 'help.jump'],
+      ['S · ↓', 'help.crouch'],
       ['E', 'help.interact'],
       ['L', 'help.downlink'],
       ['P', 'help.power'],

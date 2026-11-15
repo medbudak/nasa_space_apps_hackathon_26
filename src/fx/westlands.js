@@ -282,6 +282,31 @@
    * player (core/surface.js); each hit adds cracks on the east face. Once open, a tunnel is cut
    * through at ground level.
    */
+  /** Tünelin tavan yüksekliği (px): ortada 48, kenarlarda 42 */
+  const tunnelH = (x, half) => 42 + Math.round(Math.sqrt(Math.max(0, 1 - Math.pow(x / (half + 2), 2))) * 6);
+  /** Açılmış bloklarda tünelin üstündeki buz, astronotun önünde: çömelen astronot tünelin içinden geçer */
+  function drawTunnelFront(ctx, s, camX, W, GY) {
+    const open = (s.salvage && s.salvage.barriersOpen) || [];
+    cfg().iceBarriers.forEach((b, i) => {
+      if (!open.includes(i)) return;
+      const cx = toScreen(S.Surface.mToPx(-b.atM), camX);
+      if (cx < -60 || cx > W + 60) return;
+      const half = 14;
+      const tall = 72 + i * 18;
+      for (let x = -half; x <= half; x += 2) {
+        const h = tall - Math.round(Math.abs(x) * 0.8) + Math.round((hash(b.atM + x) - 0.5) * 10);
+        const top = GY + 2 - h;
+        const ceil = GY + 2 - tunnelH(x, half);
+        ctx.fillStyle = x < -4 ? '#b6d9f3' : x < 6 ? '#93c0e4' : '#6f9fcb';
+        ctx.fillRect(cx + x, top, 2, ceil - top);
+        ctx.fillStyle = '#f4faff';
+        ctx.fillRect(cx + x, top, 2, 2);
+        ctx.fillStyle = '#5d8dbf';
+        ctx.fillRect(cx + x, ceil - 2, 2, 2);
+      }
+    });
+  }
+
   function drawBarriers(ctx, s, camX, W, GY) {
     const w = cfg();
     if (!w.iceBarriers) return;
@@ -312,7 +337,7 @@
       if (open.includes(i)) {
         // the tunnel dug through
         for (let x = -half - 1; x <= half; x += 2) {
-          const th = 30 + Math.round(Math.sqrt(Math.max(0, 1 - Math.pow(x / (half + 2), 2))) * 8);
+          const th = tunnelH(x, half); // çömelen astronot (~44 px) sığar, ayakta (58 px) sığmaz
           ctx.fillStyle = '#2e5a8a';
           ctx.fillRect(cx + x, GY + 2 - th, 2, th);
           ctx.fillStyle = '#5d8dbf';
@@ -1286,6 +1311,7 @@
    */
   West.drawFront = function (ctx, s, camX, W, GY, t, a) {
     if (!cfg()) return;
+    if (cfg().iceBarriers) drawTunnelFront(ctx, s, camX, W, GY);
     drawShelterFront(ctx, s, camX, W, GY);
     if (!a) return;
     const b = S.Sim.bottle(s);
@@ -1318,7 +1344,7 @@
     }
     if (!b) return;
     // hand height depends on the pose (sprites face right; walking swings the arm a little)
-    const kneel = a.pose === 'action';
+    const kneel = a.pose === 'action' || a.pose === 'crouch';
     const swing = a.pose === 'walk' ? Math.round(Math.sin(t * 9) * 2) : 0;
     drawBottle(ctx, a.x + f * ((kneel ? 14 : 7) + swing), a.y - 22, b === 'full', 0);
   };

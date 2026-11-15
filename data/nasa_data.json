@@ -158,6 +158,7 @@
     "moralePerSol": -3,
     "lowHabitatTempMoralePerHour": -2,
     "jumpVelocityPxPerS": 150,
+    "crouch": { "speedFactor": 0.5, "seconds": 0.36, "simplified": true, "note": "Crouch by holding S / Down (like W / Up jumps; with Left / Right the astronaut creeps forward in the crouched pose): half walking speed, no jumping. Game values." },
     "wreckInteractRangeM": 40,
     "structureInteractRangeM": 30,
     "suitBatteryKwh": 1.2,

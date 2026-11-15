@@ -21,6 +21,13 @@
     "whiteKeptPx": 11964
   },
   {
+    "asset": "sprites/astronaut_crouch_sheet.png",
+    "size": "140x58",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "sprites/astronaut_jump.png",
     "size": "46x60",
     "mode": "flood",

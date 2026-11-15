@@ -15,6 +15,7 @@
     astronaut_jump: 'sprites/astro/astro_legacy_jump.png',
     astronaut_frozen: 'sprites/astro/astro_legacy_idle.png',
     astronaut_action: 'sprites/astro/astro_legacy_action.png',
+    astronaut_crouch_sheet: 'sprites/astronaut_crouch_sheet.png',
     drone_ingenuity: 'sprites/drone_ingenuity.png',
     rover_opportunity: 'sprites/rover_opportunity.png',
     rover_spirit: 'sprites/rover_spirit.png',

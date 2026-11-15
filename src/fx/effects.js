@@ -193,19 +193,79 @@
     walk: { key: 'astro_surface_walk', frames: 4, ms: 140, hands: [[30, 28], [28, 27], [30, 27], [29, 28]] },
     // diz çökme (kazı, tarayıcı): yeni karakter için çizilen 2 kare; kazarken iner-kalkar
     kneel: { key: 'astro_surface_kneel', frames: 2, ms: 260, hands: [[27, 30], [28, 31]] },
+    // çömelme (K2 Sude, takımın GIF'i): 4 kare ayakta → tam çömelme; kare Surface.body.crouchK'den, ilerlerken sabit
+    crouch: { key: 'astronaut_crouch_sheet', frames: 4, ms: 180, hands: [[24, 33], [24, 37], [25, 40], [25, 44]] },
     // mekik içi (kasksız): ayakta 132 px ölçeğinde şeritler, mekikte 66 px çizilir
     inIdle: { key: 'astro_indoor_idle', frames: 4, ms: 350 },
     inWalk: { key: 'astro_indoor_walk', frames: 4, ms: 140 }
   };
   let frostCv = null;
+  let capCv = null;
+  /**
+   * Buzlanma (K2 Sude): batı buz alanında elbise buz tutar. 0..1: zeminin buzlanmasıyla aynı eğri (Surface.iciness),
+   * elbise soğudukça artar; tam donunca (frozen) 1. Mekik içinde ve lav tünelinde yok.
+   */
+  function astroFrost() {
+    const s = S.getState && S.getState();
+    if (!s || s.player.inside || s.player.zone === 'cave') return 0;
+    const eva = S.DATA.constants.eva;
+    const cold = Math.max(0, Math.min(1, (eva.suitNominalC - 4 - s.suit.tempC) / 18));
+    return Math.min(1, Math.max(S.Surface.iciness(s.player.x) * 0.75, cold));
+  }
+  /**
+   * Kareyi buzlu boyar: buz mavisi ton + üst kenarlarda (kask, omuz, sırt çantası) beyaz kırağı.
+   * Piksel okumadan, yalnızca tuval birleştirme ile (file:// altında da çalışır): kırağı = siluet − 2 px aşağı kaymış siluet.
+   */
+  function frostFrame(img, sx, fw, fh, k) {
+    frostCv = frostCv || document.createElement('canvas');
+    capCv = capCv || document.createElement('canvas');
+    frostCv.width = capCv.width = fw;
+    frostCv.height = capCv.height = fh;
+    const c = frostCv.getContext('2d');
+    c.clearRect(0, 0, fw, fh);
+    c.drawImage(img, sx, 0, fw, fh, 0, 0, fw, fh);
+    c.globalCompositeOperation = 'source-atop';
+    c.fillStyle = 'rgba(110, 175, 240, ' + (0.55 * k).toFixed(3) + ')';
+    c.fillRect(0, 0, fw, fh);
+    // kırağı: üst kenarlar beyaz
+    const m = capCv.getContext('2d');
+    m.clearRect(0, 0, fw, fh);
+    m.drawImage(img, sx, 0, fw, fh, 0, 0, fw, fh);
+    m.globalCompositeOperation = 'source-in';
+    m.fillStyle = '#f2f9ff';
+    m.fillRect(0, 0, fw, fh);
+    m.globalCompositeOperation = 'destination-out';
+    m.drawImage(img, sx, 0, fw, fh, 0, 3, fw, fh); // 3 px kalın kırağı kenarı
+    m.globalCompositeOperation = 'source-over';
+    c.globalAlpha = Math.min(1, 0.95 * k);
+    c.drawImage(capCv, 0, 0);
+    // kırağı benekleri: sabit desen (titreşmez), yalnızca karakterin üstünde (source-atop)
+    c.globalAlpha = 1;
+    c.fillStyle = 'rgba(245, 251, 255, ' + (0.85 * k).toFixed(3) + ')';
+    const n = Math.round(((fw * fh) / 18) * k);
+    for (let i = 0; i < n; i++) {
+      const x = Math.floor(((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1 * fw);
+      const y = Math.floor(((Math.sin(i * 78.233) * 12345.678) % 1 + 1) % 1 * fh);
+      c.fillRect(x, y, i % 3 ? 1 : 2, 1);
+    }
+    c.globalCompositeOperation = 'source-over';
+    return frostCv;
+  }
   function drawAstro(ctx, pose, cx, bottomY, flip, t, rate) {
-    const set = pose === 'walk' || pose === 'jump' ? ASTRO.walk : pose === 'action' && S.Sprites.get(ASTRO.kneel.key) ? ASTRO.kneel : ASTRO.idle;
+    const set =
+      pose === 'crouch' && S.Sprites.get(ASTRO.crouch.key) ? ASTRO.crouch
+        : pose === 'walk' || pose === 'jump' ? ASTRO.walk
+          : pose === 'action' && S.Sprites.get(ASTRO.kneel.key) ? ASTRO.kneel : ASTRO.idle;
     const img = S.Sprites.get(set.key);
     if (!img) return null;
     const fw = img.width / set.frames;
     const fh = img.height;
     let f = Math.floor((t * 1000 * (rate || 1)) / set.ms) % set.frames;
     if (pose === 'jump') f = 0; // uzun adım karesi
+    if (set === ASTRO.crouch) {
+      const b = S.Surface.body;
+      f = Math.min(3, Math.round(b.crouchK * 3)); // çömelerek ilerlerken de son karede sabit kalır (sürünür, adım atmaz)
+    }
     if (pose === 'frozen') f = 0;
     if (pose === 'action' && set !== ASTRO.kneel) f = 0;
     if (pose === 'action' && set === ASTRO.kneel && !(S.Surface.body.actionT > 0)) f = 0; // tarayıcı: sabit diz çökme
@@ -215,19 +275,9 @@
     const top = Math.round(bottomY - dh);
     let src = img;
     let sx = f * fw;
-    if (pose === 'frozen') {
-      // buz mavisi: kareyi küçük bir tuvalde boya (yalnızca karakterin pikselleri)
-      frostCv = frostCv || document.createElement('canvas');
-      frostCv.width = fw;
-      frostCv.height = fh;
-      const c = frostCv.getContext('2d');
-      c.clearRect(0, 0, fw, fh);
-      c.drawImage(img, sx, 0, fw, fh, 0, 0, fw, fh);
-      c.globalCompositeOperation = 'source-atop';
-      c.fillStyle = 'rgba(150, 205, 255, 0.45)';
-      c.fillRect(0, 0, fw, fh);
-      c.globalCompositeOperation = 'source-over';
-      src = frostCv;
+    const frost = pose === 'frozen' ? 1 : astroFrost();
+    if (frost > 0.02) {
+      src = frostFrame(img, sx, fw, fh, frost);
       sx = 0;
     }
     ctx.save();
@@ -454,7 +504,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = 'rgba(8,10,14,0.75)';
-      const txt = S.t('hint.jump');
+      const txt = S.t(body.blockHint || 'hint.jump'); // tünel: ↓ ile eğil
       const tw = ctx.measureText(txt).width + 8;
       ctx.fillRect(Math.round(ax - tw / 2), ay - 80, Math.round(tw), 12);
       ctx.fillStyle = '#ffc233';

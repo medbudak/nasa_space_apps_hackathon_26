@@ -1866,7 +1866,7 @@ window.SOL14.STORY = {
   "station.imp.s1_t": "Topla",
   "station.imp.s1": "Sandıklar ve kablolar yerde ve kayaların üstünde (zıpla). Bazı kitler tümseklere gömüldü: kaz.",
   "station.imp.s2_t": "Kaz",
-  "station.imp.s2": "Açık zeminde S / ↓ ile regolit torbası doldur: kalkan için.",
+  "station.imp.s2": "Açık zeminde E ile regolit torbası doldur: kalkan için.",
   "station.imp.s3_t": "Kur",
   "station.imp.s3": "Mekikteki atölyede beş modülü üret. Enkaz parçaları da işe yarar.",
   "station.imp.fiction": "Kurgu: Mars'ta her yıl yeni çarpma kraterleri oluşur (MRO görüntüleri), ama birinin bir üssün yanına düşmesi çok düşük bir olasılıktır.",
@@ -1925,7 +1925,7 @@ window.SOL14.STORY = {
   "item.cargo_crate.from": "Göktaşının saçtığı kargo",
   "item.regolith_bag.name": "Regolit torbası",
   "item.regolith_bag.desc": "Kalkan için doldurulmuş Mars toprağı.",
-  "item.regolith_bag.from": "Açık zeminde S / ↓ ile kazıldı",
+  "item.regolith_bag.from": "Açık zeminde E ile kazıldı",
   "item.rhu_pack.name": "RHU paketi",
   "item.rhu_pack.desc": "Radyoizotop ısıtıcı birimleri.",
   "item.rhu_pack.from": "Enkaz: Opportunity / Spirit",
@@ -2159,7 +2159,9 @@ window.SOL14.STORY = {
   "mineral.hematite.refined": "demir külçe (oyun kurgusu)",
   "mineral.meteorite.refined": "kesilmiş göktaşı kesiti",
   "mineral.gypsum.refined": "alçıtaşı kristali",
-  "mineral.olivine.refined": "peridot (mücevher kalitesinde olivin)"
+  "mineral.olivine.refined": "peridot (mücevher kalitesinde olivin)",
+  "help.crouch": "Çömel (basılı tut; ← → ile çömelip sürünerek ilerle)",
+  "hint.crouch": "↓ · eğil"
  },
  "en": {
   "ui.back": "Back",
@@ -4026,7 +4028,7 @@ window.SOL14.STORY = {
   "station.imp.s1_t": "Collect",
   "station.imp.s1": "Crates and cables lie on the ground and on top of boulders (jump). Some kits were buried in mounds: dig.",
   "station.imp.s2_t": "Dig",
-  "station.imp.s2": "On open ground, fill regolith bags with S / ↓: they make the shield.",
+  "station.imp.s2": "On open ground, fill regolith bags with E: they make the shield.",
   "station.imp.s3_t": "Build",
   "station.imp.s3": "Make the five modules in the lander's workshop. Wreck parts help too.",
   "station.imp.fiction": "Fiction: new impact craters form on Mars every year (MRO images), but one landing next to a base is very unlikely.",
@@ -4085,7 +4087,7 @@ window.SOL14.STORY = {
   "item.cargo_crate.from": "Cargo scattered by the meteorite",
   "item.regolith_bag.name": "Regolith bag",
   "item.regolith_bag.desc": "Martian soil bagged for the shield.",
-  "item.regolith_bag.from": "Dug with S / ↓ on open ground",
+  "item.regolith_bag.from": "Dug with E on open ground",
   "item.rhu_pack.name": "RHU pack",
   "item.rhu_pack.desc": "Radioisotope heater units.",
   "item.rhu_pack.from": "Wreck: Opportunity / Spirit",
@@ -4319,6 +4321,8 @@ window.SOL14.STORY = {
   "mineral.hematite.refined": "iron ingot (game fiction)",
   "mineral.meteorite.refined": "cut meteorite slice",
   "mineral.gypsum.refined": "gypsum crystal",
-  "mineral.olivine.refined": "peridot (gem-quality olivine)"
+  "mineral.olivine.refined": "peridot (gem-quality olivine)",
+  "help.crouch": "Crouch (hold; ← → to creep forward crouched)",
+  "hint.crouch": "↓ · crouch"
  }
 };
