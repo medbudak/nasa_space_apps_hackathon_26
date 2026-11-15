@@ -4,7 +4,7 @@
  *  4.6–11.2    yolculuk: Dünya → kesikli yörünge → Mars; mekik yörünge boyunca ilerler (meteor olayı ortada)
  *  11.2–12.4   varış: Mars yaklaşır, ekran Mars gökyüzü rengine açılır
  * Ardından oyun dünyasında mevcut iniş sahnesi (S.Lander) başlar: alçalma ve iniş yalnızca orada oynar.
- * Mekik, docs/design/references/lander-reference.png'ye göre burada çizilir (drawRefShip). Zaman çizelgesi DOM'suzdur.
+ * Mekik, oyundaki iniş aracının aynı çizimidir (S.Lander.drawShip, lander-reference.png'ye göre). Zaman çizelgesi DOM'suzdur.
  */
 (function (S) {
   'use strict';
@@ -69,280 +69,20 @@
     return S.Art ? S.Art.mix(a, b, clamp01(k)) : a;
   }
 
-  /*
-   * K2 trial: the opening's vehicle, drawn to match docs/design/references/lander-reference.png part by
-   * part (black nose with an orange ring and blue windows, orange shoulders with a dish and a whip antenna,
-   * white riveted hull with a grey and a copper pipe, orange side pods with thrusters, hazard stripes, the
-   * small hatch with its status lights and the long ladder, the wide orange skirt, three bells with the
-   * centre one larger, and four hydraulic legs with round pads, front pair bright and rear pair dark).
-   * Shapes are given in the reference image's pixel coordinates and scaled by RK, so the vehicle stands
-   * ~290 px tall, 5x the 58 px astronaut. Filled row by row (no anti-aliasing) with a dark outline.
-   */
-  const RK = 0.3;
-  const RCX = 472; // the vehicle's centre line in the reference image
-  const SH = { W: 204, H: 292, CX: 102 };
-  const qx = (x) => Math.round((x - RCX) * RK + SH.CX);
-  const qy = (y) => Math.round((y - 25) * RK);
-  SH.FEET = qy(985); // footpad bottom
-  SH.BASE = qy(872); // bottom of the centre bell
-  SH.NOZ = [[390, 850, 50], [472, 872, 70], [554, 850, 50]].map(([x, y, w]) => ({ x: qx(x), y: qy(y), w: Math.max(4, Math.round(w * RK)) }));
-  SH.LADDER = { x0: qx(462), x1: qx(495), top: qy(682) };
-  O.SHIP = SH;
-  const OUT = '#1b1622';
-  const mir = (p) => p.map(([x, y]) => [2 * RCX - x, y]);
-  /** Scanline polygon fill in canvas pixels; pts in reference coordinates. */
-  function pfill(c, col, pts, ox = 0, oy = 0) {
-    const P = pts.map(([x, y]) => [(x - RCX) * RK + SH.CX + ox, (y - 25) * RK + oy]);
-    let y0 = Infinity;
-    let y1 = -Infinity;
-    for (const p of P) {
-      y0 = Math.min(y0, p[1]);
-      y1 = Math.max(y1, p[1]);
-    }
-    c.fillStyle = col;
-    for (let y = Math.floor(y0); y <= Math.ceil(y1); y++) {
-      const yc = y + 0.5;
-      const xs = [];
-      for (let i = 0; i < P.length; i++) {
-        const [ax, ay] = P[i];
-        const [bx, by] = P[(i + 1) % P.length];
-        if ((ay <= yc && by > yc) || (by <= yc && ay > yc)) xs.push(ax + ((yc - ay) * (bx - ax)) / (by - ay));
-      }
-      xs.sort((a, b) => a - b);
-      for (let i = 0; i + 1 < xs.length; i += 2) {
-        const a = Math.round(xs[i]);
-        const b = Math.round(xs[i + 1]);
-        if (b > a) c.fillRect(a, y, b - a, 1);
-      }
-    }
-  }
-  /** The same, with a 1 px dark outline around the shape */
-  function pout(c, col, pts) {
-    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) pfill(c, OUT, pts, ox, oy);
-    pfill(c, col, pts);
-  }
-  const quad = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
-  function box(c, col, x0, y0, x1, y1) {
-    const X = qx(x0);
-    const Y = qy(y0);
-    c.fillStyle = col;
-    c.fillRect(X, Y, Math.max(1, qx(x1) - X), Math.max(1, qy(y1) - Y));
-  }
-  /** Thick bar between two points (w in reference px) */
-  function bar(x0, y0, x1, y1, w) {
-    const L = Math.hypot(x1 - x0, y1 - y0);
-    const nx = (-(y1 - y0) / L) * (w / 2);
-    const ny = ((x1 - x0) / L) * (w / 2);
-    return [[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]];
-  }
-  function ellipse(cx, cy, rx, ry, rot) {
-    const pts = [];
-    for (let i = 0; i < 16; i++) {
-      const a = (i / 16) * Math.PI * 2;
-      const x = Math.cos(a) * rx;
-      const y = Math.sin(a) * ry;
-      pts.push([cx + x * Math.cos(rot) - y * Math.sin(rot), cy + x * Math.sin(rot) + y * Math.cos(rot)]);
-    }
-    return pts;
-  }
-  function hazardBox(c, x0, y0, x1, y1, a, b) {
-    const X0 = qx(x0);
-    const Y0 = qy(y0);
-    const X1 = Math.max(X0 + 1, qx(x1));
-    const Y1 = Math.max(Y0 + 1, qy(y1));
-    for (let y = Y0; y < Y1; y++) {
-      for (let x = X0; x < X1; x++) {
-        c.fillStyle = ((x + y) >> 1) & 1 ? a : b;
-        c.fillRect(x, y, 1, 1);
-      }
-    }
-  }
-
-  function drawRefShip(c, ladder) {
-    const W1 = '#efece6';
-    const W2 = '#d2cdc4';
-    const W3 = '#a39d94';
-    const W4 = '#7a756d';
-    const OR = '#e8692a';
-    const OR2 = '#b84a18';
-    const OR3 = '#7a3010';
-    const BK = '#2a2b31';
-    const BK2 = '#3d3f48';
-    const BK3 = '#17181c';
-    const MET = '#8d8f96';
-    const METL = '#c4c6cc';
-    const MET2 = '#5c5e66';
-    const CU = '#b5622a';
-    const CUL = '#e08a4a';
-    c.clearRect(0, 0, SH.W, SH.H);
-
-    // rear legs (dark, behind the hull)
-    for (const m of [(p) => p, mir]) {
-      pout(c, '#4a4c54', m(bar(392, 760, 322, 930, 18)));
-      pout(c, OR3, m(bar(366, 820, 348, 862, 26)));
-      pout(c, '#3b3d45', m(quad(282, 926, 360, 946)));
-      pfill(c, OR2, m(quad(286, 926, 356, 930)));
-    }
-    // engine bay and the three bells (centre one larger)
-    pout(c, BK2, quad(338, 752, 606, 796));
-    const bells = [
-      [[372, 794], [408, 794], [425, 850], [355, 850]],
-      [[446, 794], [498, 794], [520, 872], [424, 872]],
-      [[536, 794], [572, 794], [589, 850], [519, 850]]
-    ];
-    for (const b of bells) {
-      pout(c, BK, b);
-      pfill(c, '#4a4c56', [b[0], [b[0][0] + 8, b[0][1]], [b[3][0] + 12, b[3][1]], b[3]]);
-      pfill(c, BK3, [[b[1][0] - 8, b[1][1]], b[1], b[2], [b[2][0] - 12, b[2][1]]]);
-      pfill(c, MET2, quad(b[3][0], b[3][1] - 8, b[2][0], b[2][1]));
-    }
-    // ladder from the hatch to the ground
-    if (ladder) {
-      box(c, '#5c5e66', 461, 682, 468, 985);
-      box(c, '#5c5e66', 489, 682, 496, 985);
-      for (let y = 692; y < 980; y += 17) box(c, '#a39d94', 461, y, 496, y + 4);
-    }
-    // skirt: wide orange band, darker lower edge, leg mounts, hazard stripes
-    pout(c, OR, [[296, 678], [648, 678], [656, 742], [640, 764], [304, 764], [288, 742]]);
-    pfill(c, OR2, [[288, 742], [656, 742], [640, 764], [304, 764]]);
-    pfill(c, '#f08a4a', quad(300, 682, 330, 738));
-    hazardBox(c, 384, 686, 560, 698, BK, '#f2c230');
-    for (let x = 392; x < 560; x += 28) box(c, OR2, x, 708, x + 6, 736);
-    for (const m of [(p) => p, mir]) {
-      pout(c, MET, m(quad(298, 696, 362, 748)));
-      pfill(c, METL, m(quad(302, 700, 312, 744)));
-      pfill(c, MET2, m(quad(350, 700, 362, 748)));
-    }
-    // front legs (bright): upper strut, orange collar, piston, round pad
-    for (const [m, lit] of [[(p) => p, true], [mir, false]]) {
-      const G = lit ? '#a5a7ae' : '#8d8f96';
-      pout(c, G, m(bar(352, 722, 256, 830, 34)));
-      pfill(c, lit ? '#cfd1d6' : '#a5a7ae', m(bar(346, 712, 250, 820, 8)));
-      pout(c, lit ? OR : OR2, m(bar(282, 800, 246, 842, 46)));
-      pfill(c, OR3, m(bar(272, 812, 256, 832, 10)));
-      pout(c, MET2, m(bar(254, 836, 226, 956, 22)));
-      pfill(c, G, m(bar(250, 836, 222, 952, 8)));
-      pout(c, lit ? OR : OR2, m([[176, 956], [260, 956], [270, 972], [166, 972]]));
-      pout(c, '#6a6c74', m(quad(164, 972, 272, 986)));
-    }
-
-    // hull: white body, grey side panels (lit from the left)
-    const hull = [[430, 288], [514, 288], [514, 334], [644, 334], [650, 680], [294, 680], [300, 334], [430, 334]];
-    pout(c, W2, hull);
-    pfill(c, W1, [[440, 296], [506, 296], [506, 342], [600, 342], [604, 672], [330, 672], [326, 342], [440, 342]]);
-    pfill(c, '#bdb8af', quad(300, 334, 326, 680));
-    pfill(c, W3, quad(612, 334, 650, 680));
-    pfill(c, W4, quad(640, 334, 650, 680));
-    for (const y of [454, 470, 560]) box(c, W3, 326, y, 612, y + 3);
-    for (const x of [424, 520]) box(c, W3, x, 342, x + 3, 454);
-    for (const y of [352, 420, 500, 540, 640]) {
-      box(c, W4, 336, y, 340, y + 4);
-      box(c, W4, 600, y, 604, y + 4);
-    }
-    // the square access panel and the small vent
-    pout(c, W2, quad(440, 362, 510, 446));
-    pfill(c, W1, quad(446, 368, 502, 438));
-    pfill(c, W3, quad(446, 432, 504, 440));
-    for (let i = 0; i < 3; i++) box(c, BK2, 466 + i * 9, 484, 471 + i * 9, 498);
-    // hazard stripes across the hull
-    hazardBox(c, 396, 568, 560, 584, BK, OR);
-    hazardBox(c, 326, 584, 384, 596, BK, '#f2c230');
-    hazardBox(c, 560, 584, 612, 596, BK, '#f2c230');
-    // orange side pods with vent slots, and the side thrusters
-    for (const [m, lit] of [[(p) => p, true], [mir, false]]) {
-      pout(c, lit ? OR : OR2, m(quad(318, 488, 364, 604)));
-      pfill(c, lit ? '#f08a4a' : OR, m(quad(322, 492, 330, 600)));
-      pfill(c, OR3, m(quad(334, 506, 350, 586)));
-      for (let y = 512; y < 584; y += 12) pfill(c, lit ? OR : OR2, m(quad(334, y, 350, y + 4)));
-      for (const ty of [532, 584]) {
-        pout(c, MET, m(quad(292, ty, 318, ty + 18)));
-        pout(c, BK, m(quad(282, ty + 2, 292, ty + 16)));
-      }
-    }
-    // pipes: grey on the left, copper on the right
-    box(c, MET, 384, 352, 398, 632);
-    box(c, METL, 384, 352, 388, 632);
-    box(c, MET, 364, 348, 398, 360);
-    box(c, MET, 384, 620, 436, 634);
-    for (const y of [420, 520]) box(c, MET2, 380, y, 402, y + 5);
-    box(c, CU, 546, 346, 560, 684);
-    box(c, CUL, 546, 346, 550, 684);
-    box(c, CU, 532, 344, 560, 356);
-    for (const y of [430, 610]) box(c, OR3, 542, y, 564, y + 5);
-    // grille with LEDs, lower right
-    pout(c, W3, quad(564, 624, 598, 668));
-    for (let i = 0; i < 4; i++) box(c, BK2, 568, 630 + i * 8, 594, 634 + i * 8);
-    box(c, '#3fe08a', 568, 660, 576, 666);
-    box(c, '#ff5a3c', 582, 660, 590, 666);
-    // the hatch, its frame and the two status lights
-    pout(c, MET2, quad(448, 612, 508, 684));
-    pfill(c, '#b8b196', quad(454, 618, 502, 682));
-    pfill(c, '#8c866f', quad(496, 618, 502, 682));
-    box(c, '#6a644e', 476, 624, 480, 678);
-    box(c, '#3fe08a', 460, 598, 472, 608);
-    box(c, '#ffc233', 484, 598, 496, 608);
-
-    // shoulders: orange, sloping out, with vents
-    for (const [m, lit] of [[(p) => p, true], [mir, false]]) {
-      pout(c, lit ? OR : OR2, m([[366, 256], [432, 256], [432, 336], [298, 336]]));
-      pfill(c, lit ? '#f08a4a' : OR, m([[366, 256], [376, 256], [310, 330], [300, 330]]));
-      pfill(c, OR3, m(quad(364, 286, 386, 316)));
-      for (let y = 290; y < 314; y += 7) pfill(c, lit ? OR2 : OR, m(quad(366, y, 384, y + 3)));
-    }
-    // black band with the blue windows and the dark front panel
-    pout(c, BK, [[360, 216], [584, 216], [590, 262], [514, 262], [514, 296], [430, 296], [430, 262], [354, 262]]);
-    pfill(c, BK2, quad(362, 220, 382, 258));
-    for (const [x0, x1] of [[358, 382], [446, 498], [562, 586]]) {
-      pout(c, '#3aa8e8', quad(x0, 230, x1, 254));
-      pfill(c, '#bff0ff', quad(x0 + 3, 233, x0 + 9, 238));
-      pfill(c, '#2d6f99', quad(x0, 248, x1, 254));
-    }
-    pout(c, BK2, quad(450, 260, 496, 294));
-    box(c, '#3fe08a', 482, 266, 488, 272);
-    box(c, '#ffc233', 482, 278, 488, 284);
-    for (let i = 0; i < 3; i++) box(c, BK3, 456, 268 + i * 8, 476, 270 + i * 8);
-    // orange ring under the nose
-    pout(c, OR, quad(360, 210, 584, 218));
-    // nose cone: black, rounded, vertical panel seams, a soft highlight on the left
-    const nTop = 28;
-    const nBot = 210;
-    const prof = (y) => 110 * Math.pow(Math.max(0, 1 - Math.pow((nBot - y) / (nBot - nTop), 1.8)), 1 / 1.8);
-    const nose = [];
-    for (let y = nTop; y <= nBot; y += 6) nose.push([RCX - prof(y), y]);
-    for (let y = nBot; y >= nTop; y -= 6) nose.push([RCX + prof(y), y]);
-    pout(c, BK, nose);
-    for (let Y = qy(nTop) + 1; Y < qy(nBot); Y++) {
-      const y = Y / RK + 25;
-      const hw = prof(y) * RK;
-      const X = SH.CX;
-      c.fillStyle = BK2;
-      c.fillRect(Math.round(X - hw * 0.86), Y, Math.max(1, Math.round(hw * 0.36)), 1);
-      if (y < 150) {
-        c.fillStyle = '#4e505a';
-        c.fillRect(Math.round(X - hw * 0.72), Y, Math.max(1, Math.round(hw * 0.12)), 1);
-      }
-      c.fillStyle = BK3;
-      c.fillRect(Math.round(X + hw * 0.62), Y, Math.max(1, Math.round(hw * 0.38)), 1);
-      for (const f of [-0.42, 0, 0.42]) c.fillRect(Math.round(X + hw * f), Y, 1, 1);
-    }
-    for (const y of [120, 172]) {
-      const hw = prof(y) * RK;
-      c.fillStyle = BK3;
-      c.fillRect(Math.round(SH.CX - hw), qy(y), Math.round(hw * 2), 1);
-    }
-    // antennas: whip on the left of the nose, a dish on the left shoulder and one by the nose on the right
-    box(c, W3, 350, 150, 354, 232);
-    box(c, '#ff5a3c', 349, 146, 355, 152);
-    pout(c, W2, ellipse(316, 300, 20, 10, -0.6));
-    pfill(c, W3, ellipse(318, 302, 12, 5, -0.6));
-    pout(c, MET, bar(326, 306, 344, 318, 6));
-    pout(c, W2, ellipse(598, 202, 20, 10, 0.6));
-    pfill(c, W3, ellipse(596, 204, 12, 5, 0.6));
-    pout(c, MET, bar(590, 208, 578, 222, 6));
-  }
-
+  // The vehicle is the lander drawn by S.Lander.drawShip (matches docs/design/references/lander-reference.png),
+  // legs open and the hatch shut; on the pad the ladder reaches the ground.
+  const LS = S.Lander.SHIP;
+  const SH = {
+    W: LS.W,
+    H: LS.H,
+    CX: LS.CX,
+    FEET: LS.FEET,
+    BASE: LS.BASE,
+    NOZ: LS.NOZ,
+    LADDER: { x0: LS.CX - 3, x1: LS.CX + 7, top: LS.BB - 24 }
+  };
   const shipCvs = {};
-  /** The vehicle's image: with the pad ladder (on the ground) or without it (in flight). Cached. */
+  /** The vehicle's image: with the ladder down to the ground (on the pad) or without it (in flight). Cached. */
   function shipImage(ladder) {
     if (typeof document === 'undefined') return null;
     const k = ladder ? 'l' : 'f';
@@ -350,7 +90,7 @@
       const cv = document.createElement('canvas');
       cv.width = SH.W;
       cv.height = SH.H;
-      drawRefShip(cv.getContext('2d'), ladder);
+      S.Lander.drawShip(cv.getContext('2d'), { deploy: 1, compress: 0, lights: 1, hatch: 0, dark: 0, time: 0, damage: 0, heat: 0, sink: 0, ladder: ladder ? 'full' : 'none' });
       shipCvs[k] = cv;
     }
     return shipCvs[k];
