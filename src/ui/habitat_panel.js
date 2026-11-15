@@ -303,11 +303,13 @@
       R.damaged(s)
         .map((id) => {
           const p = R.part(id);
-          const c = R.check(s, id);
+          const held = S.Hotbar.selected(s);
+          const c = R.check(s, id, held ? held.id : null);
           // eksik satırın altında nereden bulunacağı yazar
           const have = (ok, label, val, fromKey) => '<li class="' + (ok ? 'ok' : 'miss') + '">' + I(ok ? 'check' : 'x') + '<span>' + label + (ok || !fromKey ? '' : '<small class="rk-from">' + t(fromKey) + '</small>') + '</span><b>' + val + '</b></li>';
           const rows =
             Object.entries(p.needs).map(([item, n]) => have(S.Workshop.count(s, item) >= n, t('item.' + item + '.name'), S.Workshop.count(s, item) + ' / ' + n, 'item.' + item + '.from')).join('') +
+            have(held && held.id === p.tool, t('rocket.in_hand'), t('tool.' + p.tool + '.name'), 'rocket.hold_how') +
             have(S.Workshop.hasTool(s, p.tool), t('rocket.tool'), t('tool.' + p.tool + '.name'), 'tool.' + p.tool + '.from') +
             have(s.res.energyKwh >= p.energyKwh, t('rocket.energy'), p.energyKwh + ' kWh');
           return (
@@ -321,15 +323,16 @@
     );
   }
 
-  async function runRepair(id) {
+  HP.runRepair = async function (id) {
     const s = S.getState();
     S.UI.closeModal('mav', true);
+    await S.Game.swingTool(); // alet elde çalışır, sonra mini oyun
     const mg = await S.runMinigame(S.Rocket.part(id).minigame, {});
     const r = S.Rocket.repair(s, id, mg.success);
     if (!r.ok) S.UI.toast(I('alert') + t(r.errKey, r.vars), 'warn');
     else S.UI.toast(r.repaired ? I('check') + t('rocket.repaired') : I('alert') + t('rocket.failed'), r.repaired ? 'ok' : 'warn', 4000);
     S.Game.afterAction();
-  }
+  };
 
   HP.openMav = function () {
     const s = S.getState();
@@ -349,7 +352,7 @@
       '</div></div>';
     S.UI.openModal('mav', html, {
       onMount: (box) => {
-        box.querySelectorAll('[data-repair]').forEach((btn) => btn.addEventListener('click', () => runRepair(btn.dataset.repair)));
+        box.querySelectorAll('[data-repair]').forEach((btn) => btn.addEventListener('click', () => HP.runRepair(btn.dataset.repair)));
         const b = box.querySelector('[data-launch]');
         if (b)
           b.addEventListener('click', () => {

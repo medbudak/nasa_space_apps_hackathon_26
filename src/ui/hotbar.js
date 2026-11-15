@@ -20,6 +20,13 @@
   HB.icon = (it) => ICON[it.id] || (it.kind === 'find' ? 'camera' : 'doc');
   HB.nameKey = (it) => (it.kind === 'tool' ? 'tool.' : 'item.') + it.id + '.name';
 
+  HB.swingStart = 0;
+  HB.swingMs = 0;
+  /** Alet vuruşunun ilerlemesi 0..1 (0: vuruş yok) */
+  HB.swingK = () => {
+    const k = HB.swingMs ? (performance.now() - HB.swingStart) / HB.swingMs : 1;
+    return k > 0 && k < 1 ? k : 0;
+  };
   HB.selected = (s) => (HB.open ? S.Workshop.inventoryList(s).slice(0, SLOTS)[HB.sel] || null : null);
 
   HB.toggle = function (open = !HB.open) {

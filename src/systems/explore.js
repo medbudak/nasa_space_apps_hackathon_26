@@ -85,23 +85,10 @@
     S.bus.emit('inventory:minerals', { spent: need });
     return true;
   };
-  /**
-   * Alet kontrolü (matkap: Kişi 4). Kişi 4'ün S.Workshop.hasTool'u (inventory.tools) varsa o karar verir;
-   * yoksa toolPlaceholder açıkken alet var sayılır (PLACEHOLDER, Kişi 4'ün aletleri main'e girince devre dışı kalır).
-   */
-  X.hasTool = function (s, tool) {
-    if (!tool) return true;
-    if (S.Workshop && S.Workshop.hasTool) return S.Workshop.hasTool(s, tool);
-    if (MC().toolPlaceholder) return true;
-    const inv = s.inventory || {};
-    return Boolean(inv.tools && inv.tools[tool]);
-  };
-  /** Kişi 4 kuralı: kazma yoksa her vuruş tools.noPickaxeDigFactor kat uzun sürer (aletler yoksa 1) */
-  X.digFactor = function (s) {
-    const tc = D().tools;
-    if (!tc || !(S.Workshop && S.Workshop.hasTool)) return 1;
-    return S.Workshop.hasTool(s, 'pickaxe') ? 1 : tc.noPickaxeDigFactor;
-  };
+  /** Alet kontrolü tek yerde: Kişi 4'ün S.Workshop.hasTool'u (inventory.tools) */
+  X.hasTool = (s, tool) => !tool || S.Workshop.hasTool(s, tool);
+  /** Kişi 4 kuralı: kazma yoksa her vuruş tools.noPickaxeDigFactor kat uzun sürer */
+  X.digFactor = (s) => (S.Workshop.hasTool(s, 'pickaxe') ? 1 : D().tools.noPickaxeDigFactor);
 
   /** Bir kazma/delme vuruşu: oyun dakikası harcar; son vuruşta mineral envantere girer */
   X.digMineral = function (s, id) {

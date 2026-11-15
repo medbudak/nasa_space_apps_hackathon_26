@@ -115,8 +115,6 @@
     "simplified": true,
     "src": "https://www.spaceappschallenge.org/",
     "interactRangeM": 14,
-    "toolPlaceholder": true,
-    "toolPlaceholderNote": "PLACEHOLDER until Kişi 4's tool check lands: while true the drill counts as carried. Remove before content lock.",
     "types": [
       { "id": "hematite", "color": "#8c5a5a", "use": "iron", "src": "https://www.jpl.nasa.gov/news/mineral-in-mars-berries-adds-to-water-story/" },
       { "id": "meteorite", "color": "#a8adb4", "use": "metal", "src": "https://www.jpl.nasa.gov/news/opportunity-rover-finds-an-iron-meteorite-on-mars/" },

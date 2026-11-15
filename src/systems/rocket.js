@@ -26,18 +26,25 @@
   /** İnişte: yolculuğun bıraktığı hasar */
   R.applyLandingDamage = (s) => cfg().landingDamage.forEach((id) => R.damage(s, id, 'landing'));
 
-  /** Tamir edilebilir mi? { ok, missing: [item], errKey, vars } — alet, malzeme, enerji sırasıyla */
-  R.check = function (s, partId) {
+  /**
+   * Tamir edilebilir mi? { ok, missing: [item], errKey, vars } — alet, malzeme, enerji, eldeki alet sırasıyla.
+   * held: oyuncunun elindeki eşya kimliği (hotbar); verilmezse (testler, bot) elde olduğu varsayılır.
+   */
+  R.check = function (s, partId, held) {
     const p = R.part(partId);
     if (!p || !R.state(s).damage[partId]) return { ok: false, errKey: 'rocket.err_ok' };
     if (!S.Workshop.hasTool(s, p.tool)) return { ok: false, errKey: 'tool.err_need', vars: { tool: S.t('tool.' + p.tool + '.name') } };
     const missing = Object.entries(p.needs).filter(([item, n]) => S.Workshop.count(s, item) < n).map(([item]) => item);
     if (missing.length) return { ok: false, missing, errKey: 'ws.err_missing', vars: { list: missing.map((i) => S.t('item.' + i + '.name')).join(', ') } };
     if (s.res.energyKwh < p.energyKwh) return { ok: false, errKey: 'rocket.err_energy', vars: { kwh: p.energyKwh } };
+    if (held !== undefined && held !== p.tool) return { ok: false, hold: true, errKey: 'rocket.err_hold', vars: { tool: S.t('tool.' + p.tool + '.name') } };
     return { ok: true };
   };
 
   /** Mini oyun bittikten sonra çağrılır: başarıda malzeme ve enerji düşer, parça onarılır; her durumda EVA süresi geçer */
+  /** Eldeki aletle tamir edilecek ilk hasarlı parça (F ile MAV'da) */
+  R.partForTool = (s, tool) => R.damaged(s).find((id) => R.part(id).tool === tool) || null;
+
   R.repair = function (s, partId, success) {
     const c = R.check(s, partId);
     if (!c.ok) return c;

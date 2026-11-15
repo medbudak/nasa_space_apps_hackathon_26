@@ -47,23 +47,57 @@ test('Aletler: başlangıçta kazma ve tarayıcı var, matkap atölyede kurulur;
   assert.equal(withPick, site.minutesPerHit);
 });
 
-test('Tamir: eksik alet / malzeme / enerji nedenini söyler; başarısız deneme yalnızca zaman harcatır', () => {
+test('Tamir: eksik alet / malzeme / enerji / eldeki alet nedenini söyler; başarısız deneme yalnızca zaman harcatır', () => {
   const { S, s } = landed();
   const R = S.Rocket;
+  const W = S.Workshop;
   s.inventory.tools.scanner = false;
   assert.equal(R.check(s, 'fuel_line').errKey, 'tool.err_need');
   s.inventory.tools.scanner = true;
+  // Tamir parçası atölyede üretilir: yedek parça + göktaşı (demir-nikel)
+  assert.equal(R.check(s, 'fuel_line').errKey, 'ws.err_missing');
+  s.player.inside = true;
+  assert.equal(W.status(s, 'rk_fitting').state, 'locked', 'göktaşı yokken');
+  s.inventory.minerals = { meteorite: 1 };
+  const spare = W.count(s, 'spare_parts');
+  assert.equal(W.build(s, 'rk_fitting').ok, true);
+  assert.equal(W.count(s, 'fuel_fitting'), 1);
+  assert.equal(W.count(s, 'spare_parts'), spare - 1);
+  assert.equal(W.mineralCount(s, 'meteorite'), 0);
   s.res.energyKwh = 0;
   assert.equal(R.check(s, 'fuel_line').errKey, 'rocket.err_energy');
   s.res.energyKwh = 30;
-  const spare = s.inventory.items.spare_parts;
+  // MAV'da doğru alet elde olmalı (hotbar); elde bir şey verilmezse (bot) var sayılır
+  assert.equal(R.check(s, 'fuel_line', 'drill').errKey, 'rocket.err_hold');
+  assert.equal(R.check(s, 'fuel_line', 'scanner').ok, true);
   const t0 = s.minute;
   assert.equal(R.repair(s, 'fuel_line', false).repaired, false);
   assert.ok(s.minute > t0, 'EVA süresi geçti');
-  assert.equal(s.inventory.items.spare_parts, spare, 'malzeme duruyor');
+  assert.equal(W.count(s, 'fuel_fitting'), 1, 'parça duruyor');
   assert.equal(R.repair(s, 'fuel_line', true).repaired, true);
-  assert.equal(s.inventory.items.spare_parts, spare - 1);
+  assert.equal(W.count(s, 'fuel_fitting'), 0);
   assert.equal(R.isDamaged(s), false);
+});
+
+test('Yükseltmeler MAV tamirine ayrılan minerali harcayamaz; tamir parçası üretilince serbest kalır', () => {
+  const { S, s } = landed();
+  const W = S.Workshop;
+  s.base.mav = true;
+  s.player.inside = true;
+  s.res.energyKwh = 30;
+  s.inventory.items.cable_spool = 5;
+  s.inventory.minerals = { meteorite: 1, hematite: 1 };
+  // Yakıt hattı hasarlı (rakor = göktaşı), göktaşı darbesi gelecek (yama = hematit): ikisi de ayrılmış
+  assert.deepEqual(Object.assign({}, W.repairReserve(s)), { meteorite: 1, hematite: 1 });
+  const st = W.status(s, 'rocket_l2');
+  assert.equal(st.state, 'locked');
+  assert.equal(st.reasonKey, 'ws.err_reserved');
+  assert.notEqual(S.t('ws.err_reserved'), 'ws.err_reserved');
+  // Rakoru üret → göktaşı ayrılmaktan çıkar; ikinci göktaşı yükseltmeye gidebilir
+  assert.equal(W.build(s, 'rk_fitting').ok, true);
+  assert.equal(W.repairReserve(s).meteorite, undefined);
+  s.inventory.minerals.meteorite = 1;
+  assert.equal(W.status(s, 'rocket_l2').state, 'ready');
 });
 
 test('Hasarlı roket güvenli kalkamaz; her oynayışta gerekli malzeme bulunur', () => {
@@ -73,11 +107,16 @@ test('Hasarlı roket güvenli kalkamaz; her oynayışta gerekli malzeme bulunur'
   S.Sim.launchMav(s);
   assert.equal(s.ending.fuelOk, false);
   assert.equal(s.ending.damaged, true);
-  // Kaynak garantisi: yedek parçalar iki parçaya yeter; sandık sayısı istasyon kabuğu + gövde paneline yeter
+  // Kaynak garantisi: her parçanın tamir parçasını üreten tarifin kiti, sandığı ve minerali haritada/kargoda var
   const D = S.DATA;
-  const need = (item) => D.rocket.parts.reduce((a, p) => a + (p.needs[item] || 0), 0);
-  assert.ok(D.workshop.startItems.spare_parts >= need('spare_parts'));
+  const makers = D.rocket.parts.map((p) => Object.keys(p.needs).map((item) => D.workshop.recipes.find((r) => r.makes === item))).flat();
+  assert.ok(makers.every(Boolean), 'her tamir parçasının atölye tarifi var');
+  const need = (field, item) => makers.reduce((a, r) => a + ((r[field] || {})[item] || 0), 0);
+  assert.ok(D.workshop.startItems.spare_parts >= need('needs', 'spare_parts'));
   const crates = D.station.pickups.filter((p) => p.item === 'cargo_crate').length;
   const shell = D.workshop.recipes.find((r) => r.id === 'station_shell').needs.cargo_crate;
-  assert.ok(crates >= shell + need('cargo_crate'));
+  assert.ok(crates >= shell + need('needs', 'cargo_crate'));
+  const found = {};
+  for (const site of D.explore.minerals.sites) if (site.zone === 'surface') found[site.mineral] = (found[site.mineral] || 0) + site.amount;
+  for (const r of makers) for (const m of Object.keys(r.minerals || {})) assert.ok((found[m] || 0) >= need('minerals', m), m + ' yüzeyde yeterli');
 });

@@ -374,7 +374,7 @@
         const hand = walked ? HAND_WALK[Math.floor(t * WALK_FPS * walkRate) % WALK_FRAMES] : HAND_IDLE;
         const left = Math.round(ax - fw / 2);
         const hx = s.player.facing < 0 ? left + fw - hand[0] : left + hand[0];
-        drawHeld(ctx, S.Hotbar.selected(s), hx, ay - (walked ? sheet.height : img.height) + hand[1], s.player.facing);
+        drawHeld(ctx, S.Hotbar.selected(s), hx, ay - (walked ? sheet.height : img.height) + hand[1], s.player.facing, S.Hotbar.swingK());
       }
       // Elbise tarayıcısı: gerçek bir gömülü noktanın yanında "!" (sahte tümsek tepki vermez)
       if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, ay - img.height, t);
@@ -1018,11 +1018,19 @@
   const HAND_IDLE = [28, 29];
 
   /** Elde tutulan eşya, tutma noktası eldivende (hx, hy): aletler küçük piksel çizimi, diğerleri küçük bir paket */
-  function drawHeld(ctx, it, hx, hy, dir) {
+  // swing: 0..1 vuruş ilerlemesi (kazma ileri iner, matkap titrer, tarayıcı kalkar); eldiven etrafında döner
+  function drawHeld(ctx, it, hx, hy, dir, swing = 0) {
     if (!it) return;
+    ctx.save();
+    ctx.translate(hx, hy);
+    if (swing > 0) {
+      if (it.id === 'pickaxe') ctx.rotate(dir * 1.6 * Math.sin(Math.PI * swing));
+      else if (it.id === 'drill') ctx.translate(dir * Math.round(Math.sin(swing * 40)), 0);
+      else ctx.rotate(-dir * 0.5 * Math.sin(Math.PI * swing));
+    }
     const px = (dx, dy, w, h, c) => {
       ctx.fillStyle = c;
-      ctx.fillRect(hx + (dir < 0 ? -dx - w : dx), hy + dy, w, h);
+      ctx.fillRect(dir < 0 ? -dx - w : dx, dy, w, h);
     };
     if (it.id === 'pickaxe') {
       px(-1, -9, 2, 12, '#8a5a32'); // sap eldivenden yukarı
@@ -1040,6 +1048,8 @@
       px(-2, -2, 6, 5, '#c9ccd2'); // paket
       px(-2, -2, 6, 1, '#ff7a1a');
     }
+    if (swing > 0 && it.id === 'drill' && Math.sin(swing * 40) > 0) px(12, -4, 1, 1, '#ffd27a');
+    ctx.restore();
   }
 
   FX.drawCrew = function (c, img, x, footY, h, dir, phase, moving) {
