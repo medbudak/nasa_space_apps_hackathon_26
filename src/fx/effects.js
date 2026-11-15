@@ -1478,11 +1478,12 @@
   }
 
   /*
-   * Spor bölmesi: kesit laboratuvar–ranza direğinden (gym.atX) ikiye ayrılır; araya giren bölmeyi spor salonu çizimi
-   * (gym_bay: koşu bandı, bisiklet, ağırlık istasyonu, nabız ekranı) doldurur, iki yanına direk gelir. Kesitin piksel
-   * boyutunda bir kez kurulur; çizim sonradan yüklenirse yeniden kurulur.
+   * Spor bölmesi: kesit laboratuvar–ranza direğinden (gym.atX) ikiye ayrılır. Araya laboratuvar bölmesinin kopyası girer
+   * (aynı çerçeve, köşe payandaları, tavan ışıkları, yan duvarlar ve zemin), arka duvarına spor salonu çizimi (gym_bay:
+   * koşu bandı, bisiklet, ağırlık istasyonu, nabız ekranı) oturur. Kesitin piksel boyutunda bir kez kurulur.
    */
-  const GYM_ART_Y = { top: 6, bottom: 147 }; // bölmenin tavan bandı ile zemin bandı arası (yerel px)
+  const GYM_FRAME = { x0: 230, x1: 417 }; // laboratuvar bölmesi, iki direğinin arası (yerel px)
+  const GYM_ART = { x0: 236, x1: 409, y0: 22, y1: 124 }; // laboratuvarın arka duvarı: ışıkların altı, zemine kadar
   let cutaway = null;
   function landerCutaway(I) {
     const img = S.Sprites.get('lander_interior');
@@ -1497,14 +1498,14 @@
     const g = cv.getContext('2d');
     const PIL = 8; // direğin yarı genişliği (yerel px)
     const at = (v) => Math.round(v * r);
-    g.drawImage(img, 0, 0, at(atX + PIL), img.height, 0, 0, at(atX + PIL), img.height);
+    const left = atX + PIL; // yeni bölmenin içi bu x'te başlar
+    g.drawImage(img, 0, 0, at(left), img.height, 0, 0, at(left), img.height);
     g.drawImage(img, at(atX - PIL), 0, img.width - at(atX - PIL), img.height, at(atX - PIL + w), 0, img.width - at(atX - PIL), img.height);
-    // aradaki bölme: önce koyu zemin (çizim yüklenmediyse boş bölme), sonra spor salonu çizimi
-    g.fillStyle = '#2a2430';
-    g.fillRect(at(atX + PIL), 0, at(w - 2 * PIL), img.height);
+    g.drawImage(img, at(GYM_FRAME.x0), 0, at(GYM_FRAME.x1 - GYM_FRAME.x0), img.height, at(left), 0, at(GYM_FRAME.x1 - GYM_FRAME.x0), img.height);
     if (art) {
       g.imageSmoothingEnabled = true;
-      g.drawImage(art, at(atX + PIL), at(GYM_ART_Y.top), at(w - 2 * PIL), at(GYM_ART_Y.bottom - GYM_ART_Y.top));
+      const ax = left + GYM_ART.x0 - GYM_FRAME.x0;
+      g.drawImage(art, at(ax), at(GYM_ART.y0), at(GYM_ART.x1 - GYM_ART.x0), at(GYM_ART.y1 - GYM_ART.y0));
     }
     cutaway = { src: img, art, cv };
     return cv;
