@@ -128,7 +128,8 @@
           const cfg = { titleKey: evText(id, ev.id, 'mg_title'), descKey: evText(id, ev.id, 'mg_desc'), caseId: id };
           // Kara kutu: gerçek telemetri kanallarını alt sistemlerine bağla
           if (ev.id === 'telemetry' && c.telemetryMap) Object.assign(cfg, { match: SP.telemetryMatch(c), pairs: Object.keys(c.telemetryMap).length });
-          const mg = await S.runMinigame(ev.minigame, cfg);
+          // Çevre kanıtı her araçta o aracın kendi ölçümü (forensics_cases.json envMinigame)
+          const mg = await S.runMinigame(ev.id === 'env' ? c.envMinigame : ev.minigame, cfg);
           S.Surface.body.actionT = 1;
           S.Forensics.collectEvidence(S.getState(), id, ev.id, mg);
           S.Game.afterAction(() => SP.openForensic(id));
@@ -287,7 +288,7 @@
           const id = SP.expSel;
           const e = S.Experiments.get(id);
           S.UI.closeModal('lab', true);
-          const mg = await S.runMinigame(e.minigame, { titleKey: 'exp.' + id + '.mg_title', descKey: 'exp.' + id + '.mg_desc', theme: e.minigameTheme });
+          const mg = await S.runMinigame(e.minigame, { titleKey: 'exp.' + id + '.mg_title', descKey: 'exp.' + id + '.mg_desc' });
           const r = S.Experiments.run(S.getState(), id, SP.expSetup[id], mg);
           if (!r.ok) S.UI.toast(t(r.errKey), 'warn');
           S.Game.afterAction(() => SP.openLab());

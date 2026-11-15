@@ -17,7 +17,7 @@
       "marsValue": 3.25,
       "earthValue": 2.01,
       "unit": "s",
-      "minigame": "qte",
+      "minigame": "pendulum",
       "reward": { "sandPitSpeedFactor": 0.8 },
       "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
     },
@@ -35,7 +35,7 @@
       "marsValue": 1.04,
       "earthValue": 0.64,
       "unit": "s",
-      "minigame": "qte",
+      "minigame": "free_fall",
       "reward": { "evaO2Factor": 0.9 },
       "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
     },
@@ -54,8 +54,7 @@
       "marsValue": 84,
       "earthValue": 95,
       "unit": "%",
-      "minigame": "converter",
-      "minigameTheme": "perchlorate",
+      "minigame": "wash",
       "reward": { "greenhouseYield": true },
       "src": "https://science.nasa.gov/resource/phoenix-finds-perchlorate/"
     },
@@ -73,7 +72,7 @@
       "marsValue": 0.61,
       "earthValue": 101.3,
       "unit": "kPa",
-      "minigame": "align",
+      "minigame": "vacuum",
       "reward": { "waterSaver": true },
       "src": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
     },
@@ -91,7 +90,7 @@
       "marsValue": 240,
       "earthValue": 343,
       "unit": "m/s",
-      "minigame": "align",
+      "minigame": "sound",
       "reward": { "acousticDiagnostics": true },
       "src": "https://science.nasa.gov/resource/nasas-perseverance-rover-captures-sounds-of-mars/"
     },
@@ -109,8 +108,7 @@
       "marsValue": 10,
       "earthValue": 6,
       "unit": "g/h",
-      "minigame": "converter",
-      "minigameTheme": "moxie",
+      "minigame": "moxie",
       "reward": { "moxieBoostPct": 20 },
       "src": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/"
     }

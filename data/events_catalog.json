@@ -158,7 +158,7 @@
       "onTrigger": { "suitLeak": true, "suitIntegrity": -35 },
       "options": [
         {
-          "id": "A", "icon": "🩹", "minigame": "qte", "effects": { "suitO2": -8, "suitLeak": false }, "score": 15,
+          "id": "A", "icon": "🩹", "minigame": "patch", "effects": { "suitO2": -8, "suitLeak": false }, "score": 15,
           "alts": [ { "when": { "minigameMin": 0.9 }, "effects": { "suitO2": -3, "suitLeak": false }, "score": 35, "resultKey": "crisis.suit_leak.A.res_good" } ]
         },
         { "id": "B", "icon": "🏠", "effects": {}, "score": 0 },

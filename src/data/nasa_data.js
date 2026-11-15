@@ -977,7 +977,6 @@ window.SOL14.DATA = {
    },
    {
     "id": "env",
-    "minigame": "qte",
     "minutes": 15,
     "instrumentBonus": "supercam"
    }
@@ -996,6 +995,7 @@ window.SOL14.DATA = {
   "cases": [
    {
     "id": "opportunity",
+    "envMinigame": "tau",
     "name": "MER-B Opportunity",
     "agency": "NASA / JPL",
     "lastContact": "2018-06-10 (Sol 5111)",
@@ -1022,6 +1022,7 @@ window.SOL14.DATA = {
    },
    {
     "id": "insight",
+    "envMinigame": "dust_devil",
     "name": "InSight Lander",
     "agency": "NASA / JPL",
     "lastContact": "2022-12-15 (Sol 1440)",
@@ -1048,6 +1049,7 @@ window.SOL14.DATA = {
    },
    {
     "id": "spirit",
+    "envMinigame": "grains",
     "name": "MER-A Spirit",
     "agency": "NASA / JPL",
     "lastContact": "2010-03-22 (Sol 2210)",
@@ -1095,6 +1097,7 @@ window.SOL14.DATA = {
    },
    {
     "id": "phoenix",
+    "envMinigame": "lidar",
     "name": "Phoenix Lander",
     "agency": "NASA / UArizona",
     "lastContact": "2008-11-02 (Sol 157)",
@@ -1121,6 +1124,7 @@ window.SOL14.DATA = {
    },
    {
     "id": "beagle2",
+    "envMinigame": "relay",
     "name": "Beagle 2 (Bonus)",
     "agency": "ESA / UK",
     "lastContact": "2003-12-25 (MRO HiRISE 2015)",
@@ -1171,7 +1175,7 @@ window.SOL14.DATA = {
     "marsValue": 3.25,
     "earthValue": 2.01,
     "unit": "s",
-    "minigame": "qte",
+    "minigame": "pendulum",
     "reward": {
      "sandPitSpeedFactor": 0.8
     },
@@ -1195,7 +1199,7 @@ window.SOL14.DATA = {
     "marsValue": 1.04,
     "earthValue": 0.64,
     "unit": "s",
-    "minigame": "qte",
+    "minigame": "free_fall",
     "reward": {
      "evaO2Factor": 0.9
     },
@@ -1220,8 +1224,7 @@ window.SOL14.DATA = {
     "marsValue": 84,
     "earthValue": 95,
     "unit": "%",
-    "minigame": "converter",
-    "minigameTheme": "perchlorate",
+    "minigame": "wash",
     "reward": {
      "greenhouseYield": true
     },
@@ -1245,7 +1248,7 @@ window.SOL14.DATA = {
     "marsValue": 0.61,
     "earthValue": 101.3,
     "unit": "kPa",
-    "minigame": "align",
+    "minigame": "vacuum",
     "reward": {
      "waterSaver": true
     },
@@ -1269,7 +1272,7 @@ window.SOL14.DATA = {
     "marsValue": 240,
     "earthValue": 343,
     "unit": "m/s",
-    "minigame": "align",
+    "minigame": "sound",
     "reward": {
      "acousticDiagnostics": true
     },
@@ -1293,8 +1296,7 @@ window.SOL14.DATA = {
     "marsValue": 10,
     "earthValue": 6,
     "unit": "g/h",
-    "minigame": "converter",
-    "minigameTheme": "moxie",
+    "minigame": "moxie",
     "reward": {
      "moxieBoostPct": 20
     },
@@ -1821,7 +1823,7 @@ window.SOL14.DATA = {
      {
       "id": "A",
       "icon": "🩹",
-      "minigame": "qte",
+      "minigame": "patch",
       "effects": {
        "suitO2": -8,
        "suitLeak": false

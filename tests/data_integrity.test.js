@@ -130,8 +130,8 @@ function expectedDynamicKeys() {
   for (const t of ['FULL_SUCCESS', 'MIN_SUCCESS', 'PARTIAL', 'FAILED']) add(`tier.${t}`);
   for (const r of ['suit_o2', 'o2_reserve', 'hypothermia', 'radiation', 'morale']) add(`gameover.${r}`, `gameover.${r}.desc`);
   for (const c of ['heating', 'greenhouse_shed', 'greenhouse_off']) add(`gh.cause_${c}`, `log.greenhouse_frozen.cause_${c}`, `chain.gh_lost.effect_${c}`);
-  for (const m of ['wires', 'align', 'qte', 'converter']) add(`mg.${m}.title`, `mg.${m}.desc`, `mg.${m}.label`, `mg.${m}.hint`, `cc.minigame.${m}`);
-  for (const th of ['sabatier', 'perchlorate', 'moxie']) add(...[1, 2, 3].map((n) => `mg.converter.${th}.s${n}`), `mg.converter.${th}.eq`);
+  // Kriz kartı mini oyun çipi: kataloğun kullandığı her oyun türü
+  for (const c of ev.crises) for (const o of c.options) if (o.minigame) add(`cc.minigame.${o.minigame}`);
   for (const env of ['habitat', 'surface']) add(`lab.env_${env}`);
   // Sol 0 bilgi balonları (design_screens.js): her seçenek için "Nedir?" + "Neden seçilir?"
   const tipIds = {

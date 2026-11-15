@@ -3,7 +3,7 @@
   "evidenceTypes": [
     { "id": "photo", "minigame": "fieldcam", "minutes": 10, "instrumentBonus": "mastcam_z" },
     { "id": "telemetry", "minigame": "wires", "minutes": 20, "instrumentBonus": null },
-    { "id": "env", "minigame": "qte", "minutes": 15, "instrumentBonus": "supercam" }
+    { "id": "env", "minutes": 15, "instrumentBonus": "supercam" }
   ],
   "minEvidenceForDiagnosis": 2,
   "telemetryMapNote": "Black-box task: the player connects each real last-telemetry channel (values above) to the subsystem it belongs to, the first step of a fault tree. The mapping is engineering knowledge, not a measurement.",
@@ -13,6 +13,7 @@
   "cases": [
     {
       "id": "opportunity",
+      "envMinigame": "tau",
       "name": "MER-B Opportunity",
       "agency": "NASA / JPL",
       "lastContact": "2018-06-10 (Sol 5111)",
@@ -29,6 +30,7 @@
     },
     {
       "id": "insight",
+      "envMinigame": "dust_devil",
       "name": "InSight Lander",
       "agency": "NASA / JPL",
       "lastContact": "2022-12-15 (Sol 1440)",
@@ -45,6 +47,7 @@
     },
     {
       "id": "spirit",
+      "envMinigame": "grains",
       "name": "MER-A Spirit",
       "agency": "NASA / JPL",
       "lastContact": "2010-03-22 (Sol 2210)",
@@ -70,6 +73,7 @@
     },
     {
       "id": "phoenix",
+      "envMinigame": "lidar",
       "name": "Phoenix Lander",
       "agency": "NASA / UArizona",
       "lastContact": "2008-11-02 (Sol 157)",
@@ -86,6 +90,7 @@
     },
     {
       "id": "beagle2",
+      "envMinigame": "relay",
       "name": "Beagle 2 (Bonus)",
       "agency": "ESA / UK",
       "lastContact": "2003-12-25 (MRO HiRISE 2015)",
