@@ -145,7 +145,13 @@
 
   /* ---------------- Kişi 5: mineraller (ikon, envanter kartı, ilk buluş bilgi kartı) ---------------- */
   /** Mineral ikonu (assets/processed/sprites/mineral_<id>.png, 24×24; büyütmede pikselli) */
-  WP.mineralIcon = (id, size) => '<img class="min-ico" src="assets/processed/sprites/mineral_' + id + '.png" width="' + (size || 24) + '" height="' + (size || 24) + '" alt="">';
+  // Kişi 7 (Sedef) görselleri olan mineraller: 2 = ham numune, 3 = atölyede işlenmiş hâli (bazaltın görseli yok: kendi ikonu)
+  const ART = { hematite: 1, meteorite: 1, gypsum: 1, olivine: 1 };
+  WP.mineralIcon = (id, size, stage) => {
+    const px = size || 24;
+    if (ART[id]) return '<img class="min-ico min-art" src="assets/processed/sprites/minerals/' + id + '_' + (stage || 2) + '.png" style="width:' + px + 'px;height:' + px + 'px" alt="">';
+    return '<img class="min-ico" src="assets/processed/sprites/mineral_' + id + '.png" width="' + px + '" height="' + px + '" alt="">';
+  };
 
   /** Envanterdeki mineraller (inventory.minerals{ad: adet}); nerede bulunduğu ve oyunda neye yaradığı */
   WP.mineralsHtml = function (s) {
@@ -175,7 +181,9 @@
       '<div class="panel min-card">' +
       '<div class="fr2-head"><span class="fr2-tag">' + I('target') + t('mineral.tag') + '</span><h2>' + t('mineral.' + id + '.name') + '</h2>' +
       '<button class="icon-btn" data-close>' + I('x') + '</button></div>' +
-      '<div class="min-body">' + WP.mineralIcon(id, 72) +
+      '<div class="min-body"><div class="min-pics">' + WP.mineralIcon(id, 72) +
+      (ART[id] ? '<figure class="min-ref">' + WP.mineralIcon(id, 40, 3) + '<figcaption>' + t('mineral.refined_label') + '<br>' + t('mineral.' + id + '.refined') + '</figcaption></figure>' : '') +
+      '</div>' +
       '<div><p class="min-got">' + t('mineral.got', { n: amount }) + '</p>' +
       '<p><b>' + t('mineral.real') + '</b> ' + t('mineral.' + id + '.fact') + '</p>' +
       '<p><b>' + t('mineral.game') + '</b> ' + t('mineral.use.' + m.use) + '</p>' +

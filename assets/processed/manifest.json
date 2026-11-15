@@ -35,6 +35,90 @@
     "whiteKeptPx": 0
   },
   {
+    "asset": "sprites/minerals/hematite_1.png",
+    "size": "36x13",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/hematite_2.png",
+    "size": "96x57",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/hematite_3.png",
+    "size": "96x58",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/meteorite_1.png",
+    "size": "36x12",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/meteorite_2.png",
+    "size": "96x65",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/meteorite_3.png",
+    "size": "96x80",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/gypsum_1.png",
+    "size": "36x23",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/gypsum_2.png",
+    "size": "96x74",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/gypsum_3.png",
+    "size": "96x72",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/olivine_1.png",
+    "size": "36x27",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/olivine_2.png",
+    "size": "96x70",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/minerals/olivine_3.png",
+    "size": "96x93",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "sprites/astro/astro_surface_idle.png",
     "size": "116x58",
     "mode": "none",

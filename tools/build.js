@@ -248,6 +248,20 @@ const ASSETS = [
   { src: 'sprites/astronaut_jump.png', mode: 'flood', size: { h: 60 } },
   // Mekik içinde kasksız mürettebat (K4 Sedef): kaynak 2048×2048 şeffaf; içeriğe kırpılıp küçültülür
   { src: 'sprites/astronaut_indoor.png', mode: 'none', size: { h: 132 } },
+  // Kişi 7'nin (Sedef) mineral görselleri: 1 = yerde (maden noktası), 2 = ham numune (envanter, bilgi kartı),
+  // 3 = atölyede işlenmiş hâli (bilgi kartında küçük). Kaynaklar 512 px'e küçültüldü (asıllar 2048 px, nursedef dalında).
+  { src: 'sprites/minerals/hematite_1.png', mode: 'none', size: { w: 36 } },
+  { src: 'sprites/minerals/hematite_2.png', mode: 'none', size: { w: 96 } },
+  { src: 'sprites/minerals/hematite_3.png', mode: 'none', size: { w: 96 } },
+  { src: 'sprites/minerals/meteorite_1.png', mode: 'none', size: { w: 36 } },
+  { src: 'sprites/minerals/meteorite_2.png', mode: 'none', size: { w: 96 } },
+  { src: 'sprites/minerals/meteorite_3.png', mode: 'none', size: { w: 96 } },
+  { src: 'sprites/minerals/gypsum_1.png', mode: 'none', size: { w: 36 } },
+  { src: 'sprites/minerals/gypsum_2.png', mode: 'none', size: { w: 96 } },
+  { src: 'sprites/minerals/gypsum_3.png', mode: 'none', size: { w: 96 } },
+  { src: 'sprites/minerals/olivine_1.png', mode: 'none', size: { w: 36 } },
+  { src: 'sprites/minerals/olivine_2.png', mode: 'none', size: { w: 96 } },
+  { src: 'sprites/minerals/olivine_3.png', mode: 'none', size: { w: 96 } },
   // Takımın 6 GIF'i (bekleme, yürüme, süzülme, yemek, su içme, uyku): 4 karelik şeritler, arka plan silinmiş;
   // boy şimdiki sprite'larla aynı (yüzey 58 px, mekik içi 132 px). Kaynak işleme: GIF -> şerit (piksel boyutu korunur)
   { src: 'sprites/astro/astro_surface_idle.png', mode: 'none', size: { w: 116, h: 58 }, noCrop: true },

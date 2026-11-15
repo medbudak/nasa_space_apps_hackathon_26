@@ -693,6 +693,34 @@
       ctx.fillRect(Math.round(x + dx), Math.round(gy + dy), w, h);
     };
     const seed = DF.seedOf(st.id);
+    // Kişi 7 (Sedef) görseli varsa: yerde duran mineral (1. aşama); her vuruşta biraz daha kuma gömülür, gece kararır
+    const art = !done && S.Sprites.get('min_' + st.mineral + '_ground');
+    if (art) {
+      const sink = Math.round(art.height * 0.55 * (1 - left));
+      const top = Math.round(gy - art.height + sink + 1);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - art.width, gy - art.height - 4, art.width * 2, art.height + 5);
+      ctx.clip();
+      const dark = cave ? 0.25 : light.dark || 0;
+      if (dark > 0.02) ctx.filter = 'brightness(' + (1 - dark * 0.65).toFixed(2) + ')';
+      ctx.drawImage(art, Math.round(x - art.width / 2), top);
+      ctx.restore();
+      if (cave) {
+        if (Math.sin(t * 3 + st.atM) > 0) R(-1, -46, 3, 3, '#ffc233'); // tünel buluntularının işareti
+      } else if (light.dark < 0.6) {
+        const phase = (t + rnd(seed) * 2) % 1.8;
+        if (phase < 0.35) {
+          ctx.save();
+          ctx.globalAlpha = (1 - phase / 0.35) * (1 - light.dark);
+          R(7, -art.height - 6, 1, 9, '#fff6d8');
+          R(3, -art.height - 2, 9, 1, '#fff6d8');
+          ctx.restore();
+        }
+      }
+      if (hits > 0) R(-3 - hits * 2, -1, 6 + hits * 4, 3, cave ? '#1a1214' : '#2a140d');
+      return;
+    }
     if (cave) {
       // duvardaki damar: tünel katmanları gibi düz renk, üstte 1 px açık ton
       const col = m ? m.color : '#9a9690';

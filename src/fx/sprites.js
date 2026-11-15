@@ -33,6 +33,11 @@
     // Mekik içi (K4 Sedef): yaşam alanının arka planı ve kasksız mürettebat
     ship_interior: 'screens/scr_ship_interior.jpeg',
     astronaut_indoor: 'sprites/astronaut_indoor.png',
+    // Kişi 7 (Sedef): maden noktasında yerde duran mineral (1. aşama)
+    min_hematite_ground: 'sprites/minerals/hematite_1.png',
+    min_meteorite_ground: 'sprites/minerals/meteorite_1.png',
+    min_gypsum_ground: 'sprites/minerals/gypsum_1.png',
+    min_olivine_ground: 'sprites/minerals/olivine_1.png',
     // Takımın GIF animasyonları (4 karelik yatay şeritler)
     astro_surface_idle: 'sprites/astro/astro_surface_idle.png',
     astro_surface_walk: 'sprites/astro/astro_surface_walk.png',

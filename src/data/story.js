@@ -2154,7 +2154,12 @@ window.SOL14.STORY = {
   "item.hull_patch.desc": "Perçinli saç yama.",
   "item.hull_patch.from": "Atölye: kargo sandığı + hematit",
   "station.bottles": "Şişe rafı",
-  "hp.bottle_desc": "Boş su şişesi al: batıdaki buz mağarasında doldurup seraya götürebilirsin. Dolu şişeyi rafa bırakırsan su habitat deposuna gider."
+  "hp.bottle_desc": "Boş su şişesi al: batıdaki buz mağarasında doldurup seraya götürebilirsin. Dolu şişeyi rafa bırakırsan su habitat deposuna gider.",
+  "mineral.refined_label": "Atölyede işlenince:",
+  "mineral.hematite.refined": "demir külçe (oyun kurgusu)",
+  "mineral.meteorite.refined": "kesilmiş göktaşı kesiti",
+  "mineral.gypsum.refined": "alçıtaşı kristali",
+  "mineral.olivine.refined": "peridot (mücevher kalitesinde olivin)"
  },
  "en": {
   "ui.back": "Back",
@@ -4309,6 +4314,11 @@ window.SOL14.STORY = {
   "item.hull_patch.desc": "A riveted sheet patch.",
   "item.hull_patch.from": "Workshop: cargo crate + hematite",
   "station.bottles": "Bottle rack",
-  "hp.bottle_desc": "Take an empty water bottle: fill it in the ice cave in the west and carry it to the greenhouse. Put a full bottle back and the water goes to the habitat tank."
+  "hp.bottle_desc": "Take an empty water bottle: fill it in the ice cave in the west and carry it to the greenhouse. Put a full bottle back and the water goes to the habitat tank.",
+  "mineral.refined_label": "Processed in the workshop:",
+  "mineral.hematite.refined": "iron ingot (game fiction)",
+  "mineral.meteorite.refined": "cut meteorite slice",
+  "mineral.gypsum.refined": "gypsum crystal",
+  "mineral.olivine.refined": "peridot (gem-quality olivine)"
  }
 };
