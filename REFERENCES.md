@@ -68,7 +68,8 @@ Running log of everything external the project uses. The submission form asks fo
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/mars-phoenix-lander-finishes-successful-work-on-red-planet/ | nasa_data.json: wrecks |
 | science.nasa.gov | https://science.nasa.gov/photojournal/image-from-mars-orbit-indicates-solar-panels-on-phoenix-lander-may-have-collapsed/ | nasa_data.json: wrecks |
 | nasa.gov | https://www.nasa.gov/press-release/nasa-retires-insight-mars-lander-mission-after-years-of-science | nasa_data.json: wrecks |
-| jpl.nasa.gov | https://www.jpl.nasa.gov/news/press_kits/mars_2020/launch/mission/ | nasa_data.json: gameplay.transit (solar-powered cruise stage, TCMs during cruise) |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/news/press_kits/mars_2020/launch/mission/ | nasa_data.json: gameplay.transit (solar-powered cruise stage; `landingChargeFrac`) |
+| jpl.nasa.gov | https://www.jpl.nasa.gov/images/pia12215-new-impact-craters-on-mars/ | nasa_data.json: station (new impact craters do form on Mars; the impact next to the base is fiction) |
 | science.nasa.gov | https://science.nasa.gov/photojournal/temperature-behavior-of-possible-cave-skylight-on-mars | explore_config.json: cave.skylight (THEMIS: skylight day-night swing ≈ 1/3 of the surrounding surface) — D-012 |
 | science.nasa.gov | https://science.nasa.gov/solar-system/planets/mars/nasa-orbiter-finds-possible-cave-skylights-on-mars/ | Lava-tube fiction label: known skylights ("Seven Sisters", ~100–225 m) are on Arsia Mons — D-012 |
 | jpl.nasa.gov | https://www.jpl.nasa.gov/news/right-front-wheel-rotations/ | forensics_cases.json: Spirit salvageChoice (right-front wheel actuator failed March 2006) — D-012 |
@@ -115,7 +116,7 @@ Include open-source and free items too. Note the license.
 | Data tick (60 ms, 1.2 kHz beep) | Made by the team with ffmpeg (sine generator), no external source | Own work | `assets/audio/data_tick` (.mp3) · downlink ticks. The Freesound pick (661435, a 7-minute track) did not fit and was not used |
 | VT323 font (`assets/fonts/VT323-Regular.ttf`, embedded in `styles/fonts.css`) | https://github.com/google/fonts/tree/main/ofl/vt323 | SIL Open Font License 1.1 (`assets/fonts/OFL-VT323.txt`) | The single retro UI font for every panel, card, HUD and canvas label |
 | `assets/ui/field_cam.png` (FIELD CAM camera body) | this repository | Supplied by K3 (Medine) with the world prototype (origin to be confirmed) | Photo-evidence minigame frame (`src/ui/field_cam.js`) |
-| `assets/sprites/astronaut_indoor.png` (crew member inside the shuttle) | this repository | Supplied by K4 (Sedef) on branch `nursedef` (see the K4 AI-tool statement under Use of AI) | Shuttle deck walk during the transit tasks |
+| `assets/sprites/astronaut_indoor.png` (crew member inside the shuttle) | this repository | Supplied by K4 (Sedef) on branch `nursedef` (see the K4 AI-tool statement under Use of AI) | Shuttle deck walk during transit |
 | Western ice field, eastern lava-plain scenery, dig mounds, SCOUT-1 parts | this repository | Procedural pixel art drawn in code by the team (K2 `src/fx/westlands.js`, K3 prototype ported to `src/fx/dig_fx.js`) | Glacier and lava-plain routes |
 | | | | |
 
@@ -131,6 +132,7 @@ Say which tool was used, and where and how. AI-generated images and videos need 
 | Gemini, Adobe Firefly (AI-assisted pixel-art tools) and custom pixel-drawing scripts | In-game pixel art and UI icons, adjusted to the SOL 14 palette (statement by K4 on branch `nursedef`, 2026-11-15) | `assets/` (incl. `assets/ui/*.png`, `assets/interior/*`, `assets/screens/scr_ship_*`) |
 | Claude (Anthropic), via Claude Code | D-012 map, ice route, lava-tube sub-map, landing cutscene: code, procedural pixel drawing (lander, ice, boulders, cave), TR/EN texts and tests; sources checked against the NASA/JPL pages listed above | `src/systems/explore.js`, `src/fx/lander.js`, `src/fx/effects.js`, `data/explore_config.json`, `content/story.json`, `tests/explore.test.js` |
 | Claude (Anthropic), via Claude Code | 2026-11-15 merge of the three archives and the git branches: conflict resolution, dig sites and hidden-wreck rules, porting the K3 prototype (FIELD CAM, SCOUT-1, scenery, Mars facts) and the K4 shuttle deck walk and tutorial into the modules, TR/EN texts and tests; real trail details checked against the NASA/JPL pages listed above | `src/systems/explore.js`, `src/fx/dig_fx.js`, `src/ui/field_cam.js`, `src/ui/cutscenes.js`, `src/core/objectives.js`, `content/story.json`, `tests/` |
+| Claude (Anthropic), via Claude Code | Ported K3 (Medine)'s world prototype from branch `medine-world-proto` into the game modules: task-free transit deck, per-task minigames and cable panel, dust storm, longer east route, station-strip lander panel, station side story (impact card, scattered cargo, station drawing, workshop modules, ending slide), TR/EN texts and tests | `src/ui/cutscenes.js`, `src/minigames/task_games.js`, `src/fx/effects.js`, `src/fx/dig_fx.js`, `src/ui/habitat_panel.js`, `src/systems/station.js`, `src/fx/station_fx.js`, `src/ui/station_card.js`, `tests/station.test.js` |
 
 ## Simplified values
 
@@ -193,3 +195,5 @@ Real-world values that were changed or rounded for gameplay.
 | `explore.fieldCam` | Game values | 40 s, focus tolerance 0.04 | FIELD CAM photo minigame |
 | `gameplay.cargoBonus` | K4 (Sedef) rule; game values | margin > 15% → +4 kg O₂, +10 L water at landing | Free payload mass carries consumables |
 | `gameplay.deploy` (minutes and minigame per base system) | Game values (ux-plan #8) | solar 30 min, ISRU 40, greenhouse 30, MAV 45 | Base systems land in crates and are set up by the player |
+| `gameplay.transit` (`deckSeconds`, `landingChargeFrac`) | Game values (D-014) | 45 s on the deck, battery at 90% on landing | Transit has no tasks; landing resources are fixed |
+| `station` (impact Sol, pad and crater positions, scattered cargo, mound kits, regolith dig minutes) and the `station_*` workshop recipes | Game values; the meteorite impact is fiction (D-014) | impact on Sol 2, pad +125 m, 9 pickups, 4 min per regolith bag | Station side story built from scattered cargo |

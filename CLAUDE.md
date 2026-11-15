@@ -193,19 +193,22 @@ To add a skill: put `SKILL.md` (with `name` and `description` frontmatter) and i
 
 ## Status snapshot (2026-11-15, late)
 
-Most of the planned work is done and on `main`. Details live in DECISIONS.md (D-012, D-013), `docs/merge-2026-11-15.md` and `docs/ux-plan.md`.
+Most of the planned work is done and on `main`. Details live in DECISIONS.md (D-012, D-013, D-014), `docs/merge-2026-11-15.md` and `docs/ux-plan.md`.
 
-- **Flow:** menu → Sol 0 mission prep (five steps, tooltips with real effects) → launch intro (K2: crowds, news, countdown, no text) → shuttle deck with four transit engineering tasks (K4 interior art; results set the landing resources) → landing cutscene → surface → ending → report.
+- **Flow:** menu → Sol 0 mission prep (five steps, tooltips with real effects) → launch intro (K2: crowds, news, countdown, no text) → task-free shuttle deck (walk to the cockpit seat; K4 interior art, Medine's version; landing resources from `Sim.landingStart`) → landing cutscene → surface → ending → report.
 - **Home is the lander.** No separate habitat building: the door is the lander's ladder at 0 m (`landingPadM` 0). The interior is the K4 shuttle cross-section (`scr_ship_interior`, `astronaut_indoor`) with stations for comms, power, suit charge, O₂, lab, workshop, suit repair, bunk and airlock. Many code names and story keys still say "habitat"; the player-facing text says "lander".
 - **Workshop and inventory** (`S.Workshop`, `src/systems/workshop.js`; UI `src/ui/workshop_panel.js`; `I` opens the inventory): base systems land as kits and are built inside. Recipes in `data/nasa_data.json` → `workshop.recipes`: full or half solar array (`s.base.solarFrac`), ISRU/MOXIE, MAV fuel line, greenhouse, salvaged antenna, salvaged repair kit. Each shows before → after rows from the same formulas. No solar power before the array, no fuel before ISRU + MAV, no safe return without the MAV.
+- **Lander panel:** a station strip in room order (Medine's layout); the selected station follows the astronaut, E runs it, the airlock exits.
+- **Minigames:** every experiment, wreck environment check and the suit-leak crisis has its own game (`src/minigames/task_games.js`, `S.TaskGames`); `minigames.js` only routes. The black-box task is a cable panel.
+- **Station side story** (D-014, `S.Station`): a Sol 2 meteorite scatters cargo (MAV intact). Pickups on the ground and boulders, kits in the two decoy mounds, regolith bags with S/↓. Five modules are `station_*` workshop recipes with either-or sources; an ending slide shows what stays for the next crew. Score unchanged.
 - **Exploration** (D-013): vehicles are found by digging (`S.Explore.dig`); there is no automatic discovery.
-  - East: lava plain to +1400 m, with a rubble-sealed skylight and the lava tube (fictional SCOUT-1 rover, FIELD CAM photos).
+  - East: lava plain to +1400 m, with a rubble-sealed skylight and the lava tube (fictional SCOUT-1 rover, FIELD CAM photos); past it dunes, yardangs and layered buttes to +3000 m (`terrain.map.eastEndM`).
   - West: K2 glacier to the ice wall at −5000 m (`src/fx/westlands.js`).
   - Wreck tasks follow what NASA/ESA did for each vehicle; the black-box task matches real telemetry channels to subsystems.
 - **Look and sound:**
   - One retro UI font, VT323 (embedded in `styles/fonts.css`). No metre labels on the ground.
   - K5's CC0 recordings (`assets/audio`) play through `src/fx/audio.js`, with a synthesised fallback.
-- **Tests:** `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`), `rhythm`, `explore`, `design_choices` → 82/82 pass.
+- **Tests:** `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`), `rhythm`, `explore`, `design_choices`, `station` → 87/87 pass.
 - **Coordinates:** `Surface.mToPx/pxToM` are piecewise (`terrain.map`); the base area −120…0 m is drawn at sprite scale. The cave is a separate space: `s.player.zone === 'cave'`, position `s.player.cx`. It uses the same scale and the same movement code as the surface; do not give it its own.
 - **Old saves:** fields added later are filled by `S.ensureExploreState` (called on load, checkpoint, `enterWorld`, `Sim.land`).
 - **Still open:**
