@@ -16,7 +16,10 @@
   const stationBuilt = (s, r) => (s.station && s.station.built[r.module]) || null;
   W.recipe = (id) => W.recipes().find((r) => r.id === id);
   W.items = (s) => (s.inventory && s.inventory.items) || {};
-  W.count = (s, item) => W.items(s)[item] || 0;
+  const isMineral = (id) => Boolean(S.Explore && S.Explore.mineralTypes().some((m) => m.id === id));
+  /** Malzeme adedi: envanter eşyası ya da mineral (Kişi 5, inventory.minerals) */
+  W.count = (s, item) => (isMineral(item) ? S.Explore.mineralCount(s, item) : W.items(s)[item] || 0);
+  W.matNameKey = (id) => (isMineral(id) ? 'mineral.' : 'item.') + id + '.name';
   /** Alet var mı? Tamir kiti mevcut repairKits stoğudur (Kişi 4 kartı) */
   W.hasTool = (s, id) => (id === 'repair_kit' ? (s.inventory.repairKits || 0) > 0 : Boolean(s.inventory.tools && s.inventory.tools[id]));
 
@@ -52,7 +55,7 @@
     if (r.onlyIfPartial && (s.base.solarFrac || 1) >= 1) return { state: 'built' };
     if (r.instrument && !S.Sim.has(s, r.instrument)) return { state: 'locked', reasonKey: 'ws.err_needs_inst', vars: { inst: S.t('inst.' + r.instrument + '.short') } };
     const missing = Object.entries(r.needs || {}).filter(([item, n]) => W.count(s, item) < n).map(([item]) => item);
-    if (missing.length) return { state: 'locked', reasonKey: 'ws.err_missing', vars: { list: missing.map((i) => S.t('item.' + i + '.name')).join(', ') }, missing };
+    if (missing.length) return { state: 'locked', reasonKey: 'ws.err_missing', vars: { list: missing.map((i) => S.t(W.matNameKey(i))).join(', ') }, missing };
     if (r.upgrade) {
       const cost = W.upgradeCost(s, r);
       if (cost.energyKwh && s.res.energyKwh < cost.energyKwh) return { state: 'locked', reasonKey: 'ws.err_energy', vars: { kwh: cost.energyKwh } };
@@ -143,6 +146,8 @@
       rows.push({ key: 'relay_mbit', before: relayMbit(s, 0), after: relayMbit(s, r.extraMbit) });
     } else if (r.tool) {
       rows.push({ key: 'tool_have', before: 0, after: 1, bool: true });
+    } else if (r.makes) {
+      rows.push({ key: 'part_count', before: W.count(s, r.makes), after: W.count(s, r.makes) + 1 });
     } else if (r.module) {
       const n = S.Station.builtCount(s);
       rows.push({ key: 'station_modules', before: n, after: n + 1 });
@@ -160,7 +165,11 @@
     if (!s.player.inside) return { ok: false, errKey: 'ws.err_inside' };
     const opt = W.option(r, optId);
     const rows = W.effects(s, id, opt && opt.id);
-    for (const [item, n] of Object.entries(r.needs || {})) s.inventory.items[item] -= n;
+    for (const [item, n] of Object.entries(r.needs || {})) {
+      if (isMineral(item)) S.Explore.spendMinerals(s, { [item]: n });
+      else s.inventory.items[item] -= n;
+    }
+    if (r.makes) s.inventory.items[r.makes] = (s.inventory.items[r.makes] || 0) + 1;
     if (r.builds) {
       if (r.builds === 'solar') s.base.solarFrac = opt ? opt.solarFrac : 1;
       S.Sim.deploy(s, r.builds, 1, 0);

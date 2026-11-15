@@ -332,12 +332,19 @@
     if (!it) return say('use.empty');
     const prompt = !s.player.inside && S.HUD.prompt;
     const name = t(S.Hotbar.nameKey(it));
+    // Eldeki aletle MAV tamiri (yakıt hattı: tarayıcı, gövde: matkap)
+    if (it.kind === 'tool' && prompt && prompt.action === 'mav') {
+      const part = S.Rocket.partForTool(s, it.id);
+      if (part) return S.HabitatPanel.runRepair(part);
+      return S.HabitatPanel.openMav();
+    }
     if (it.id === 'pickaxe' || it.id === 'drill') {
-      if (prompt && prompt.kind === 'dig') return Game.dig(prompt.id);
-      if (S.Station.impacted(s) && !s.player.inside) return Game.digRegolith();
+      if (prompt && (prompt.kind === 'dig' || prompt.kind === 'mineral')) return Game.swingTool().then(() => Game.interact());
+      if (S.Station.impacted(s) && !s.player.inside) return Game.swingTool().then(() => Game.digRegolith());
       return say('use.dig_where', { item: name });
     }
     if (it.id === 'scanner') {
+      Game.swingTool();
       const ping = S.Explore.scannerPing(s);
       return ping ? say('use.scan_hit', { m: Math.round(ping.d) }, 'ok') : say('use.scan_none');
     }
@@ -351,6 +358,29 @@
     if (forRocket) return say('use.at_mav', { item: name });
     if (recipes.length) return say('use.at_workshop', { item: name, list: recipes.map((id) => t('ws.' + id + '.name')).join(', ') });
     return say('use.passive', { item: name });
+  };
+
+  /**
+   * Eldeki aleti çalıştır: kazma iner, matkap döner, tarayıcı tarar (S.Hotbar.swing, effects.js çizer).
+   * Vuruş anında toz/kıvılcım ve ses; Promise vuruş bitince çözülür ve iş o zaman yapılır.
+   */
+  Game.swingTool = function () {
+    const s = S.getState();
+    const it = S.Hotbar.selected(s);
+    if (!it || it.kind !== 'tool') return Promise.resolve();
+    const SWING_MS = 420;
+    S.Hotbar.swingStart = performance.now();
+    S.Hotbar.swingMs = SWING_MS;
+    return new Promise((done) =>
+      setTimeout(() => {
+        const body = S.Surface.body;
+        const front = body.px + s.player.facing * 10;
+        if (it.id === 'pickaxe') S.bus.emit('fx:puff', { px: front, size: 2 });
+        if (it.id === 'drill') S.bus.emit('fx:puff', { px: front, size: 1 });
+        S.bus.emit('audio:play', it.id === 'scanner' ? 'scan' : 'land');
+        done();
+      }, SWING_MS * 0.6)
+    );
   };
 
   /** D-015: roket hasar alınca ne yapılacağını adım adım söyle */

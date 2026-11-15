@@ -620,6 +620,8 @@
       { "id": "antenna", "once": true, "needs": { "spare_antenna": 1 }, "minutes": 20, "extraMbit": 10 },
       { "id": "repair_kit", "needs": { "robotic_arm": 1, "cable_spool": 1 }, "minutes": 25, "repairKits": 1 },
       { "id": "tool_drill", "tool": "drill", "needs": { "drill_kit": 1 }, "minutes": 20 },
+      { "id": "rk_fitting", "makes": "fuel_fitting", "needs": { "spare_parts": 1, "meteorite": 1 }, "minutes": 40 },
+      { "id": "rk_patch", "makes": "hull_patch", "needs": { "cargo_crate": 1, "hematite": 1 }, "minutes": 45 },
       { "id": "station_shell", "module": "shell", "needs": { "cargo_crate": 3, "cable_spool": 1 }, "minutes": 60 },
       { "id": "station_shield", "module": "shield", "requiresModule": "shell", "needs": { "regolith_bag": 4 }, "minutes": 45 },
       { "id": "station_heat_rhu", "module": "heat", "requiresModule": "shell", "needs": { "rhu_pack": 1 }, "minutes": 30 },
@@ -654,13 +656,13 @@
   },
   "rocket": {
     "simplified": true,
-    "simplifiedNote": "Game values (Kişi 4 task card, D-015 proposed): MAV damage and repair. In NASA's reference plan most of the ascent propellant (the oxygen) is made on Mars, so the repair screen also shows the fuel level. Repair minutes are long on purpose (gloved hands, dust, cold); materials, energy and minutes are not measured values. The landing damage and the meteorite are fiction.",
+    "simplifiedNote": "Game values (Kişi 4 task card, D-015 proposed): MAV damage and repair. In NASA's reference plan most of the ascent propellant (the oxygen) is made on Mars, so the repair screen also shows the fuel level. Repair parts are made in the workshop (rk_fitting: spare part + iron-nickel meteorite; rk_patch: cargo crate + hematite as the iron source); the tool must be in hand at the MAV. Repair minutes are long on purpose (gloved hands, dust, cold); materials, energy and minutes are not measured values. The landing damage and the meteorite are fiction.",
     "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
     "landingDamage": ["fuel_line"],
     "meteorDamage": ["hull"],
     "parts": [
-      { "id": "fuel_line", "needs": { "spare_parts": 1 }, "tool": "scanner", "energyKwh": 1, "evaMinutes": 40, "minigame": "wires" },
-      { "id": "hull", "needs": { "spare_parts": 1, "cargo_crate": 1 }, "tool": "drill", "energyKwh": 2, "evaMinutes": 60, "minigame": "patch" }
+      { "id": "fuel_line", "needs": { "fuel_fitting": 1 }, "tool": "scanner", "energyKwh": 1, "evaMinutes": 30, "minigame": "wires" },
+      { "id": "hull", "needs": { "hull_patch": 1 }, "tool": "drill", "energyKwh": 2, "evaMinutes": 40, "minigame": "patch" }
     ]
   },
   "station": {

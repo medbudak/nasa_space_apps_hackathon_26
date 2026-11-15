@@ -38,7 +38,7 @@
     const mats = needs.length
       ? needs.map(([item, n]) => {
           const have = W().count(s, item);
-          return '<li class="' + (have >= n ? 'ok' : 'miss') + '">' + I(have >= n ? 'check' : 'x') + '<span>' + t('item.' + item + '.name') + '</span><b>' + have + ' / ' + n + '</b></li>';
+          return '<li class="' + (have >= n ? 'ok' : 'miss') + '">' + I(have >= n ? 'check' : 'x') + '<span>' + t(W().matNameKey(item)) + '</span><b>' + have + ' / ' + n + '</b></li>';
         }).join('')
       : '<li class="ok">' + I('check') + '<span>' + t('ws.no_materials') + '</span></li>';
     const opts = r.options

@@ -1063,6 +1063,24 @@ window.SOL14.DATA = {
     "minutes": 20
    },
    {
+    "id": "rk_fitting",
+    "makes": "fuel_fitting",
+    "needs": {
+     "spare_parts": 1,
+     "meteorite": 1
+    },
+    "minutes": 40
+   },
+   {
+    "id": "rk_patch",
+    "makes": "hull_patch",
+    "needs": {
+     "cargo_crate": 1,
+     "hematite": 1
+    },
+    "minutes": 45
+   },
+   {
     "id": "station_shell",
     "module": "shell",
     "needs": {
@@ -1259,7 +1277,7 @@ window.SOL14.DATA = {
  },
  "rocket": {
   "simplified": true,
-  "simplifiedNote": "Game values (Kişi 4 task card, D-015 proposed): MAV damage and repair. In NASA's reference plan most of the ascent propellant (the oxygen) is made on Mars, so the repair screen also shows the fuel level. Repair minutes are long on purpose (gloved hands, dust, cold); materials, energy and minutes are not measured values. The landing damage and the meteorite are fiction.",
+  "simplifiedNote": "Game values (Kişi 4 task card, D-015 proposed): MAV damage and repair. In NASA's reference plan most of the ascent propellant (the oxygen) is made on Mars, so the repair screen also shows the fuel level. Repair parts are made in the workshop (rk_fitting: spare part + iron-nickel meteorite; rk_patch: cargo crate + hematite as the iron source); the tool must be in hand at the MAV. Repair minutes are long on purpose (gloved hands, dust, cold); materials, energy and minutes are not measured values. The landing damage and the meteorite are fiction.",
   "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
   "landingDamage": [
    "fuel_line"
@@ -1271,22 +1289,21 @@ window.SOL14.DATA = {
    {
     "id": "fuel_line",
     "needs": {
-     "spare_parts": 1
+     "fuel_fitting": 1
     },
     "tool": "scanner",
     "energyKwh": 1,
-    "evaMinutes": 40,
+    "evaMinutes": 30,
     "minigame": "wires"
    },
    {
     "id": "hull",
     "needs": {
-     "spare_parts": 1,
-     "cargo_crate": 1
+     "hull_patch": 1
     },
     "tool": "drill",
     "energyKwh": 2,
-    "evaMinutes": 60,
+    "evaMinutes": 40,
     "minigame": "patch"
    }
   ]
@@ -2641,8 +2658,6 @@ window.SOL14.DATA = {
    "simplified": true,
    "src": "https://www.spaceappschallenge.org/",
    "interactRangeM": 14,
-   "toolPlaceholder": true,
-   "toolPlaceholderNote": "PLACEHOLDER until Kişi 4's tool check lands: while true the drill counts as carried. Remove before content lock.",
    "types": [
     {
      "id": "hematite",
