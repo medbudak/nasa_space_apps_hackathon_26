@@ -177,3 +177,17 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Why: The player asked for exploration, decisions and interaction instead of ready-made vehicles, with two routes that play differently. It builds on the three archives (K2 glacier, K3 buried wrecks and tube rover, D-012 map and UI). Rejected: keeping D-012's visible wrecks on the right route.
 - Changes D-012: the wreck positions, "InSight, Phoenix and Beagle 2 are not on the map" and the −450 / +600 m bounds. D-012's base-centred map, lava-tube sub-map, ice loop and landing cutscene stay.
 - Affects: `data/nasa_data.json` (terrain.map, westRegion, gameplay.cargoBonus), `data/explore_config.json` (dig, cave.scout, westFinds, fieldCam), `data/forensics_cases.json`, `src/systems/explore.js`, `src/systems/forensics.js`, `src/core/surface.js`, `objectives.js`, `sim.js`, `state.js`, `src/fx/dig_fx.js`, `westlands.js`, `effects.js`, `src/ui/field_cam.js`, `cutscenes.js`, `hud.js`, `science_panels.js`, `design_screens.js`, `content/story.json`, tests
+
+### D-014: Task-free transit, per-task minigames and the station side story
+- Status: Proposed (applied on K1's instruction, 2026-11-15; team to confirm)
+- Date: 2026-11-15
+- Agreed by: (pending; K1 decided, from K3 Medine's world prototype)
+- Decision:
+  - Transit has no engineering tasks: the player walks the shuttle deck and takes the cockpit seat (or the deck timer runs out). Landing resources come from `Sim.landingStart` (`gameplay.transit.landingChargeFrac`, game value).
+  - Every experiment, wreck environment check and suit-leak crisis plays its own short minigame (`src/minigames/task_games.js`); the old wires/align/qte/converter templates are removed.
+  - Station side story: on Sol 2 a meteorite (fictional) lands east of the base and scatters the cargo of a permanent station meant for the next crew. The MAV and the lander are not hit; the return and the success rules (D-006) stay the same.
+    - Crates and cables lie on the ground and on boulders; two decoy mounds hide a heater kit and a relay kit; S/↓ fills regolith bags.
+    - Five modules (shell, shield, heating, power, comms) are workshop recipes, some with either-or sources (RHUs from Opportunity/Spirit or a heater kit; InSight's panel or a spare panel kit; Beagle 2's antenna, which then can't boost the lander relay, or a relay kit).
+    - The ending adds one slide on what the station leaves behind (six variants). It changes no score.
+- Why: The team chose Medine's prototypes; K1 kept the MAV and the return so the success rules and the report card stay valid. Rejected: the prototype's holed MAV (it removed the return and changed the win condition) and its budget shop (parts bought from Earth would arrive at once, which is not physically sound).
+- Affects: `src/ui/cutscenes.js`, `src/core/sim.js`, `src/minigames/`, `src/systems/station.js` (new), `src/fx/station_fx.js` (new), `src/ui/station_card.js` (new), `src/systems/workshop.js`, `explore.js`, `forensics.js`, `objectives.js`, `data/nasa_data.json` (`gameplay.transit`, `station`, `workshop.recipes`), `data/forensics_cases.json`, `content/story.json`, tests
