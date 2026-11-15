@@ -324,12 +324,206 @@
       .concat(tot.spof.map((k) => Object.assign({ k, crit: false }, ISSUE[k] || { cat: 'comm', step: 5 })));
   }
 
+  /* ---------------- Bilgi balonları: Nedir? · Neden seçilir? · Oyunda ne değişir? ---------------- */
+  // "Ne değişir?" satırı her çizimde veriden üretilir (S.DATA + Engineering.calcDesignTotals + Sim.transitVars):
+  // bütçe çubukları, iniş değerleri ve oyun aynı formülleri kullanır, bu yüzden metin sayılarla çelişmez.
+  const findById = (list, id) => S.Engineering.findById(list, id);
+  const round1 = (v) => S.util.round1(v);
+  const join = (parts) => parts.filter(Boolean).join(' · ');
+  const TIP_GROUP = { objectiveFocus: 'obj', rocketId: 'rocket', orbitType: 'orbit', landingSiteId: 'site', powerSource: 'pwr', insulation: 'ins', commArchitecture: 'comm' };
+
+  DS.parseValue = (f, v) => (f === 'batteryKwh' || f === 'repairKits' ? Number(v) : f === 'launchWindowCaught' ? v === true || v === 'true' : v);
+
+  /** Bu seçenek seçilseydi tasarım (diğer seçimler aynı kalır) */
+  function withChoice(d, f, v) {
+    const alt = Object.assign({}, d, { instruments: d.instruments.slice() });
+    alt[f] = v;
+    return alt;
+  }
+  /** Nominal transitle iniş değerleri: Sim.land ile aynı kod yolu (yakıt, moral) */
+  const landing = (s, design) => S.Sim.transitVars({ demoMode: s.demoMode, design }, S.Sim.transitOutcome(null));
+
+  const moneyText = (tot) =>
+    tot.moneyUsed <= tot.moneyMax ? t('tip.money_left', { left: tot.moneyMax - tot.moneyUsed }) : t('tip.money_over', { over: tot.moneyUsed - tot.moneyMax });
+  const massText = (tot) =>
+    tot.massUsed <= tot.massMax ? t('tip.mass_margin', { pct: tot.massMarginPct }) : t('tip.mass_over', { over: round1(tot.massUsed - tot.massMax) });
+  function nightText(tot, design) {
+    const bats = S.DATA.habitat.batteries;
+    const kwh = (bats.find((b) => b.kwh === design.batteryKwh) || bats[1]).kwh;
+    if (tot.batteryNightSafe) return t('tip.night_ok', { need: tot.nightNeedKwh, kwh, left: Math.round(((kwh - tot.nightNeedKwh) / kwh) * 100) });
+    return t('tip.night_short', { need: tot.nightNeedKwh, kwh, short: round1(tot.nightNeedKwh - kwh) });
+  }
+  const dataText = (tot) => t('tip.data_left', { left: tot.reportDataMbit, cap: tot.dataPerSolMbit, inst: tot.instrumentDataMbit });
+
+  DS.optionEffect = function (s, d, f, v) {
+    const D = S.DATA;
+    const alt = withChoice(d, f, v);
+    const tot = S.Engineering.calcDesignTotals(alt);
+    if (f === 'objectiveFocus') {
+      const o = findById(D.objectives, v);
+      const th = s.demoMode ? D.demoSuccess : o;
+      return t('tip.fx.obj', {
+        fm: o.forensicsMultiplier, em: o.experimentsMultiplier,
+        ff: th.fullSuccess.forensicsSent, fe: th.fullSuccess.experimentsSent, mf: th.minSuccess.forensicsSent, me: th.minSuccess.experimentsSent
+      });
+    }
+    if (f === 'rocketId') return join([t('tip.fx.rocket', { max: tot.massMax, m: findById(D.rockets, v).costM }), massText(tot), moneyText(tot)]);
+    if (f === 'orbitType') {
+      const o = findById(D.orbits, v);
+      const limit = D.constants.radiation.careerLimitMsv;
+      return join([
+        t('tip.fx.orbit', { days: o.transitDays, dose: tot.transitDoseMsv, limit, room: Math.round(limit - tot.transitDoseMsv), fuel: landing(s, alt).fuel }),
+        o.payloadPenaltyKg || o.costPenaltyM ? t('tip.fx.orbit_cost', { kg: o.payloadPenaltyKg, m: o.costPenaltyM }) : '',
+        massText(tot),
+        moneyText(tot)
+      ]);
+    }
+    if (f === 'launchWindowCaught') {
+      const morale = landing(s, alt).morale;
+      return v
+        ? t('tip.fx.window_caught', { morale })
+        : join([t('tip.fx.window_missed', { m: D.constants.synodicPeriod.missedWindowCostM, morale, perSol: Math.abs(D.gameplay.moralePerSol) }), moneyText(tot)]);
+    }
+    if (f === 'landingSiteId') {
+      const x = findById(D.landingSites, v);
+      return join([t('tip.fx.site', { w: Math.round(tot.solarNoonW), day: x.dayMaxC, night: x.nightMinC, water: x.waterStartL }), nightText(tot, alt)]);
+    }
+    if (f === 'powerSource') {
+      const p = D.habitat.powerSource[v];
+      const ds = D.constants.dustStorm;
+      const head = p.rtgW > 0
+        ? t('tip.fx.pwr_rtg', { rtg: p.rtgW, heat: p.rtgWasteHeatW })
+        : t('tip.fx.pwr_solar', { storm: Math.round((1 - Math.exp(-ds.solarTransmissionK * ds.gameTau)) * 100) });
+      return join([head, nightText(tot, alt), massText(tot), moneyText(tot)]);
+    }
+    if (f === 'batteryKwh') {
+      const b = D.habitat.batteries.find((x) => x.kwh === v) || D.habitat.batteries[1];
+      return join([nightText(tot, alt), t('tip.fx.bat', { kg: b.massKg, m: b.costM, pen: D.scoring.lostSystemPenaltyPoints }), massText(tot)]);
+    }
+    if (f === 'insulation') {
+      const site = findById(D.landingSites, alt.landingSiteId);
+      return join([t('tip.fx.ins', { ua: D.habitat.insulation[v].uaWPerK, heat: tot.heatingNightW, night: site.nightMinC }), nightText(tot, alt), massText(tot)]);
+    }
+    if (f === 'commArchitecture') {
+      return join([
+        dataText(tot),
+        t('tip.fx.comm_ufo', { ufo: S.Score.ufoDownloadPct({ design: alt }) }),
+        t(v === 'relay_xband' ? 'tip.fx.comm_xband' : 'tip.fx.comm_uhf'),
+        moneyText(tot)
+      ]);
+    }
+    if (f === 'repairKits') {
+      const A = D.gameplay.actions;
+      // Kit isteyen ya da kitle daha iyi sonuçlanan kriz seçenekleri (events_catalog)
+      const usesKit = (o) => (o.requires && o.requires.inventory === 'repairKits') || (o.alts || []).some((a) => a.when && a.when.inventory === 'repairKits');
+      const list = D.events.crises.filter((c) => c.options.some(usesKit)).map((c) => t('crisis.' + c.id + '.short')).join(', ');
+      const head = v > 0
+        ? t('tip.fx.kits', { n: v, kitMin: A.repairSuitKitMin, noKitMin: A.repairSuitMin, pct: A.repairSuitIntegrity, list })
+        : t('tip.fx.kits_none', { noKitMin: A.repairSuitMin, pct: A.repairSuitIntegrity, list });
+      return join([head, massText(tot), moneyText(tot)]);
+    }
+    return '';
+  };
+
+  DS.optionTip = function (s, d, f, v, title) {
+    let what;
+    let why;
+    if (f === 'batteryKwh') {
+      what = t('tip.bat.what');
+      why = t('tip.bat.why_' + Math.max(0, S.DATA.habitat.batteries.findIndex((b) => b.kwh === v)));
+    } else if (f === 'repairKits') {
+      what = t('tip.kits.what');
+      why = t('tip.kits.why_' + v);
+    } else if (f === 'launchWindowCaught') {
+      const id = v ? 'caught' : 'missed';
+      what = t('tip.window.' + id + '.what', { months: S.DATA.constants.synodicPeriod.months });
+      why = t('tip.window.' + id + '.why');
+    } else {
+      what = t('tip.' + TIP_GROUP[f] + '.' + v + '.what');
+      why = t('tip.' + TIP_GROUP[f] + '.' + v + '.why');
+    }
+    return S.UI.tipHtml(title, [[t('tip.lbl_what'), what, 'what'], [t('tip.lbl_why'), why, 'why'], [t('tip.lbl_fx'), DS.optionEffect(s, d, f, v), 'fx']]);
+  };
+
+  /** Alete özgü oynanış etkileri (sayılar veriden) */
+  const INST_FX = {
+    mastcam_z: (s, d) => t('tip.inst.mastcam_z.fx', { hi: S.Score.ufoDownloadPct({ design: withChoice(d, 'instruments', d.instruments.concat('mastcam_z')) }), lo: S.DATA.ufo.lowResPct }),
+    rimfax: () => t('tip.inst.rimfax.fx', { m: S.DATA.terrain.iceDepositM, min: S.DATA.terrain.iceDigMinutes, l: S.DATA.terrain.iceDigWaterL }),
+    moxie: (s, d) => {
+      const c = S.DATA.constants;
+      return t('tip.inst.moxie.fx', {
+        day: c.moxie.o2GramsPerHourDay, night: c.moxie.o2GramsPerHourNight, fuel: c.sabatier.mavFuelPctPerBatch,
+        kwh: c.sabatier.energyKwh, l: c.sabatier.waterL, start: landing(s, d).fuel, bonus: S.DATA.scoring.safeReturnBonusPoints
+      });
+    },
+    veggie: () => {
+      const g = S.DATA.habitat.greenhouse;
+      return t('tip.inst.veggie.fx', { m: g.moralePerSolHealthy, tend: g.tendMorale, l: g.tendWaterL, w: g.powerW, pen: S.DATA.scoring.lostSystemPenaltyPoints });
+    },
+    ingenuity: () => t('tip.inst.ingenuity.fx', { m: S.DATA.terrain.wreckVisibleWithoutDroneM, f: Math.round(S.DATA.terrain.sandPitSpeedFactor * 100) })
+  };
+
+  /** Alet etkisi: kütle/güç/veri + özel etki + veriden türeyen uyarı, kriz, kanıt ve deney listeleri */
+  DS.instrumentEffect = function (s, d, inst) {
+    const D = S.DATA;
+    const id = inst.id;
+    const names = (list, key) => list.map(key).join(', ');
+    const parts = [t('tip.fx.inst', { kg: inst.massKg, w: inst.powerW, mbit: inst.dataMbit })];
+    if (INST_FX[id]) parts.push(INST_FX[id](s, d));
+    const warns = D.events.crises.filter((c) => c.warnInstrument === id);
+    if (warns.length) parts.push(t('tip.inst_warn', { list: names(warns, (c) => t('crisis.' + c.id + '.short')) }));
+    const better = D.events.crises.filter((c) =>
+      c.options.some((o) => (o.requires && o.requires.instrument === id) || (o.alts || []).some((a) => a.when && a.when.instrument === id))
+    );
+    if (better.length) parts.push(t('tip.inst_crisis', { list: names(better, (c) => t('crisis.' + c.id + '.short')) }));
+    const evidence = D.forensics.evidenceTypes.filter((e) => e.instrumentBonus === id);
+    if (evidence.length) parts.push(t('tip.inst_evidence', { list: names(evidence, (e) => t('ev.' + e.id)) }));
+    const exps = D.experimentsCfg.experiments.filter((e) => e.requiredInstrument === id);
+    if (exps.length) parts.push(t('tip.inst_exp', { list: names(exps, (e) => t('exp.' + e.id + '.name')) }));
+    return join(parts);
+  };
+
+  DS.instrumentTip = (s, d, inst) =>
+    S.UI.tipHtml(t('inst.' + inst.id + '.name'), [
+      [t('tip.lbl_what'), t('tip.inst.' + inst.id + '.what'), 'what'],
+      [t('tip.lbl_why'), t('tip.inst.' + inst.id + '.why'), 'why'],
+      [t('tip.lbl_fx'), DS.instrumentEffect(s, d, inst), 'fx']
+    ]);
+
+  /** Üst bütçe çubukları: sınırın anlamı ve bu tasarımdaki durumu */
+  DS.budgetTip = function (d, tot, key) {
+    const D = S.DATA;
+    const fx = {
+      money: () => join([t('tip.budget.money.fx', { used: tot.moneyUsed, max: tot.moneyMax }), moneyText(tot)]),
+      mass: () => join([t('tip.budget.mass.fx', { used: tot.massUsed, max: tot.massMax, good: D.habitat.massMarginGoodPct, bonus: D.scoring.massMarginBonusPoints }), massText(tot)]),
+      power: () => join([t('tip.budget.power.fx', { load: tot.nightLoadW, rtg: tot.rtgW, h: tot.nightHours }), nightText(tot, d)]),
+      data: () =>
+        join([
+          dataText(tot),
+          t(tot.reportDataMbit <= 0 ? 'tip.budget.data.fx_zero' : tot.reportDataMbit < tot.largestReportMbit ? 'tip.budget.data.fx' : 'tip.budget.data.fx_ok', { big: tot.largestReportMbit })
+        ])
+    }[key]();
+    return S.UI.tipHtml(t('budget.' + key), [
+      [t('tip.lbl_what'), t('tip.budget.' + key + '.what'), 'what'],
+      [t('tip.lbl_matters'), t('tip.budget.' + key + '.why'), 'why'],
+      [t('tip.lbl_now'), fx, 'fx']
+    ]);
+  };
+
   /* ---------- Shared parts ---------- */
   const chk = (on) => '<span class="dz-chk' + (on ? ' on' : '') + '" aria-hidden="true">' + (on ? I('check') : '') + '</span>';
   const money = (m) => '$' + m + 'M';
   /** Single-choice option (radio semantics). attrs = data-* string; k = stable focus key */
+  /** Bilgi balonu: data-f/data-v taşıyan her seçenek "Nedir? · Neden seçilir? · Oyunda ne değişir?" gösterir */
+  const TIP_FIELDS = ['objectiveFocus', 'rocketId', 'orbitType', 'landingSiteId', 'powerSource', 'insulation', 'commArchitecture', 'batteryKwh', 'repairKits', 'launchWindowCaught'];
+  function optTip(attrs) {
+    const m = /data-f="(\w+)" data-v="([^"]*)"/.exec(attrs);
+    const s = S.getState();
+    if (!m || !s || !TIP_FIELDS.includes(m[1])) return '';
+    return S.UI.tipAttr(DS.optionTip(s, s.design, m[1], DS.parseValue(m[1], m[2]), null));
+  }
   const radio = (k, attrs, sel, inner, cls) =>
-    '<button type="button" role="radio" aria-checked="' + sel + '" class="' + cls + (sel ? ' sel' : '') + '" data-k="' + k + '" ' + attrs + '>' + inner + '</button>';
+    '<button type="button" role="radio" aria-checked="' + sel + '" class="' + cls + (sel ? ' sel' : '') + '" data-k="' + k + '" ' + attrs + optTip(attrs) + '>' + inner + '</button>';
   const seg = (field, label, items) =>
     '<div class="dz-seg" role="radiogroup" aria-label="' + label + '">' +
     items.map(([v, txt, sel]) => radio(field + '-' + v, 'data-f="' + field + '" data-v="' + v + '"', sel, '<span>' + txt + '</span>' + chk(sel), 'dz-sopt')).join('') +
@@ -476,7 +670,7 @@
         .map((inst) => {
           const on = d.instruments.includes(inst.id);
           return (
-            '<button type="button" role="checkbox" aria-checked="' + on + '" class="dz-inst' + (on ? ' sel' : '') + '" data-k="inst-' + inst.id + '" data-inst="' + inst.id + '">' +
+            '<button type="button" role="checkbox" aria-checked="' + on + '" class="dz-inst' + (on ? ' sel' : '') + '" data-k="inst-' + inst.id + '" data-inst="' + inst.id + '"' + S.UI.tipAttr(DS.instrumentTip(s, d, inst)) + '>' +
             '<span class="dz-pic">' + iconInst(inst.id) + '</span><span class="dz-txt"><b>' + t('inst.' + inst.id + '.name') + '</b><small>' + t('inst.' + inst.id + '.what') + '</small>' +
             '<em>' + t('prep.inst_card', { kg: inst.massKg, m: inst.costM }) + '</em></span>' + chk(on) + '</button>'
           );

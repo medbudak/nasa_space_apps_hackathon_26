@@ -325,6 +325,7 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .dl-top { display: grid; grid-template-columns: 2fr 1fr; gap: 0.8em; margin-bottom: 0.7em; }
 .dl-cap, .dl-delay { padding: 0.6em 0.8em; border: 1px solid var(--line); border-radius: 0.45em; background: rgba(0,0,0,0.25); }
 .dl-cap-head { display: flex; justify-content: space-between; font-size: 0.75em; font-weight: 800; text-transform: uppercase; margin-bottom: 0.45em; }
+.dl-routine { display: flex; align-items: center; gap: 0.35em; margin-top: 0.45em; font-size: 0.64em; color: var(--muted); }
 .dl-delay { display: flex; flex-direction: column; gap: 0.15em; }
 .dl-delay span { font-size: 0.72em; color: var(--muted); }
 .dl-delay b { font-size: 1.15em; }
@@ -886,6 +887,44 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .spof-ok { display: flex; gap: 0.4em; font-size: 0.75em; color: var(--green); margin: 0; }
 .d-actions { display: flex; gap: 0.4em; margin-top: auto; }
 .d-actions .btn { flex: 1; }
+.d-card, .inst { padding-right: 1.7em; }
+.d-card:focus-visible, .inst:focus-visible, .d-step:focus-visible, .budget:focus-visible { outline: 2px solid var(--orange2); outline-offset: 2px; }
+.budget { position: relative; cursor: help; }
+.budget .tip-i { margin-left: 0.2em; }
+.d-side > .spof-list, .d-side > .d-change { min-height: 0; flex-shrink: 1; }
+/* "Bu seçim" özeti: son seçimin neyi değiştirdiği (önce → sonra) */
+.d-change { padding: 0.5em 0.6em; border: 1px solid rgba(63,224,230,0.45); border-left: 3px solid var(--cyan); border-radius: 0.35em; background: rgba(63,224,230,0.07); font-size: 0.68em; line-height: 1.35; overflow: auto; animation: dChangeIn 0.25s ease-out; }
+.d-change-head { display: flex; align-items: center; gap: 0.35em; margin-bottom: 0.25em; }
+.d-change-head span { color: var(--cyan); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.d-change ul { list-style: none; margin: 0 0 0.3em; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25em; }
+.d-change li { padding: 0.1em 0.4em; border: 1px solid var(--line2); border-radius: 0.25em; background: rgba(0,0,0,0.25); font-weight: 700; }
+.d-change p { margin: 0; color: #d6d1c9; }
+@keyframes dChangeIn { from { opacity: 0; transform: translateY(-0.3em); } to { opacity: 1; transform: none; } }
+
+/* Bilgi balonu (tooltip): retro panel — koyu zemin, camgöbeği üst çizgi, monospace başlık etiketleri */
+.ui > .ui-tip {
+  position: absolute; z-index: 55; max-width: 24em; max-height: calc(100% - 12px); overflow: hidden; pointer-events: none;
+  padding: 0.6em 0.75em 0.65em; background: var(--panel2); border: 1px solid var(--line2); border-top: 2px solid var(--cyan); border-radius: 0.4em;
+  box-shadow: 0 0.5em 1.6em rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.03); font-size: 0.7em; line-height: 1.38; color: var(--text); text-align: left;
+  animation: tipIn 0.12s ease-out;
+}
+.ui > .ui-tip.above { border-top-width: 1px; border-bottom: 2px solid var(--cyan); }
+.tip-title { font-weight: 800; font-size: 1.05em; margin-bottom: 0.3em; }
+.tip-row { margin: 0.35em 0 0; display: flex; flex-direction: column; gap: 0.1em; }
+.tip-row b { font: 700 0.8em/1.2 'Courier New', Consolas, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cyan); }
+.tip-row.why b { color: var(--amber); }
+.tip-row.fx b { color: var(--green); }
+.tip-row span { color: #d6d1c9; }
+.tip-row.fx span { color: var(--text); }
+@keyframes tipIn { from { opacity: 0; transform: translateY(0.25em); } to { opacity: 1; transform: none; } }
+/* "i" rozeti: fare için ipucu, dokunmatikte seçim yapmadan balonu açar */
+.tip-i {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.25em; height: 1.25em;
+  border: 1px solid var(--line2); border-radius: 50%; font: italic 700 0.62em/1 Georgia, 'Times New Roman', serif; color: var(--muted); background: rgba(0,0,0,0.25);
+}
+.d-card .tip-i, .inst .tip-i { position: absolute; top: 0.55em; right: 0.55em; }
+.d-card:hover .tip-i, .inst:hover .tip-i, .budget:hover .tip-i, [aria-describedby='ui-tip'] .tip-i { color: var(--cyan); border-color: var(--cyan); }
+[data-tip] { -webkit-touch-callout: none; }
 
 /* Transit */
 .transit { background: #05070f; }

@@ -21,6 +21,11 @@
   Sim.powerCfg = (s) => D().habitat.powerSource[s.design.powerSource];
   Sim.insulationCfg = (s) => D().habitat.insulation[s.design.insulation];
   Sim.has = (s, instrumentId) => s.design.instruments.includes(instrumentId);
+  /** ISRU ünitesi (Sabatier yakıt partisi) yalnızca MOXIE seçildiyse kurulur: yoksa MAV yakıtı artmaz */
+  Sim.hasIsru = (s) => Sim.has(s, 'moxie');
+  /** Seçili aletlerin günlük rutin verisi (gameplay.instrumentData): her röle geçişinde raporlardan önce gider */
+  Sim.instrumentDataMbit = (s) =>
+    s.design.instruments.reduce((a, id) => a + ((D().instruments.find((x) => x.id === id) || {}).dataMbit || 0), 0);
   Sim.clockMinute = (s) => s.minute % 1480;
   Sim.ambient = (s) => E().ambientTempAt(Sim.site(s), Sim.clockMinute(s));
   Sim.tod = (s) => E().timeOfDay(Sim.clockMinute(s));
@@ -145,7 +150,8 @@
     const orbit = E().findById(d.orbits, s.design.orbitType);
     const o2Start = d.habitat.base.o2ReserveStartKg;
     const fuelStart = s.demoMode ? 92 : orbit.mavFuelStartPct;
-    const moraleStart = s.design.launchWindowCaught ? 90 : 80;
+    const lw = d.gameplay.launchWindow;
+    const moraleStart = s.design.launchWindowCaught ? lw.moraleStartCaught : lw.moraleStartMissed;
     return {
       days: orbit.transitDays,
       charge: Math.round(out.chargeFrac * 100),
@@ -186,6 +192,7 @@
     s.inventory.rhuUnits = 0;
     s.inventory.spareAntenna = false;
     s.greenhouse.installed = Sim.has(s, 'veggie');
+    s.downlink.routineMbit = Sim.instrumentDataMbit(s);
     // D-012: mekik üssün iniş alanına (landingPadM) iner; astronot kapaktan iner
     s.player = { x: d.terrain.map.landingPadM + d.terrain.map.landingExitM, inside: false, facing: 1, zone: 'surface', cx: 0 };
     s.lander = { landed: true };
@@ -520,7 +527,16 @@
       dl.passUsedMbit[pass.id] = (dl.passUsedMbit[pass.id] || 0) + burn;
       cap -= burn;
     }
-    let budget = Math.min(cap, (pass.capacityMbit / pass.durationMin) * dt * (dl.extraMbit > 0 ? 1.6 : 1));
+    // Aletlerin günlük rutin verisi (gameplay.instrumentData) raporlardan önce, geçişin kendi hızıyla gider
+    let rate = (pass.capacityMbit / pass.durationMin) * dt;
+    if (dl.routineMbit > 0) {
+      const burn = Math.min(Sim.passCapacityLeft(s, pass), dl.routineMbit, rate);
+      dl.routineMbit = Math.max(0, dl.routineMbit - burn);
+      dl.passUsedMbit[pass.id] = round2((dl.passUsedMbit[pass.id] || 0) + burn);
+      cap -= burn;
+      rate -= burn;
+    }
+    let budget = Math.min(cap, rate * (dl.extraMbit > 0 ? 1.6 : 1));
     for (const p of dl.queue) {
       if (budget <= 0) break;
       if (p.status !== 'queued' && p.status !== 'sending') continue;
@@ -658,6 +674,7 @@
     s.downlink.passUsedMbit = {};
     s.downlink.lossMbit = 0;
     s.downlink.extraMbit = 0;
+    s.downlink.routineMbit = Sim.instrumentDataMbit(s);
     if (s.weather.stormSolsLeft > 0) {
       s.weather.stormSolsLeft -= 1;
       if (s.weather.stormSolsLeft <= 0) {
@@ -737,19 +754,27 @@
         s.suit.battery = 100;
       }
     },
+    // Tamir kiti varsa: tam onarım, daha kısa sürer, bir kit harcanır. Kit yoksa: yama ile kısmi onarım, daha uzun.
+    // Her iki durumda da sızıntı kapanır. (Süre ve miktarlar: gameplay.actions)
     repair_suit: {
-      minutes: () => A().repairSuitMin,
+      minutes: (s) => ((s.inventory.repairKits || 0) > 0 ? A().repairSuitKitMin : A().repairSuitMin),
       preview(s) {
+        const kits = s.inventory.repairKits || 0;
         return {
           from: Math.round(s.suit.integrity),
-          to: Math.min(100, Math.round(s.suit.integrity + A().repairSuitIntegrity)),
-          costKey: s.suit.leak ? 'action.cost_fix_leak' : 'action.cost_time_only',
-          costVars: {}
+          to: kits > 0 ? 100 : Math.min(100, Math.round(s.suit.integrity + A().repairSuitIntegrity)),
+          costKey: kits > 0 ? 'action.cost_repair_kit' : 'action.cost_repair_nokit',
+          costVars: { left: Math.max(0, kits - 1), pct: A().repairSuitIntegrity, kitMin: A().repairSuitKitMin }
         };
       },
       can: (s) => (s.suit.integrity >= 100 && !s.suit.leak ? 'action.err_suit_ok' : null),
       run(s) {
-        s.suit.integrity = Math.min(100, s.suit.integrity + A().repairSuitIntegrity);
+        if ((s.inventory.repairKits || 0) > 0) {
+          s.inventory.repairKits -= 1;
+          s.suit.integrity = 100;
+        } else {
+          s.suit.integrity = Math.min(100, s.suit.integrity + A().repairSuitIntegrity);
+        }
         s.suit.leak = false;
       }
     },
@@ -801,6 +826,7 @@
       },
       can(s) {
         const c = D().constants.sabatier;
+        if (!Sim.hasIsru(s)) return 'action.err_no_isru';
         if (s.res.mavFuel >= 100) return 'action.err_fuel_full';
         if (s.res.energyKwh < c.energyKwh) return 'action.err_no_energy';
         if (s.res.waterL < c.waterL) return 'action.err_no_water';
@@ -833,8 +859,9 @@
     if (!act) return { ok: false, errKey: 'action.err_unknown' };
     const err = act.can(s);
     if (err) return { ok: false, errKey: err };
+    const minutes = act.minutes(s); // süre eylemden önce okunur (tamir kiti harcanınca değişir)
     act.run(s);
-    Sim.advance(s, act.minutes(s));
+    Sim.advance(s, minutes);
     S.bus.emit('action:done', { id });
     return { ok: true };
   };

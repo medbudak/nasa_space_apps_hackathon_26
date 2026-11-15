@@ -217,13 +217,14 @@
     const s = S.getState();
     const final = S.Sim.canLaunchMav(s);
     const fuel = Math.round(s.res.mavFuel);
+    const isru = S.Sim.hasIsru(s); // MOXIE yoksa ISRU ünitesi yok: yakıt üretilemez
     const html =
       '<div class="panel action-modal"><div class="modal-head"><h3>' + I('rocket') + t('mav.title') + '</h3><button class="icon-btn" data-close>' + I('x') + '</button></div>' +
       '<div class="pv-row">' + I('rocket') + '<span>' + t('pv.mav_fuel') + '</span><b>%' + fuel + '</b></div>' +
       S.UI.bar(fuel, fuel >= 100 ? 'cyan' : 'amber') +
-      '<p class="pv-desc">' + t(final ? (fuel >= 100 ? 'mav.ready' : 'mav.lowfuel') : 'mav.not_yet', { sol: s.maxSols }) + '</p>' +
+      '<p class="pv-desc">' + t(final ? (fuel >= 100 ? 'mav.ready' : 'mav.lowfuel') : isru ? 'mav.not_yet' : 'mav.not_yet_no_isru', { sol: s.maxSols }) + '</p>' +
       S.UI.checklistHtml(s) +
-      '<p class="pv-cost">' + I('flask') + t('mav.sabatier_hint') + '</p>' +
+      '<p class="pv-cost">' + I('flask') + (isru ? t('mav.sabatier_hint') : t('mav.no_isru_hint', { fuel })) + '</p>' +
       '<div class="modal-actions"><button class="btn btn-ghost" data-close>' + t('ui.close') + '</button>' +
       (final ? '<button class="btn btn-primary" data-launch>' + I('rocket') + t('mav.launch') + '</button>' : '') +
       '</div></div>';

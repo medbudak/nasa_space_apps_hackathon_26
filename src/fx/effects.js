@@ -275,10 +275,8 @@
         if (!s.greenhouse.installed) continue;
         key = s.greenhouse.frozen ? 'greenhouse_frozen' : 'greenhouse_ok';
       }
-      if (st.id === 'isru' && !S.Sim.has(s, 'moxie')) {
-        drawOnGround(ctx, key, st.px, GY);
-        continue;
-      }
+      // MOXIE seçilmediyse ISRU ünitesi hiç kurulmaz (Sabatier yakıt partisi yok)
+      if (!Surf.structureBuilt(s, st)) continue;
       drawOnGround(ctx, key, st.px, GY);
       if (st.id === 'greenhouse' && !s.greenhouse.frozen && light.dark > 0.3) {
         ctx.globalAlpha = 0.25 * light.dark;

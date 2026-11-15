@@ -67,9 +67,12 @@
   /** Oyuncunun bulunduğu alt haritadaki pikseli */
   Surf.playerPx = (s) => (Surf.inCave(s) ? body.cpx : body.px);
 
+  /** Yapı bu tasarımda kurulu mu? ISRU ünitesi yalnızca MOXIE seçildiyse vardır */
+  Surf.structureBuilt = (s, st) => st.id !== 'isru' || S.Sim.hasIsru(s);
+
   Surf.interactables = function (s) {
     if (Surf.inCave(s)) return Surf.caveInteractables(s);
-    const list = Surf.STRUCTURES.map((st) => ({
+    const list = Surf.STRUCTURES.filter((st) => Surf.structureBuilt(s, st)).map((st) => ({
       id: st.id,
       kind: 'structure',
       px: st.interactPx !== undefined ? st.interactPx : st.px + st.w / 2,
@@ -118,6 +121,9 @@
     return S.DATA.terrain.sandPits.some((p) => m >= p.fromM && m <= p.toM);
   };
 
+  /** Ingenuity kum tuzaklarını önceden işaretler ve yürüyüşü sert zeminden geçirir (terrain.droneRoutesAroundSandPits) */
+  Surf.sandPitAvoided = (s) => Boolean(S.Sim.has(s, 'ingenuity') && S.DATA.terrain.droneRoutesAroundSandPits);
+
   /* ---------------- Oyuncu fiziği (gerçek zaman, saniye) ---------------- */
   const body = { px: 0, cpx: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560 };
   Surf.body = body;
@@ -152,8 +158,9 @@
 
   Surf.speedFactor = function (s) {
     let f = s.suit.frozen ? S.DATA.constants.eva.frozenSpeedFactor : 1;
-    // Sarkaç deneyi ödülü: 0.38g yürüyüş kalibrasyonu kum tuzağındaki hız kaybını azaltır (kum çukurları yalnızca yüzeyde)
-    if (!Surf.inCave(s) && Surf.inSandPit(s.player.x)) f *= s.rewards.sandPitSpeedFactor || S.DATA.terrain.sandPitSpeedFactor;
+    // Sarkaç deneyi ödülü: 0.38g yürüyüş kalibrasyonu kum tuzağındaki hız kaybını azaltır (kum çukurları yalnızca yüzeyde;
+    // Ingenuity rotayı önceden keşfettiyse çukurun çevresinden dolaşılır)
+    if (!Surf.inCave(s) && Surf.inSandPit(s.player.x) && !Surf.sandPitAvoided(s)) f *= s.rewards.sandPitSpeedFactor || S.DATA.terrain.sandPitSpeedFactor;
     return f;
   };
 

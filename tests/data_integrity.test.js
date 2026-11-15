@@ -136,6 +136,22 @@ function expectedDynamicKeys() {
   // Transit görev zinciri (gameplay.transit.tasks): kart, mini oyun, sonuç ve gemi durumu metinleri
   for (const tk of d.gameplay.transit.tasks) add(...['sys', 'title', 'what', 'why', 'do', 'stake', 'mg_title', 'mg_desc', 'fx', 'ok', 'degraded'].map((p) => `transit.${tk.id}.${p}`));
   for (const st of ['pending', 'ok', 'degraded']) add(`transit.st_${st}`);
+  // Sol 0 bilgi balonları (design_screens.js): her seçenek için "Nedir?" + "Neden seçilir?"
+  const tipIds = {
+    obj: d.objectives.map((o) => o.id),
+    rocket: d.rockets.map((r) => r.id),
+    orbit: d.orbits.map((o) => o.id),
+    window: ['caught', 'missed'],
+    site: d.landingSites.map((x) => x.id),
+    pwr: Object.keys(d.habitat.powerSource),
+    ins: Object.keys(d.habitat.insulation),
+    comm: Object.keys(d.habitat.comms),
+    inst: d.instruments.map((i) => i.id)
+  };
+  for (const [g, ids] of Object.entries(tipIds)) for (const id of ids) add(`tip.${g}.${id}.what`, `tip.${g}.${id}.why`);
+  d.habitat.batteries.forEach((b, i) => add(`tip.bat.why_${i}`));
+  for (let n = 0; n <= d.habitat.repairKit.max; n++) add(`tip.kits.why_${n}`);
+  for (const b of ['money', 'mass', 'power', 'data']) add(`budget.${b}`, `tip.budget.${b}.what`, `tip.budget.${b}.why`);
   for (const l of ['what', 'why', 'do', 'stake']) add(`transit.lbl_${l}`);
 
   // Adli inceleme
