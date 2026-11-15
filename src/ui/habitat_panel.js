@@ -41,8 +41,8 @@
     const act = S.Sim.actions[id];
     if (!act) return null;
     const p = act.preview(s);
-    const unit = { refill_suit: '%', charge_suit: '%', repair_suit: '%', tend_greenhouse: '', clean_panels: '%', sabatier: '%', dig_ice: ' L' }[id] || '';
-    const label = { refill_suit: 'O₂', charge_suit: t('pv.suit_battery'), repair_suit: t('pv.integrity'), tend_greenhouse: t('pv.morale'), clean_panels: t('pv.dust'), sabatier: t('pv.mav_fuel'), dig_ice: t('pv.water') }[id];
+    const unit = { refill_suit: '%', charge_suit: '%', repair_suit: '%', tend_greenhouse: '', harvest_greenhouse: '', clean_panels: '%', sabatier: '%', dig_ice: ' L' }[id] || '';
+    const label = { refill_suit: 'O₂', charge_suit: t('pv.suit_battery'), repair_suit: t('pv.integrity'), tend_greenhouse: t('pv.morale'), harvest_greenhouse: t('pv.morale'), clean_panels: t('pv.dust'), sabatier: t('pv.mav_fuel'), dig_ice: t('pv.water') }[id];
     return {
       title: t('action.' + id),
       lines: [
@@ -203,17 +203,40 @@
     } else if (id === 'sabatier') text = t('fb.sabatier', { fuel: Math.round(s.res.mavFuel) });
     else if (id === 'dig_ice') text = t('fb.dig_ice', { l: Math.round(s.res.waterL - before.water) });
     else if (id === 'tend_greenhouse') text = t('fb.tend_greenhouse', { pct: s.greenhouse.yieldPct });
+    else if (id === 'harvest_greenhouse') text = t('fb.harvest', { kg: s.res.foodKg });
     if (text) S.bus.emit('fx:float', { text, px: S.Surface.body.px, tone: 'ok' });
+  };
+
+  /**
+   * Sera paneli (Kişi 6): bitkinin evresi (görsel + 4 adımlı şerit), sonraki evreye ne kaldığı, bugünkü bakım durumu;
+   * olgunsa "Hasat et", değilse "Seraya bak". Sıkıştırılmış süre ve bilimsel not her zaman görünür.
+   */
+  HP.greenhouseInfo = function (s) {
+    const gh = s.greenhouse;
+    if (!gh.installed) return '<p class="pv-desc">' + t('gh.not_installed') + '</p>';
+    if (gh.frozen) return '<div class="alert danger">' + I('temp') + '<span>' + t('gh.frozen_info', { sol: gh.frozenSol, cause: t('gh.cause_' + gh.cause) }) + '</span></div>';
+    const stages = S.DATA.habitat.greenhouse.growth.stages;
+    const st = S.Sim.ghStage(s);
+    const strip = stages
+      .map((k, i) => '<span class="gh-step' + (i < st ? ' done' : i === st ? ' now' : '') + '"><span class="gh-art gh-art-' + k + '"></span><small>' + t('gh.stage.' + k) + '</small></span>')
+      .join('');
+    let next;
+    if (S.Sim.ghMature(s)) next = '<p class="pv-note ok">' + I('check') + t('gh.ready') + '</p>';
+    else if (gh.tendedSol === s.sol) next = '<p class="pv-note ok">' + I('check') + t('gh.tended_today', { next: t('gh.stage.' + stages[st + 1]) }) + '</p>';
+    else next = '<p class="pv-note">' + I('alert') + t('gh.needs_tending', { next: t('gh.stage.' + stages[st + 1]), sols: stages.length - 1 - st }) + '</p>';
+    return (
+      '<div class="gh-stages">' + strip + '</div>' +
+      next +
+      '<div class="pv-row">' + I('leaf') + '<span>' + t('gh.yield') + '</span><b>%' + gh.yieldPct + '</b></div>' +
+      (gh.yieldPct > 100 ? '<p class="pv-note ok">' + I('check') + t('gh.boosted') + '</p>' : '') +
+      '<p class="pv-desc gh-sci">' + t('gh.science') + '</p>'
+    );
   };
 
   HP.openGreenhouse = function () {
     const s = S.getState();
-    const gh = s.greenhouse;
-    let info;
-    if (!gh.installed) info = '<p class="pv-desc">' + t('gh.not_installed') + '</p>';
-    else if (gh.frozen) info = '<div class="alert danger">' + I('temp') + '<span>' + t('gh.frozen_info', { sol: gh.frozenSol, cause: t('gh.cause_' + gh.cause) }) + '</span></div>';
-    else info = '<div class="pv-row">' + I('leaf') + '<span>' + t('gh.yield') + '</span><b>%' + gh.yieldPct + '</b></div>' + (gh.yieldPct > 100 ? '<p class="pv-note ok">' + I('check') + t('gh.boosted') + '</p>' : '');
-    HP.openActionModal('tend_greenhouse', info);
+    const ripe = s.greenhouse.installed && !s.greenhouse.frozen && S.Sim.ghMature(s);
+    HP.openActionModal(ripe ? 'harvest_greenhouse' : 'tend_greenhouse', HP.greenhouseInfo(s));
   };
 
   HP.openMav = function () {

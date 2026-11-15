@@ -26,6 +26,22 @@
   /** Üs sistemi kuruldu mu? (eski kayıtta base alanı yoksa kurulu sayılır) */
   Sim.deployed = (s, id) => !s.base || s.base[id] !== false;
   /** Bu tasarımda kurulabilecek mi? ISRU ünitesi MOXIE, sera Veggie ister */
+  /* ---- Sera büyüme evreleri (Kişi 6): 0 tohum → 1 çimlenme → 2 filiz → 3 olgun → hasat ---- */
+  const GROWTH = () => D().habitat.greenhouse.growth;
+  Sim.ghStage = (s) => s.greenhouse.stage || 0;
+  Sim.ghStageKey = (s) => GROWTH().stages[Sim.ghStage(s)];
+  Sim.ghMature = (s) => Sim.ghStage(s) >= GROWTH().stages.length - 1;
+  /** Bitkinin bu sol bir evre ilerlemesi için bakım gerekiyor mu (olgunsa büyüme durur, hasat beklenir) */
+  Sim.ghNeedsTending = (s) => s.greenhouse.installed && !s.greenhouse.frozen && !Sim.ghMature(s) && s.greenhouse.tendedSol !== s.sol;
+  /** Sol sonu: o sol bakım yapıldıysa bir evre ilerler; yapılmadıysa büyüme durur (sıkıştırılmış süre, simplified) */
+  Sim.growGreenhouse = function (s) {
+    const gh = s.greenhouse;
+    if (!gh.installed || gh.frozen || Sim.ghMature(s)) return false;
+    if (gh.tendedSol !== s.sol) return false;
+    gh.stage = Sim.ghStage(s) + 1;
+    S.bus.emit('greenhouse:grew', { stage: gh.stage, key: Sim.ghStageKey(s) });
+    return true;
+  };
   Sim.deployAvailable = (s, id) => (id === 'isru' ? Sim.hasIsru(s) : id === 'greenhouse' ? Sim.has(s, 'veggie') : true);
   /** Yakıt üretimi: ISRU ünitesi ve MAV kurulu olmalı */
   Sim.isruReady = (s) => Sim.hasIsru(s) && Sim.deployed(s, 'isru') && Sim.deployed(s, 'mav');
@@ -381,6 +397,7 @@
     if (cause) {
       gh.frozen = true;
       gh.frozenSol = s.sol;
+      gh.stage = 0; // donan bitki ölür; donma kalıcıdır, sera bu görevde bir daha büyümez
       gh.cause = cause;
       gh.frozenMinute = Math.round(Sim.clockMinute(s));
       s.res.morale = clamp(s.res.morale - 8, 0, 100);
@@ -666,6 +683,7 @@
       final: s.sol >= s.maxSols
     };
     s.solHistory.push(summary);
+    summary.greenhouseGrew = Sim.growGreenhouse(s);
 
     if (s.sol >= s.maxSols) {
       // Son Sol bitti: MAV otomatik kalkar
@@ -807,6 +825,34 @@
         s.res.waterL -= g.tendWaterL;
         s.res.morale = clamp(s.res.morale + g.tendMorale * (s.greenhouse.yieldPct / 100), 0, 100);
         s.greenhouse.tendedSol = s.sol;
+      }
+    },
+    harvest_greenhouse: {
+      minutes: () => GROWTH().harvestMinutes,
+      preview(s) {
+        const g = GROWTH();
+        return {
+          from: Math.round(s.res.morale),
+          to: Math.min(100, Math.round(s.res.morale + g.harvestMorale)),
+          costKey: 'action.cost_harvest',
+          costVars: { kg: round1(g.harvestFoodKg * (s.greenhouse.yieldPct / 100)) }
+        };
+      },
+      can(s) {
+        if (!s.greenhouse.installed) return 'action.err_no_veggie';
+        if (s.greenhouse.frozen) return 'action.err_gh_frozen';
+        if (!Sim.ghMature(s)) return 'action.err_gh_not_ripe';
+        return null;
+      },
+      run(s) {
+        const g = GROWTH();
+        const kg = round1(g.harvestFoodKg * (s.greenhouse.yieldPct / 100));
+        // Hasat yiyecek stoğuna gider (Kişi 2'nin açlık göstergesi buradan okur) ve yeniden ekilir
+        s.res.foodKg = round1((s.res.foodKg || 0) + kg);
+        s.res.morale = clamp(s.res.morale + g.harvestMorale, 0, 100);
+        s.greenhouse.stage = 0;
+        s.greenhouse.harvests = (s.greenhouse.harvests || 0) + 1;
+        S.bus.emit('greenhouse:harvest', { foodKg: kg, total: s.res.foodKg, harvests: s.greenhouse.harvests });
       }
     },
     clean_panels: {

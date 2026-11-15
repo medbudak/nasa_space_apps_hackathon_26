@@ -535,7 +535,22 @@ window.SOL14.DATA = {
    "tendWaterL": 2,
    "tendMinutes": 20,
    "germinationYieldBonusPct": 30,
-   "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/"
+   "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/",
+   "growth": {
+    "stages": [
+     "seed",
+     "germination",
+     "sprout",
+     "mature"
+    ],
+    "harvestMinutes": 30,
+    "harvestFoodKg": 1,
+    "harvestMorale": 12,
+    "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/",
+    "note": "Veggie on the ISS grew red romaine lettuce from seed to harvest in about a month (33 days for the first crop eaten in 2015).",
+    "simplified": true,
+    "simplifiedNote": "Growth is compressed for the 14-sol mission: one stage per sol in which the greenhouse is tended (seed -> germination -> sprout -> mature, so 3 tended sols instead of about a month). A skipped sol pauses growth; freezing resets it to seed. Harvest food (1 kg fresh lettuce, scaled by yield), 30 game minutes and +12 morale are game values."
+   }
   }
  },
  "instruments": [
