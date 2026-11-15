@@ -152,3 +152,5 @@ Real-world values that were changed or rounded for gameplay.
 - **Oyun İçi Pixel Art Varlıkları & UI İkonları (ssets/):** Yapay zeka destekli pixel art üretim araçları (Gemini / Adobe Firefly) ile 'SOL 14: RED HORIZON' renk paletine uygun olarak üretilmiş ve düzenlenmiştir.
 
 - **Oyun İçi Pixel Art Varlıkları & UI İkonları (ssets/):** Yapay zeka destekli pixel art araçları ve özel piksel çizim betikleri ile 'SOL 14: RED HORIZON' renk paletine uygun olarak üretilmiştir.
+
+- UFO finale & cover visuals (ufo_liftoff.png, ufo_sky.png, scr_mission_control.png, ufo_photo_clear.png, ufo_photo_blur.png, cover_thumbnail.png) � Generated with AI image generation tool (watermark preserved), used in ending sequence and 30s video cover.
