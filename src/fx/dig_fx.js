@@ -540,12 +540,99 @@
     ctx.fillRect(x + 33, gy - 30, 5, 3);
   }
 
+  /* ---------------- Uzay çöpü ve uydu kalıntıları (tünelden sonra, doğunun sonuna kadar; kurgusal dekor) ---------------- */
+  // Konumlar (m) dekordur (oyun kuralı değil). Gerçekte Mars'ta iniş donanımı parçaları (paraşüt, arka kabuk, ısı kalkanı)
+  // ve düşmüş araçlar vardır; buradaki uydu kalıntıları kurgusaldır (sıkıştırılmış harita).
+  const JUNK = [
+    { m: 1480, kind: 'panel' }, { m: 1555, kind: 'chute' }, { m: 1640, kind: 'tank' }, { m: 1720, kind: 'strut' },
+    { m: 1810, kind: 'sat' }, { m: 1905, kind: 'dish' }, { m: 1990, kind: 'panel' }, { m: 2140, kind: 'shell' },
+    { m: 2190, kind: 'strut' }, { m: 2330, kind: 'tank' }, { m: 2420, kind: 'chute' }, { m: 2520, kind: 'dish' },
+    { m: 2610, kind: 'sat' }, { m: 2665, kind: 'panel' }, { m: 2800, kind: 'shell' }, { m: 2890, kind: 'strut' },
+    { m: 2960, kind: 'tank' }
+  ];
+  function drawJunk(ctx, kind, x, gy, seed, minute) {
+    const N = (c) => atNight(c, minute);
+    const flip = rnd(seed) < 0.5 ? -1 : 1;
+    const R = (dx, dy, w, h, c) => {
+      ctx.fillStyle = N(c);
+      ctx.fillRect(Math.round(x + (flip < 0 ? -dx - w : dx)), Math.round(gy + dy), w, h);
+    };
+    const sand = (w) => R(-w, -2, w * 2, 2, '#b8643c'); // kumla örtülmüş taban
+    if (kind === 'sat') {
+      // uydu gövdesi: altın folyolu kutu, kırık güneş kanatları, eğik anten
+      R(-7, -14, 14, 12, '#c9a23a');
+      R(-7, -14, 14, 1, '#f0d27a');
+      R(-6, -11, 3, 3, '#8a6a22');
+      R(1, -8, 4, 3, '#8a6a22');
+      R(-21, -12, 13, 5, '#22335c');
+      for (let i = 0; i < 4; i++) R(-20 + i * 3, -11, 2, 1, '#5b77b3');
+      R(-8, -10, 1, 2, '#8d939b');
+      R(8, -7, 11, 4, '#22335c');
+      R(15, -9, 5, 3, '#22335c'); // kırılmış, kalkmış kanat ucu
+      R(9, -6, 1, 1, '#5b77b3');
+      R(-2, -21, 1, 7, '#c3c8cf');
+      R(-4, -22, 5, 1, '#c3c8cf');
+      sand(14);
+    } else if (kind === 'dish') {
+      // çatlak yüksek kazançlı anten çanağı, kenarı kuma gömülü
+      R(-10, -9, 20, 3, '#d8d4cc');
+      R(-8, -11, 16, 2, '#cfcac0');
+      R(-5, -12, 10, 1, '#bdb8ae');
+      R(-1, -9, 1, 3, '#6c727a'); // çatlak
+      R(2, -10, 1, 2, '#6c727a');
+      R(-1, -16, 2, 5, '#8d939b');
+      R(-2, -17, 4, 1, '#8d939b');
+      sand(12);
+    } else if (kind === 'panel') {
+      // kopmuş güneş paneli parçası
+      R(-9, -4, 18, 3, '#22335c');
+      for (let i = 0; i < 5; i++) R(-8 + i * 4, -4, 3, 1, '#5b77b3');
+      R(-9, -1, 18, 1, '#c3c8cf');
+      R(6, -6, 4, 2, '#22335c');
+      sand(9);
+    } else if (kind === 'chute') {
+      // paraşüt kalıntısı: kuma yayılmış kumaş ve ipler
+      R(-12, -3, 24, 2, '#e8e2d8');
+      R(-12, -3, 7, 2, '#d0603a');
+      R(2, -3, 5, 2, '#d0603a');
+      for (let i = 0; i < 6; i++) R(-14 + i * 2, -1 - (i % 2), 1, 1, '#9a9690');
+      R(12, -4, 3, 1, '#e8e2d8');
+    } else if (kind === 'shell') {
+      // arka kabuk (koni) yan yatmış, yarısı gömülü
+      R(-9, -8, 18, 6, '#b8b3ab');
+      R(-6, -11, 12, 3, '#b8b3ab');
+      R(-3, -13, 6, 2, '#cfcac0');
+      R(-9, -2, 18, 1, '#6e6a64');
+      R(-4, -7, 2, 2, '#2c1d1c'); // delik
+      sand(11);
+    } else if (kind === 'tank') {
+      // küresel yakıt tankı, ezik
+      R(-6, -11, 12, 10, '#8d939b');
+      R(-5, -12, 10, 1, '#c3c8cf');
+      R(-4, -10, 3, 2, '#c3c8cf');
+      R(2, -6, 4, 3, '#5f6773'); // ezik
+      R(6, -4, 4, 1, '#6c727a'); // kopmuş boru
+      sand(8);
+    } else if (kind === 'strut') {
+      // eğri kafes kiriş
+      for (let i = 0; i < 16; i++) R(-8 + i, -2 - Math.round(i * 0.55), 1, 1, '#9a9690');
+      for (let i = 0; i < 10; i++) R(-2 + i, -8 + Math.round(i * 0.6), 1, 1, '#9a9690');
+      R(-9, -2, 3, 2, '#6c727a');
+      sand(6);
+    }
+  }
+
   /** Kazı noktaları + döküntü + tarayıcı tepkisi + RIMFAX sinyali (effects.js, dünya katmanında) */
   DF.drawSites = function (ctx, s, camX, w, gy, t, light) {
     const X = S.Explore;
     if (!X || !s.explore) return;
     const pal = S.Art.palette(s.design.landingSiteId, s.minute);
     const vis = (sx) => sx > -80 && sx < w + 80;
+    // Uzay çöpü ve uydu kalıntıları (kurgusal dekor, tünelden sonrası)
+    for (const j of JUNK) {
+      const sx = Math.round(S.Surface.mToPx(j.m) - camX);
+      if (vis(sx)) drawJunk(ctx, j.kind, sx, gy, DF.seedOf('junk' + j.m), s.minute);
+    }
     // Döküntü: doğudaki henüz kazılmamış araçların yolunda
     for (const c of S.Forensics.cases()) {
       if (c.distanceM < 0) continue;

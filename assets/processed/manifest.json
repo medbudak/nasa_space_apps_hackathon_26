@@ -35,6 +35,48 @@
     "whiteKeptPx": 0
   },
   {
+    "asset": "sprites/astro/astro_surface_idle.png",
+    "size": "116x58",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_surface_walk.png",
+    "size": "140x55",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_float.png",
+    "size": "452x124",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_eat.png",
+    "size": "348x137",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_drink.png",
+    "size": "332x133",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_sleep.png",
+    "size": "268x129",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "sprites/astronaut_frozen.png",
     "size": "37x58",
     "mode": "flood",
@@ -199,8 +241,8 @@
     "asset": "structures/greenhouse_ok.png",
     "size": "150x108",
     "mode": "flood",
-    "bgRemovedPx": 500121,
-    "whiteKeptPx": 81299
+    "bgRemovedPx": 1229912,
+    "whiteKeptPx": 216179
   },
   {
     "asset": "structures/greenhouse_frozen.png",

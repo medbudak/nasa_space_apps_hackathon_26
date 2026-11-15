@@ -1512,7 +1512,7 @@ window.SOL14.STORY = {
   "help.base.greenhouse": "<b>Sera (Veggie):</b> gece ısıtma kesilmezse bitkiler sağlıklı kalır ve moral verir; ısı kesilirse sera donar ve bitki ölür. Her bakımlı sol bitkiyi büyütür: marul, turp ya da zinya olgunlaşınca hasat edilir. Gerçekte bu bitkiler 27–60 günde yetişir; oyunda süre birkaç sole sıkıştırılmıştır.",
   "help.base.downlink": "<b>Veri:</b> rapor ve fotoğraflar ancak Dünya'ya ulaşınca puan sayılır. L panelinden röle geçişlerinde gönder.",
   "help.base.mav": "<b>Güvenli dönüş:</b> son solde MAV yakıtını %100'e tamamla ve rampadan kalk.",
-  "transit.deck_hint": "<kbd>A</kbd>/<kbd>D</kbd> ile yürü · kokpit koltuğunda <kbd>E</kbd>: varışa hazırlan · <kbd>Esc</kbd>: geç",
+  "transit.deck_hint": "<kbd>A</kbd>/<kbd>D</kbd> ve <kbd>W</kbd>/<kbd>S</kbd> ile süzül · kokpit koltuğunda <kbd>E</kbd>: varışa hazırlan · <kbd>Esc</kbd>: geç",
   "toast.cargo_bonus": "Yük marjı %{pct}: iniş aracı ek ikmal getirdi (+{o2} kg O₂, +{w} L su).",
   "log.cargo.title": "Yük marjı: ek ikmal",
   "log.cargo.choice": "Tasarımda %{min}'ten fazla boş kütle bırakıldı",
@@ -1776,7 +1776,7 @@ window.SOL14.STORY = {
   "inv.used_in": "Kullanım: {list}",
   "inv.empty": "Envanter boş.",
   "transit.deck_title": "Mekik güvertesi",
-  "transit.deck_body": "Görev yok: yolculuğun tadını çıkar, mekikte dolaşabilirsin. Varışa hazır olunca kokpitteki koltukta E'ye bas; günler dolunca yaklaşma kendiliğinden başlar.",
+  "transit.deck_body": "Görev yok: yolculuğun tadını çıkar. Uzayda ağırlık yok, mekikte süzülerek dolaşabilirsin. Varışa hazır olunca kokpitteki koltukta E'ye bas; günler dolunca yaklaşma kendiliğinden başlar.",
   "transit.seat": "Varışa hazırlan",
   "tg.tag.exp": "DENEY",
   "tg.tag.env": "ÖLÇÜM",
@@ -2152,7 +2152,9 @@ window.SOL14.STORY = {
   "item.fuel_fitting.from": "Atölye: yedek parça + göktaşı",
   "item.hull_patch.name": "Gövde yaması",
   "item.hull_patch.desc": "Perçinli saç yama.",
-  "item.hull_patch.from": "Atölye: kargo sandığı + hematit"
+  "item.hull_patch.from": "Atölye: kargo sandığı + hematit",
+  "station.bottles": "Şişe rafı",
+  "hp.bottle_desc": "Boş su şişesi al: batıdaki buz mağarasında doldurup seraya götürebilirsin. Dolu şişeyi rafa bırakırsan su habitat deposuna gider."
  },
  "en": {
   "ui.back": "Back",
@@ -3665,7 +3667,7 @@ window.SOL14.STORY = {
   "help.base.greenhouse": "<b>Greenhouse (Veggie):</b> keep night heating on and the plants stay healthy and lift morale; lose heat and it freezes and the plant dies. Every tended sol grows the plant: lettuce, radish or zinnia is harvested when mature. In reality these crops take 27–60 days; in the game the time is compressed to a few sols.",
   "help.base.downlink": "<b>Data:</b> reports and photos score only once they reach Earth. Send them in L during relay passes.",
   "help.base.mav": "<b>Safe return:</b> top the MAV fuel up to 100% by the final sol and launch from the pad.",
-  "transit.deck_hint": "<kbd>A</kbd>/<kbd>D</kbd> to walk · <kbd>E</kbd> at the cockpit seat: prepare for arrival · <kbd>Esc</kbd>: skip",
+  "transit.deck_hint": "<kbd>A</kbd>/<kbd>D</kbd> and <kbd>W</kbd>/<kbd>S</kbd> to float · <kbd>E</kbd> at the cockpit seat: prepare for arrival · <kbd>Esc</kbd>: skip",
   "toast.cargo_bonus": "Mass margin {pct}%: the lander brought extra supplies (+{o2} kg O₂, +{w} L water).",
   "log.cargo.title": "Mass margin: extra supplies",
   "log.cargo.choice": "More than {min}% of the payload left free in the design",
@@ -3929,7 +3931,7 @@ window.SOL14.STORY = {
   "inv.used_in": "Used in: {list}",
   "inv.empty": "The inventory is empty.",
   "transit.deck_title": "Shuttle deck",
-  "transit.deck_body": "No tasks: enjoy the journey and walk around the shuttle. When you are ready for arrival press E at the cockpit seat; when the days run out the approach starts by itself.",
+  "transit.deck_body": "No tasks: enjoy the journey. There is no weight in space, so you float around the shuttle. When you are ready for arrival press E at the cockpit seat; when the days run out the approach starts by itself.",
   "transit.seat": "Prepare for arrival",
   "tg.tag.exp": "EXPERIMENT",
   "tg.tag.env": "MEASURE",
@@ -4305,6 +4307,8 @@ window.SOL14.STORY = {
   "item.fuel_fitting.from": "Workshop: spare part + meteorite",
   "item.hull_patch.name": "Hull patch",
   "item.hull_patch.desc": "A riveted sheet patch.",
-  "item.hull_patch.from": "Workshop: cargo crate + hematite"
+  "item.hull_patch.from": "Workshop: cargo crate + hematite",
+  "station.bottles": "Bottle rack",
+  "hp.bottle_desc": "Take an empty water bottle: fill it in the ice cave in the west and carry it to the greenhouse. Put a full bottle back and the water goes to the habitat tank."
  }
 };

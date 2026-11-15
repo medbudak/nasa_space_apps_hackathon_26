@@ -210,6 +210,9 @@ Most of the planned work is done and on `main`. Details live in DECISIONS.md (D-
 - **Look and sound:**
   - One retro UI font, VT323 (embedded in `styles/fonts.css`). No metre labels on the ground.
   - K5's CC0 recordings (`assets/audio`) play through `src/fx/audio.js`, with a synthesised fallback.
+  - Astronaut art comes from the team's six GIFs (`assets/sprites/astro/astro_*.png`, 4-frame strips; `FX.drawAstro` on the surface and in the tube, held-tool glove points per frame in `ASTRO`). Transit deck: zero-g float (A/D + W/S). Lander: `FX.playActivity('eat' | 'drink' | 'sleep')` plays the GIF at 66 px (sleep at the bunk, lights dim, then `Sim.sleep`). Toilet has no animation.
+  - East of the tube: procedural space junk and satellite remains (`JUNK` in `src/fx/dig_fx.js`, fictional scenery).
+  - Lander panel: the needs buttons (Kişi 2) sit as an icon row inside the Status card (name and cost in the tooltip) so they no longer cover the interior; any unknown interior station falls back to its name instead of crashing the panel.
 - **Tests:** `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`), `rhythm`, `explore`, `design_choices`, `station`, `rocket`, `upgrades` … → 125/125 pass (2026-11-15).
 - **Coordinates:** `Surface.mToPx/pxToM` are piecewise (`terrain.map`); the base area −120…0 m is drawn at sprite scale. The cave is a separate space: `s.player.zone === 'cave'`, position `s.player.cx`. It uses the same scale and the same movement code as the surface; do not give it its own.
 - **Old saves:** fields added later are filled by `S.ensureExploreState` (called on load, checkpoint, `enterWorld`, `Sim.land`).

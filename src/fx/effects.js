@@ -182,6 +182,60 @@
     return true;
   }
 
+  /**
+   * Takımın GIF astronotu (astro_surface_idle / astro_surface_walk: 4 karelik şeritler, boy şimdiki sprite'la aynı).
+   * Pozlar: walk = yürüme şeridi; idle = bekleme şeridi (350 ms); jump = yürümenin adım karesi;
+   * action (diz çökme / kazı) = bekleme karesi biraz çömelmiş; frozen = bekleme karesi buz mavisi.
+   * Dönüş: { fw, fh, hand: [x, y] (karedeki eldiven), left, top } ya da şerit yoksa null (eski sprite'lara düşülür).
+   */
+  const ASTRO = {
+    idle: { key: 'astro_surface_idle', frames: 4, ms: 350, hands: [[24, 33], [24, 31], [25, 31], [24, 33]] },
+    walk: { key: 'astro_surface_walk', frames: 4, ms: 140, hands: [[30, 28], [28, 27], [30, 27], [29, 28]] }
+  };
+  let frostCv = null;
+  function drawAstro(ctx, pose, cx, bottomY, flip, t, rate) {
+    const set = pose === 'walk' || pose === 'jump' ? ASTRO.walk : ASTRO.idle;
+    const img = S.Sprites.get(set.key);
+    if (!img) return null;
+    const fw = img.width / set.frames;
+    const fh = img.height;
+    let f = Math.floor((t * 1000 * (rate || 1)) / set.ms) % set.frames;
+    if (pose === 'jump') f = 0; // uzun adım karesi
+    if (pose === 'action' || pose === 'frozen') f = 0;
+    const sy = pose === 'action' ? 0.84 : 1; // çömelme
+    const dh = Math.round(fh * sy);
+    const left = Math.round(cx - fw / 2);
+    const top = Math.round(bottomY - dh);
+    let src = img;
+    let sx = f * fw;
+    if (pose === 'frozen') {
+      // buz mavisi: kareyi küçük bir tuvalde boya (yalnızca karakterin pikselleri)
+      frostCv = frostCv || document.createElement('canvas');
+      frostCv.width = fw;
+      frostCv.height = fh;
+      const c = frostCv.getContext('2d');
+      c.clearRect(0, 0, fw, fh);
+      c.drawImage(img, sx, 0, fw, fh, 0, 0, fw, fh);
+      c.globalCompositeOperation = 'source-atop';
+      c.fillStyle = 'rgba(150, 205, 255, 0.45)';
+      c.fillRect(0, 0, fw, fh);
+      c.globalCompositeOperation = 'source-over';
+      src = frostCv;
+      sx = 0;
+    }
+    ctx.save();
+    if (flip) {
+      ctx.translate(left + fw, top);
+      ctx.scale(-1, 1);
+      ctx.drawImage(src, sx, 0, fw, fh, 0, 0, fw, dh);
+    } else {
+      ctx.drawImage(src, sx, 0, fw, fh, left, top, fw, dh);
+    }
+    ctx.restore();
+    const hand = set.hands[f];
+    return { fw, fh: dh, left, top, hand: [hand[0], Math.round(hand[1] * sy)] };
+  }
+
   function drawOnGround(ctx, key, leftPx, groundY, flip) {
     const img = S.Sprites.get(key);
     if (!img) return null;
@@ -352,11 +406,13 @@
     const img = S.Sprites.get(key) || S.Sprites.get('astronaut_idle');
     const ax = FX.worldToScreen(landingAstro ? landingAstro.px : body.px);
     let ay = GY + 2 - (landingAstro ? landingAstro.y : body.y);
+    let astro = null;
     if (img && !hideAstro) {
       // Kum çukurunda adımlar yavaşlar (hareket hızıyla uyumlu)
       const walkRate = Surf.inSandPit(s.player.x) ? 0.5 : 1;
-      const walked = pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, walkRate);
-      if (!walked) {
+      astro = drawAstro(ctx, pose, ax, ay, s.player.facing < 0, t, pose === 'walk' ? walkRate : 1);
+      const walked = !astro && pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, walkRate);
+      if (!astro && !walked) {
         if (pose === 'walk') ay -= Math.abs(Math.sin(t * 9)) > 0.5 ? 1 : 0;
         drawSprite(ctx, img === S.Sprites.get(key) ? key : 'astronaut_idle', ax - img.width / 2, ay - img.height, s.player.facing < 0);
       }
@@ -368,7 +424,10 @@
       ctx.fillRect(ax - sh / 2, GY + 1 - floorH, sh, 2);
       ctx.globalAlpha = 1;
       // Seçili envanter eşyası eldivende (hotbar açıkken; zıplarken ve diz çökerken çizilmez)
-      if (S.Hotbar && !landingAstro && (walked || pose === 'idle')) {
+      if (S.Hotbar && !landingAstro && astro && (pose === 'walk' || pose === 'idle')) {
+        const hx = s.player.facing < 0 ? astro.left + astro.fw - astro.hand[0] : astro.left + astro.hand[0];
+        drawHeld(ctx, S.Hotbar.selected(s), hx, astro.top + astro.hand[1], s.player.facing, S.Hotbar.swingK());
+      } else if (S.Hotbar && !landingAstro && !astro && (walked || pose === 'idle')) {
         const sheet = S.Sprites.get('astronaut_walk_sheet');
         const fw = walked ? sheet.width / WALK_FRAMES : img.width;
         const hand = walked ? HAND_WALK[Math.floor(t * WALK_FPS * walkRate) % WALK_FRAMES] : HAND_IDLE;
@@ -377,7 +436,7 @@
         drawHeld(ctx, S.Hotbar.selected(s), hx, ay - (walked ? sheet.height : img.height) + hand[1], s.player.facing, S.Hotbar.swingK());
       }
       // Elbise tarayıcısı: gerçek bir gömülü noktanın yanında "!" (sahte tümsek tepki vermez)
-      if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, ay - img.height, t);
+      if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, astro ? astro.top : ay - img.height, t);
     }
     // D-016 (K2 Sude): glacier ice cave front layer, the water bottle in hand and the pour into the greenhouse
     if (S.Westlands && S.Westlands.drawFront && !hideAstro) S.Westlands.drawFront(ctx, s, FX.camX, W, GY, t, landingAstro ? null : { x: ax, y: ay, pose });
@@ -894,8 +953,9 @@
     const ax = FX.worldToScreen(body.cpx);
     let ay = GY + 2 - body.y;
     if (img) {
-      const walked = pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, 1);
-      if (!walked) {
+      const astro = drawAstro(ctx, pose, ax, ay, s.player.facing < 0, t, 1);
+      const walked = !astro && pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, 1);
+      if (!astro && !walked) {
         if (pose === 'walk') ay -= Math.abs(Math.sin(t * 9)) > 0.5 ? 1 : 0;
         drawSprite(ctx, S.Sprites.get(key) ? key : 'astronaut_idle', ax - img.width / 2, ay - img.height, s.player.facing < 0);
       }
@@ -1081,6 +1141,83 @@
     c.restore();
   };
 
+  /* ---------------- Mekik içi etkinlik animasyonları (takımın GIF'leri: yemek, su içme, uyku) ---------------- */
+  // Şeritler 132 px ölçeğinde (ayakta duran figür = 132); mekikte figür 66 px çizildiği için yarı ölçek.
+  const ACTIVITY = {
+    eat: { key: 'astro_eat', frames: 4, ms: 240, secs: 2.6 },
+    drink: { key: 'astro_drink', frames: 4, ms: 320, secs: 2.6 },
+    sleep: { key: 'astro_sleep', frames: 4, ms: 450, secs: 3.2, at: 'bunk' }
+  };
+  FX.activity = null;
+  /** Bir etkinlik animasyonu başlat; bitince (ya da oyuncu yürüyünce) onDone çağrılır */
+  FX.playActivity = function (kind, onDone) {
+    const a = ACTIVITY[kind];
+    if (!a || !S.Sprites.get(a.key)) {
+      if (onDone) onDone();
+      return false;
+    }
+    FX.activity = { kind, t: 0, onDone: onDone || null };
+    return true;
+  };
+  function endActivity() {
+    const cb = FX.activity && FX.activity.onDone;
+    FX.activity = null;
+    if (cb) cb();
+  }
+  /** Çizildiyse true (o karede normal mürettebat çizilmez) */
+  FX.drawActivity = function (ctx, s, dt, t, ox, footY) {
+    const act = FX.activity;
+    if (!act) return false;
+    const a = ACTIVITY[act.kind];
+    const body = S.Surface.body;
+    act.t += dt;
+    if (act.t >= a.secs || (body.moving && act.kind !== 'sleep')) {
+      endActivity();
+      return false;
+    }
+    const img = S.Sprites.get(a.key);
+    const fw = img.width / a.frames;
+    const k = 66 / 132;
+    const dw = Math.round(fw * k);
+    const dh = Math.round(img.height * k);
+    const f = Math.floor((act.t * 1000) / a.ms) % a.frames;
+    const st = a.at && S.Surface.INTERIOR.stations.find((x) => x.id === a.at);
+    const x = Math.round(ox + (st ? st.x : body.ix));
+    const flip = s.player.facing < 0;
+    if (act.kind === 'sleep') {
+      // ışıklar kısılır; uyku tulumu yatağın önünde, üstünde yükselen "z" işaretleri (kodla çizilir)
+      const fade = Math.min(1, act.t / 0.6, (a.secs - act.t) / 0.6);
+      ctx.fillStyle = 'rgba(4, 6, 14,' + (0.7 * fade).toFixed(3) + ')';
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    if (flip) {
+      ctx.translate(x + Math.round(dw / 2), footY - dh);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, f * fw, 0, fw, img.height, 0, 0, dw, dh);
+    } else {
+      ctx.drawImage(img, f * fw, 0, fw, img.height, x - Math.round(dw / 2), footY - dh, dw, dh);
+    }
+    ctx.restore();
+    if (act.kind === 'sleep') {
+      ctx.fillStyle = '#e8eef5';
+      for (let i = 0; i < 3; i++) {
+        const ph = (act.t * 0.7 + i / 3) % 1;
+        const zx = x + 8 + Math.round(ph * 10);
+        const zy = Math.round(footY - dh - 4 - ph * 22);
+        const sz = 2 + i % 2;
+        ctx.globalAlpha = Math.sin(ph * Math.PI);
+        // piksel "z": üst çizgi, çapraz, alt çizgi
+        ctx.fillRect(zx, zy, sz * 2, 1);
+        for (let j = 0; j < sz * 2; j++) ctx.fillRect(zx + sz * 2 - 1 - j, zy + 1 + Math.floor((j * (sz * 2 - 1)) / (sz * 2)), 1, 1);
+        ctx.fillRect(zx, zy + sz * 2, sz * 2, 1);
+      }
+      ctx.globalAlpha = 1;
+    }
+    return true;
+  };
+
   FX.renderInterior = function (ctx, s, dt, t) {
     const st = S.Surface.nearestStation();
     // 640 px'lik kesit geniş tuvalde ortalanır; uzun tuvalde yüzeydeki gibi OFF_Y kadar aşağı iner,
@@ -1119,9 +1256,11 @@
       ctx.fillRect(lx - 1, ly + 4, 3, 3);
       ctx.textAlign = 'left';
     }
-    // Kasksız mürettebat (mekik içinde), adım atarak yürür
+    // Kasksız mürettebat (mekik içinde), adım atarak yürür; yemek / su / uyku sırasında takımın GIF animasyonu
     body.stepPh = body.moving ? ((body.stepPh || 0) + dt * 1.9) % 1 : 0;
-    FX.drawCrew(ctx, S.Sprites.get('astronaut_indoor'), ox + body.ix, OFF_Y + I.floorY + 1, 66, s.player.facing, body.stepPh, body.moving);
+    if (!FX.drawActivity(ctx, s, dt, t, ox, OFF_Y + I.floorY + 1)) {
+      FX.drawCrew(ctx, S.Sprites.get('astronaut_indoor'), ox + body.ix, OFF_Y + I.floorY + 1, 66, s.player.facing, body.stepPh, body.moving);
+    }
     if (S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, ox + body.ix, OFF_Y + I.floorY + 1, t, body.moving);
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);

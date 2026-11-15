@@ -105,6 +105,8 @@
     let crewX = DECK.startX;
     let dir = -1;
     let moveDir = 0;
+    let moveV = 0; // W/S: ağırlıksız ortamda yukarı / aşağı süzülme
+    let crewY = 0.35; // zeminden yükseklik (figür boyu oranında, 0..1)
     let stepPh = 0;
     let camL = null;
     let deckW = 0; // çizilen kesitin genişliği (tıklama için)
@@ -190,7 +192,31 @@
       dc.fillStyle = dc.strokeStyle;
       dc.fillText(label, Math.round(seatSX), Math.round(ly + 2));
       dc.fillRect(Math.round(seatSX - 3), Math.round(ly + 10), 6, 3);
-      S.FX.drawCrew(dc, crewImg, camL + crewX * iw, floorY, ih * DECK.crewFrac, dir, stepPh, moveDir !== 0);
+      // Ağırlıksız ortam: takımın süzülme GIF'i (4 kare); boyu güvertedeki ayakta figürle aynı (şerit 132 px ölçeğinde)
+      const fl = S.Sprites.get('astro_float');
+      if (fl) {
+        const crewH = ih * DECK.crewFrac;
+        const k = crewH / 132;
+        const fw = fl.width / 4;
+        const dw = Math.round(fw * k);
+        const dh = Math.round(fl.height * k);
+        const f = Math.floor(performance.now() / 300) % 4;
+        const bob = Math.sin(stepPh * Math.PI * 2) * crewH * 0.04;
+        const cx = Math.round(camL + crewX * iw);
+        const by = Math.round(floorY - crewY * crewH * 0.9 - crewH * 0.08 + bob);
+        dc.save();
+        dc.imageSmoothingEnabled = false;
+        if (dir < 0) {
+          dc.translate(cx + Math.round(dw / 2), by - dh);
+          dc.scale(-1, 1);
+          dc.drawImage(fl, f * fw, 0, fw, fl.height, 0, 0, dw, dh);
+        } else {
+          dc.drawImage(fl, f * fw, 0, fw, fl.height, cx - Math.round(dw / 2), by - dh, dw, dh);
+        }
+        dc.restore();
+      } else {
+        S.FX.drawCrew(dc, crewImg, camL + crewX * iw, floorY, ih * DECK.crewFrac, dir, stepPh, moveDir !== 0);
+      }
     }
 
     /* --- Akış: kalkış -> güverte -> uçuş + daktilo -> varış --- */
@@ -259,10 +285,9 @@
         else O.draw(g, ts, { skyTo });
       } else if (phase === 'deck') {
         deckT += dt;
-        if (moveDir) {
-          crewX = Math.max(DECK.minX, Math.min(DECK.maxX, crewX + moveDir * DECK.speed * dt));
-          stepPh = (stepPh + dt * DECK.stepHz) % 1;
-        } else stepPh = 0;
+        if (moveDir) crewX = Math.max(DECK.minX, Math.min(DECK.maxX, crewX + moveDir * DECK.speed * dt));
+        if (moveV) crewY = Math.max(0.05, Math.min(1, crewY + moveV * 0.9 * dt));
+        stepPh = (stepPh + dt * 0.35) % 1; // süzülme salınımı
         drawDeck(dt);
         if (deckT >= deckSeconds) startFlight();
       } else {
@@ -298,6 +323,8 @@
       if (phase !== 'deck') return;
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') moveDir = dir = -1;
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') moveDir = dir = 1;
+      else if (e.code === 'ArrowUp' || e.code === 'KeyW') moveV = 1;
+      else if (e.code === 'ArrowDown' || e.code === 'KeyS') moveV = -1;
       else if ((e.code === 'KeyE' || e.key === 'Enter') && !e.repeat && performance.now() >= guardUntil) {
         if (Math.abs(crewX - DECK.seatX) <= DECK.seatReach) startFlight();
       } else return;
@@ -307,6 +334,8 @@
     const onKeyUp = (e) => {
       if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && moveDir === -1) moveDir = 0;
       if ((e.code === 'ArrowRight' || e.code === 'KeyD') && moveDir === 1) moveDir = 0;
+      if ((e.code === 'ArrowUp' || e.code === 'KeyW') && moveV === 1) moveV = 0;
+      if ((e.code === 'ArrowDown' || e.code === 'KeyS') && moveV === -1) moveV = 0;
     };
     window.addEventListener('keydown', onKey, true);
     window.addEventListener('keyup', onKeyUp, true);

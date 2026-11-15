@@ -508,10 +508,20 @@
   };
 
   Game.sleep = function () {
-    const s = S.getState();
-    const r = S.Sim.sleep(s);
-    if (r.interrupted) S.UI.toast(t('toast.sleep_interrupted'), 'warn');
-    Game.afterAction();
+    if (Game.sleepAnim) return;
+    const run = () => {
+      Game.sleepAnim = false;
+      const s = S.getState();
+      const r = S.Sim.sleep(s);
+      if (r.interrupted) S.UI.toast(t('toast.sleep_interrupted'), 'warn');
+      Game.afterAction();
+    };
+    // Mekik içinde önce uyku animasyonu (takımın GIF'i: uyku tulumu, ışıklar kısılır), sonra sabaha geçilir
+    if (S.getState().player.inside && S.FX.playActivity && S.FX.playActivity('sleep', run)) {
+      Game.sleepAnim = true;
+      return;
+    }
+    run();
   };
 
   Game.launchMav = function () {

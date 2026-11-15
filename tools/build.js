@@ -248,6 +248,14 @@ const ASSETS = [
   { src: 'sprites/astronaut_jump.png', mode: 'flood', size: { h: 60 } },
   // Mekik içinde kasksız mürettebat (K4 Sedef): kaynak 2048×2048 şeffaf; içeriğe kırpılıp küçültülür
   { src: 'sprites/astronaut_indoor.png', mode: 'none', size: { h: 132 } },
+  // Takımın 6 GIF'i (bekleme, yürüme, süzülme, yemek, su içme, uyku): 4 karelik şeritler, arka plan silinmiş;
+  // boy şimdiki sprite'larla aynı (yüzey 58 px, mekik içi 132 px). Kaynak işleme: GIF -> şerit (piksel boyutu korunur)
+  { src: 'sprites/astro/astro_surface_idle.png', mode: 'none', size: { w: 116, h: 58 }, noCrop: true },
+  { src: 'sprites/astro/astro_surface_walk.png', mode: 'none', size: { w: 140, h: 55 }, noCrop: true },
+  { src: 'sprites/astro/astro_float.png', mode: 'none', size: { w: 452, h: 124 }, noCrop: true },
+  { src: 'sprites/astro/astro_eat.png', mode: 'none', size: { w: 348, h: 137 }, noCrop: true },
+  { src: 'sprites/astro/astro_drink.png', mode: 'none', size: { w: 332, h: 133 }, noCrop: true },
+  { src: 'sprites/astro/astro_sleep.png', mode: 'none', size: { w: 268, h: 129 }, noCrop: true },
   { src: 'sprites/astronaut_frozen.png', mode: 'flood', size: { h: 58 } },
   { src: 'sprites/astronaut_action.png', mode: 'flood', size: { h: 48 } },
   { src: 'sprites/drone_ingenuity.png', mode: 'flood', size: { h: 34 } },

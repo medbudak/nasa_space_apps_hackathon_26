@@ -1307,6 +1307,14 @@ body[data-scene='world'] .screen-layer { display: none; }
 .hp-need small { font-size: 0.6em; color: var(--muted); text-align: center; }
 .hp-need .ico { width: 1.1em; height: 1.1em; }
 .hp-trade { margin: 0.4em 0 0; font-size: 0.6em; color: var(--amber); }
+/* İhtiyaçlar "Durum" kartının içinde tek satır (mekik görüntüsünü kapatmaz); maliyet düğmenin ipucunda */
+.hp-needs-in { margin-top: 0.25em; }
+.hp-needs-in h5 { display: none; }
+.hp-needs-in .hp-need-row { gap: 0.15em; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.hp-needs-in .hp-need { flex-direction: row; justify-content: center; padding: 0.2em 0; min-width: 0; font-size: 1em; font-family: inherit; }
+.hp-needs-in .hp-need svg { width: 1.05em; height: 1.05em; flex: none; }
+.hp-needs-in .hp-need .ico { width: auto; height: auto; font-size: 0.95em; line-height: 1; flex: none; }
+.hp-needs-in .hp-need b, .hp-needs-in .hp-need small { display: none; } /* ad ve maliyet düğmenin ipucunda */
 
 /* Sera büyüme evreleri (Kişi 6); evre görselleri Kişi 7'nin (assets/sprites/plants) */
 .gh-img { width: 48px; height: 48px; image-rendering: pixelated; display: block; }

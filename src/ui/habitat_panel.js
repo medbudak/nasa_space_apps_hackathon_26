@@ -86,17 +86,20 @@
   HP.needsHtml = function (s) {
     const btn = (b) => {
       if (b.id === 'sleep') {
-        return '<button type="button" class="hp-need" data-need="sleep">' + I('bed') + '<b>' + t('needs.sleep') + '</b><small>' +
+        const tip = t('needs.sleep') + ' · ' + t('needs.cost_sleep', { from: Math.round(S.Sim.needs(s).fatigue) });
+        return '<button type="button" class="hp-need" data-need="sleep" title="' + S.util.escape(tip) + '" aria-label="' + S.util.escape(tip) + '">' + I('bed') + '<b>' + t('needs.sleep') + '</b><small>' +
           t('needs.cost_sleep', { from: Math.round(S.Sim.needs(s).fatigue) }) + '</small></button>';
       }
       const act = S.Sim.actions[b.id];
       const p = act.preview(s);
       const err = act.can(s);
-      return '<button type="button" class="hp-need" data-need="' + b.id + '"' + (err ? ' disabled title="' + S.util.escape(t(err)) + '"' : '') + '>' +
+      const tip = t('needs.' + b.id) + ' · ' + (err ? t(err) : t(p.costKey, p.costVars));
+      return '<button type="button" class="hp-need" data-need="' + b.id + '" title="' + S.util.escape(tip) + '" aria-label="' + S.util.escape(tip) + '"' + (err ? ' disabled' : '') + '>' +
         '<span class="ico">' + b.icon + '</span><b>' + t('needs.' + b.id) + '</b><small>' + t(p.costKey, p.costVars) + '</small></button>';
     };
-    return '<section class="panel hp-needs"><h4>' + t('needs.title') + '</h4><div class="hp-need-row">' + NEED_BTNS.map(btn).join('') + '</div>' +
-      '<p class="hp-trade">💧 ' + t('needs.trade_note', { l: S.DATA.constants.sabatier.waterL, d: S.Sim.drinkL() }) + '</p></section>';
+    // Mekik görüntüsünü kapatmasın diye "Durum" kartının içinde küçük bir satır (su notu düğmelerin ipucunda)
+    const note = t('needs.trade_note', { l: S.DATA.constants.sabatier.waterL, d: S.Sim.drinkL() });
+    return '<div class="hp-needs-in" title="' + S.util.escape(note) + '"><h5>' + t('needs.title') + '</h5><div class="hp-need-row">' + NEED_BTNS.map(btn).join('') + '</div></div>';
   };
 
   /* ---------------- Mekik içi alt paneli ---------------- */
@@ -122,7 +125,7 @@
       statusRow('morale', t('hp.morale'), s.res.morale, 'var(--cyan)') +
       '<div class="hp-res"><span>' + I('tank') + s.res.o2ReserveKg.toFixed(1) + ' kg O₂</span><span>' + I('power') + s.res.energyKwh.toFixed(1) + ' kWh</span><span>💧 ' + Math.round(s.res.waterL) + ' L</span>' +
       (gh ? '<span class="hp-gh ' + gh.tone + '" title="' + S.util.escape(t('hp.greenhouse') + ': ' + gh.text) + '">' + I('leaf') + (s.greenhouse.frozen ? '✗' : '%' + s.greenhouse.yieldPct) + '</span>' : '') +
-      '</div></section>' +
+      '</div>' + HP.needsHtml(s) + '</section>' +
       '<section class="panel hp-stations"><h4>' + t('hp.stations') + '</h4><div class="hp-strip" style="--n:' + stations.length + '">' +
       stations
         .map(
@@ -137,8 +140,7 @@
       '<section class="panel hp-preview"><div class="pv-title">' + I(STATION_ICON[sel] || 'target') + '<span>' + pv.title + '</span></div>' +
       pv.lines.join('') +
       (pv.can ? '<p class="pv-err">' + I('x') + t(pv.can) + '</p>' : '') +
-      '<button type="button" class="hp-go" data-run ' + (pv.can ? 'disabled' : '') + '>' + pv.button + (near && near.id === sel ? ' <kbd>E</kbd>' : '') + '</button></section>' +
-      HP.needsHtml(s);
+      '<button type="button" class="hp-go" data-run ' + (pv.can ? 'disabled' : '') + '>' + pv.button + (near && near.id === sel ? ' <kbd>E</kbd>' : '') + '</button></section>';
     if (html === HP.lastHtml) return;
     HP.lastHtml = html;
     host.innerHTML = html;
@@ -178,7 +180,11 @@
     if (!S.Sim.actions[id]) return;
     const res = S.Sim.doAction(s, id);
     if (!res.ok) S.UI.toast(t(res.errKey), 'warn');
-    else S.UI.toast(I('check') + t('action.done.' + id), 'ok');
+    else {
+      S.UI.toast(I('check') + t('action.done.' + id), 'ok');
+      // yemek / su içme: takımın GIF animasyonu astronotun durduğu yerde
+      if ((id === 'eat' || id === 'drink') && S.FX.playActivity) S.FX.playActivity(id);
+    }
     HP.lastHtml = '';
     S.Game.afterAction();
   };

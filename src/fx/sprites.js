@@ -32,7 +32,14 @@
     vfx_frost_2: 'vfx/vfx_frost_2.png',
     // Mekik içi (K4 Sedef): yaşam alanının arka planı ve kasksız mürettebat
     ship_interior: 'screens/scr_ship_interior.jpeg',
-    astronaut_indoor: 'sprites/astronaut_indoor.png'
+    astronaut_indoor: 'sprites/astronaut_indoor.png',
+    // Takımın GIF animasyonları (4 karelik yatay şeritler)
+    astro_surface_idle: 'sprites/astro/astro_surface_idle.png',
+    astro_surface_walk: 'sprites/astro/astro_surface_walk.png',
+    astro_float: 'sprites/astro/astro_float.png',
+    astro_eat: 'sprites/astro/astro_eat.png',
+    astro_drink: 'sprites/astro/astro_drink.png',
+    astro_sleep: 'sprites/astro/astro_sleep.png'
   };
 
   /** DOM arka planları için (CSS url) yol yardımcıları */
