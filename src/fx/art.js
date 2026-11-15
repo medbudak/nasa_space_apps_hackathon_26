@@ -295,7 +295,7 @@
     }
     // H-01 etiketi
     ctx.fillStyle = mix('#5b5650', '#202020', dark * 0.5);
-    ctx.font = 'bold 8px "VT323", monospace';
+    ctx.font = '8px \"VT323\", monospace';
     ctx.textBaseline = 'top';
     ctx.fillText('H-01', x + 118, top + 18);
     // Hava kilidi kapısı (sağ uç)
@@ -436,7 +436,7 @@
     r(ctx, 352, 92, 18, 4, '#cfc8be');
     r(ctx, 350, 140, 22, 6, '#3b82c4');
     ctx.fillStyle = '#2a2a2a';
-    ctx.font = 'bold 7px "VT323", monospace';
+    ctx.font = '7px \"VT323\", monospace';
     ctx.fillText('O2', 355, 120);
     const o2frac = Math.min(1, state.res.o2ReserveKg / S.DATA.habitat.base.o2ReserveStartKg);
     r(ctx, 374, 100, 3, 80, '#22201e');

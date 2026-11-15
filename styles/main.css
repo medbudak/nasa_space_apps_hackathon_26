@@ -25,7 +25,8 @@
 }
 
 * { box-sizing: border-box; }
-html { font-synthesis: weight; } /* tek ağırlıklı retro font: kalın sentezlenir, sahte italik yok */
+html { font-synthesis: none; } /* tek ağırlıklı retro font (VT323): sahte kalın / italik üretilmez; vurgu renk, büyük harf ve boyutla */
+button, input, select, textarea { font-family: inherit; }
 html, body { margin: 0; width: 100%; height: 100%; background: #07080b; color: var(--text); font-family: var(--font); overflow: hidden; }
 body { -webkit-tap-highlight-color: transparent; }
 button { font-family: inherit; color: inherit; }
@@ -1316,7 +1317,7 @@ body[data-scene='world'] .screen-layer { display: none; }
 .hp-needs-in h5 { display: none; }
 .hp-needs-in .hp-need-row { gap: 0.15em; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .hp-needs-in .hp-need { flex-direction: row; justify-content: center; padding: 0.2em 0; min-width: 0; font-size: 1em; font-family: inherit; }
-.hp-needs-in .hp-need svg { width: 1.05em; height: 1.05em; flex: none; }
+.hp-needs-in .hp-need svg { width: 0.8em; height: 0.8em; flex: none; }
 .hp-needs-in .hp-need .ico { width: auto; height: auto; font-size: 0.95em; line-height: 1; flex: none; }
 .hp-needs-in .hp-need b, .hp-needs-in .hp-need small { display: none; } /* ad ve maliyet düğmenin ipucunda */
 

@@ -193,7 +193,7 @@
       dc.fillText(label, Math.round(seatSX), Math.round(ly + 2));
       dc.fillRect(Math.round(seatSX - 3), Math.round(ly + 10), 6, 3);
       // Ağırlıksız ortam: takımın süzülme GIF'i (4 kare); boyu güvertedeki ayakta figürle aynı (şerit 132 px ölçeğinde)
-      const fl = S.Sprites.get('astro_float');
+      const fl = S.Sprites.get('astro_indoor_float') || S.Sprites.get('astro_float'); // mekiğin içi: kasksız
       if (fl) {
         const crewH = ih * DECK.crewFrac;
         const k = crewH / 132;

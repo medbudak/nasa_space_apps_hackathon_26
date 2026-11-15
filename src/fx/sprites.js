@@ -8,12 +8,13 @@
   'use strict';
   const P = 'assets/processed/';
   const MANIFEST = {
-    astronaut_idle: 'sprites/astronaut_idle.png',
-    astronaut_walk: 'sprites/astronaut_walk.png',
+    // Yeni karakter her yerde (takımın GIF'leri): eski anahtarlar yeni karelere işaret eder; kaynak sprite'lar assets/sprites'ta duruyor
+    astronaut_idle: 'sprites/astro/astro_legacy_idle.png',
+    astronaut_walk: 'sprites/astro/astro_legacy_jump.png',
     astronaut_walk_sheet: 'sprites/astronaut_walk_sheet.png',
-    astronaut_jump: 'sprites/astronaut_jump.png',
-    astronaut_frozen: 'sprites/astronaut_frozen.png',
-    astronaut_action: 'sprites/astronaut_action.png',
+    astronaut_jump: 'sprites/astro/astro_legacy_jump.png',
+    astronaut_frozen: 'sprites/astro/astro_legacy_idle.png',
+    astronaut_action: 'sprites/astro/astro_legacy_action.png',
     drone_ingenuity: 'sprites/drone_ingenuity.png',
     rover_opportunity: 'sprites/rover_opportunity.png',
     rover_spirit: 'sprites/rover_spirit.png',
@@ -32,7 +33,7 @@
     vfx_frost_2: 'vfx/vfx_frost_2.png',
     // Mekik içi (K4 Sedef): yaşam alanının arka planı ve kasksız mürettebat
     ship_interior: 'screens/scr_ship_interior.jpeg',
-    astronaut_indoor: 'sprites/astronaut_indoor.png',
+    astronaut_indoor: 'sprites/astro/astro_legacy_indoor.png',
     // Kişi 7 (Sedef): maden noktasında yerde duran mineral (1. aşama)
     min_hematite_ground: 'sprites/minerals/hematite_1.png',
     min_meteorite_ground: 'sprites/minerals/meteorite_1.png',
@@ -44,7 +45,11 @@
     astro_float: 'sprites/astro/astro_float.png',
     astro_eat: 'sprites/astro/astro_eat.png',
     astro_drink: 'sprites/astro/astro_drink.png',
-    astro_sleep: 'sprites/astro/astro_sleep.png'
+    astro_sleep: 'sprites/astro/astro_sleep.png',
+    astro_indoor_idle: 'sprites/astro/astro_indoor_idle.png',
+    astro_indoor_walk: 'sprites/astro/astro_indoor_walk.png',
+    astro_indoor_float: 'sprites/astro/astro_indoor_float.png',
+    astro_surface_kneel: 'sprites/astro/astro_surface_kneel.png'
   };
 
   /** DOM arka planları için (CSS url) yol yardımcıları */

@@ -121,8 +121,8 @@
     return [
       { id: 'morale', icon: UI().icon('morale'), pct: s.res.morale, level: lvl(100 - s.res.morale) },
       { id: 'sleep', icon: UI().icon('bed'), pct: 100 - n.fatigue, level: lvl(n.fatigue) },
-      { id: 'hunger', icon: '<span class="ico">🍽</span>', pct: n.hunger, level: lvl(n.hunger) },
-      { id: 'thirst', icon: '<span class="ico">💧</span>', pct: n.thirst, level: lvl(n.thirst) }
+      { id: 'hunger', icon: UI().icon('food'), pct: n.hunger, level: lvl(n.hunger) },
+      { id: 'thirst', icon: UI().icon('drop'), pct: n.thirst, level: lvl(n.thirst) }
     ];
   };
 

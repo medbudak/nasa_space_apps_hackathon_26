@@ -40,7 +40,7 @@
     return (
       '<div class="panel big-panel pw-panel">' +
       '<div class="bp-head"><span class="bp-num">06</span><h2>' + t('pw.title') + '</h2><button class="icon-btn" data-close>' + I('x') + '</button></div>' +
-      '<div class="pw-top"><div>' + I('target') + '<span>' + t('pw.production') + '</span><b>' + prod + ' W</b><small>☀ ' + p.solarW + ' W · RTG ' + p.rtgW + ' W</small></div>' +
+      '<div class="pw-top"><div>' + I('target') + '<span>' + t('pw.production') + '</span><b>' + prod + ' W</b><small>' + I('sun') + ' ' + p.solarW + ' W · RTG ' + p.rtgW + ' W</small></div>' +
       '<div>' + I('power') + '<span>' + t('pw.demand') + '</span><b>' + demandTotal + ' W</b><small>' + t('pw.ambient', { c: Math.round(amb) }) + '</small></div>' +
       '<div class="' + (gap > 0 ? 'gap' : 'ok') + '">' + I(gap > 0 ? 'alert' : 'check') + '<span>' + t('pw.gap') + '</span><b>' + gap + ' W</b><small>' + t('pw.battery', { e: s.res.energyKwh.toFixed(1), c: s.res.batteryKwh }) + '</small></div></div>' +
       '<div class="pw-list"><div class="pw-head"><span>' + t('pw.system') + '</span><span>' + t('pw.power') + '</span><span>' + t('pw.status') + '</span></div>' + rows +

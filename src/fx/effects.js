@@ -88,7 +88,7 @@
   FX.drawFloats = function (ctx, dt, groundY) {
     if (!FX.floats.length) return;
     ctx.save();
-    ctx.font = 'bold 9px "VT323", "Segoe UI", Arial, sans-serif';
+    ctx.font = '9px \"VT323\", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const f of FX.floats) {
@@ -190,19 +190,26 @@
    */
   const ASTRO = {
     idle: { key: 'astro_surface_idle', frames: 4, ms: 350, hands: [[24, 33], [24, 31], [25, 31], [24, 33]] },
-    walk: { key: 'astro_surface_walk', frames: 4, ms: 140, hands: [[30, 28], [28, 27], [30, 27], [29, 28]] }
+    walk: { key: 'astro_surface_walk', frames: 4, ms: 140, hands: [[30, 28], [28, 27], [30, 27], [29, 28]] },
+    // diz çökme (kazı, tarayıcı): yeni karakter için çizilen 2 kare; kazarken iner-kalkar
+    kneel: { key: 'astro_surface_kneel', frames: 2, ms: 260, hands: [[27, 30], [28, 31]] },
+    // mekik içi (kasksız): ayakta 132 px ölçeğinde şeritler, mekikte 66 px çizilir
+    inIdle: { key: 'astro_indoor_idle', frames: 4, ms: 350 },
+    inWalk: { key: 'astro_indoor_walk', frames: 4, ms: 140 }
   };
   let frostCv = null;
   function drawAstro(ctx, pose, cx, bottomY, flip, t, rate) {
-    const set = pose === 'walk' || pose === 'jump' ? ASTRO.walk : ASTRO.idle;
+    const set = pose === 'walk' || pose === 'jump' ? ASTRO.walk : pose === 'action' && S.Sprites.get(ASTRO.kneel.key) ? ASTRO.kneel : ASTRO.idle;
     const img = S.Sprites.get(set.key);
     if (!img) return null;
     const fw = img.width / set.frames;
     const fh = img.height;
     let f = Math.floor((t * 1000 * (rate || 1)) / set.ms) % set.frames;
     if (pose === 'jump') f = 0; // uzun adım karesi
-    if (pose === 'action' || pose === 'frozen') f = 0;
-    const sy = pose === 'action' ? 0.84 : 1; // çömelme
+    if (pose === 'frozen') f = 0;
+    if (pose === 'action' && set !== ASTRO.kneel) f = 0;
+    if (pose === 'action' && set === ASTRO.kneel && !(S.Surface.body.actionT > 0)) f = 0; // tarayıcı: sabit diz çökme
+    const sy = pose === 'action' && set !== ASTRO.kneel ? 0.84 : 1; // şerit yoksa eski çömelme
     const dh = Math.round(fh * sy);
     const left = Math.round(cx - fw / 2);
     const top = Math.round(bottomY - dh);
@@ -443,7 +450,7 @@
     // Kayaya takılınca kısa zıplama ipucu
     if (body.blockedT > 0 && !hideAstro) {
       ctx.save();
-      ctx.font = 'bold 8px "VT323", "Segoe UI", Arial, sans-serif';
+      ctx.font = '8px \"VT323\", monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = 'rgba(8,10,14,0.75)';
@@ -1141,6 +1148,33 @@
     c.restore();
   };
 
+  /** Mekik içinde kasksız astronot (takımın GIF'lerinden, kask yerine baş): bekleme / yürüme, ayakta 66 px */
+  function drawIndoor(ctx, s, t, cx, footY, moving) {
+    const set = moving ? ASTRO.inWalk : ASTRO.inIdle;
+    const img = S.Sprites.get(set.key);
+    if (!img) return false;
+    const fw = img.width / set.frames;
+    const k = 66 / 132;
+    const dw = Math.round(fw * k);
+    const dh = Math.round(img.height * k);
+    const f = Math.floor((t * 1000) / set.ms) % set.frames;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(Math.round(cx), footY - 2, dw * 0.38, 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (s.player.facing < 0) {
+      ctx.translate(Math.round(cx + dw / 2), footY - dh);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, f * fw, 0, fw, img.height, 0, 0, dw, dh);
+    } else {
+      ctx.drawImage(img, f * fw, 0, fw, img.height, Math.round(cx - dw / 2), footY - dh, dw, dh);
+    }
+    ctx.restore();
+    return true;
+  }
+
   /* ---------------- Mekik içi etkinlik animasyonları (takımın GIF'leri: yemek, su içme, uyku) ---------------- */
   // Şeritler 132 px ölçeğinde (ayakta duran figür = 132); mekikte figür 66 px çizildiği için yarı ölçek.
   const ACTIVITY = {
@@ -1242,7 +1276,7 @@
     // Yakındaki istasyonun işareti
     if (st) {
       const label = S.t('station.' + st.id);
-      ctx.font = 'bold 9px "VT323", "Segoe UI", Arial, sans-serif';
+      ctx.font = '9px \"VT323\", monospace';
       ctx.textAlign = 'center';
       const tw = Math.ceil(ctx.measureText(label).width) + 8;
       const lx = Math.round(ox + st.x);
@@ -1258,7 +1292,7 @@
     }
     // Kasksız mürettebat (mekik içinde), adım atarak yürür; yemek / su / uyku sırasında takımın GIF animasyonu
     body.stepPh = body.moving ? ((body.stepPh || 0) + dt * 1.9) % 1 : 0;
-    if (!FX.drawActivity(ctx, s, dt, t, ox, OFF_Y + I.floorY + 1)) {
+    if (!FX.drawActivity(ctx, s, dt, t, ox, OFF_Y + I.floorY + 1) && !drawIndoor(ctx, s, t, ox + body.ix, OFF_Y + I.floorY + 1, body.moving)) {
       FX.drawCrew(ctx, S.Sprites.get('astronaut_indoor'), ox + body.ix, OFF_Y + I.floorY + 1, 66, s.player.facing, body.stepPh, body.moving);
     }
     if (S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, ox + body.ix, OFF_Y + I.floorY + 1, t, body.moving);

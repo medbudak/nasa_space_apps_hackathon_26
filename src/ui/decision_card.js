@@ -35,7 +35,7 @@
         const altNote = variant.resultKey && variant.resultKey !== 'crisis.' + c.id + '.' + o.id + '.res' && !o.minigame ? '<span class="cc-bonus">' + I('check') + t('cc.bonus_available') + '</span>' : '';
         return (
           '<button class="cc-opt" data-opt="' + o.id + '" ' + (avail ? '' : 'disabled') + '>' +
-          '<span class="cc-ico">' + (o.icon || o.id) + '</span>' +
+          '<span class="cc-ico">' + S.UI.dataIcon(o.icon || o.id) + '</span>' +
           '<span class="cc-body"><b>' + t('crisis.' + c.id + '.' + o.id + '.label') + '</b>' +
           '<span class="cc-sub">' + t('crisis.' + c.id + '.' + o.id + '.sub') + '</span>' +
           '<span class="cc-chips">' + S.UI.costChips(costs) + (o.minigame ? '<span class="chip mg">' + I('target') + t('cc.minigame.' + o.minigame) + '</span>' : '') + '</span>' +

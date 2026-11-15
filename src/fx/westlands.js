@@ -1343,7 +1343,7 @@
     for (let i = 0; i < left; i++) drawBottle(ctx, x + slots[i][0], y + slots[i][1], false, 0);
     if (nearId === 'bottles') {
       ctx.save();
-      ctx.font = 'bold 8px "VT323", "Segoe UI", Arial, sans-serif';
+      ctx.font = '8px \"VT323\", monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const txt = '[E] ' + S.t(S.Sim.bottle(s) ? 'bottle.rack_put' : 'bottle.rack_take');

@@ -161,6 +161,62 @@
     "whiteKeptPx": 0
   },
   {
+    "asset": "sprites/astro/astro_indoor_idle.png",
+    "size": "272x133",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_indoor_walk.png",
+    "size": "320x127",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_indoor_float.png",
+    "size": "444x124",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_surface_kneel.png",
+    "size": "62x50",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_legacy_idle.png",
+    "size": "29x57",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_legacy_jump.png",
+    "size": "34x55",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_legacy_action.png",
+    "size": "30x49",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/astro/astro_legacy_indoor.png",
+    "size": "68x131",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "sprites/astronaut_frozen.png",
     "size": "37x58",
     "mode": "flood",

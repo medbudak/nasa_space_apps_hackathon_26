@@ -570,7 +570,14 @@
           panelBg(c);
           const night = clamp(tt / 18, 0, 1);
           R(c, 0, 0, W, 14, night > 0.5 ? '#1a1830' : '#a8573a');
-          txt(c, night > 0.5 ? '☾' : '☀', 10, 7, '#f2ebe2', 'left', 9);
+          // gece / gündüz işareti: piksel ay ya da güneş (emoji değil)
+          if (night > 0.5) {
+            R(c, 10, 3, 6, 8, '#f2ebe2');
+            R(c, 13, 3, 4, 7, '#1a1830');
+          } else {
+            R(c, 11, 4, 6, 6, '#f2ebe2');
+            for (const [dx, dy] of [[13, 1], [13, 11], [8, 6], [18, 6]]) R(c, dx, dy, 2, 2, '#f2ebe2');
+          }
           // the cell: glows with temperature
           const k = clamp((T - 500) / 400, 0, 1);
           R(c, 40, 40, 110, 90, '#2a2d33');

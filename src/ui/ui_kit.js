@@ -55,8 +55,30 @@
     mute: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m16 9 5 6M21 9l-5 6"/>',
     sat: '<path d="m13 7 4 4M4 14l6-6 6 6-6 6z"/><path d="M17 3l4 4M14 17a3 3 0 0 0 3 3"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
-    globe2: '<circle cx="12" cy="12" r="9"/><path d="M5 8h5l2 3-2 3H6M14 5l2 3h3M15 16l2-2h3"/>'
+    globe2: '<circle cx="12" cy="12" r="9"/><path d="M5 8h5l2 3-2 3H6M14 5l2 3h3M15 16l2-2h3"/>',
+    // emoji yerine aynı çizgi tarzında (retro arayüzde sistem emoji yazı tipi görünmesin)
+    drop: '<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/><path d="M9 14a3 3 0 0 0 3 3"/>',
+    food: '<circle cx="12" cy="13" r="6"/><circle cx="12" cy="13" r="2.5"/><path d="M3 4v6M5 4v6M3 7h2M4 10v10M21 4c-2 1-2 4-2 6h2v10"/>',
+    wc: '<circle cx="7" cy="5" r="2"/><circle cx="17" cy="5" r="2"/><path d="M5 9h4v6H5zM6 15v5M8 15v5M14 9h6l-1 7h-4zM16 16v4M18 16v4M12 3v18"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+    moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    wind: '<path d="M3 9h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 17h7"/>',
+    snow: '<path d="M12 2v20M3.5 7l17 10M20.5 7l-17 10M9 4l3 2 3-2M9 20l3-2 3 2"/>',
+    pick: '<path d="M4 7c5-4 11-4 16 0"/><path d="M12 5l-7 16"/>'
   };
+  // Veri dosyalarındaki emoji ikonlar (ör. kriz kartı seçenekleri) -> çizgi ikon
+  const EMOJI = {
+    '🔋': 'battery', '🧹': 'wrench', '🚀': 'rocket', '📶': 'signal', '🌍': 'globe', '🧑': 'suit', '☀': 'sun', '☀️': 'sun',
+    '🌪': 'wind', '🌪️': 'wind', '🌀': 'wind', '🌬': 'wind', '🌬️': 'wind', '💨': 'wind', '🎙': 'signal', '🎙️': 'signal',
+    '❄': 'snow', '❄️': 'snow', '🧊': 'snow', '🗑': 'x', '🗑️': 'x', '📡': 'sat', '☣': 'alert', '☣️': 'alert', '☢': 'alert', '☢️': 'alert',
+    '⚠': 'alert', '⚠️': 'alert', '📄': 'doc', '💌': 'doc', '💾': 'doc', '🚁': 'target', '📷': 'camera', '🌙': 'moon',
+    '🛡': 'shield', '🛡️': 'shield', '🏠': 'home', '🔌': 'power', '⚡': 'power', '🩹': 'heart', '🌡': 'temp', '🌡️': 'temp',
+    '📦': 'weight', '♨': 'heat', '♨️': 'heat', '🔧': 'wrench', '⚙': 'wrench', '⚙️': 'wrench', '🚶': 'walk', '✂': 'grip', '✂️': 'grip',
+    '🧪': 'flask', '📈': 'up', '💧': 'drop', '🍽': 'food', '🍽️': 'food', '🚻': 'wc', '⛏': 'pick', '⛏️': 'pick', '🧑‍🚀': 'suit', '〰': 'wind'
+  };
+  UI.isEmoji = (x) => Boolean(x && EMOJI[x]);
+  /** Bir veri ikonunu çiz: emoji ise eşleşen çizgi ikon, değilse olduğu gibi metin (ör. seçenek harfi) */
+  UI.dataIcon = (x) => (EMOJI[x] ? UI.icon(EMOJI[x]) : esc(String(x)));
   UI.icon = (name, cls = '') =>
     '<svg class="ico ' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     (P[name] || P.alert) +

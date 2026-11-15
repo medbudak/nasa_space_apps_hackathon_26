@@ -51,7 +51,7 @@
       '<div class="rc-tiles">' +
       tile('doc', t('rc.reports'), sc.sentForensics + '/' + reqF.forensicsSent + (sc.sentForensics > reqF.forensicsSent ? '+' : ''), sc.sentForensics >= reqF.forensicsSent) +
       tile('flask', t('rc.experiments'), sc.sentExperiments + '/' + reqF.experimentsSent + (sc.sentExperiments > reqF.experimentsSent ? '+' : ''), sc.sentExperiments >= reqF.experimentsSent) +
-      tile('shield', t('rc.return'), sc.safeReturn ? '✓' : '✗', sc.safeReturn) +
+      tile('shield', t('rc.return'), sc.safeReturn ? I('check') : I('x'), sc.safeReturn) +
       tile('weight', t('rc.margin'), '%' + (s.totals ? s.totals.massMarginPct : 0), s.totals && s.totals.massMarginPct >= S.DATA.scoring.massMarginBonusThresholdPct) +
       '</div>' +
       '<div class="rc-cols"><section class="panel rc-chains"><h3>' + t('rc.chains') + '</h3>' + chainRows + (topDecisions ? '<h4>' + t('rc.key_decisions') + '</h4>' + topDecisions : '') + '</section>' +

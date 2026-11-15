@@ -78,10 +78,10 @@
 
   /* ---------------- İhtiyaç düğmeleri (Kişi 2): Yemek ye / Su iç / Uyu / Tuvalet ---------------- */
   const NEED_BTNS = [
-    { id: 'eat', icon: '🍽' },
-    { id: 'drink', icon: '💧' },
+    { id: 'eat', icon: 'food' },
+    { id: 'drink', icon: 'drop' },
     { id: 'sleep', icon: null },
-    { id: 'toilet', icon: '🚻' }
+    { id: 'toilet', icon: 'wc' }
   ];
   HP.needsHtml = function (s) {
     const btn = (b) => {
@@ -95,7 +95,7 @@
       const err = act.can(s);
       const tip = t('needs.' + b.id) + ' · ' + (err ? t(err) : t(p.costKey, p.costVars));
       return '<button type="button" class="hp-need" data-need="' + b.id + '" title="' + S.util.escape(tip) + '" aria-label="' + S.util.escape(tip) + '"' + (err ? ' disabled' : '') + '>' +
-        '<span class="ico">' + b.icon + '</span><b>' + t('needs.' + b.id) + '</b><small>' + t(p.costKey, p.costVars) + '</small></button>';
+        I(b.icon) + '<b>' + t('needs.' + b.id) + '</b><small>' + t(p.costKey, p.costVars) + '</small></button>';
     };
     // Mekik görüntüsünü kapatmasın diye "Durum" kartının içinde küçük bir satır (su notu düğmelerin ipucunda)
     const note = t('needs.trade_note', { l: S.DATA.constants.sabatier.waterL, d: S.Sim.drinkL() });
@@ -123,8 +123,8 @@
       statusRow('battery', t('hp.suit_battery'), s.suit.battery, levelColor(s.suit.battery)) +
       statusRow('suit', t('hp.suit'), s.suit.integrity, s.suit.leak ? 'var(--red)' : 'var(--cyan)') +
       statusRow('morale', t('hp.morale'), s.res.morale, 'var(--cyan)') +
-      '<div class="hp-res"><span>' + I('tank') + s.res.o2ReserveKg.toFixed(1) + ' kg O₂</span><span>' + I('power') + s.res.energyKwh.toFixed(1) + ' kWh</span><span>💧 ' + Math.round(s.res.waterL) + ' L</span>' +
-      (gh ? '<span class="hp-gh ' + gh.tone + '" title="' + S.util.escape(t('hp.greenhouse') + ': ' + gh.text) + '">' + I('leaf') + (s.greenhouse.frozen ? '✗' : '%' + s.greenhouse.yieldPct) + '</span>' : '') +
+      '<div class="hp-res"><span>' + I('tank') + s.res.o2ReserveKg.toFixed(1) + ' kg O₂</span><span>' + I('power') + s.res.energyKwh.toFixed(1) + ' kWh</span><span>' + I('drop') + Math.round(s.res.waterL) + ' L</span>' +
+      (gh ? '<span class="hp-gh ' + gh.tone + '" title="' + S.util.escape(t('hp.greenhouse') + ': ' + gh.text) + '">' + I('leaf') + (s.greenhouse.frozen ? I('x') : '%' + s.greenhouse.yieldPct) + '</span>' : '') +
       '</div>' + HP.needsHtml(s) + '</section>' +
       '<section class="panel hp-stations"><h4>' + t('hp.stations') + '</h4><div class="hp-strip" style="--n:' + stations.length + '">' +
       stations
