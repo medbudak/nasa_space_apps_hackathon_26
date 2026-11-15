@@ -302,7 +302,12 @@
   Surf.sandPitAvoided = (s) => Boolean(S.Sim.has(s, 'ingenuity') && S.DATA.terrain.droneRoutesAroundSandPits);
 
   /* ---------------- Oyuncu fiziği (gerçek zaman, saniye) ---------------- */
-  const body = { px: 0, cpx: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560, crouchK: 0, crouching: false };
+  // im: lander içi yatay hız (S.util.easeVelocity durumu, px/sn)
+  // jv: lander içi dikey süzülme hızı (S.util.easeVelocity durumu); rising: tavana doğru itilirken true
+  const body = { px: 0, cpx: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560, im: { v: 0, vMid: 0 }, jv: { v: 0, vMid: 0 }, rising: false, crouchK: 0, crouching: false };
+  // Süzülme eylemsizliği: kalkış/duruşun oturma süresi (sn). Lander içi ve transit güvertesi aynı değeri kullanır
+  // (kullanıcı kararı 2026-11-15: mekik içi her zaman Sol 0'daki gibi ağırlıksız; lander'da oyun basitleştirmesi)
+  Surf.DRIFT_ACCEL_TAU = 0.9;
   Surf.body = body;
 
   Surf.gravityPx = () => S.DATA.constants.marsGravity.value * G().spritePxPerMeter;
@@ -323,8 +328,24 @@
     body.y = Surf.inCave(s) ? 0 : Surf.groundAt(body.px);
     body.vy = 0;
     body.onGround = true;
-    if (typeof s.player.ix === 'number') body.ix = s.player.ix;
+    // İçerideyken (kayıttan / checkpoint'ten devam) kapıdan girişle aynı başlangıç durumu
+    if (s.player.inside) resetInteriorBody(s, typeof s.player.ix === 'number' ? s.player.ix : Surf.INTERIOR.right - 4);
+    else if (typeof s.player.ix === 'number') body.ix = s.player.ix;
   };
+
+  /** Lander içine her girişte (kapı, kayıt, checkpoint, gün) aynı hareket durumu: zeminde, hareketsiz */
+  function resetInteriorBody(s, ix) {
+    const I = Surf.INTERIOR;
+    body.ix = Math.max(I.left, Math.min(I.right, ix));
+    body.im.v = body.im.vMid = 0;
+    body.jv.v = body.jv.vMid = 0;
+    body.rising = false;
+    body.y = 0;
+    body.vy = 0;
+    body.onGround = true;
+    body.moving = false;
+    s.player.ix = body.ix;
+  }
 
   /**
    * Ekrandaki yürüme hızı ayrı bir sayı değildir, veriden türetilir:
@@ -533,21 +554,27 @@
   };
 
   /* ---------------- Habitat içi (kesit görünüm) ---------------- */
-  /* Mekik içi (K4 Sedef'in mekik kesiti, scr_ship_interior): istasyonlar görseldeki yerlerinde (640 px genişlikte) */
+  /* Lander kesiti (interior/lander_interior.png, 640 px genişliğe göre yerel koordinat): kokpit · laboratuvar · ranzalar + banyo + hava kilidi.
+     İstasyonlar görseldeki eşyaların önünde; galleySeat = yemek/içme animasyonunun oturduğu masa sandalyesi. */
   Surf.INTERIOR = {
-    left: 112,
-    right: 612,
-    floorY: 186,
+    left: 34,
+    right: 614,
+    floorY: 128, // kesitin kendi koordinatında (640 px genişlikte); ekrana yerleşimi FX.renderInterior'da
+    // Ağırlıksız itişte ayak en fazla bu kadar yükselir: kask tavana (y ≈ 34) değmeden döner
+    maxJumpPx: 30,
+    driftRisePxPerSecond: 24, // itişle yükselme / geri süzülme hızı
+    turnBelowPx: 12, // tavana bu kadar kala geri dönülür; yumuşak dönüş kalan yolu tamamlar
+    galleySeat: { x: 508, facing: -1 },
     stations: [
-      { id: 'comms', x: 140, action: 'comms' },
-      { id: 'power', x: 205, action: 'power' },
-      { id: 'charger', x: 270, action: 'charge_suit' },
-      { id: 'locker', x: 340, action: 'refill_suit' },
-      { id: 'lab', x: 418, action: 'lab' },
-      { id: 'workshop', x: 478, action: 'workshop' },
-      { id: 'workbench', x: 528, action: 'repair_suit' },
-      { id: 'bunk', x: 572, action: 'sleep' },
-      { id: 'bottles', x: 592, action: 'bottle' }, // D-016 (K2 Sude): su şişesi rafı hava kilidinin yanında
+      { id: 'comms', x: 50, action: 'comms' },
+      { id: 'power', x: 105, action: 'power' },
+      { id: 'charger', x: 145, action: 'charge_suit' },
+      { id: 'locker', x: 186, action: 'refill_suit' },
+      { id: 'lab', x: 258, action: 'lab' },
+      { id: 'workshop', x: 330, action: 'workshop' },
+      { id: 'workbench', x: 386, action: 'repair_suit' },
+      { id: 'bunk', x: 452, action: 'sleep' },
+      { id: 'bottles', x: 566, action: 'bottle' }, // D-016 (K2 Sude): su şişesi rafı hava kilidinin yanında
       { id: 'airlock', x: 612, action: 'exit' }
     ]
   };
@@ -556,9 +583,14 @@
     const I = Surf.INTERIOR;
     body.moving = input.dir !== 0;
     if (input.dir !== 0) s.player.facing = input.dir;
-    body.ix = Math.max(I.left, Math.min(I.right, body.ix + input.dir * G().interiorWalkPxPerSecond * dt));
+    // Eylemsizlik: hız yumuşakça hedefe oturur (transit güvertesiyle aynı yöntem); duvarda durur
+    S.util.easeVelocity(body.im, input.dir * G().interiorWalkPxPerSecond, dt, Surf.DRIFT_ACCEL_TAU);
+    const nx = body.ix + body.im.v * dt;
+    body.ix = Math.max(I.left, Math.min(I.right, nx));
+    if (body.ix !== nx) body.im.v = body.im.vMid = 0;
     s.player.ix = body.ix;
-    if (body.moving) {
+    updateInteriorJump(input, dt, I);
+    if (body.moving && body.onGround) {
       body.stepT -= dt;
       if (body.stepT <= 0) {
         body.stepT = 0.36;
@@ -566,6 +598,30 @@
       }
     }
   };
+
+  /**
+   * Mekik içinde zıplama = ağırlıksız itiş (Sol 0 güvertesiyle aynı his): dikey hız aynı yumuşatmayla tavana doğru
+   * artar, tavana yaklaşınca yön değiştirir ve mürettebat yavaşça zemine geri süzülür.
+   */
+  function updateInteriorJump(input, dt, I) {
+    if (input.jump && body.onGround) {
+      body.onGround = false;
+      body.rising = true;
+      body.jv.v = body.jv.vMid = 0;
+      S.bus.emit('audio:play', 'jump');
+    }
+    if (body.onGround) return;
+    if (body.rising && body.y >= I.maxJumpPx - I.turnBelowPx) body.rising = false;
+    body.vy = S.util.easeVelocity(body.jv, (body.rising ? 1 : -1) * I.driftRisePxPerSecond, dt, Surf.DRIFT_ACCEL_TAU);
+    body.y = Math.min(I.maxJumpPx, body.y + body.vy * dt);
+    if (!body.rising && body.y <= 0) {
+      body.y = 0;
+      body.vy = 0;
+      body.onGround = true;
+      body.landedT = 0.25;
+      S.bus.emit('audio:play', 'land');
+    }
+  }
 
   Surf.nearestStation = function () {
     let best = null;
@@ -588,8 +644,7 @@
     }
     s.player.x = 0;
     s.player.zone = 'surface';
-    body.ix = Surf.INTERIOR.right - 10;
-    s.player.ix = body.ix;
+    resetInteriorBody(s, Surf.INTERIOR.right - 4);
     s.player.facing = -1;
     S.bus.emit('audio:play', 'door');
   };

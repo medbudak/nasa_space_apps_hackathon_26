@@ -16,19 +16,22 @@
   /* ================================================================ */
   /* 1) AÇILIŞ + TRANSIT                                                */
   /* ================================================================ */
-  // Mekik kesiti (scr_ship_interior) üzerindeki yerler, görselin oranı olarak (K3 Medine'nin ölçümü)
+  // Lander kesiti (interior/lander_interior.png) üzerindeki yerler, görselin oranı olarak. Ölçek ve zemin yüksekliği
+  // lander içiyle aynı (S.FX.interiorScreenMetrics): güverte ve sonradan girilen lander ekranda birebir aynı boyuttadır.
   const DECK = {
-    floorFrac: 0.695, // güverte zemini, görsel yüksekliğinin oranı
-    minX: 0.2, // yürünebilir bölüm, görsel genişliğinin oranı
-    maxX: 0.93,
+    floorFrac: 0.837, // güverte zemini, görsel yüksekliğinin oranı
+    minX: 0.05, // süzülünebilen bölüm, görsel genişliğinin oranı
+    maxX: 0.95,
     startX: 0.5,
-    seatX: 0.255, // kokpit koltuğu: burada E varışı başlatır
-    seatReach: 0.07,
-    crewFrac: 0.19, // mürettebat boyu, görsel yüksekliğinin oranı
-    speed: 0.11, // saniyede görsel genişliği
-    zoom: 1.32, // görsel ekran yüksekliğinin bu katı kadar çizilir
-    stepHz: 1.9
+    seatX: 0.073, // kokpit koltuğu: burada E varışı başlatır
+    seatReach: 0.06
   };
+  // Süzülme hızı lander içiyle aynı kaynaktan (gameplay.interiorWalkPxPerSecond), görsel genişliğinin oranı olarak
+  const deckSpeed = () => S.DATA.gameplay.interiorWalkPxPerSecond / S.FX.BASE_W;
+  /*
+   * Ağırlıksız güverte: mürettebat ve serbest eşyalar lander içiyle birebir aynı sistemden gelir (S.util.easeVelocity,
+   * S.Surface.DRIFT_ACCEL_TAU, S.FX.crewMotionPose, S.FX.drawFloaters).
+   */
   const TYPE_MS = 60; // daktilo: harf başına
   const KEY_GUARD_MS = 700; // "Fırlatmayı başlat"tan taşan Enter basışını yut
   const FACT_MS = 6000; // Mars bilgi kartı başına
@@ -89,8 +92,8 @@
     const deck = R('deck');
     const dc = deck.getContext('2d');
     const card = R('card');
-    const deckImg = S.Sprites.get('ship_interior');
-    const crewImg = S.Sprites.get('astronaut_indoor');
+    const deckImg = S.Sprites.get('lander_interior');
+    const crewImg = S.Sprites.get('astro_indoor_float'); // süzülen kasksız mürettebat (takımın GIF'i)
     // Varışta açılacak renk = oyun dünyasının ilk karesindeki gökyüzü (iniş alanı, Sol 1 sabahı)
     const skyTo = S.Art ? S.Art.palette(s.design.landingSiteId, S.DATA.gameplay.solStartMinute).skyTop : null;
     const timers = [];
@@ -105,9 +108,8 @@
     let crewX = DECK.startX;
     let dir = -1;
     let moveDir = 0;
-    let moveV = 0; // W/S: ağırlıksız ortamda yukarı / aşağı süzülme
-    let crewY = 0.35; // zeminden yükseklik (figür boyu oranında, 0..1)
-    let stepPh = 0;
+    const drift = { v: 0, vMid: 0 }; // süzülme hızı (görsel genişliği/sn), S.util.easeVelocity durumu
+    const motionAmp = S.FX.motionAmp();
     let camL = null;
     let deckW = 0; // çizilen kesitin genişliği (tıklama için)
     let guardUntil = performance.now() + KEY_GUARD_MS;
@@ -167,15 +169,16 @@
       dc.fillStyle = '#05060a';
       dc.fillRect(0, 0, W, H);
       if (!deckImg) return;
-      const ih = Math.max(H * DECK.zoom, (W * 1.25 * deckImg.height) / deckImg.width);
-      const iw = (ih * deckImg.width) / deckImg.height;
+      const view = S.FX.interiorScreenMetrics(H);
+      const iw = S.FX.BASE_W * view.scale;
+      const ih = (iw * deckImg.height) / deckImg.width;
       deckW = iw;
-      const top = Math.max(H - ih, Math.min(0, H * 0.78 - ih * DECK.floorFrac)); // zemin ekranın %78'inde, altta boşluk yok
-      const want = Math.max(W - iw, Math.min(0, W * 0.45 - crewX * iw));
+      const floorY = view.floorY;
+      const top = floorY - ih * DECK.floorFrac;
+      const want = iw <= W ? (W - iw) / 2 : Math.max(W - iw, Math.min(0, W / 2 - crewX * iw));
       camL = camL === null || !dt ? want : camL + (want - camL) * Math.min(1, dt * 6);
-      dc.imageSmoothingEnabled = false;
+      dc.imageSmoothingEnabled = true;
       dc.drawImage(deckImg, Math.round(camL), Math.round(top), Math.round(iw), Math.round(ih));
-      const floorY = top + ih * DECK.floorFrac;
       // Kokpit koltuğunun üstünde zıplayan etiket; yanındayken E ipucu
       const seatSX = camL + DECK.seatX * iw;
       const near = Math.abs(crewX - DECK.seatX) <= DECK.seatReach;
@@ -192,31 +195,14 @@
       dc.fillStyle = dc.strokeStyle;
       dc.fillText(label, Math.round(seatSX), Math.round(ly + 2));
       dc.fillRect(Math.round(seatSX - 3), Math.round(ly + 10), 6, 3);
-      // Ağırlıksız ortam: takımın süzülme GIF'i (4 kare); boyu güvertedeki ayakta figürle aynı (şerit 132 px ölçeğinde)
-      const fl = S.Sprites.get('astro_indoor_float') || S.Sprites.get('astro_float'); // mekiğin içi: kasksız
-      if (fl) {
-        const crewH = ih * DECK.crewFrac;
-        const k = crewH / 132;
-        const fw = fl.width / 4;
-        const dw = Math.round(fw * k);
-        const dh = Math.round(fl.height * k);
-        const f = Math.floor(performance.now() / 300) % 4;
-        const bob = Math.sin(stepPh * Math.PI * 2) * crewH * 0.04;
-        const cx = Math.round(camL + crewX * iw);
-        const by = Math.round(floorY - crewY * crewH * 0.9 - crewH * 0.08 + bob);
-        dc.save();
-        dc.imageSmoothingEnabled = false;
-        if (dir < 0) {
-          dc.translate(cx + Math.round(dw / 2), by - dh);
-          dc.scale(-1, 1);
-          dc.drawImage(fl, f * fw, 0, fw, fl.height, 0, 0, dw, dh);
-        } else {
-          dc.drawImage(fl, f * fw, 0, fw, fl.height, cx - Math.round(dw / 2), by - dh, dw, dh);
-        }
-        dc.restore();
-      } else {
-        S.FX.drawCrew(dc, crewImg, camL + crewX * iw, floorY, ih * DECK.crewFrac, dir, stepPh, moveDir !== 0);
+      // Ağırlıksız güverte: eşyalar ve mürettebat süzülür (bir eşya mürettebatın önünde kalır: derinlik)
+      const tSec = performance.now() / 1000;
+      S.FX.drawFloaters(dc, 'back', camL, floorY, view.scale, tSec, motionAmp);
+      if (crewImg) {
+        const pose = S.FX.crewMotionPose(tSec, drift.v / deckSpeed(), motionAmp);
+        S.FX.drawCrewPosed(dc, pose, camL + crewX * iw, floorY, dir, tSec, view.scale);
       }
+      S.FX.drawFloaters(dc, 'front', camL, floorY, view.scale, tSec, motionAmp);
     }
 
     /* --- Akış: kalkış -> güverte -> uçuş + daktilo -> varış --- */
@@ -285,9 +271,12 @@
         else O.draw(g, ts, { skyTo });
       } else if (phase === 'deck') {
         deckT += dt;
-        if (moveDir) crewX = Math.max(DECK.minX, Math.min(DECK.maxX, crewX + moveDir * DECK.speed * dt));
-        if (moveV) crewY = Math.max(0.05, Math.min(1, crewY + moveV * 0.9 * dt));
-        stepPh = (stepPh + dt * 0.35) % 1; // süzülme salınımı
+        // Eylemsizlik: lander içiyle aynı yumuşatma (S eğrisi); duvara değince durur
+        crewX += S.util.easeVelocity(drift, moveDir * deckSpeed(), dt, S.Surface.DRIFT_ACCEL_TAU) * dt;
+        if (crewX < DECK.minX || crewX > DECK.maxX) {
+          crewX = Math.max(DECK.minX, Math.min(DECK.maxX, crewX));
+          drift.v = drift.vMid = 0;
+        }
         drawDeck(dt);
         if (deckT >= deckSeconds) startFlight();
       } else {
@@ -323,8 +312,6 @@
       if (phase !== 'deck') return;
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') moveDir = dir = -1;
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') moveDir = dir = 1;
-      else if (e.code === 'ArrowUp' || e.code === 'KeyW') moveV = 1;
-      else if (e.code === 'ArrowDown' || e.code === 'KeyS') moveV = -1;
       else if ((e.code === 'KeyE' || e.key === 'Enter') && !e.repeat && performance.now() >= guardUntil) {
         if (Math.abs(crewX - DECK.seatX) <= DECK.seatReach) startFlight();
       } else return;
@@ -334,8 +321,6 @@
     const onKeyUp = (e) => {
       if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && moveDir === -1) moveDir = 0;
       if ((e.code === 'ArrowRight' || e.code === 'KeyD') && moveDir === 1) moveDir = 0;
-      if ((e.code === 'ArrowUp' || e.code === 'KeyW') && moveV === 1) moveV = 0;
-      if ((e.code === 'ArrowDown' || e.code === 'KeyS') && moveV === -1) moveV = 0;
     };
     window.addEventListener('keydown', onKey, true);
     window.addEventListener('keyup', onKeyUp, true);

@@ -54,6 +54,16 @@
   S.util = {
     clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
     lerp: (a, b, k) => a + (b - a) * k,
+    /**
+     * Eylemsizlik: hız hedefe iki kademeli üstel yumuşatmayla oturur (kalkış ve duruş S eğrisi, ease-in-out).
+     * m = { v, vMid } yerinde güncellenir; tau iki kademenin toplam oturma süresi (sn). Lander içi ve transit güvertesi.
+     */
+    easeVelocity(m, target, dt, tau) {
+      const k = 1 - Math.exp(-dt / (tau / 2));
+      m.vMid += (target - m.vMid) * k;
+      m.v += (m.vMid - m.v) * k;
+      return m.v;
+    },
     round1: (v) => Math.round(v * 10) / 10,
     round2: (v) => Math.round(v * 100) / 100,
     /** Sol içi dakika -> "HH:MM" (Mars saati, 24 sa 39 dk) */

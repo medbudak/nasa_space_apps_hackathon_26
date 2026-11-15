@@ -32,9 +32,8 @@
     vfx_shadow_hallucination: 'vfx/vfx_shadow_hallucination.png',
     vfx_frost_1: 'vfx/vfx_frost_1.png',
     vfx_frost_2: 'vfx/vfx_frost_2.png',
-    // Mekik içi (K4 Sedef): yaşam alanının arka planı ve kasksız mürettebat
-    ship_interior: 'screens/scr_ship_interior.jpeg',
-    astronaut_indoor: 'sprites/astro/astro_legacy_indoor.png',
+    // Lander içi ve transit güvertesi: kesit arka planı (Sude'nin lander kesiti)
+    lander_interior: 'interior/lander_interior.png',
     // Kişi 7 (Sedef): maden noktasında yerde duran mineral (1. aşama)
     min_hematite_ground: 'sprites/minerals/hematite_1.png',
     min_meteorite_ground: 'sprites/minerals/meteorite_1.png',
@@ -65,7 +64,6 @@
     scr_transit: 'screens/scr_transit.png',
     shuttle_cockpit_interior: 'interior/shuttle_cockpit_interior.jpeg',
     shuttle_engineering_bay: 'interior/shuttle_engineering_bay.jpeg',
-    scr_ship_interior: 'screens/scr_ship_interior.jpeg',
     scr_ship_o2_leak: 'screens/scr_ship_o2_leak.jpeg',
     scr_ship_reactor: 'screens/scr_ship_reactor.jpeg',
     scr_map_corridor: 'screens/scr_map_corridor.png',

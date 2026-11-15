@@ -164,6 +164,15 @@ function chromaUnwhite(img) {
   return { removed: 0, keptWhite: 0 };
 }
 
+/** Sabit bir dikdörtgeni kes (spec.crop: kaynakta boş kenarları olan görseller, ör. lander kesiti) */
+function cropRect(img, { x, y, w, h }) {
+  const out = new Uint8Array(w * h * 4);
+  for (let row = 0; row < h; row++) {
+    out.set(img.data.subarray(((row + y) * img.width + x) * 4, ((row + y) * img.width + x + w) * 4), row * w * 4);
+  }
+  return { width: w, height: h, data: out };
+}
+
 function cropToContent(img, pad = 2) {
   const { width: w, height: h, data } = img;
   let x0 = w;
@@ -314,6 +323,9 @@ const ASSETS = [
   { src: 'structures/solar_clean.png', mode: 'flood', size: { w: 104 } },
   { src: 'structures/solar_dusty.png', mode: 'flood', size: { w: 104 } },
   { src: 'structures/moxie_unit.png', mode: 'flood', size: { w: 78 } },
+  // Lander kesiti (Sude: kokpit · laboratuvar · ranzalar + hava kilidi): üst/alt boş lacivert kenarlar kırpılır, boyut korunur
+  // (lander içi ve transit güvertesi onu tam sayı ölçekle büyütür)
+  { src: 'interior/lander_interior.png', mode: 'none', crop: { x: 0, y: 90, w: 2172, h: 520 }, size: { w: 2172 }, noCrop: true, opaque: true },
   // VFX
   { src: 'vfx/vfx_dust_devil.png', mode: 'flood', size: { h: 130 }, soft: true },
   { src: 'vfx/vfx_shadow_hallucination.png', mode: 'flood', size: { h: 62 } },
@@ -355,6 +367,7 @@ function buildAssets() {
     if (spec.mode === 'flood') stats = chromaBorderFlood(img);
     else if (spec.mode === 'vignette') stats = chromaVignette(img);
     else if (spec.mode === 'unwhite') stats = chromaUnwhite(img);
+    if (spec.crop) img = cropRect(img, spec.crop);
     if (!spec.noCrop) img = cropToContent(img);
 
     let tw;

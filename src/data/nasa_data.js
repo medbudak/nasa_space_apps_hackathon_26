@@ -172,7 +172,7 @@ window.SOL14.DATA = {
   "metersPerPixel": 1.2,
   "spritePxPerMeter": 30,
   "earthJumpHeightM": 0.5,
-  "interiorWalkPxPerSecond": 105,
+  "interiorWalkPxPerSecond": 51,
   "maxEvaRangeM": 3000,
   "habitatTargetC": 20,
   "habitatHeatCapacityJPerK": 81000,

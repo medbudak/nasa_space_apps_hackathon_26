@@ -160,28 +160,6 @@
     return img;
   }
 
-  /** Yürüme döngüsü: astronaut_walk_sheet yatay şeridi (6 kare, kaynak GIF'te kare başına 140 ms). Şerit yoksa false */
-  const WALK_FRAMES = 6;
-  const WALK_FPS = 1 / 0.14;
-  function drawWalk(ctx, cx, bottomY, flip, t, rate) {
-    const img = S.Sprites.get('astronaut_walk_sheet');
-    if (!img) return false;
-    const fw = img.width / WALK_FRAMES;
-    const f = Math.floor(t * WALK_FPS * rate) % WALK_FRAMES;
-    const x = Math.round(cx - fw / 2);
-    const y = Math.round(bottomY - img.height);
-    ctx.save();
-    if (flip) {
-      ctx.translate(x + fw, y);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, f * fw, 0, fw, img.height, 0, 0, fw, img.height);
-    } else {
-      ctx.drawImage(img, f * fw, 0, fw, img.height, x, y, fw, img.height);
-    }
-    ctx.restore();
-    return true;
-  }
-
   /**
    * Takımın GIF astronotu (astro_surface_idle / astro_surface_walk: 4 karelik şeritler, boy şimdiki sprite'la aynı).
    * Pozlar: walk = yürüme şeridi; idle = bekleme şeridi (350 ms); jump = yürümenin adım karesi;
@@ -194,10 +172,7 @@
     // diz çökme (kazı, tarayıcı): yeni karakter için çizilen 2 kare; kazarken iner-kalkar
     kneel: { key: 'astro_surface_kneel', frames: 2, ms: 260, hands: [[27, 30], [28, 31]] },
     // çömelme (K2 Sude, takımın GIF'i): 4 kare ayakta → tam çömelme; kare Surface.body.crouchK'den, ilerlerken sabit
-    crouch: { key: 'astronaut_crouch_sheet', frames: 4, ms: 180, hands: [[24, 33], [24, 37], [25, 40], [25, 44]] },
-    // mekik içi (kasksız): ayakta 132 px ölçeğinde şeritler, mekikte 66 px çizilir
-    inIdle: { key: 'astro_indoor_idle', frames: 4, ms: 350 },
-    inWalk: { key: 'astro_indoor_walk', frames: 4, ms: 140 }
+    crouch: { key: 'astronaut_crouch_sheet', frames: 4, ms: 180, hands: [[24, 33], [24, 37], [25, 40], [25, 44]] }
   };
   let frostCv = null;
   let capCv = null;
@@ -1021,7 +996,7 @@
     const key = 'astronaut_' + pose;
     const img = S.Sprites.get(key) || S.Sprites.get('astronaut_idle');
     const ax = FX.worldToScreen(body.cpx);
-    let ay = GY + 2 - body.y;
+    const ay = GY + 2 - body.y;
     if (img) {
       const astro = drawAstro(ctx, pose, ax, ay, s.player.facing < 0, t, 1);
       const walked = !astro && pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, 1);
@@ -1182,61 +1157,147 @@
     ctx.restore();
   }
 
-  FX.drawCrew = function (c, img, x, footY, h, dir, phase, moving) {
-    if (!img) return;
-    const k = h / img.height;
-    const w = img.width * k;
-    const hip = 0.56; // bacakların başladığı yer (figür yüksekliğinin oranı)
-    const swing = moving ? Math.sin(phase * Math.PI * 2) : 0;
-    const bob = moving ? Math.abs(Math.cos(phase * Math.PI * 2)) * h * 0.012 : 0;
-    c.save();
-    c.translate(Math.round(x), Math.round(footY));
-    if (dir > 0) c.scale(-1, 1);
-    c.imageSmoothingEnabled = false;
-    c.fillStyle = 'rgba(0,0,0,0.35)';
-    c.beginPath();
-    c.ellipse(0, -2, w * 0.42, h * 0.02, 0, 0, Math.PI * 2);
-    c.fill();
-    const legTop = img.height * hip;
-    const legH = img.height - legTop;
-    const halfW = img.width / 2;
-    // önce geriye salınan bacak, sonra öndeki (öne giden bacak kalkar)
-    const legs = [{ sx: 0, off: -swing }, { sx: halfW, off: swing }].sort((a, b) => a.off - b.off);
-    for (const leg of legs) {
-      const dx = leg.off * h * 0.035;
-      const dy = moving ? -Math.max(0, leg.off) * h * 0.03 : 0;
-      c.drawImage(img, leg.sx, legTop, halfW, legH, -w / 2 + leg.sx * k + dx, -legH * k + dy - bob * 0.3, halfW * k, legH * k);
-    }
-    c.drawImage(img, 0, 0, img.width, legTop + 2, -w / 2, -h - bob, w, (legTop + 2) * k);
-    c.restore();
+  /* ---------------- Mürettebat (lander içi + transit güvertesi) ---------------- */
+  // tools/build.js her GIF'i tek satırlık şeride çevirir (kareler yan yana, sprite'lar sağa bakar); kare süreleri GIF'lerden
+  const CREW_ANIM = {
+    idle: { frames: 4, ms: 350 },
+    walk: { frames: 4, ms: 140 },
+    float: { frames: 4, ms: 300 },
+    eat: { frames: 4, ms: 240 },
+    drink: { frames: 4, ms: 320 },
+    sleep_bunk: { frames: 3, ms: 120 }
+  };
+  const CREW_ACT_LOOPS = 2; // yemek/içme animasyonu kaç tur oynar
+  const SLEEP_CLOSEUP_S = 3; // ranza yakın planı (sn)
+
+  const crewFrame = (pose, t) => Math.floor((t * 1000) / CREW_ANIM[pose].ms) % CREW_ANIM[pose].frames;
+  // Şeritler takımın GIF'leri (astro_*, ~130 px boy; Medine'nin işlemesi); lander içi ve transit ~60 px çizer
+  const CREW_SPRITE = { idle: 'astro_indoor_idle', walk: 'astro_indoor_walk', float: 'astro_indoor_float', eat: 'astro_eat', drink: 'astro_drink' };
+  const CREW_HEIGHT_PX = 60;
+  const crewStrip = (pose) => S.Sprites.get(CREW_SPRITE[pose]);
+  const crewScale = (img) => CREW_HEIGHT_PX / img.height;
+
+  /** pose karesini ayak hizası (x, footY) üzerine çizer; dir < 0 sola bakar. scale yalnız transit güvertesinde 1'den farklı. */
+  FX.drawCrew = function (c, pose, x, footY, dir, t, scale = 1) {
+    FX.drawCrewFrame(c, pose, crewFrame(pose, t), x, footY, dir, scale);
   };
 
-  /** Mekik içinde kasksız astronot (takımın GIF'lerinden, kask yerine baş): bekleme / yürüme, ayakta 66 px */
-  function drawIndoor(ctx, s, t, cx, footY, moving) {
-    const set = moving ? ASTRO.inWalk : ASTRO.inIdle;
-    const img = S.Sprites.get(set.key);
-    if (!img) return false;
-    const fw = img.width / set.frames;
-    const k = 66 / 132;
-    const dw = Math.round(fw * k);
-    const dh = Math.round(img.height * k);
-    const f = Math.floor((t * 1000) / set.ms) % set.frames;
-    ctx.save();
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.beginPath();
-    ctx.ellipse(Math.round(cx), footY - 2, dw * 0.38, 1.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    if (s.player.facing < 0) {
-      ctx.translate(Math.round(cx + dw / 2), footY - dh);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, f * fw, 0, fw, img.height, 0, 0, dw, dh);
-    } else {
-      ctx.drawImage(img, f * fw, 0, fw, img.height, Math.round(cx - dw / 2), footY - dh, dw, dh);
-    }
-    ctx.restore();
-    return true;
+  /*
+   * Mekik içi süzülme pozu: transit güvertesi ve lander içi birebir aynı sistemi kullanır (kullanıcı kararı 2026-11-15:
+   * mekik içi her zaman Sol 0'daki gibi ağırlıksız; lander Mars'ta 0.38g'de olduğu için orada oyun basitleştirmesi,
+   * oyunda etiketli). Hız S.util.easeVelocity ile yumuşar; burada görünüş üretilir. speedNorm: hız / azami hız (-1..1).
+   * Zeminin üstünde katmanlı sinüs salınımı (dikey, yatay), ilerlerken kolla itme kareleri (crew_float), hareket
+   * yönüne eğilme ve hafif gövde dönmesi. Birimler kesit pikseli, açılar radyan.
+   */
+  const CREW_MOTION = {
+    movingAbove: 0.15, // |speedNorm| bunun üstündeyse kolla itme pozu
+    leanMax: 0.128, // tam hızda hareket yönüne eğilme (Sol 0 güvertesinin ilk ayarı)
+    tilt: [0.035, 0.63], // gövde dönmesi: [genlik, açısal hız]
+    hover: 12, // zeminden ortalama yükseklik
+    bob: [[3, 0.55], [1.4, 1.37]], // dikey salınım katmanları: [genlik px, açısal hız rad/sn]
+    sway: [1.6, 0.41], // yatay mikro kayma
+    reducedMotion: 0.3 // "hareketi azalt" açıkken salınım katsayısı (design-rules.md §11)
+  };
+
+  /** Salınım genliği: sistemde "hareketi azalt" açıksa küçülür */
+  FX.motionAmp = () =>
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? CREW_MOTION.reducedMotion : 1;
+
+  /** @returns {{ sprite, lift, dx, angle }} sprite: crew şeridi; lift: zeminden yükseklik; dx: yatay kayma */
+  FX.crewMotionPose = function (tSec, speedNorm, amp = 1, airborne = false) {
+    const M = CREW_MOTION;
+    const moving = airborne || Math.abs(speedNorm) > M.movingAbove;
+    const bob = M.bob.reduce((sum, [a, w], i) => sum + a * Math.sin(tSec * w + i * 1.9), 0);
+    return {
+      sprite: moving ? 'float' : 'idle',
+      lift: M.hover + amp * bob,
+      dx: amp * M.sway[0] * Math.sin(tSec * M.sway[1] + 0.7),
+      angle: Math.max(-M.leanMax, Math.min(M.leanMax, speedNorm * M.leanMax)) + amp * M.tilt[0] * Math.sin(tSec * M.tilt[1] + 2.3)
+    };
+  };
+
+  // Mekik içi serbest eşyalar, asenkron: her birinin evresi, hızı ve genliği farklı (sabit tohumlu S.makeRng)
+  // Serbest eşyalar: [tür, x (kesit px), zeminden yükseklik (px)]; piksel çizimleri FLOATER_ART'ta
+  const FLOATERS = [
+    ['pen', 128, 70],
+    ['pouch', 300, 52],
+    ['bolt', 362, 82],
+    ['tablet', 470, 66],
+    ['food', 548, 46]
+  ];
+  // Her satır bir piksel sırası; harf → renk. Ortası dönme ekseni.
+  const FLOATER_ART = {
+    pen: { rows: ['k', 'o', 'o', 'o', 'o', 'o', 'w'], colors: { k: '#2a2320', o: '#e0632a', w: '#f2e8d4' } },
+    pouch: { rows: ['.bb.', 'ssss', 'sSSs', 'sSSs', 'ssss', 'ssss', '.ss.'], colors: { b: '#3f8fd6', s: '#c9ccd2', S: '#e9ecf0' } },
+    bolt: { rows: ['ggg', 'gdg', 'ggg', '.g.', '.g.'], colors: { g: '#8f949c', d: '#4a4e55' } },
+    tablet: { rows: ['kkkkkkk', 'kCcccck', 'kcCccck', 'kccccck', 'kkkkkkk'], colors: { k: '#23252b', c: '#2f8f95', C: '#82cfc8' } },
+    food: { rows: ['bbbbbb', 'boooob', 'bbbbbb', 'bbbbbb'], colors: { b: '#e8dcc0', o: '#cc5728' } }
+  };
+
+  function makeFloaters() {
+    const rng = S.makeRng(1407);
+    const vary = (base, spread) => base * (1 - spread + rng() * 2 * spread);
+    return FLOATERS.map(([kind, x, y]) => ({
+      kind,
+      x,
+      y,
+      ax: vary(3, 0.4),
+      ay: vary(4, 0.4),
+      fx: vary(0.35, 0.25),
+      fy: vary(0.5, 0.25),
+      fr: vary(0.45, 0.3),
+      spin: (rng() - 0.5) * 0.5, // yavaş sürekli dönme (rad/sn)
+      ra: vary(0.25, 0.4),
+      phase: [0, 1, 2, 3, 4].map(() => rng() * Math.PI * 2),
+      r0: rng() * Math.PI * 2
+    }));
   }
+
+  const FLOATER_STATE = makeFloaters();
+
+  /**
+   * Serbest süzülen eşyalar (mekik içi, transit ve lander aynı). layer 'back' mürettebatın arkasındakiler, 'front' son
+   * eşya: mürettebatın önünde kalır (derinlik). ox, floorY: kesitin sol kenarı ve zemini (tuval px), scale: kesit ölçeği.
+   */
+  FX.drawFloaters = function (dc, layer, ox, floorY, scale, tSec, amp) {
+    const list = layer === 'front' ? FLOATER_STATE.slice(-1) : FLOATER_STATE.slice(0, -1);
+    list.forEach((f) => drawFloater(dc, f, ox, floorY, scale, tSec, amp));
+  };
+
+  function drawFloater(dc, f, ox, floorY, scale, tSec, amp) {
+    const p = f.phase;
+    const x = f.x + amp * (f.ax * Math.sin(tSec * f.fx + p[0]) + 0.4 * f.ax * Math.sin(tSec * f.fx * 0.43 + p[1]));
+    const y = f.y + amp * (f.ay * Math.sin(tSec * f.fy + p[2]) + 0.5 * f.ay * Math.sin(tSec * f.fy * 0.61 + p[3]));
+    const rot = f.r0 + amp * (f.spin * tSec + f.ra * Math.sin(tSec * f.fr + p[4]));
+    const art = FLOATER_ART[f.kind];
+    const w = art.rows[0].length;
+    const h = art.rows.length;
+    dc.save();
+    dc.translate(ox + x * scale, floorY - y * scale);
+    dc.rotate(rot);
+    dc.scale(scale, scale);
+    art.rows.forEach((row, ry) => {
+      for (let rx = 0; rx < row.length; rx++) {
+        const c = art.colors[row[rx]];
+        if (!c) continue;
+        dc.fillStyle = c;
+        dc.fillRect(rx - w / 2, ry - h / 2, 1.02, 1.02); // 1.02: döndürülmüş pikseller arasında ince boşluk kalmasın
+      }
+    });
+    dc.restore();
+  }
+
+  /** Pozu çizer: gövdenin ortası etrafında döner, lift kadar yükselir (x, footY: zemindeki ayak noktası) */
+  FX.drawCrewPosed = function (c, pose, x, footY, dir, tSec, scale = 1) {
+    const img = crewStrip(pose.sprite);
+    if (!img) return;
+    const h = img.height * scale * crewScale(img);
+    c.save();
+    c.translate(x + pose.dx * scale, footY - pose.lift * scale - h / 2);
+    c.rotate(pose.angle);
+    FX.drawCrew(c, pose.sprite, 0, h / 2, dir, tSec, scale);
+    c.restore();
+  };
 
   /* ---------------- Mekik içi etkinlik animasyonları (takımın GIF'leri: yemek, su içme, uyku) ---------------- */
   // Şeritler 132 px ölçeğinde (ayakta duran figür = 132); mekikte figür 66 px çizildiği için yarı ölçek.
@@ -1316,52 +1377,124 @@
     }
     return true;
   };
+  /** Şeridin belirli bir karesi (zıplama gibi zamana değil fiziğe bağlı pozlar için) */
+  FX.drawCrewFrame = function (c, pose, frame, x, footY, dir, scale = 1) {
+    const img = crewStrip(pose);
+    if (!img) return;
+    const fw = img.width / CREW_ANIM[pose].frames;
+    const k = scale * crewScale(img);
+    const w = Math.round(fw * k);
+    const h = Math.round(img.height * k);
+    c.save();
+    c.translate(Math.round(x), Math.round(footY));
+    if (dir < 0) c.scale(-1, 1);
+    c.imageSmoothingEnabled = false;
+    c.drawImage(img, frame * fw, 0, fw, img.height, -Math.round(w / 2), -h, w, h);
+    c.restore();
+  };
+
+  // Lander kesiti tam ekran (transit güvertesi gibi): zemin çizgisi alttaki istasyon çekmecesinin hemen üstünde
+  // (tabandan 74 px: 5.9em panel + 0.9em boşluk, 1em = 10.67 oyun pikseli), kesit üst kenara kadar uzanır, üst HUD üstünde
+  // yüzer. Ölçek tam sayıdır (mürettebat pikselleri kare kalır); kesit ekrandan genişse kamera mürettebatı izler.
+  const INTERIOR_VIEW = { bottomGap: 74, floorGap: 4, aspect: 520 / 2172 };
+  const interiorCam = { x: null, lastT: -1 };
+  // Her girişte kamera mürettebata oturur
+  S.bus.on('habitat:enter', () => {
+    interiorCam.x = null;
+  });
+
+  /** Zeminin tuvaldeki y'si ve kesitin tam sayı ölçeği (lander içi ve transit güvertesi aynı değerleri kullanır) */
+  function interiorScale(I) {
+    const floorScreenY = OFF_Y + BASE_H - INTERIOR_VIEW.bottomGap - INTERIOR_VIEW.floorGap;
+    return { floorScreenY, k: Math.max(1, Math.floor(floorScreenY / I.floorY)) };
+  }
+
+  /**
+   * Transit güvertesi (DOM tuvali, CSS pikseli) lander içiyle birebir aynı boyutta çizilsin diye: kesit pikseli başına
+   * CSS pikseli ve zemin çizgisinin CSS y'si. Oyun tuvali pencereyi doldurur (main.js fitStage).
+   */
+  FX.interiorScreenMetrics = function (cssHeight) {
+    const { floorScreenY, k } = interiorScale(S.Surface.INTERIOR);
+    const cssPerPx = cssHeight / H;
+    return { scale: k * cssPerPx, floorY: floorScreenY * cssPerPx };
+  };
+
+  /** Kesitin ekran yerleşimi: k ölçeği ve sol üst köşe. İç mekân koordinatları 640 px genişlikteki kesite göredir. */
+  function interiorLayout(I, bodyIx, dt, t) {
+    const localH = BASE_W * INTERIOR_VIEW.aspect;
+    const { floorScreenY, k } = interiorScale(I);
+    const shipW = BASE_W * k;
+    let x = (W - shipW) / 2;
+    if (shipW > W) {
+      const want = Math.max(W - shipW, Math.min(0, W / 2 - bodyIx * k));
+      // Habitata yeni girildiyse (çizim arası boşluk) kamera kaymadan yerine oturur
+      const snap = interiorCam.x === null || t - interiorCam.lastT > 0.3;
+      interiorCam.x = snap ? want : interiorCam.x + (want - interiorCam.x) * Math.min(1, dt * 6);
+      x = interiorCam.x;
+    }
+    interiorCam.lastT = t;
+    return { k, localH, floorScreenY, x: Math.round(x), y: Math.round(floorScreenY - I.floorY * k) };
+  }
+
+  /** Yakındaki istasyonun adı, mürettebatın başının üstünde (ekran koordinatı, kesit ölçeğinden bağımsız boyut) */
+  function drawStationLabel(ctx, label, x, y) {
+    ctx.font = 'bold 9px "VT323", "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    const tw = Math.ceil(ctx.measureText(label).width) + 8;
+    const lx = Math.round(x);
+    const ly = Math.round(y);
+    ctx.fillStyle = 'rgba(15,16,21,0.9)';
+    ctx.fillRect(lx - tw / 2, ly - 9, tw, 12);
+    ctx.strokeStyle = '#3fe0e6';
+    ctx.strokeRect(lx - tw / 2 + 0.5, ly - 8.5, tw - 1, 11);
+    ctx.fillStyle = '#3fe0e6';
+    ctx.fillText(label, lx, ly);
+    ctx.fillRect(lx - 1, ly + 4, 3, 3);
+    ctx.textAlign = 'left';
+  }
 
   FX.renderInterior = function (ctx, s, dt, t) {
     const st = S.Surface.nearestStation();
-    // 640 px'lik kesit geniş tuvalde ortalanır; uzun tuvalde yüzeydeki gibi OFF_Y kadar aşağı iner,
-    // böylece alttaki habitat paneliyle (em ölçülü) ilişkisi her pencere oranında 16:9'daki gibi kalır.
-    const ox = Math.round((W - BASE_W) / 2);
     const I = S.Surface.INTERIOR;
     const body = S.Surface.body;
-    // Mekik kesiti (K4 Sedef): 640 px genişliğe ölçeklenir, güverte zemini (görselin %75.5'i) floorY'ye oturur
     ctx.fillStyle = '#05060a';
     ctx.fillRect(0, 0, W, H);
-    const ship = S.Sprites.get('ship_interior');
+    const ship = S.Sprites.get('lander_interior');
+    const view = interiorLayout(I, body.ix, dt, t);
+    let crewLift = 0;
+    ctx.save();
+    ctx.translate(view.x, view.y);
+    ctx.scale(view.k, view.k);
     if (ship) {
-      const sh = Math.round((BASE_W * ship.height) / ship.width);
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(ship, ox, Math.round(OFF_Y + I.floorY - sh * 0.695), BASE_W, sh); // güverte zemini görselin %69.5'inde
+      ctx.drawImage(ship, 0, 0, BASE_W, view.localH);
       ctx.imageSmoothingEnabled = false;
     } else {
-      S.Art.drawInterior(ctx, s, st ? st.id : null, t, { w: W, h: H, ox, oy: OFF_Y });
+      // Görsel yüklenemedi (RULES §2.6: eksik görsel oyunu kilitlemez): yalnız zemin çizgisi, oynanış sürer
+      ctx.fillStyle = '#2a2320';
+      ctx.fillRect(0, I.floorY, BASE_W, 4);
     }
-    // D-016 (K2 Sude): hava kilidinin yanındaki su şişesi rafı
-    if (S.Westlands && S.Westlands.drawInteriorRack) S.Westlands.drawInteriorRack(ctx, s, ox, OFF_Y, t, st ? st.id : null);
-    // Yakındaki istasyonun işareti
-    if (st) {
-      const label = S.t('station.' + st.id);
-      ctx.font = '9px \"VT323\", monospace';
-      ctx.textAlign = 'center';
-      const tw = Math.ceil(ctx.measureText(label).width) + 8;
-      const lx = Math.round(ox + st.x);
-      const ly = Math.round(OFF_Y + I.floorY - 78 + Math.sin(t * 4) * 1.5);
-      ctx.fillStyle = 'rgba(15,16,21,0.9)';
-      ctx.fillRect(lx - tw / 2, ly - 9, tw, 12);
-      ctx.strokeStyle = '#3fe0e6';
-      ctx.strokeRect(lx - tw / 2 + 0.5, ly - 8.5, tw - 1, 11);
-      ctx.fillStyle = '#3fe0e6';
-      ctx.fillText(label, lx, ly);
-      ctx.fillRect(lx - 1, ly + 4, 3, 3);
-      ctx.textAlign = 'left';
+    // D-016 (K2 Sude): hava kilidinin yanındaki su şişesi rafı. Rafın kendi [E] yazısı kesitle birlikte büyüdüğü için
+    // verilmez (nearId null): eylem alttaki çekmecede, ad istasyon etiketinde görünür.
+    if (S.Westlands && S.Westlands.drawInteriorRack) S.Westlands.drawInteriorRack(ctx, s, 0, 0, t, null);
+    // Transit güvertesiyle birebir aynı ortam: serbest eşyalar her zaman süzülür (biri mürettebatın önünde)
+    const amp = FX.motionAmp();
+    FX.drawFloaters(ctx, 'back', 0, I.floorY, 1, t, amp);
+    // Yemek / su / uyku: takımın GIF animasyonu (FX.drawActivity); yoksa ağırlıksız süzülme (transit güvertesiyle aynı)
+    const acting = FX.drawActivity(ctx, s, dt, t, 0, I.floorY + 1);
+    if (!acting) {
+      const pose = FX.crewMotionPose(t, body.im.v / S.DATA.gameplay.interiorWalkPxPerSecond, amp, !body.onGround);
+      const footY = I.floorY + 1 - body.y;
+      FX.drawCrewPosed(ctx, pose, body.ix, footY, s.player.facing, t);
+      crewLift = body.y + pose.lift;
+      if (S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, body.ix, footY - pose.lift, t, body.moving);
     }
-    // Kasksız mürettebat (mekik içinde), adım atarak yürür; yemek / su / uyku sırasında takımın GIF animasyonu
-    body.stepPh = body.moving ? ((body.stepPh || 0) + dt * 1.9) % 1 : 0;
-    if (!FX.drawActivity(ctx, s, dt, t, ox, OFF_Y + I.floorY + 1) && !drawIndoor(ctx, s, t, ox + body.ix, OFF_Y + I.floorY + 1, body.moving)) {
-      FX.drawCrew(ctx, S.Sprites.get('astronaut_indoor'), ox + body.ix, OFF_Y + I.floorY + 1, 66, s.player.facing, body.stepPh, body.moving);
+    FX.drawFloaters(ctx, 'front', 0, I.floorY, 1, t, amp);
+    ctx.restore();
+    if (st && !acting) {
+      const headY = view.floorScreenY - (64 + crewLift) * view.k; // mürettebat ~60 px boyunda; etiket süzülmeyle yükselir
+      drawStationLabel(ctx, S.t('station.' + st.id), view.x + st.x * view.k, headY - 12 + Math.sin(t * 4) * 1.5);
     }
-    // elde şişe: yemek / su / uyku animasyonu sırasında çizilmez (tulumun üstünde görünmesin)
-    if (!FX.activity && S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, ox + body.ix, OFF_Y + I.floorY + 1, t, body.moving);
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);
   };

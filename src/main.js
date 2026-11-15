@@ -200,8 +200,8 @@
       s.cargoBonusShown = true;
       setTimeout(() => S.UI.toast(S.UI.icon('o2') + t('toast.cargo_bonus', s.cargoBonus), 'info', 5500), 900);
     }
-    if (s.sol === 1 && !Game.tutorialShown) {
-      Game.tutorialShown = true;
+    if (s.sol === 1 && !s.tutorialShown) {
+      s.tutorialShown = true; // kayıtta tutulur: sayfa yenilenince ipucu tekrar çıkmaz
       setTimeout(() => S.UI.toast(t('toast.tutorial'), 'info', 7000), 1200);
     }
   };
