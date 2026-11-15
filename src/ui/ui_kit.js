@@ -192,9 +192,22 @@
    */
   const TQ = { queue: [], shown: 0, recent: new Map() };
   const TOAST_MAX = 2;
-  function toastNext() {
+  /** Ara sahneler (yolculuk, göktaşı, final) oynarken bildirimler bekler; sahne bitince gösterilir */
+  const toastBlocked = () => {
+    const sc = S.Game && S.Game.scene;
+    const top = UI.topModal && UI.topModal();
+    return sc === 'transit' || sc === 'ending' || sc === 'report' || Boolean(top && top.id === 'impact-scene');
+  };
+  if (typeof setInterval === 'function' && typeof document !== 'undefined') setInterval(() => {
     const host = document.getElementById('toast-layer');
     if (!host) return;
+    const b = toastBlocked();
+    host.style.visibility = b ? 'hidden' : '';
+    if (!b && TQ.queue.length) toastNext();
+  }, 300);
+  function toastNext() {
+    const host = document.getElementById('toast-layer');
+    if (!host || toastBlocked()) return;
     while (TQ.shown < TOAST_MAX && TQ.queue.length) {
       const it = TQ.queue.shift();
       const el = document.createElement('div');

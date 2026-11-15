@@ -183,7 +183,7 @@
     else {
       S.UI.toast(I('check') + t('action.done.' + id), 'ok');
       // yemek / su içme: takımın GIF animasyonu astronotun durduğu yerde
-      if ((id === 'eat' || id === 'drink') && S.FX.playActivity) S.FX.playActivity(id);
+      if ((id === 'eat' || id === 'drink' || id === 'toilet') && S.FX.playActivity) S.FX.playActivity(id);
     }
     HP.lastHtml = '';
     S.Game.afterAction();
