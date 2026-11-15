@@ -1835,7 +1835,10 @@ window.SOL14.STORY = {
   "tg.cb.skip": "Atla",
   "tg.cb.ok": "BAĞLANTI TAMAM",
   "tg.cb.fail": "SÜRE DOLDU",
-  "cc.minigame.patch": "Mini oyun: yama"
+  "cc.minigame.patch": "Mini oyun: yama",
+  "zone.yardangs": "Yardang Sırtları",
+  "zone.buttes": "Katmanlı Tepeler",
+  "zone.dunes_east": "Doğu Kum Tepeleri"
  },
  "en": {
   "ui.back": "Back",
@@ -3671,6 +3674,9 @@ window.SOL14.STORY = {
   "tg.cb.skip": "Skip",
   "tg.cb.ok": "ALL CONNECTED",
   "tg.cb.fail": "TIME UP",
-  "cc.minigame.patch": "Minigame: patch"
+  "cc.minigame.patch": "Minigame: patch",
+  "zone.yardangs": "Yardang Ridges",
+  "zone.buttes": "Layered Buttes",
+  "zone.dunes_east": "Eastern Dunes"
  }
 };

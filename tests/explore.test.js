@@ -35,7 +35,7 @@ test('Harita: parçalı koordinat gidiş-dönüş, sınırlarda süreklilik; bat
   assert.ok(Math.abs(Surf.mToPx(map.baseLeftM) - map.baseLeftPx) < 1e-9);
   assert.ok(Math.abs(Surf.mToPx(map.baseLeftM - 0.001) - Surf.mToPx(map.baseLeftM)) < 0.01, '−120 m sınırında sıçrama yok');
   assert.ok(Math.abs(Surf.pxToM(Surf.worldLeftPx()) - map.leftLimitM) < 1e-9);
-  assert.ok(Surf.pxToM(Surf.worldRightPx()) > map.tubeMouthM && Surf.pxToM(Surf.worldRightPx()) < map.tubeMouthM + 40);
+  assert.ok(Surf.pxToM(Surf.worldRightPx()) > map.eastEndM && Surf.pxToM(Surf.worldRightPx()) < map.eastEndM + 40);
   // Astronot iniş mekiğinde yaşar: kapı mekiğin merdiveni, hava kilidi 0 m
   assert.equal(Surf.STRUCTURES.find((x) => x.id === 'habitat').interactPx, 0);
   assert.equal(S.DATA.terrain.map.landingPadM, 0);
@@ -106,7 +106,7 @@ test('Kalıcılık: kırılan buz kaydet/yükle sonrası kırık kalır; eski ka
   assert.equal(old.explore.ice[c.id].broken, false);
   S.State.set(old);
   S.Surface.syncFromState(old);
-  assert.ok(old.player.x <= S.DATA.terrain.map.tubeMouthM + 40, 'eski konum yeni sınıra kırpılır');
+  assert.ok(old.player.x <= S.DATA.terrain.map.eastEndM + 40, 'eski konum yeni sınıra kırpılır');
 });
 
 test('Kalıntı habitata girince rapor olur ve Dünya\'ya ulaşınca rapor sayılır', () => {

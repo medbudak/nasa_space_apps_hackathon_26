@@ -168,7 +168,7 @@ window.SOL14.DATA = {
   "spritePxPerMeter": 30,
   "earthJumpHeightM": 0.5,
   "interiorWalkPxPerSecond": 105,
-  "maxEvaRangeM": 1400,
+  "maxEvaRangeM": 3000,
   "habitatTargetC": 20,
   "habitatHeatCapacityJPerK": 81000,
   "habitatComfortMinC": 10,
@@ -617,7 +617,7 @@ window.SOL14.DATA = {
   "simplifiedNote": "Route layout, sand pit positions, the slowdown factor, ice dig values and the drone rule (Ingenuity scouts the route around sand pits) are game values. Wrecks are not shown until the player uncovers them by digging (explore.dig). Real lesson behind the sand pits: Spirit was stuck in soft sand at Troy (NASA Spirit mission page).",
   "map": {
    "simplified": true,
-   "simplifiedNote": "Compressed, fictional map (D-012, widened in the 2026-11-15 merge): base at 0 m; west, the glacier route to the ice wall (-5000 m, map edge -5350 m, terrain.westRegion); east, the lava-plain route through a dried lake bed, dunes and a crater field to a rubble-sealed lava-tube skylight (+1400 m). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
+   "simplifiedNote": "Compressed, fictional map (D-012, widened in the 2026-11-15 merge): base at 0 m; west, the glacier route to the ice wall (-5000 m, map edge -5350 m, terrain.westRegion); east, the lava-plain route through a dried lake bed, dunes and a crater field to a rubble-sealed lava-tube skylight (+1400 m), then on through dunes, yardang ridges and layered buttes to the map edge (+3000 m, K3 Medine). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
    "leftLimitM": -5350,
    "baseLeftM": -120,
    "baseLeftPx": -700,
@@ -625,6 +625,7 @@ window.SOL14.DATA = {
    "landingPadM": 0,
    "landingExitM": 40,
    "tubeMouthM": 1400,
+   "eastEndM": 3000,
    "zones": [
     {
      "id": "ice_wall",
@@ -675,6 +676,21 @@ window.SOL14.DATA = {
      "id": "tube_mouth",
      "fromM": 1390,
      "toM": 1430
+    },
+    {
+     "id": "dunes_east",
+     "fromM": 1430,
+     "toM": 1850
+    },
+    {
+     "id": "yardangs",
+     "fromM": 1850,
+     "toM": 2450
+    },
+    {
+     "id": "buttes",
+     "fromM": 2450,
+     "toM": 3000
     }
    ],
    "src": "https://www.spaceappschallenge.org/"

@@ -269,7 +269,6 @@ const ASSETS = [
   { src: 'vfx/vfx_shadow_hallucination.png', mode: 'flood', size: { h: 62 } },
   { src: 'vfx/vfx_frost_1.png', mode: 'vignette', size: { w: 640, h: 360 }, noCrop: true, soft: true },
   { src: 'vfx/vfx_frost_2.png', mode: 'vignette', size: { w: 640, h: 360 }, noCrop: true, soft: true },
-  { src: 'vfx/vfx_dust_storm.png', mode: 'unwhite', size: { w: 640, h: 360 }, noCrop: true, soft: true },
   // Tam ekran sahneler (menü, ara sahne, panel arka planları) — opak, 960x540
   ...[
     'backgrounds/bg_jezero_day.png',

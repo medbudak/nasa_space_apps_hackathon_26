@@ -35,9 +35,12 @@
   const SCENERY = {
     lakebed: { ground: 'lakebed' },
     dunes: { back: 'dunes', ground: 'sand' },
+    dunes_east: { back: 'dunes', ground: 'sand' },
     rocky_approach: { back: 'craters', ground: 'blocky' },
     lava_plain: { back: 'lava', ground: 'basalt' },
-    tube_mouth: { back: 'lava', ground: 'basalt' }
+    tube_mouth: { back: 'lava', ground: 'basalt' },
+    yardangs: { back: 'yardangs', ground: 'layered' },
+    buttes: { back: 'buttes', ground: 'bedrock' }
   };
   const BLEND_M = 120; // bölge sınırındaki yumuşak bandın genişliği (m, zeminde)
   let layer = null;
@@ -265,6 +268,89 @@
     }
   }
 
+  // Yardang sırtları: rüzgârın oyduğu uzun, akıcı sırtlar (rüzgâra bakan kör baş, uzayan kuyruk), katmanlı yanlar
+  function drawYardangs(ctx, minute, camX, w) {
+    const rows = [
+      { par: 0.1, base: 284, spacing: 300, minL: 160, maxL: 260, minH: 18, maxH: 34, body: '#b98a68', band: '#a27454', lit: '#e3bc96', seed: 23 },
+      { par: 0.28, base: 300, spacing: 240, minL: 120, maxL: 200, minH: 12, maxH: 24, body: '#a87a5a', band: '#8f6347', lit: '#d8ad86', seed: 41 }
+    ];
+    for (const R of rows) {
+      const body = atNight(R.body, minute);
+      const band = atNight(R.band, minute);
+      const lit = atNight(R.lit, minute);
+      const shift = camX * R.par;
+      const first = Math.floor(shift / R.spacing) - 1;
+      for (let i = first; i < first + w / R.spacing + 3; i++) {
+        const L = R.minL + Math.round(rnd(i * 3.3 + R.seed) * (R.maxL - R.minL));
+        const H = R.minH + Math.round(rnd(i * 6.1 + R.seed) * (R.maxH - R.minH));
+        const x0 = Math.round(i * R.spacing - shift + rnd(i * 1.7 + R.seed) * 80);
+        for (let x = 0; x < L; x += 2) {
+          const u = x / L;
+          const prof = u < 0.12 ? Math.sin(((u / 0.12) * Math.PI) / 2) : Math.pow(1 - (u - 0.12) / 0.88, 1.6);
+          const hh = Math.round(H * prof);
+          if (hh <= 0) continue;
+          const top = R.base - hh;
+          ctx.fillStyle = body;
+          ctx.fillRect(x0 + x, top, 2, hh + 2);
+          ctx.fillStyle = band;
+          for (let y = top + 3; y < R.base; y += 4) ctx.fillRect(x0 + x, y, 2, 1);
+          ctx.fillStyle = lit;
+          ctx.fillRect(x0 + x, top, 2, 1);
+        }
+      }
+    }
+  }  // Katmanlı tepeler: üst üste tortul kaya bantlarından düz tepeli basamaklı tepeler
+  function drawButtes(ctx, minute, camX, w) {
+    const rows = [
+      { par: 0.1, base: 286, spacing: 230, minW: 90, maxW: 170, minH: 40, maxH: 78, light: '#c79a74', dark: '#9c6a4c', seed: 3 },
+      { par: 0.3, base: 300, spacing: 170, minW: 50, maxW: 110, minH: 20, maxH: 44, light: '#b5835f', dark: '#875538', seed: 11 }
+    ];
+    for (const R of rows) {
+      const light = atNight(R.light, minute);
+      const dark = atNight(R.dark, minute);
+      const shift = camX * R.par;
+      const first = Math.floor(shift / R.spacing) - 1;
+      for (let i = first; i < first + w / R.spacing + 3; i++) {
+        const bw = R.minW + Math.round(rnd(i * 3.1 + R.seed) * (R.maxW - R.minW));
+        const bh = R.minH + Math.round(rnd(i * 5.7 + R.seed) * (R.maxH - R.minH));
+        const x0 = Math.round(i * R.spacing - shift + rnd(i * 1.3 + R.seed) * 60);
+        const top = R.base - bh;
+        for (let y = top; y < R.base; y += 3) {
+          const band = Math.floor((y - top) / 3);
+          const inset = Math.max(0, 8 - band * 2) + (band % 4 === 3 ? 2 : 0);
+          ctx.fillStyle = band % 2 ? dark : light;
+          ctx.fillRect(x0 + inset, y, bw - inset * 2, 3);
+        }
+        ctx.fillStyle = dark;
+        ctx.fillRect(x0 - 10, R.base - 3, bw + 20, 3);
+      }
+    }
+  }  // Yardang zemini: ince katmanlı, rüzgârın oluk açtığı açık renkli yumuşak kaya
+  function drawLayeredGround(ctx, minute, camX, w, h, gy) {
+    ctx.fillStyle = atNight('#c49a76', minute);
+    ctx.fillRect(0, gy, w, h - gy);
+    ctx.fillStyle = atNight('#e1bb95', minute);
+    ctx.fillRect(0, gy, w, 2);
+    ctx.fillStyle = atNight('#a87e5e', minute);
+    for (let y = gy + 5; y < h; y += 5) {
+      const off = Math.round((((camX + y * 31) % 90) + 90) % 90);
+      for (let x = -off; x < w; x += 90) ctx.fillRect(x, y, 60 + Math.round(rnd(y + x) * 20), 1);
+    }
+  }  // Tepe ülkesi zemini: levhalar arasında çatlaklar olan açık katmanlı ana kaya
+  function drawBedrock(ctx, minute, camX, w, h, gy) {
+    ctx.fillStyle = atNight('#b48a64', minute);
+    ctx.fillRect(0, gy, w, h - gy);
+    ctx.fillStyle = atNight('#d4ab84', minute);
+    ctx.fillRect(0, gy, w, 2);
+    ctx.fillStyle = atNight('#946a4a', minute);
+    for (let y = gy + 8; y < h; y += 9) ctx.fillRect(0, y, w, 1);
+    const cell = 34;
+    const start = Math.floor(camX / cell) - 1;
+    for (let i = start; i < start + w / cell + 2; i++) {
+      const x = Math.round(i * cell - camX);
+      for (let row = 0; row < 4; row++) ctx.fillRect(x + Math.round(rnd(i * 2 + row) * 12), gy + 4 + row * 9, 1, 8);
+    }
+  }
   /** Lav ovasında tümülüsler ve çökme çukurları (tünel tavanının çöktüğü yerler); m = tünel penceresine uzaklık */
   const LAVA_FEATURES = [
     { m: -230, kind: 'tumulus', w: 64, h: 13 },
@@ -316,6 +402,8 @@
       if (sc.back === 'dunes') drawDunes(c, minute, camX, w);
       else if (sc.back === 'craters') drawCraterRims(c, minute, camX, w);
       else if (sc.back === 'lava') drawLavaPlain(c, minute, camX, w);
+      else if (sc.back === 'yardangs') drawYardangs(c, minute, camX, w);
+      else if (sc.back === 'buttes') drawButtes(c, minute, camX, w);
     });
   };
 
@@ -327,6 +415,8 @@
       else if (sc.ground === 'sand') drawSandGround(c, minute, camX, w, h, gy);
       else if (sc.ground === 'blocky') drawBlockyGround(c, minute, camX, w, h, gy);
       else if (sc.ground === 'basalt') drawBasaltGround(c, minute, camX, w, h, gy);
+      else if (sc.ground === 'layered') drawLayeredGround(c, minute, camX, w, h, gy);
+      else if (sc.ground === 'bedrock') drawBedrock(c, minute, camX, w, h, gy);
     });
     const tube = S.DATA.terrain.map.tubeMouthM;
     for (const f of LAVA_FEATURES) {

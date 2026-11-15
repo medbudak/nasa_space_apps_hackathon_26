@@ -249,7 +249,7 @@
   /** Alt çizgi ölçeği (D-012, iki yönlü): sol sınır (−450 m) → habitat (0 m) → lav tüneli ağzı (+600 m) */
   HUD.trackPct = function (m) {
     const map = S.DATA.terrain.map;
-    return Math.max(0, Math.min(100, ((m - map.leftLimitM) / (map.tubeMouthM - map.leftLimitM)) * 100));
+    return Math.max(0, Math.min(100, ((m - map.leftLimitM) / (map.eastEndM - map.leftLimitM)) * 100));
   };
 
   /** Oyun dakikası → "3 sa 20 dk" / "45 dk" (geri sayım tahminleri; aşağı yuvarlanır) */
@@ -396,7 +396,7 @@
     const r = ref('mmreach');
     const l = HUD.trackPct(Math.max(map.leftLimitM, -reach));
     r.style.left = l + '%';
-    r.style.width = HUD.trackPct(Math.min(map.tubeMouthM, reach)) - l + '%';
+    r.style.width = HUD.trackPct(Math.min(map.eastEndM, reach)) - l + '%';
     r.title = t('hud.mm_legend', { reach: Math.round(reach), dist: ponr.distanceM });
     ref('mmhome').style.left = HUD.trackPct(0) + '%';
     ref('mmtube').style.left = HUD.trackPct(map.tubeMouthM) + '%';

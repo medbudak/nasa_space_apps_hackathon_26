@@ -161,13 +161,6 @@
     "whiteKeptPx": 0
   },
   {
-    "asset": "vfx/vfx_dust_storm.png",
-    "size": "640x360",
-    "mode": "unwhite",
-    "bgRemovedPx": 0,
-    "whiteKeptPx": 0
-  },
-  {
     "asset": "backgrounds/bg_jezero_day.png",
     "size": "960x540",
     "mode": "none",

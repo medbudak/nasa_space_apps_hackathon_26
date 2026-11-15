@@ -26,7 +26,7 @@
     return MAP().baseLeftM + (px - MAP().baseLeftPx) * G().metersPerPixel;
   };
   Surf.worldLeftPx = () => Surf.mToPx(MAP().leftLimitM);
-  Surf.worldRightPx = () => Surf.mToPx(MAP().tubeMouthM) + 24;
+  Surf.worldRightPx = () => Surf.mToPx(MAP().eastEndM) + 24;
 
   /* Lav tüneli alt haritası: yüzeyle aynı ölçek (gameplay.metersPerPixel) → aynı ekran hızı */
   Surf.caveMToPx = (m) => m / G().metersPerPixel;

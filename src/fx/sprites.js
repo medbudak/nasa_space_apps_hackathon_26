@@ -30,7 +30,6 @@
     vfx_shadow_hallucination: 'vfx/vfx_shadow_hallucination.png',
     vfx_frost_1: 'vfx/vfx_frost_1.png',
     vfx_frost_2: 'vfx/vfx_frost_2.png',
-    vfx_dust_storm: 'vfx/vfx_dust_storm.png',
     // Mekik içi (K4 Sedef): yaşam alanının arka planı ve kasksız mürettebat
     ship_interior: 'screens/scr_ship_interior.jpeg',
     astronaut_indoor: 'sprites/astronaut_indoor.png'

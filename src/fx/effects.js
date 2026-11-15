@@ -25,6 +25,7 @@
     camX: -300,
     shake: 0,
     stormVis: 0,
+    stormRamp: 0,
     dustDevil: 0,
     toxic: 0,
     glitch: 0,
@@ -399,9 +400,10 @@
       }
     }
 
-    // Rüzgâr tozu / fırtına
+    // Rüzgâr tozu / fırtına: fırtına STORM_FADE_S boyunca düzgünce yükselir ve aynı hızla diner
     const storm = s.weather.stormTau > 0;
-    FX.stormVis += ((storm ? 1 : 0) - FX.stormVis) * Math.min(1, dt * 0.8);
+    FX.stormRamp = Math.max(0, Math.min(1, FX.stormRamp + ((storm ? 1 : -1) * dt) / STORM_FADE_S));
+    FX.stormVis = FX.stormRamp * FX.stormRamp * (3 - 2 * FX.stormRamp);
     const windK = 0.25 + FX.stormVis * 2.5;
     ctx.fillStyle = '#e6a477';
     for (const d of FX.windDust) {
@@ -414,19 +416,7 @@
       ctx.fillRect(Math.round(d.x), Math.round(d.y), d.s * (1 + FX.stormVis * 2), d.s);
     }
     ctx.globalAlpha = 1;
-    if (FX.stormVis > 0.02) {
-      ctx.fillStyle = 'rgba(176, 82, 38,' + FX.stormVis * 0.45 + ')';
-      fillView(ctx);
-      const sv = S.Sprites.get('vfx_dust_storm');
-      if (sv) {
-        // Toz dokusu tuval yüksekliğine ölçeklenir ve yatayda döşenir (oran korunur, uzatma yok)
-        const tw = Math.max(1, Math.round((sv.width * H) / sv.height));
-        const off = (t * 120) % tw;
-        ctx.globalAlpha = FX.stormVis * 0.55;
-        for (let x = -off; x < W; x += tw) ctx.drawImage(sv, Math.round(x), -OFF_Y, tw, H);
-        ctx.globalAlpha = 1;
-      }
-    }
+    if (FX.stormVis > 0.01) drawStorm(ctx, FX.stormVis, dt);
 
     // Gece karartması + ışıklar
     if (light.dark > 0.02) {
@@ -960,6 +950,48 @@
    * Kasksız mürettebatın yürüyüşü (K3 Medine): gövde hafifçe sallanır; bacaklar (figürün alt %44'ü) sol ve sağ yarı
    * olarak ileri geri salınıp sırayla kalkar, ayaklar kaymaz. Görsel sola bakar; dir = +1 aynalar. footY: zemin çizgisi.
    */
+  /* Toz fırtınası (K3 Medine): koyulaşan turuncu ışık, yuvarlanan toz bulutları, rüzgârın sürdüğü ince çizgiler.
+     Desenli doku yok (dikiş ve sert bantlar veriyordu). Koordinatlar dünya katmanında: üst kenar −OFF_Y. */
+  const STORM_FADE_S = 10;
+  const stormHash = (n) => {
+    const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const STORM_STREAKS = Array.from({ length: 190 }, (_, i) => ({ x: stormHash(i * 1.7) * 960, y: stormHash(i * 2.9), v: 260 + stormHash(i * 4.3) * 360, len: 6 + Math.round(stormHash(i * 6.1) * 26) }));
+  const STORM_PUFFS = Array.from({ length: 14 }, (_, i) => ({ x: stormHash(i * 9.1) * 960, y: 0.15 + stormHash(i * 3.7) * 0.75, r: 30 + stormHash(i * 5.3) * 60, v: 60 + stormHash(i * 7.7) * 80 }));
+  function drawStorm(ctx, k, dt) {
+    const top = -OFF_Y;
+    ctx.save();
+    ctx.globalAlpha = 0.5 * k;
+    ctx.fillStyle = '#6a2c14';
+    ctx.fillRect(0, top, W, H);
+    ctx.globalAlpha = 0.18 * k;
+    ctx.fillStyle = '#2a120a';
+    ctx.fillRect(0, top, W, H);
+    ctx.globalAlpha = 1;
+    for (const p of STORM_PUFFS) {
+      p.x += p.v * (0.5 + 0.5 * k) * dt;
+      if (p.x - p.r > W + 40) p.x = -p.r - 40;
+      const cy = top + p.y * H;
+      const g = ctx.createRadialGradient(p.x, cy, 0, p.x, cy, p.r);
+      g.addColorStop(0, 'rgba(196,120,70,' + (0.32 * k).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(196,120,70,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(p.x - p.r, cy - p.r, p.r * 2, p.r * 2);
+    }
+    // fırtınanın başında ve sonunda daha az çizgi
+    ctx.fillStyle = '#d0905e';
+    ctx.globalAlpha = 0.7 * k;
+    const shown = Math.round(STORM_STREAKS.length * (0.15 + 0.85 * k));
+    for (let i = 0; i < STORM_STREAKS.length; i++) {
+      const d = STORM_STREAKS[i];
+      d.x += d.v * (0.45 + 0.55 * k) * dt;
+      if (d.x > W + 20) d.x = -40;
+      if (i < shown) ctx.fillRect(Math.round(d.x), Math.round(top + d.y * H + Math.sin((d.x + d.y * 1000) * 0.02) * 6), d.len, 1);
+    }
+    ctx.restore();
+  }
+
   FX.drawCrew = function (c, img, x, footY, h, dir, phase, moving) {
     if (!img) return;
     const k = h / img.height;
