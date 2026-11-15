@@ -361,6 +361,9 @@
     if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);
     if (it.action === 'greenhouse') return S.HabitatPanel.openGreenhouse();
     if (it.action === 'mav') return S.HabitatPanel.openMav();
+    if (it.action === 'break_ice') return S.Surface.breakIce(s);
+    if (it.action === 'dig_probe') return S.Surface.digProbe(s);
+    if (it.action === 'dig_barrier' || it.action === 'dig_barrier_again') return S.Surface.digBarrier(s, it.index);
     S.HabitatPanel.openActionModal(it.action);
   };
 
@@ -402,6 +405,8 @@
     const s = S.getState();
     if (!s || Game.scene !== 'world') return false;
     if (s.gameOver) {
+      // K2 trial: dying in the ice field, the heavy frost first closes over the screen (~2.6 s)
+      if (S.Westlands && S.Westlands.holdDeath(s)) return true;
       S.UI.closeAll();
       S.clearSave();
       Game.setScene('gameover');
@@ -580,7 +585,8 @@
     S.Audio.init();
     S.FX.init();
     S.bus.on('sol:advance', (sum) => Game.pendingSol.push(sum));
-    S.bus.on('forensics:discovered', (p) => S.UI.toast(S.UI.icon('target') + t('toast.discovered', { name: S.Forensics.get(p.id).name }), 'info'));
+    // K2 trial: wrecks in the western ice field announce themselves with a "!" (core/surface.js)
+    S.bus.on('forensics:discovered', (p) => S.Forensics.get(p.id).distanceM < 0 && S.DATA.terrain.westRegion ? null : S.UI.toast(S.UI.icon('target') + t('toast.discovered', { name: S.Forensics.get(p.id).name }), 'info'));
     S.bus.on('downlink:arrived', (p) => S.UI.toast(S.UI.icon('signal') + t('toast.arrived', { title: t(p.titleKey, p.vars) }), 'ok'));
     S.bus.on('explore:filed', (p) =>
       S.UI.toast(S.UI.icon('doc') + t('toast.relic_filed', { items: p.relics.map((r) => t('relic.' + r)).join(', ') }), 'ok', 5000)

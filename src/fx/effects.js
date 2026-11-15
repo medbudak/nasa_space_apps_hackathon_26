@@ -249,6 +249,8 @@
       iceFullPx: Surf.mToPx(map.leftLimitM + 100)
     });
     FX.drawRoute(ctx, s, t, GY, light);
+    // Batı buz alanı (K2 Sude): zemin batıya doğru buza döner; izler ve kraterler enkazlara götürür
+    if (S.Westlands) S.Westlands.drawLand(ctx, s, FX.camX, W, BASE_H, GY, t);
 
     // Buz yatağı (RIMFAX)
     if (S.Sim.has(s, 'rimfax')) {
@@ -318,6 +320,8 @@
       L.draw(ctx, GY, FX.worldToScreen, t, light.dark, S.Art.palette(site, minute));
       if (L.active) L.drawFx(ctx, GY, FX.worldToScreen, t);
     }
+    // Batı buz alanı (K2 Sude): moloz, kayıp kargo aracı ve parçaları, buz blokları, sonda
+    if (S.Westlands) S.Westlands.drawObjects(ctx, s, FX.camX, W, GY, t);
 
     // Ingenuity
     if (S.Sim.has(s, 'ingenuity') && !(L && L.active)) {
@@ -479,6 +483,7 @@
     FX.drawFloats(ctx, dt, GY);
     ctx.restore(); // dünya ötelemesi (OFF_Y) biter; vizör ve parazit tüm tuvale çizilir
     FX.drawVisorFrost(ctx, s);
+    if (S.Westlands) S.Westlands.drawScreenFrost(ctx, s, W, H);
     FX.drawGlitch(ctx, dt);
     ctx.restore();
     FX.drawFade(ctx, dt);
@@ -915,6 +920,7 @@
   };
 
   FX.drawVisorFrost = function (ctx, s) {
+    if (S.Westlands && S.Westlands.ownsVisor(s)) return; // K2 trial: the ice field draws its own visor frost
     const eva = S.DATA.constants.eva;
     let a = 0;
     if (s.suit.frozen) a = 0.9;
