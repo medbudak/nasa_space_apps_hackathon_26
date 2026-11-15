@@ -1464,7 +1464,7 @@
   function interiorLayout(I, bodyIx, dt, t) {
     const localH = BASE_W * INTERIOR_VIEW.aspect;
     const { floorScreenY, k } = interiorScale(I);
-    const shipW = BASE_W * k;
+    const shipW = I.width * k;
     let x = (W - shipW) / 2;
     if (shipW > W) {
       const want = Math.max(W - shipW, Math.min(0, W / 2 - bodyIx * k));
@@ -1475,6 +1475,99 @@
     }
     interiorCam.lastT = t;
     return { k, localH, floorScreenY, x: Math.round(x), y: Math.round(floorScreenY - I.floorY * k) };
+  }
+
+  /*
+   * Spor bölmesi: kesit laboratuvar–ranza direğinden (gym.atX) ikiye ayrılır, aradaki boşluğa ilk bölmenin düz duvar
+   * şeridi döşenir (tavan ışıkları ve zemin dahil) ve iki yanına direk gelir; üstüne ISS'teki gibi koşu bandı (T2),
+   * bisiklet (CEVIS) ve duvara bağlı direnç aleti (ARED) çizilir. Kesitin piksel boyutunda bir kez kurulur.
+   */
+  const GYM_WALL = { x0: 90, x1: 155 }; // ilk bölmenin düz duvarı (yerel px)
+  let cutaway = null;
+  function landerCutaway(I) {
+    const img = S.Sprites.get('lander_interior');
+    if (!img) return null;
+    if (cutaway && cutaway.src === img) return cutaway.cv;
+    const r = img.width / BASE_W; // kaynak px / yerel px
+    const { atX, w } = I.gym;
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(I.width * r);
+    cv.height = img.height;
+    const g = cv.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    const PIL = 8; // direğin yarı genişliği (yerel px)
+    const at = (v) => Math.round(v * r);
+    g.drawImage(img, 0, 0, at(atX + PIL), img.height, 0, 0, at(atX + PIL), img.height);
+    g.drawImage(img, at(atX - PIL), 0, img.width - at(atX - PIL), img.height, at(atX - PIL + w), 0, img.width - at(atX - PIL), img.height);
+    const strip = GYM_WALL.x1 - GYM_WALL.x0;
+    for (let x = atX + PIL; x < atX - PIL + w; x += strip) {
+      const sw = Math.min(strip, atX - PIL + w - x);
+      g.drawImage(img, at(GYM_WALL.x0), 0, at(sw), img.height, at(x), 0, at(sw), img.height);
+    }
+    g.save();
+    g.scale(r, r);
+    drawGym(g, atX + PIL, I.floorY, w - 2 * PIL);
+    g.restore();
+    cutaway = { src: img, cv };
+    return cv;
+  }
+
+  /** Spor aletleri (yerel px; x0 bölmenin sol kenarı, floorY zemin, bw bölme genişliği) */
+  function drawGym(g, x0, floorY, bw) {
+    const R = (x, y, w, h, c) => {
+      g.fillStyle = c;
+      g.fillRect(x0 + x, floorY + y, w, h);
+    };
+    const OUT = '#23252b'; // kontur
+    const DARK = '#3a3d45';
+    const MID = '#6b6f78';
+    const CREAM = '#e3dccd';
+    const SHADE = '#bfb6a5';
+    const ORANGE = '#d9652b';
+    const SCREEN = '#3fa9b0';
+    const box = (x, y, w, h, c, shade) => {
+      R(x - 1, y - 1, w + 2, h + 2, OUT);
+      R(x, y, w, h, c);
+      if (shade) R(x, y + h - 2, w, 2, shade);
+    };
+    // Duvara bağlı direnç aleti (ARED): iki dikme, kaldırma barı, iki vakum silindiri ve ayak plakası
+    const ax = bw - 40;
+    box(ax, -80, 4, 74, MID);
+    box(ax + 28, -80, 4, 74, MID);
+    box(ax - 2, -84, 36, 4, DARK);
+    box(ax + 6, -70, 6, 22, DARK);
+    box(ax + 20, -70, 6, 22, DARK);
+    R(ax + 7, -66, 4, 2, SCREEN);
+    R(ax + 21, -66, 4, 2, SCREEN);
+    box(ax - 6, -44, 44, 3, CREAM);
+    R(ax - 7, -46, 3, 7, ORANGE);
+    R(ax + 36, -46, 3, 7, ORANGE);
+    box(ax - 4, -5, 40, 4, DARK, OUT);
+    // Koşu bandı (T2): krem gövde, koyu bant, yan tutamak, ön direk ve ekran; tavana emniyet askısı bağlantısı
+    box(4, -9, 56, 8, CREAM, SHADE);
+    R(6, -11, 50, 2, OUT);
+    R(4, -3, 56, 1, ORANGE);
+    box(52, -40, 4, 30, CREAM, SHADE);
+    box(44, -48, 18, 9, CREAM, SHADE);
+    R(46, -46, 12, 4, SCREEN);
+    R(60, -45, 1, 2, ORANGE);
+    box(30, -28, 24, 2, MID);
+    R(14, -62, 2, 14, ORANGE);
+    R(38, -62, 2, 14, ORANGE);
+    R(12, -63, 30, 2, MID);
+    // Bisiklet ergometresi (CEVIS): krem volan kapağı, sele, gidon ve ekran
+    const bx = 70;
+    box(bx, -18, 18, 16, CREAM, SHADE);
+    R(bx + 5, -13, 8, 6, DARK);
+    R(bx + 8, -11, 2, 2, ORANGE);
+    box(bx + 2, -30, 3, 12, MID);
+    box(bx - 3, -33, 11, 3, OUT);
+    box(bx + 16, -36, 3, 18, MID);
+    box(bx + 13, -39, 11, 2, DARK);
+    box(bx + 16, -46, 8, 5, CREAM);
+    R(bx + 17, -45, 6, 3, SCREEN);
+    R(bx + 6, -5, 4, 2, ORANGE);
+    box(bx - 4, -2, 28, 2, DARK)
   }
 
   /** Yakındaki istasyonun adı, mürettebatın başının üstünde (ekran koordinatı, kesit ölçeğinden bağımsız boyut) */
@@ -1500,7 +1593,7 @@
     const body = S.Surface.body;
     ctx.fillStyle = '#05060a';
     ctx.fillRect(0, 0, W, H);
-    const ship = S.Sprites.get('lander_interior');
+    const ship = landerCutaway(I);
     const view = interiorLayout(I, body.ix, dt, t);
     let crewLift = 0;
     ctx.save();
@@ -1508,12 +1601,12 @@
     ctx.scale(view.k, view.k);
     if (ship) {
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(ship, 0, 0, BASE_W, view.localH);
+      ctx.drawImage(ship, 0, 0, I.width, view.localH);
       ctx.imageSmoothingEnabled = false;
     } else {
       // Görsel yüklenemedi (RULES §2.6: eksik görsel oyunu kilitlemez): yalnız zemin çizgisi, oynanış sürer
       ctx.fillStyle = '#2a2320';
-      ctx.fillRect(0, I.floorY, BASE_W, 4);
+      ctx.fillRect(0, I.floorY, I.width, 4);
     }
     // D-016 (K2 Sude): hava kilidinin yanındaki su şişesi rafı. Rafın kendi [E] yazısı kesitle birlikte büyüdüğü için
     // verilmez (nearId null): eylem alttaki çekmecede, ad istasyon etiketinde görünür.

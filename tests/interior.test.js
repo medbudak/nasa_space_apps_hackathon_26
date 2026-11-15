@@ -104,3 +104,19 @@ test('lander içine her giriş aynı hareket durumunu verir (kapı, kayıttan de
   assert.deepEqual(Object.values(snapshot()), Object.values(atDoor));
   assert.equal(body.ix, s.player.ix);
 });
+
+test('spor bölmesi: istasyon duvarlar arasında; spor moral verir, yorgunluk ekler, süresi veriden', () => {
+  const { S, s } = inside();
+  const I = S.Surface.INTERIOR;
+  const gym = I.stations.find((st) => st.id === 'gym');
+  assert.ok(gym && gym.x > I.gym.atX && gym.x < I.gym.atX + I.gym.w, 'istasyon spor bölmesinde');
+  assert.ok(I.right <= I.width, 'sağ duvar kesitin içinde');
+  const e = S.DATA.gameplay.exercise;
+  s.res.morale = 50;
+  const fatigue = S.Sim.needs(s).fatigue;
+  const t0 = s.minute;
+  assert.equal(S.Sim.doAction(s, 'exercise').ok, true);
+  assert.equal(s.res.morale >= 50 + e.morale - 1, true, 'moral arttı (zaman geçerken az düşebilir)');
+  assert.ok(S.Sim.needs(s).fatigue >= fatigue + e.fatigue - 1, 'yorgunluk arttı');
+  assert.ok(s.minute - t0 >= e.minutes, 'süre geçti');
+});

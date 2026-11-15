@@ -1018,6 +1018,20 @@
         Sim.relieveNeed(s, 'thirst', N().drinkRelief);
       }
     },
+    // Spor bölmesi (lander): T2 koşu bandı / CEVIS bisikleti gibi; moral artar, yorgunluk biraz artar (gameplay.exercise)
+    exercise: {
+      minutes: () => D().gameplay.exercise.minutes,
+      preview: (s) => {
+        const e = D().gameplay.exercise;
+        return { from: Math.round(s.res.morale), to: Math.min(100, Math.round(s.res.morale + e.morale)), costKey: 'action.cost_exercise', costVars: { min: e.minutes, f: e.fatigue } };
+      },
+      can: () => null,
+      run(s) {
+        const e = D().gameplay.exercise;
+        s.res.morale = clamp(s.res.morale + e.morale, 0, 100);
+        Sim.needs(s).fatigue = clamp(Sim.needs(s).fatigue + e.fatigue, 0, 100);
+      }
+    },
     toilet: {
       minutes: () => N().toiletMinutes,
       preview: (s) => ({ from: Math.round(s.res.morale), to: Math.min(100, Math.round(s.res.morale + N().toiletMorale)), costKey: 'needs.cost_toilet', costVars: { min: N().toiletMinutes, m: N().toiletMorale } }),

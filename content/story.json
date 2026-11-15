@@ -2184,7 +2184,11 @@
     "gh.trays_info": "Sera seviye {lv}: {n} saksı. Her saksı ayrı sulanır ({l} L); su yettiği sürece istediğin kadar bitki büyütebilirsin. Daha çok saksı için serayı atölyede yükselt.",
     "help.crouch": "Çömel (basılı tut; ← → ile çömelip sürünerek ilerle)",
     "hint.crouch": "↓ · eğil",
-    "hp.zero_g_note": "Oyun basitleştirmesi: mekik içinde karakter yolculuktaki gibi süzülür. Gerçekte Mars yüzeyinde yerçekimi Dünya'nınkinin %{pct}'i kadardır; ağırlıksızlık yalnız uzay yolculuğunda yaşanır."
+    "hp.zero_g_note": "Oyun basitleştirmesi: mekik içinde karakter yolculuktaki gibi süzülür. Gerçekte Mars yüzeyinde yerçekimi Dünya'nınkinin %{pct}'i kadardır; ağırlıksızlık yalnız uzay yolculuğunda yaşanır.",
+    "station.gym": "Spor bölmesi",
+    "action.exercise": "Spor yap",
+    "action.done.exercise": "Spor bitti: moral yükseldi.",
+    "action.cost_exercise": "{min} dk · yorgunluk +{f} · Gerçekte ISS ekibi haftada ~10 saat spor yapar (kemik ve kas kaybını yavaşlatır)."
   },
   "en": {
     "ui.back": "Back",
@@ -4371,6 +4375,10 @@
     "gh.trays_info": "Greenhouse level {lv}: {n} trays. Each tray is watered on its own ({l} L); grow as many plants as your water allows. Upgrade the greenhouse in the workshop for more trays.",
     "help.crouch": "Crouch (hold; ← → to creep forward crouched)",
     "hint.crouch": "↓ · crouch",
-    "hp.zero_g_note": "Game simplification: inside the lander the crew floats as on the journey. On the real Martian surface gravity is {pct}% of Earth's; weightlessness only happens in spaceflight."
+    "hp.zero_g_note": "Game simplification: inside the lander the crew floats as on the journey. On the real Martian surface gravity is {pct}% of Earth's; weightlessness only happens in spaceflight.",
+    "station.gym": "Exercise bay",
+    "action.exercise": "Exercise",
+    "action.done.exercise": "Workout done: morale is up.",
+    "action.cost_exercise": "{min} min · fatigue +{f} · ISS crews exercise ~10 h a week to slow bone and muscle loss."
   }
 }

@@ -177,6 +177,14 @@
       "diagnoseMin": 10,
       "sleepMorale": 6
     },
+    "exercise": {
+      "simplified": true,
+      "simplifiedNote": "ISS crews exercise up to about 10 hours a week on the T2 treadmill, the CEVIS cycle ergometer and the ARED resistance device to slow bone and muscle loss (NASA). One session in the game is 60 min; its morale gain and the fatigue it adds are game values. On Mars (0.38 g) the crew would still need exercise.",
+      "src": "https://www.nasa.gov/missions/station/iss-research/astronaut-exercise",
+      "minutes": 60,
+      "morale": 4,
+      "fatigue": 10
+    },
     "needs": {
       "simplified": true,
       "simplifiedNote": "Game values for the needs system (hunger, thirst, fatigue: 0 = fine, 100 = critical). Rates are tuned so a crew member needs about 3 meals, 4 drinks and one sleep per sol; the water per drink and meals per sol follow lifeSupport (waterLPerSol / drinksPerSol; BVAD plans food as individually packaged meals). Sleep loss and isolation lowering morale follow ISS, Mars-500 and HI-SEAS findings (qualitative).",
