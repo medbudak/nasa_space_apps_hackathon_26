@@ -267,7 +267,10 @@
   Game.dig = function (id) {
     const s = S.getState();
     const r = S.Explore.dig(s, id);
-    if (!r.ok) return;
+    if (!r.ok) {
+      if (r.errKey) S.UI.toast(S.UI.icon('alert') + t(r.errKey, r.vars), 'warn', 3800);
+      return;
+    }
     const st = S.Explore.site(id);
     const px = S.Surface.mToPx(S.Explore.siteAt(st));
     S.Surface.body.actionT = r.done ? 1 : 0.6;

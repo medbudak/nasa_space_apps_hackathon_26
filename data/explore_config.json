@@ -87,7 +87,7 @@
       { "id": "opportunity", "case": "opportunity", "kind": "dust", "hits": 4, "minutesPerHit": 4 },
       { "id": "mound_e2", "atM": 545, "kind": "sand", "hits": 2, "minutesPerHit": 4 },
       { "id": "insight", "case": "insight", "kind": "dust", "hits": 4, "minutesPerHit": 4 },
-      { "id": "skylight", "atM": 1400, "kind": "rubble", "hits": 6, "minutesPerHit": 5, "opens": "tube" },
+      { "id": "skylight", "atM": 1400, "kind": "rubble", "hits": 6, "minutesPerHit": 5, "opens": "tube", "needsTool": "drill" },
       { "id": "spirit", "case": "spirit", "kind": "frost", "hits": 4, "minutesPerHit": 4 },
       { "id": "phoenix", "case": "phoenix", "kind": "ice", "hits": 5, "minutesPerHit": 4 },
       { "id": "beagle2", "case": "beagle2", "kind": "overhang", "hits": 5, "minutesPerHit": 4 }

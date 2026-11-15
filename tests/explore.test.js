@@ -410,6 +410,8 @@ test('Tünel penceresi: moloz kazılınca açılır, merdiven etkileşimi o zama
   s.player.x = S.Explore.siteAt(sky);
   const opened = [];
   S.bus.on('explore:tube_open', () => opened.push(1));
+  assert.equal(S.Explore.dig(s, 'skylight').errKey, 'tool.err_need', 'moloz matkapsız açılmaz');
+  s.inventory.tools.drill = true;
   for (let i = 0; i < sky.hits; i++) S.Explore.dig(s, 'skylight');
   assert.equal(S.Explore.tubeOpen(s), true);
   assert.equal(opened.length, 1);

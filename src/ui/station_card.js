@@ -21,7 +21,7 @@
     const html =
       '<div class="imp-card" role="alertdialog">' +
       '<div class="imp-head"><span class="imp-led"></span><div><small>' + t('station.imp.alarm', { sol: s.sol }) + '</small><h2>' + t('station.imp.title') + '</h2></div></div>' +
-      '<div class="imp-rows">' + row('mav', 'ok') + row('lander', 'ok') + row('cargo', 'warn') + '</div>' +
+      '<div class="imp-rows">' + row('mav', 'warn') + row('lander', 'ok') + row('cargo', 'warn') + '</div>' +
       '<p class="imp-text">' + t('station.imp.text') + '</p>' +
       '<div class="imp-mission">▶ ' + t('station.imp.mission') + '</div>' +
       '<div class="imp-steps">' + step(1) + step(2) + step(3) + '</div>' +

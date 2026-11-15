@@ -204,6 +204,9 @@
     }
     s.res.habTempC = d.gameplay.habitatTargetC;
     s.inventory.repairKits = s.design.repairKits;
+    s.inventory.tools = Object.assign({}, d.tools.start);
+    s.rocket = { damage: {} };
+    if (S.Rocket) S.Rocket.applyLandingDamage(s); // D-015: inişte yakıt hattı gevşer
     s.inventory.rhuUnits = 0;
     // Atölye malzemeleri: kargodaki kitler (seçilen alete göre)
     s.inventory.items = S.Workshop ? S.Workshop.startItems(s.design) : {};
@@ -702,11 +705,13 @@
   Sim.launchMav = function (s, { auto = false } = {}) {
     if (s.ending) return;
     for (const p of s.downlink.queue) if (p.status === 'sent') Sim.markArrived(s, p);
-    // MAV kurulmadıysa güvenli dönüş yok
-    const fuelOk = s.res.mavFuel >= 100 && Sim.deployed(s, 'mav');
+    // MAV kurulmadıysa ya da hasarlıysa (D-015) güvenli dönüş yok
+    const damaged = Boolean(S.Rocket && S.Rocket.isDamaged(s));
+    const fuelOk = s.res.mavFuel >= 100 && Sim.deployed(s, 'mav') && !damaged;
     s.ending = {
       auto,
       fuelOk,
+      damaged,
       sol: s.sol,
       ufoPct: S.Score.ufoDownloadPct(s),
       cameraTier: Sim.has(s, 'mastcam_z') ? 'high' : 'low'
@@ -717,7 +722,7 @@
         category: 'system',
         titleKey: 'log.mav.title',
         choiceKey: auto ? 'log.mav.auto' : 'log.mav.manual',
-        resultKey: fuelOk ? 'log.mav.res_ok' : 'log.mav.res_lowfuel',
+        resultKey: fuelOk ? 'log.mav.res_ok' : damaged ? 'log.mav.res_damaged' : 'log.mav.res_lowfuel',
         vars: { fuel: Math.round(s.res.mavFuel) },
         score: fuelOk ? 0 : -D().scoring.safeReturnBonusPoints
       },

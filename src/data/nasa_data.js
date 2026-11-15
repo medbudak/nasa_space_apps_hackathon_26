@@ -866,6 +866,8 @@ window.SOL14.DATA = {
   "note": "Shuttle workshop (2026-11-15, ux-plan #8): base systems land as kits and are built in the lander; salvaged wreck parts become upgrades. Minutes, kit counts and the half-array option are game values; the effects shown come from the existing formulas and sourced data (solar model, constants.moxie, constants.sabatier, habitat.greenhouse, relay passes).",
   "src": "https://www.spaceappschallenge.org/",
   "startItems": {
+   "drill_kit": 1,
+   "spare_parts": 2,
    "panel_kit": 1,
    "umbilical_kit": 1,
    "cable_spool": 2
@@ -948,6 +950,14 @@ window.SOL14.DATA = {
     "repairKits": 1
    },
    {
+    "id": "tool_drill",
+    "tool": "drill",
+    "needs": {
+     "drill_kit": 1
+    },
+    "minutes": 20
+   },
+   {
     "id": "station_shell",
     "module": "shell",
     "needs": {
@@ -1024,6 +1034,51 @@ window.SOL14.DATA = {
    }
   ]
  },
+ "tools": {
+  "simplified": true,
+  "simplifiedNote": "Game values (Kişi 4 task card, D-015 proposed): the astronaut's tools. The pickaxe and the suit scanner land with the crew; the drill is assembled in the workshop from a cargo kit. Without the pickaxe each dig swing takes noPickaxeDigFactor times longer (hand trowel); the rubble-sealed skylight and the MAV hull panel need the drill.",
+  "src": "https://www.spaceappschallenge.org/",
+  "start": {
+   "pickaxe": true,
+   "scanner": true,
+   "drill": false
+  },
+  "noPickaxeDigFactor": 2
+ },
+ "rocket": {
+  "simplified": true,
+  "simplifiedNote": "Game values (Kişi 4 task card, D-015 proposed): MAV damage and repair. In NASA's reference plan most of the ascent propellant (the oxygen) is made on Mars, so the repair screen also shows the fuel level. Repair minutes are long on purpose (gloved hands, dust, cold); materials, energy and minutes are not measured values. The landing damage and the meteorite are fiction.",
+  "src": "https://www.nasa.gov/wp-content/uploads/2015/09/373665main_nasa-sp-2009-566.pdf",
+  "landingDamage": [
+   "fuel_line"
+  ],
+  "meteorDamage": [
+   "hull"
+  ],
+  "parts": [
+   {
+    "id": "fuel_line",
+    "needs": {
+     "spare_parts": 1
+    },
+    "tool": "scanner",
+    "energyKwh": 1,
+    "evaMinutes": 40,
+    "minigame": "wires"
+   },
+   {
+    "id": "hull",
+    "needs": {
+     "spare_parts": 1,
+     "cargo_crate": 1
+    },
+    "tool": "drill",
+    "energyKwh": 2,
+    "evaMinutes": 60,
+    "minigame": "patch"
+   }
+  ]
+ },
  "station": {
   "simplified": true,
   "simplifiedNote": "FICTIONAL story (K3 Medine's prototype, D-014 proposed): on Sol 2 a meteorite lands east of the base and scatters cargo. New impact craters do form on Mars (MRO before-and-after images), but one landing next to a base is very unlikely. The MAV is not hit; the return stays the same. Positions, counts and minutes are game values; the station modules are built in the lander's workshop (workshop.recipes with a module field).",
@@ -1094,6 +1149,12 @@ window.SOL14.DATA = {
     "id": "k4",
     "m": 2720,
     "item": "cable_spool",
+    "place": "ground"
+   },
+   {
+    "id": "c5",
+    "m": 1200,
+    "item": "cargo_crate",
     "place": "ground"
    }
   ],
@@ -2320,7 +2381,8 @@ window.SOL14.DATA = {
      "kind": "rubble",
      "hits": 6,
      "minutesPerHit": 5,
-     "opens": "tube"
+     "opens": "tube",
+     "needsTool": "drill"
     },
     {
      "id": "spirit",

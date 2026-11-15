@@ -4,6 +4,20 @@
  */
 'use strict';
 
+/** D-015: kalkıştan önce MAV'ı tamir et; gövde paneli için göktaşının saçtığı ilk sandığı topla */
+function repairRocket(S, s) {
+  for (const id of S.Rocket.damaged(s)) {
+    if (S.Rocket.part(id).needs.cargo_crate && !S.Workshop.count(s, 'cargo_crate')) {
+      const crate = S.DATA.station.pickups.find((p) => p.item === 'cargo_crate' && p.place === 'ground' && !s.station.picked[p.id]);
+      s.player.inside = false;
+      s.player.x = crate.m;
+      S.Station.collect(s, 0);
+    }
+    S.Rocket.repair(s, id, true);
+  }
+  s.player.inside = true;
+}
+
 const { loadCore } = require('./load_core.js');
 
 function bestOption(S, s) {
@@ -141,7 +155,7 @@ function play(design, { demoMode = false, policy = {} } = {}) {
   S.Sim.land(s);
   // Sol 1 sabahı: mekikteki atölyede üs sistemlerini üret (önce tam güneş dizisi)
   s.player.inside = true;
-  for (const id of ['solar_array', 'mav_line', 'isru_unit', 'greenhouse']) if (S.Workshop.status(s, id).state === 'ready') S.Workshop.build(s, id, 'full');
+  for (const id of ['solar_array', 'mav_line', 'isru_unit', 'greenhouse', 'tool_drill']) if (S.Workshop.status(s, id).state === 'ready') S.Workshop.build(s, id, 'full');
 
   const mg = { success: true, score: 0.95 };
   // Yakından uzağa (doğu ve batı rotası karışık): araç önce kazılıp ortaya çıkarılır
@@ -226,6 +240,7 @@ function play(design, { demoMode = false, policy = {} } = {}) {
       S.Sim.doAction(s, 'sabatier');
       S.Sim.advance(s, 120);
       handleCrisis(S, s, log);
+      repairRocket(S, s);
       S.Sim.launchMav(s, { auto: false });
     }
   }

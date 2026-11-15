@@ -45,7 +45,7 @@
    * RIMFAX (yer radarı) varsa sinyal daha uzaktan gelir. Dönüş: { site, d, close } | null
    */
   X.scannerPing = function (s) {
-    if (!s.explore || s.player.inside || s.player.zone === 'cave') return null;
+    if (!s.explore || s.player.inside || s.player.zone === 'cave' || !S.Workshop.hasTool(s, 'scanner')) return null;
     const dc = X.digCfg();
     const range = S.Sim.has(s, 'rimfax') ? dc.rimfaxRangeM : dc.reactRangeM;
     let best = null;
@@ -61,9 +61,11 @@
   X.dig = function (s, id) {
     const st = X.site(id);
     if (!st || X.siteDone(s, st)) return { ok: false };
+    // Kişi 4: bazı noktalar alet ister (moloz → matkap); kazma yoksa her vuruş daha uzun sürer
+    if (st.needsTool && !S.Workshop.hasTool(s, st.needsTool)) return { ok: false, errKey: 'tool.err_need', vars: { tool: S.t('tool.' + st.needsTool + '.name') } };
     if (X.siteHits(s, st) >= st.hits) s.explore.dig[id] = 0; // çarpmadan önce boş kazılmıştı
     s.explore.dig[id] = X.siteHits(s, st) + 1;
-    S.Sim.advance(s, st.minutesPerHit);
+    S.Sim.advance(s, st.minutesPerHit * (S.Workshop.hasTool(s, 'pickaxe') ? 1 : D().tools.noPickaxeDigFactor));
     const hits = s.explore.dig[id];
     const out = { ok: true, id, hits, total: st.hits, done: hits >= st.hits, kind: st.kind };
     S.bus.emit('dig:hit', { id, m: X.siteAt(st), hits, total: st.hits, kind: st.kind });

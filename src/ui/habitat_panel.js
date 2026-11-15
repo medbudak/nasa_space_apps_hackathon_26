@@ -216,9 +216,45 @@
     HP.openActionModal('tend_greenhouse', info);
   };
 
+  /** D-015: hasarlı parçalar; her biri için gerekli / sende olan, alet, enerji ve EVA süresi */
+  function repairHtml(s) {
+    const R = S.Rocket;
+    if (!R.isDamaged(s)) return '<p class="pv-note ok">' + I('check') + t('rocket.all_ok') + '</p>';
+    return (
+      '<h5 class="rk-head">' + I('alert') + t('rocket.damaged_title') + '</h5>' +
+      R.damaged(s)
+        .map((id) => {
+          const p = R.part(id);
+          const c = R.check(s, id);
+          const have = (ok, label, val) => '<li class="' + (ok ? 'ok' : 'miss') + '">' + I(ok ? 'check' : 'x') + '<span>' + label + '</span><b>' + val + '</b></li>';
+          const rows =
+            Object.entries(p.needs).map(([item, n]) => have(S.Workshop.count(s, item) >= n, t('item.' + item + '.name'), S.Workshop.count(s, item) + ' / ' + n)).join('') +
+            have(S.Workshop.hasTool(s, p.tool), t('rocket.tool'), t('tool.' + p.tool + '.name')) +
+            have(s.res.energyKwh >= p.energyKwh, t('rocket.energy'), p.energyKwh + ' kWh');
+          return (
+            '<div class="rk-part"><b>' + t('rocket.part.' + id) + '</b><small>' + t('rocket.src.' + R.state(s).damage[id]) + '</small>' +
+            '<ul class="ws-mats">' + rows + '</ul>' +
+            (c.ok ? '' : '<p class="pv-err">' + I('x') + t(c.errKey, c.vars) + '</p>') +
+            '<button class="btn btn-primary btn-sm" data-repair="' + id + '" ' + (c.ok ? '' : 'disabled') + '>' + I('wrench') + t('rocket.repair', { min: p.evaMinutes }) + '</button></div>'
+          );
+        })
+        .join('')
+    );
+  }
+
+  async function runRepair(id) {
+    const s = S.getState();
+    S.UI.closeModal('mav', true);
+    const mg = await S.runMinigame(S.Rocket.part(id).minigame, {});
+    const r = S.Rocket.repair(s, id, mg.success);
+    if (!r.ok) S.UI.toast(I('alert') + t(r.errKey, r.vars), 'warn');
+    else S.UI.toast(r.repaired ? I('check') + t('rocket.repaired') : I('alert') + t('rocket.failed'), r.repaired ? 'ok' : 'warn', 4000);
+    S.Game.afterAction();
+  }
+
   HP.openMav = function () {
     const s = S.getState();
-    const final = S.Sim.canLaunchMav(s);
+    const final = S.Sim.canLaunchMav(s) && !S.Rocket.isDamaged(s);
     const fuel = Math.round(s.res.mavFuel);
     const isru = S.Sim.hasIsru(s); // MOXIE yoksa ISRU ünitesi yok: yakıt üretilemez
     const html =
@@ -227,12 +263,14 @@
       S.UI.bar(fuel, fuel >= 100 ? 'cyan' : 'amber') +
       '<p class="pv-desc">' + t(final ? (fuel >= 100 ? 'mav.ready' : 'mav.lowfuel') : isru ? 'mav.not_yet' : 'mav.not_yet_no_isru', { sol: s.maxSols }) + '</p>' +
       S.UI.checklistHtml(s) +
+      repairHtml(s) +
       '<p class="pv-cost">' + I('flask') + (isru ? t('mav.sabatier_hint') : t('mav.no_isru_hint', { fuel })) + '</p>' +
       '<div class="modal-actions"><button class="btn btn-ghost" data-close>' + t('ui.close') + '</button>' +
       (final ? '<button class="btn btn-primary" data-launch>' + I('rocket') + t('mav.launch') + '</button>' : '') +
       '</div></div>';
     S.UI.openModal('mav', html, {
       onMount: (box) => {
+        box.querySelectorAll('[data-repair]').forEach((btn) => btn.addEventListener('click', () => runRepair(btn.dataset.repair)));
         const b = box.querySelector('[data-launch]');
         if (b)
           b.addEventListener('click', () => {

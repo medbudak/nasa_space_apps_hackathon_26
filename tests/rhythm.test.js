@@ -114,6 +114,8 @@ test('RIT-02: hedef önceliği — hayati tehlike > son Sol > yarım inceleme > 
   // Son Sol
   s.sol = s.maxSols;
   s.res.mavFuel = 80;
+  assert.equal(S_main(ctx), 'mav_repair', 'D-015: hasarlı roket önce tamir edilir');
+  s.rocket.damage = {};
   assert.equal(S_main(ctx), 'mav_fuel');
   s.res.mavFuel = 100;
   assert.equal(S_main(ctx), 'mav_launch');

@@ -27,6 +27,7 @@
     if (st.impact || s.sol < cfg().impactSol) return false;
     st.impact = true;
     st.impactSol = s.sol;
+    if (S.Rocket) S.DATA.rocket.meteorDamage.forEach((id) => S.Rocket.damage(s, id, 'meteor'));
     S.bus.emit('station:impact', { sol: s.sol });
     return true;
   };

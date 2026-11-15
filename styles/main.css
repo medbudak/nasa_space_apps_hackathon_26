@@ -1250,3 +1250,10 @@ body[data-scene='world'] .screen-layer { display: none; }
 .inv-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5em; }
 .inv-n { color: var(--cyan); font-weight: 700; }
 .inv-use { display: flex; align-items: center; gap: 0.3em; color: var(--green) !important; }
+.inv-group { grid-column: 1 / -1; margin: 0.4em 0 0; font-size: 0.7em; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.inv-head .ico { width: 1.2em; height: 1.2em; color: var(--cyan); }
+.inv-head b { flex: 1; }
+.rk-head { display: flex; align-items: center; gap: 0.4em; margin: 0.7em 0 0.3em; font-size: 0.75em; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); }
+.rk-part { display: flex; flex-direction: column; gap: 0.3em; padding: 0.5em 0.6em; margin-bottom: 0.4em; border: 1px solid rgba(255,194,74,0.35); border-radius: 0.4em; background: rgba(255,194,74,0.05); }
+.rk-part small { font-size: 0.72em; color: var(--muted); }
+.rk-part .btn { align-self: flex-start; }

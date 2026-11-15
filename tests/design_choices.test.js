@@ -69,6 +69,7 @@ test('MOXIE yoksa ISRU ünitesi, Sabatier eylemi ve yakıt hedefleri yok; MOXIE 
     Object.values(s.experiments).forEach((r) => (r.done = true));
     s.greenhouse.tendedSol = s.sol;
     s.res.panelDust = 0;
+    s.rocket.damage = {}; // D-015: roket tamiri ayrı test edilir (rocket.test.js)
   };
   const without = landed({ instruments: NO_MOXIE });
   {

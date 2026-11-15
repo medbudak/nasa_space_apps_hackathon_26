@@ -144,22 +144,28 @@
     S.UI.openModal('workshop', WP.html(S.getState()), { cls: 'modal-wide', onMount: mount });
   };
 
+  // Kişi 4: envanter ızgarası aletler → malzemeler → stok ve buluntular; ikon + adet (alet ikonları Kişi 7'den gelince değişir)
+  const TOOL_ICON = { pickaxe: 'wrench', drill: 'grip', scanner: 'target' };
+  const INV_GROUPS = [['tool', 'inv.tools'], ['item', 'inv.materials'], ['stock', 'inv.stock'], ['find', 'inv.finds']];
+
   WP.inventoryHtml = function (s) {
     const list = W().inventoryList(s);
+    const card = (it) => {
+      const key = (it.kind === 'tool' ? 'tool.' : 'item.') + it.id;
+      const used = it.kind === 'item' ? W().usedIn(it.id) : [];
+      return (
+        '<div class="inv-card"><div class="inv-head">' + I(it.kind === 'tool' ? TOOL_ICON[it.id] || 'wrench' : ICON[it.id] || 'doc') + '<b>' + t(key + '.name') + '</b><span class="inv-n">×' + it.n + '</span></div>' +
+        '<p>' + t(key + '.desc') + '</p>' +
+        '<small>' + I('map') + t(key + '.from') + '</small>' +
+        (used.length ? '<small class="inv-use">' + I('wrench') + t('inv.used_in', { list: used.map((r) => t('ws.' + r + '.name')).join(', ') }) + '</small>' : '') +
+        '</div>'
+      );
+    };
     const cards = list.length
-      ? list
-          .map((it) => {
-            const key = it.kind === 'find' ? 'item.' + it.id : 'item.' + it.id;
-            const used = it.kind === 'item' ? W().usedIn(it.id) : [];
-            return (
-              '<div class="inv-card"><div class="inv-head"><b>' + t(key + '.name') + '</b><span class="inv-n">×' + it.n + '</span></div>' +
-              '<p>' + t(key + '.desc') + '</p>' +
-              '<small>' + I('map') + t(key + '.from') + '</small>' +
-              (used.length ? '<small class="inv-use">' + I('wrench') + t('inv.used_in', { list: used.map((r) => t('ws.' + r + '.name')).join(', ') }) + '</small>' : '') +
-              '</div>'
-            );
-          })
-          .join('')
+      ? INV_GROUPS.map(([kind, title]) => {
+          const group = list.filter((it) => it.kind === kind);
+          return group.length ? '<h5 class="inv-group">' + t(title) + '</h5>' + group.map(card).join('') : '';
+        }).join('')
       : '<p class="pv-note">' + t('inv.empty') + '</p>';
     return (
       '<div class="panel big-panel ws-panel">' +

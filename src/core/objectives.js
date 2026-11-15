@@ -155,6 +155,7 @@
     if (s.sol >= s.maxSols) {
       if (outside && inCave(s)) return goal('cave_exit', {}, homeTarget(s));
       if (!S.Sim.deployed(s, 'mav')) return goal('deploy_mav', {}, toLander());
+      if (S.Rocket && S.Rocket.isDamaged(s)) return goal('mav_repair', { n: S.Rocket.damaged(s).length });
       return p.fuelOk || !p.canFuel ? goal('mav_launch') : goal('mav_fuel', { fuel: p.fuel });
     }
 
@@ -220,6 +221,7 @@
     // Kurulmayı bekleyen üs sistemleri (MAV, ISRU, sera)
     const packed = ['mav', 'isru', 'greenhouse'].find((id) => !S.Sim.deployed(s, id) && S.Sim.deployAvailable(s, id));
     if (packed) opts.push(goal('opt_deploy', { what: S.t('deploy.' + packed + '.name') }));
+    if (S.Rocket && S.Rocket.isDamaged(s) && S.Sim.deployed(s, 'mav')) opts.push(goal('mav_repair', { n: S.Rocket.damaged(s).length }));
     if (s.res.panelDust >= 0.3 && S.Sim.deployed(s, 'solar')) opts.push(goal('opt_clean', { pct: Math.round(s.res.panelDust * 100) }));
     if (gh.installed && !gh.frozen && gh.tendedSol !== s.sol && s.res.waterL >= ghCfg.tendWaterL) opts.push(goal('opt_greenhouse'));
     if (S.Sim.has(s, 'rimfax') && s.iceDugSol !== s.sol && s.res.waterL < 30) opts.push(goal('opt_ice', { l: Math.round(s.res.waterL) }));

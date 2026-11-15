@@ -22,6 +22,7 @@ const CORE_SCRIPTS = [
   'src/systems/explore.js',
   'src/systems/workshop.js',
   'src/systems/station.js',
+  'src/systems/rocket.js',
   'src/core/objectives.js',
   'src/core/surface.js',
   'src/fx/lander.js',

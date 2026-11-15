@@ -17,6 +17,8 @@
   W.recipe = (id) => W.recipes().find((r) => r.id === id);
   W.items = (s) => (s.inventory && s.inventory.items) || {};
   W.count = (s, item) => W.items(s)[item] || 0;
+  /** Alet var mı? Tamir kiti mevcut repairKits stoğudur (Kişi 4 kartı) */
+  W.hasTool = (s, id) => (id === 'repair_kit' ? (s.inventory.repairKits || 0) > 0 : Boolean(s.inventory.tools && s.inventory.tools[id]));
 
   /** İnişte kargodan çıkan kitler: her görevde aynı temel kitler + seçilen alete bağlı kitler */
   W.startItems = function (design) {
@@ -39,6 +41,7 @@
     }
     if (r.builds && S.Sim.deployed(s, r.builds)) return { state: 'built' };
     if (r.once && (s.workshop || {})[id]) return { state: 'built' };
+    if (r.tool && W.hasTool(s, r.tool)) return { state: 'built' };
     if (r.requiresBuilt && !S.Sim.deployed(s, r.requiresBuilt)) return { state: 'locked', reasonKey: 'ws.err_needs_built', vars: { what: S.t('ws.' + r.requiresBuilt + '.name') } };
     if (r.onlyIfPartial && (s.base.solarFrac || 1) >= 1) return { state: 'built' };
     if (r.instrument && !S.Sim.has(s, r.instrument)) return { state: 'locked', reasonKey: 'ws.err_needs_inst', vars: { inst: S.t('inst.' + r.instrument + '.short') } };
@@ -83,6 +86,8 @@
       rows.push({ key: 'load_w', before: 0, after: g.powerW });
     } else if (r.extraMbit) {
       rows.push({ key: 'relay_mbit', before: relayMbit(s, 0), after: relayMbit(s, r.extraMbit) });
+    } else if (r.tool) {
+      rows.push({ key: 'tool_have', before: 0, after: 1, bool: true });
     } else if (r.module) {
       const n = S.Station.builtCount(s);
       rows.push({ key: 'station_modules', before: n, after: n + 1 });
@@ -109,6 +114,7 @@
     if (r.extraMbit) s.downlink.extraMbit += r.extraMbit;
     if (r.repairKits) s.inventory.repairKits += r.repairKits;
     if (r.module) s.station.built[r.module] = r.id;
+    if (r.tool) s.inventory.tools[r.tool] = true;
     s.workshop = s.workshop || {};
     s.workshop[id] = opt ? opt.id : true;
     S.Sim.advance(s, minutesOf(r, opt));
@@ -132,6 +138,7 @@
     const list = Object.entries(W.items(s))
       .filter(([, n]) => n > 0)
       .map(([id, n]) => ({ id, n, kind: 'item' }));
+    for (const [id, have] of Object.entries(inv.tools || {})) if (have) list.unshift({ id, n: 1, kind: 'tool' });
     if (inv.repairKits > 0) list.push({ id: 'repair_kit', n: inv.repairKits, kind: 'stock' });
     if (inv.rhuUnits > 0) list.push({ id: 'rhu', n: inv.rhuUnits, kind: 'stock' });
     for (const p of (s.salvage && s.salvage.found) || []) list.push({ id: 'find_' + p, n: 1, kind: 'find' });
