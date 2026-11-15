@@ -1,12 +1,12 @@
 /**
  * SOL 14: RED HORIZON — Alt envanter çubuğu (hotbar)
  * Yüzeyde ekranın altında 9 kare slot: önce aletler, sonra malzemeler, stok ve buluntular; ikon + adet.
- * 1–9 slot seçer: seçilen eşya astronotun elinde görünür (effects.js) ve F ile kullanılır (main.js Game.useItem).
- * I tam envanteri açar. Veri S.Workshop.inventoryList.
+ * Dışarıda I çubuğu aşağıdan kaydırarak açar/kapar; açıkken seçilen eşya astronotun elinde görünür (effects.js)
+ * ve F ile kullanılır (main.js Game.useItem). 1–9 slot seçer. Çubuktaki "Tümü" tam envanteri açar.
  */
 (function (S) {
   'use strict';
-  const HB = { sel: 0, lastHtml: '' };
+  const HB = { sel: 0, open: false, lastHtml: '' };
   const SLOTS = 9;
   const I = (n) => S.UI.icon(n);
 
@@ -20,9 +20,15 @@
   HB.icon = (it) => ICON[it.id] || (it.kind === 'find' ? 'camera' : 'doc');
   HB.nameKey = (it) => (it.kind === 'tool' ? 'tool.' : 'item.') + it.id + '.name';
 
-  HB.selected = (s) => S.Workshop.inventoryList(s).slice(0, SLOTS)[HB.sel] || null;
+  HB.selected = (s) => (HB.open ? S.Workshop.inventoryList(s).slice(0, SLOTS)[HB.sel] || null : null);
+
+  HB.toggle = function (open = !HB.open) {
+    HB.open = open;
+    S.bus.emit('audio:play', 'click');
+  };
 
   HB.select = function (i) {
+    HB.open = true;
     HB.sel = i;
     HB.lastHtml = '';
     S.bus.emit('audio:play', 'click');
@@ -30,6 +36,7 @@
 
   HB.render = function (host, s) {
     if (!host) return;
+    host.classList.toggle('open', HB.open);
     const list = S.Workshop.inventoryList(s).slice(0, SLOTS);
     const picked = list[HB.sel];
     let html = '<div class="hb-name">' + (picked ? S.t(HB.nameKey(picked)) + ' <kbd>F</kbd> ' + S.t('use.hint') : '') + '</div><div class="hb-row">';
@@ -41,10 +48,11 @@
         (it ? I(HB.icon(it)) + (it.n > 1 ? '<b class="hb-n">' + it.n + '</b>' : '') : '') +
         '</div>';
     }
-    html += '</div>';
+    html += '<button type="button" class="hb-all" data-inv>' + S.t('hb.all') + ' <kbd>I</kbd></button></div>';
     if (html === HB.lastHtml) return;
     HB.lastHtml = html;
     host.innerHTML = html;
+    host.querySelector('[data-inv]').addEventListener('click', () => S.Game.openPanel('inventory'));
   };
 
   S.Hotbar = HB;

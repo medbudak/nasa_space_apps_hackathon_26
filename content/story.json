@@ -1993,7 +1993,9 @@
     "rocket.help_build": "Önce mekikteki atölyede \"MAV yakıt hattı\"nı kur; sonra dışarıda MAV'ın yanında E'ye bas.",
     "rocket.help_built": "Dışarıda MAV'ın yanına git ve E'ye bas: tamir ekranı neyin eksik olduğunu gösterir.",
     "rocket.how": "Tamir: 1) eksik malzemeyi ve aleti topla (satırların altında nereden bulunacağı yazar) 2) MAV'ın yanında Tamir et 3) mini oyunu bitir.",
-    "goal.opt_mav_first": "Roket hasarlı: önce atölyede MAV yakıt hattını kur"
+    "goal.opt_mav_first": "Roket hasarlı: önce atölyede MAV yakıt hattını kur",
+    "hb.all": "Tümü",
+    "use.closed": "Önce I ile envanteri aç ve 1–9 ile bir eşya seç."
   },
   "en": {
     "ui.back": "Back",
@@ -3989,6 +3991,8 @@
     "rocket.help_build": "First build the \"MAV fuel line\" in the lander's workshop; then press E next to the MAV outside.",
     "rocket.help_built": "Go to the MAV outside and press E: the repair screen shows what is missing.",
     "rocket.how": "Repair: 1) collect the missing materials and tool (each row says where to find them) 2) press Repair at the MAV 3) finish the minigame.",
-    "goal.opt_mav_first": "Rocket damaged: first build the MAV fuel line in the workshop"
+    "goal.opt_mav_first": "Rocket damaged: first build the MAV fuel line in the workshop",
+    "hb.all": "All",
+    "use.closed": "Open the inventory with I first and pick an item with 1–9."
   }
 }

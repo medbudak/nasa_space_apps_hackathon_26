@@ -309,6 +309,7 @@
     const s = S.getState();
     const it = S.Hotbar.selected(s);
     const say = (key, vars, tone = 'info') => S.UI.toast(S.UI.icon('alert') + t(key, vars), tone, 4500);
+    if (!S.Hotbar.open) return say('use.closed');
     if (!it) return say('use.empty');
     const prompt = !s.player.inside && S.HUD.prompt;
     const name = t(S.Hotbar.nameKey(it));
@@ -657,7 +658,7 @@
     else if (e.code === 'KeyL') Game.openPanel('downlink');
     else if (e.code === 'KeyP') Game.openPanel('power');
     else if (e.code === 'KeyJ') Game.openPanel('log');
-    else if (e.code === 'KeyI') Game.openPanel('inventory');
+    else if (e.code === 'KeyI') S.getState().player.inside ? Game.openPanel('inventory') : S.Hotbar.toggle();
     else if (/^Digit[1-9]$/.test(e.code)) S.Hotbar.select(Number(e.code.slice(5)) - 1);
     else if (e.code === 'KeyF') Game.useItem();
     else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && S.Station.impacted(S.getState())) {

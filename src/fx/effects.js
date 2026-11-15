@@ -354,7 +354,8 @@
     let ay = GY + 2 - (landingAstro ? landingAstro.y : body.y);
     if (img && !hideAstro) {
       // Kum çukurunda adımlar yavaşlar (hareket hızıyla uyumlu)
-      const walked = pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, Surf.inSandPit(s.player.x) ? 0.5 : 1);
+      const walkRate = Surf.inSandPit(s.player.x) ? 0.5 : 1;
+      const walked = pose === 'walk' && drawWalk(ctx, ax, ay, s.player.facing < 0, t, walkRate);
       if (!walked) {
         if (pose === 'walk') ay -= Math.abs(Math.sin(t * 9)) > 0.5 ? 1 : 0;
         drawSprite(ctx, img === S.Sprites.get(key) ? key : 'astronaut_idle', ax - img.width / 2, ay - img.height, s.player.facing < 0);
@@ -366,8 +367,15 @@
       const sh = Math.max(6, 20 - (body.y - floorH) * 0.2);
       ctx.fillRect(ax - sh / 2, GY + 1 - floorH, sh, 2);
       ctx.globalAlpha = 1;
-      // Seçili envanter eşyası elde (hotbar)
-      if (S.Hotbar && !landingAstro) drawHeld(ctx, S.Hotbar.selected(s), ax + s.player.facing * Math.round(img.width * 0.28), ay - Math.round(img.height * 0.42), s.player.facing);
+      // Seçili envanter eşyası eldivende (hotbar açıkken; zıplarken ve diz çökerken çizilmez)
+      if (S.Hotbar && !landingAstro && (walked || pose === 'idle')) {
+        const sheet = S.Sprites.get('astronaut_walk_sheet');
+        const fw = walked ? sheet.width / WALK_FRAMES : img.width;
+        const hand = walked ? HAND_WALK[Math.floor(t * WALK_FPS * walkRate) % WALK_FRAMES] : HAND_IDLE;
+        const left = Math.round(ax - fw / 2);
+        const hx = s.player.facing < 0 ? left + fw - hand[0] : left + hand[0];
+        drawHeld(ctx, S.Hotbar.selected(s), hx, ay - (walked ? sheet.height : img.height) + hand[1], s.player.facing);
+      }
       // Elbise tarayıcısı: gerçek bir gömülü noktanın yanında "!" (sahte tümsek tepki vermez)
       if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, ay - img.height, t);
     }
@@ -996,7 +1004,11 @@
     ctx.restore();
   }
 
-  /** Elde tutulan eşya: aletler küçük piksel çizimi, diğer eşyalar eldeki küçük bir paket */
+  // Öndeki eldivenin ortası (sağa bakan kare, px; sprite piksellerinden ölçüldü): yürüme sayfasının 6 karesi ve duruş
+  const HAND_WALK = [[26, 28], [25, 28], [23, 31], [22, 29], [22, 30], [23, 30]];
+  const HAND_IDLE = [28, 29];
+
+  /** Elde tutulan eşya, tutma noktası eldivende (hx, hy): aletler küçük piksel çizimi, diğerleri küçük bir paket */
   function drawHeld(ctx, it, hx, hy, dir) {
     if (!it) return;
     const px = (dx, dy, w, h, c) => {
@@ -1004,20 +1016,20 @@
       ctx.fillRect(hx + (dir < 0 ? -dx - w : dx), hy + dy, w, h);
     };
     if (it.id === 'pickaxe') {
-      px(0, -10, 2, 12, '#8a5a32'); // sap
-      px(-4, -12, 10, 2, '#b8bec6'); // kafa
-      px(-5, -11, 2, 2, '#8d939b');
-      px(5, -11, 2, 2, '#8d939b');
+      px(-1, -9, 2, 12, '#8a5a32'); // sap eldivenden yukarı
+      px(-5, -11, 10, 2, '#b8bec6'); // kafa
+      px(-6, -10, 2, 2, '#8d939b');
+      px(4, -10, 2, 2, '#8d939b');
     } else if (it.id === 'drill') {
-      px(-1, -2, 4, 6, '#2a2d33'); // kabza
-      px(-2, -6, 9, 4, '#e8742e'); // gövde
-      px(7, -5, 5, 2, '#b8bec6'); // uç
+      px(-1, -1, 3, 4, '#2a2d33'); // kabza eldivende
+      px(-1, -5, 8, 4, '#e8742e'); // gövde
+      px(7, -4, 4, 2, '#b8bec6'); // uç
     } else if (it.id === 'scanner') {
-      px(-1, -7, 6, 8, '#2a2d33');
-      px(0, -6, 4, 3, Math.floor(performance.now() / 400) % 2 ? '#3fe0e6' : '#1d6f73'); // ekran
+      px(-1, -5, 5, 7, '#2a2d33');
+      px(0, -4, 3, 3, Math.floor(performance.now() / 400) % 2 ? '#3fe0e6' : '#1d6f73'); // ekran
     } else {
-      px(-1, -5, 7, 6, '#c9ccd2'); // paket
-      px(-1, -5, 7, 1, '#ff7a1a');
+      px(-2, -2, 6, 5, '#c9ccd2'); // paket
+      px(-2, -2, 6, 1, '#ff7a1a');
     }
   }
 
