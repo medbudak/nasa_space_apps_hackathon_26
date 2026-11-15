@@ -87,7 +87,7 @@
   FX.drawFloats = function (ctx, dt, groundY) {
     if (!FX.floats.length) return;
     ctx.save();
-    ctx.font = 'bold 9px "Segoe UI", Arial, sans-serif';
+    ctx.font = 'bold 9px "VT323", "Segoe UI", Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const f of FX.floats) {
@@ -279,11 +279,16 @@
       let key = st.sprite;
       if (st.id === 'solar') key = s.res.panelDust > 0.35 ? 'solar_dusty' : 'solar_clean';
       if (st.id === 'greenhouse') {
-        if (!s.greenhouse.installed) continue;
+        if (!s.greenhouse.installed && S.Sim.deployed(s, 'greenhouse')) continue;
         key = s.greenhouse.frozen ? 'greenhouse_frozen' : 'greenhouse_ok';
       }
       // MOXIE seçilmediyse ISRU ünitesi hiç kurulmaz (Sabatier yakıt partisi yok)
       if (!Surf.structureBuilt(s, st)) continue;
+      // Kurulmamış sistem kargo sandığında bekler (ux-plan #8)
+      if (!S.Sim.deployed(s, st.id)) {
+        if (S.Sim.deployAvailable(s, st.id) && S.DigFx) S.DigFx.drawCrate(ctx, FX.worldToScreen(st.px + st.w / 2), GY, st.id, t);
+        continue;
+      }
       drawOnGround(ctx, key, st.px, GY);
       if (st.id === 'greenhouse' && !s.greenhouse.frozen && light.dark > 0.3) {
         ctx.globalAlpha = 0.25 * light.dark;
@@ -374,7 +379,7 @@
     // Kayaya takılınca kısa zıplama ipucu
     if (body.blockedT > 0 && !hideAstro) {
       ctx.save();
-      ctx.font = 'bold 8px "Segoe UI", Arial, sans-serif';
+      ctx.font = 'bold 8px "VT323", "Segoe UI", Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillStyle = 'rgba(8,10,14,0.75)';

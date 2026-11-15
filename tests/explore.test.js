@@ -14,7 +14,14 @@ function landed(opts = {}) {
   const s = S.State.reset(opts);
   S.Sim.launch(s);
   S.Sim.land(s, null);
+  baseReady(S, s);
   return { S, s };
+}
+
+/** Üs sistemleri kurulmuş say (bu testler kurulum akışını değil sonrasını sınar; kurulum: explore.test.js) */
+function baseReady(S, s) {
+  for (const id of Object.keys(s.base)) if (S.Sim.deployAvailable(s, id)) s.base[id] = true;
+  s.greenhouse.installed = S.Sim.has(s, 'veggie');
 }
 
 test('Harita: parçalı koordinat gidiş-dönüş, sınırlarda süreklilik; batı buzul sınırı ve doğu tünel penceresi', () => {
@@ -472,4 +479,58 @@ test('Metinler: yeni rota, kazı, İZCİ-1, FIELD CAM, teşhis hikâyesi ve Mars
   for (const lang of ['tr', 'en']) for (const k of keys) assert.ok(S.STORY[lang][k], lang + ' ' + k);
   // Fotoğraf kanıtı FIELD CAM ile çekilir
   assert.equal(S.DATA.forensics.evidenceTypes.find((e) => e.id === 'photo').minigame, 'fieldcam');
+});
+
+test('Üs kurulumu: sistemler kargo sandığında iner; panel kurulmadan güneş enerjisi yok, ISRU + MAV kurulmadan yakıt yok', () => {
+  const S = loadCore();
+  const s = S.State.reset({});
+  S.Sim.launch(s);
+  S.Sim.land(s, null);
+  assert.deepEqual(Object.values(s.base), [false, false, false, false]);
+  assert.equal(s.greenhouse.installed, false);
+  // İlk hedef paneli kurmak; sandıklar etkileşim listesinde, yapılar değil
+  assert.equal(S.Objectives.compute(s).main.id, 'deploy_solar');
+  const its = S.Surface.interactables(s);
+  assert.ok(its.some((it) => it.kind === 'deploy' && it.id === 'solar'));
+  assert.ok(!its.some((it) => it.kind === 'structure' && it.id === 'solar'));
+  // Öğlen bile panel yokken üretim sıfır
+  s.minute = 720;
+  S.Sim.step(s, 1);
+  assert.equal(s.power.solarW, 0);
+  // Yakıt: ISRU/MAV kurulmadan Sabatier yapılamaz
+  if (S.Sim.hasIsru(s)) assert.ok(S.Sim.actions.sabatier.can(s));
+  const t0 = s.totalMinutes;
+  assert.equal(S.Sim.deploy(s, 'solar', 0.9).ok, true);
+  assert.equal(S.Sim.deploy(s, 'solar', 0.9).ok, false, 'iki kez kurulmaz');
+  assert.ok(s.totalMinutes - t0 >= S.DATA.gameplay.deploy.solar.minutes - 1e-6, 'kurulum zaman alır');
+  S.Sim.step(s, 1);
+  assert.ok(s.power.solarW > 0, 'panel kurulunca gündüz üretim');
+  assert.notEqual(S.Objectives.compute(s).main.id, 'deploy_solar');
+  if (S.Sim.hasIsru(s)) {
+    S.Sim.deploy(s, 'isru');
+    assert.equal(S.Sim.isruReady(s), false, 'MAV kurulmadan yakıt yok');
+    S.Sim.deploy(s, 'mav');
+    assert.equal(S.Sim.isruReady(s), true);
+  }
+  // Eski kayıt (base alanı yok): yapılar kurulu sayılır
+  const old = JSON.parse(JSON.stringify(s));
+  delete old.base;
+  S.ensureExploreState(old);
+  assert.ok(Object.values(old.base).every(Boolean));
+});
+
+test('Araç incelemesi: her vakanın kanıt görevi o araca özgü (TR + EN) ve kara kutu gerçek telemetri kanallarını alt sistemlere bağlatır', () => {
+  const S = loadCore();
+  for (const c of S.Forensics.cases()) {
+    const map = c.telemetryMap;
+    assert.ok(map, c.id + ' telemetryMap');
+    const keys = Object.keys(map);
+    assert.ok(keys.length >= 3);
+    for (const k of keys) assert.ok(k in c.telemetry, c.id + ' kanal veride: ' + k);
+    assert.equal(new Set(Object.values(map)).size, keys.length, c.id + ': alt sistemler tekil (eşleme belirsiz olmaz)');
+    for (const lang of ['tr', 'en']) {
+      for (const ev of S.DATA.forensics.evidenceTypes) for (const part of ['title', 'desc', 'mg_title', 'mg_desc']) assert.ok(S.STORY[lang]['ev.' + c.id + '.' + ev.id + '.' + part], lang + ' ev.' + c.id + '.' + ev.id + '.' + part);
+      for (const k of keys) assert.ok(S.STORY[lang]['tlm.' + k] && S.STORY[lang]['sub.' + map[k]], lang + ' ' + k);
+    }
+  }
 });

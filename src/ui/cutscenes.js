@@ -25,7 +25,9 @@
   const TASK_BG = { arrays: 'shuttle_engineering_bay', leak: 'scr_ship_o2_leak', tcm: 'shuttle_cockpit_interior', thermal: 'scr_ship_reactor' };
   // Mekik kesiti (scr_ship_interior) üzerinde istasyonların yatay konumu (% genişlik; görselin yerleşimi) ve yürüme sınırları
   const STATION_X = { tcm: 22, leak: 46, arrays: 61, thermal: 71 };
-  const DECK = { minX: 15, maxX: 73, startX: 24, speedPctPerSec: 28, reachPct: 8 };
+  // Güverte bir "dünya"dır: mekik kesiti görselin kendi oranında (1672×941) ekrandan büyük çizilir, kamera astronotu izler.
+  // Tüm konumlar görselin yüzdesidir (ekranın değil): pencere oranı ne olursa olsun astronot gövdenin içinde kalır.
+  const DECK = { minX: 15, maxX: 73, startX: 24, speedPctPerSec: 16, reachPct: 5, aspect: 1672 / 941, zoom: 1.35, minWidthFrac: 1.3, focusX: 0.42, floorFrom: 0.8 };
   const TASK_MG = { thermal: { theme: 'thermal' } };
   const ADVANCE_MS = 1400; // görev sonrası çubuk/gün/doz animasyonu
   const TYPE_MS = 75; // daktilo: harf başına
@@ -72,10 +74,11 @@
     const html =
       '<div class="cutscene transit"><canvas class="op-cv" width="' + O.W + '" height="' + O.H + '" data-r="cv"></canvas>' +
       // Mekik güvertesi (K4 Sedef): kesit görseli, sıradaki istasyonun işareti, yürüyen astronot, [E] balonu
-      '<div class="sw-deck" data-r="deck" hidden><div class="sw-bg" data-r="deckbg"></div>' +
+      '<div class="sw-deck" data-r="deck" hidden><div class="sw-station" data-r="station"></div>' +
+      '<div class="sw-world" data-r="world" style="background-image:url(&quot;' + S.Sprites.screen('scr_ship_interior') + '&quot;)">' +
       '<button type="button" class="sw-mark" data-r="mark"><span data-r="marklbl"></span><i>▼</i></button>' +
       '<img class="sw-crew" data-r="crew" alt="" src="assets/processed/sprites/astronaut_indoor.png">' +
-      '<button type="button" class="world-prompt sw-prompt" data-r="swprompt" hidden></button>' +
+      '<button type="button" class="world-prompt sw-prompt" data-r="swprompt" hidden></button></div>' +
       '<p class="sw-hint" data-r="swhint"></p></div>' +
       UI_header() +
       '<div class="transit-track"><span class="tt-earth">' + t('transit.earth') + '</span><div class="tt-line"><div class="tt-fill"></div>' + marks +
@@ -284,7 +287,25 @@
     };
     /* --- Mekik güvertesi (K4 Sedef): sıradaki görevin istasyonuna yürü, E ile kartı aç --- */
     const deck = R('deck');
-    const setDeckBg = (key) => (R('deckbg').style.backgroundImage = "url('" + S.Sprites.screen(key) + "')");
+    const setStationBg = (key) => (R('station').style.backgroundImage = "url('" + S.Sprites.screen(key) + "')");
+    let camLeft = null; // güverte dünyasının ekrandaki sol kenarı (px), yumuşak takip
+    /** Dünyanın boyu ve yeri: görsel oranında, ekrandan geniş; zemin ekranın alt kısmında; kamera astronotu izler */
+    function layoutDeck(dt) {
+      const w = R('world');
+      const W = deck.clientWidth;
+      const H = deck.clientHeight;
+      if (!W || !H) return;
+      const wh = Math.max(H * DECK.zoom, (W * DECK.minWidthFrac) / DECK.aspect);
+      const ww = wh * DECK.aspect;
+      w.style.height = Math.round(wh) + 'px';
+      w.style.width = Math.round(ww) + 'px';
+      // Zemin (görselin %75.5'i) ekranın floorFrom oranına gelsin, dünya ekranın dışına boşluk bırakmasın
+      const top = Math.max(H - wh, Math.min(0, H * DECK.floorFrom - wh * 0.755));
+      w.style.top = Math.round(top) + 'px';
+      const target = Math.max(W - ww, Math.min(0, W * DECK.focusX - (crewX / 100) * ww));
+      camLeft = camLeft === null || !dt ? target : camLeft + (target - camLeft) * Math.min(1, dt * 6);
+      w.style.left = Math.round(camLeft) + 'px';
+    }
     const nearStation = () => idx < tasks.length && Math.abs(crewX - STATION_X[tasks[idx].id]) <= DECK.reachPct;
     function placeDeck() {
       const tk = tasks[idx];
@@ -299,9 +320,11 @@
       pr.style.left = STATION_X[tk.id] + '%';
     }
     function updateDeck(dt) {
-      if (!moveDir) return;
-      crewX = Math.max(DECK.minX, Math.min(DECK.maxX, crewX + moveDir * DECK.speedPctPerSec * dt));
-      placeDeck();
+      if (moveDir) {
+        crewX = Math.max(DECK.minX, Math.min(DECK.maxX, crewX + moveDir * DECK.speedPctPerSec * dt));
+        placeDeck();
+      }
+      layoutDeck(dt); // kamera astronotla birlikte sağa sola kayar (pencere boyutu değişirse de uyar)
     }
     const enterDeck = (note) => {
       phase = 'deck';
@@ -310,11 +333,12 @@
       deck.hidden = false;
       deck.classList.remove('show-card');
       root.classList.add('on-deck');
-      setDeckBg('scr_ship_interior');
       const tk = tasks[idx];
       R('swprompt').innerHTML = '<kbd>E</kbd><span>' + t('transit.' + tk.id + '.title') + '</span>';
       R('swhint').innerHTML = t('transit.deck_hint', { n: idx + 1, total: tasks.length, station: t('transit.station.' + tk.id) });
       placeDeck();
+      camLeft = null;
+      layoutDeck(0);
       guardUntil = performance.now() + KEY_GUARD_MS;
       updateSkip();
       S.bus.emit('audio:play', 'scan');
@@ -334,7 +358,7 @@
       deck.hidden = false;
       deck.classList.add('show-card'); // istasyonun görseli arkada, güverte işaretleri gizli
       root.classList.add('on-deck');
-      setDeckBg(TASK_BG[tasks[idx].id] || 'scr_ship_interior');
+      setStationBg(TASK_BG[tasks[idx].id] || 'scr_ship_interior');
       card.innerHTML = cardHtml(note);
       card.querySelector('[data-start]').addEventListener('click', startTask);
       card.querySelector('[data-deck]').addEventListener('click', () => enterDeck(note));

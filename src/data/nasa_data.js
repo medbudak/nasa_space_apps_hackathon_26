@@ -138,6 +138,26 @@ window.SOL14.DATA = {
   "simplifiedNote": "Game balance block. Time is compressed: a sol is 24.66 h (constants.sol, NASA Mars Fact Sheet); at gameMinutesPerRealSecond 2 it lasts about 12.3 real minutes (12 h of daylight ≈ 6 min) and in the jury quick mode (?demo, demoGameMinutesPerRealSecond 4) about 6.2 min. The on-screen walking speed is not a separate value: it is eva.speedMPerMin × game minutes per real second ÷ metersPerPixel, so metres walked per game minute always equal eva.speedMPerMin.",
   "gameMinutesPerRealSecond": 2,
   "demoGameMinutesPerRealSecond": 4,
+  "deploy": {
+   "simplified": true,
+   "note": "Base systems land packed in cargo crates and are set up by the player on EVA (ux-plan #8). Minutes are game values; the minigame stands for the work (pointing the array, wiring MOXIE and the MAV, starting the greenhouse). Until the array is deployed the base runs on its battery (and RTG if chosen).",
+   "solar": {
+    "minutes": 30,
+    "minigame": "align"
+   },
+   "isru": {
+    "minutes": 40,
+    "minigame": "wires"
+   },
+   "greenhouse": {
+    "minutes": 30,
+    "minigame": "converter"
+   },
+   "mav": {
+    "minutes": 45,
+    "minigame": "wires"
+   }
+  },
   "cargoBonus": {
    "minMarginPct": 15,
    "o2Kg": 4,
@@ -908,6 +928,7 @@ window.SOL14.DATA = {
    }
   ],
   "minEvidenceForDiagnosis": 2,
+  "telemetryMapNote": "Black-box task: the player connects each real last-telemetry channel (values above) to the subsystem it belongs to, the first step of a fault tree. The mapping is engineering knowledge, not a measurement.",
   "activeCaseIds": [
    "opportunity",
    "insight",
@@ -937,6 +958,11 @@ window.SOL14.DATA = {
      "panelW": 22,
      "coreTempC": -41
     },
+    "telemetryMap": {
+     "tau": "atmos",
+     "panelW": "power",
+     "coreTempC": "thermal"
+    },
     "src": "https://science.nasa.gov/mission/mer-opportunity/"
    },
    {
@@ -957,6 +983,11 @@ window.SOL14.DATA = {
      "dustCoverPct": 92,
      "whPerSol": 285,
      "maxQuakeM": 4.7
+    },
+    "telemetryMap": {
+     "dustCoverPct": "panels",
+     "whPerSol": "power",
+     "maxQuakeM": "science"
     },
     "src": "https://science.nasa.gov/mission/insight/"
    },
@@ -1000,6 +1031,11 @@ window.SOL14.DATA = {
      "tiltDeg": -11.5,
      "heaterTempC": -55
     },
+    "telemetryMap": {
+     "wheelSlipPct": "mobility",
+     "tiltDeg": "attitude",
+     "heaterTempC": "thermal"
+    },
     "src": "https://science.nasa.gov/mission/mer-spirit/"
    },
    {
@@ -1020,6 +1056,11 @@ window.SOL14.DATA = {
      "co2IceKg": 140,
      "panelBusV": 0,
      "ambientC": -96
+    },
+    "telemetryMap": {
+     "co2IceKg": "structure",
+     "panelBusV": "power",
+     "ambientC": "thermal"
     },
     "src": "https://science.nasa.gov/mission/phoenix/"
    },
@@ -1042,6 +1083,11 @@ window.SOL14.DATA = {
      "petalsDeployed": "2/4",
      "uhfBlocked": true,
      "rfDb": 0
+    },
+    "telemetryMap": {
+     "petalsDeployed": "structure",
+     "uhfBlocked": "antenna",
+     "rfDb": "relay"
     },
     "src": "https://www.esa.int/Science_Exploration/Space_Science/Mars_Express/Beagle-2_lander_found_on_Mars"
    }

@@ -17,8 +17,15 @@ function landed(patch = {}, opts = {}) {
   const s = S.State.reset({ design });
   S.Sim.launch(s);
   S.Sim.land(s, null);
+  baseReady(S, s);
   s.player.inside = true;
   return { S, s };
+}
+
+/** Üs sistemleri kurulmuş say (bu testler kurulum akışını değil sonrasını sınar; kurulum: explore.test.js) */
+function baseReady(S, s) {
+  for (const id of Object.keys(s.base)) if (S.Sim.deployAvailable(s, id)) s.base[id] = true;
+  s.greenhouse.installed = S.Sim.has(s, 'veggie');
 }
 
 const NO_MOXIE = ['mastcam_z', 'meda', 'seis', 'supercam', 'veggie'];

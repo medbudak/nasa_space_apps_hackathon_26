@@ -13,23 +13,40 @@
   /* ================================================================ */
   const EV_ICON = { photo: 'camera', telemetry: 'power', env: 'target' };
 
+  /** Vakaya özgü metin (NASA/ESA'nın o araç için yaptığı inceleme), yoksa genel kanıt metni */
+  const evText = (id, ev, part) => {
+    const k = 'ev.' + id + '.' + ev + '.' + part;
+    return S.STORY && S.STORY[S.lang] && S.STORY[S.lang][k] ? k : part === 'title' ? 'ev.' + ev : 'ev.' + ev + '.' + part;
+  };
+  SP.evText = evText;
+  /** Kara kutu görevi: aracın gerçek son telemetri kanalları → ait oldukları alt sistem (wires eşleme modu) */
+  SP.telemetryMatch = function (c) {
+    const map = c.telemetryMap || {};
+    return Object.keys(map).map((k) => ({ left: t('tlm.' + k, { v: c.telemetry[k] }), right: t('sub.' + map[k]) }));
+  };
+
   SP.forensicHtml = function (s, id) {
     const c = S.Forensics.get(id);
     const rec = s.forensics[id];
     const n = S.Forensics.evidenceCount(rec);
+    const types = S.DATA.forensics.evidenceTypes;
     const ponr = S.Sim.ponr(s);
-    const evCards = S.DATA.forensics.evidenceTypes
-      .map((ev) => {
+    const steps = types
+      .map((ev, i) => {
         const q = rec.evidence[ev.id];
         const missing = ev.instrumentBonus && !S.Sim.has(s, ev.instrumentBonus);
+        const pct = q !== null ? Math.round(q * 100) : 0;
         return (
-          '<div class="ev-card ' + (q !== null ? 'done' : '') + '">' +
-          '<div class="ev-head">' + I(EV_ICON[ev.id]) + '<b>' + t('ev.' + ev.id) + '</b></div>' +
-          '<p>' + t('ev.' + ev.id + '.desc') + '</p>' +
-          (missing ? '<p class="ev-warn">' + I('alert') + t('ev.missing_' + ev.id, { inst: t('inst.' + ev.instrumentBonus + '.short') }) + '</p>' : '') +
+          '<div class="fr2-step' + (q !== null ? ' done' : '') + '">' +
+          '<div class="fr2-step-head"><span class="fr2-num">' + (i + 1) + '</span>' + I(EV_ICON[ev.id]) +
+          '<em class="fr2-state">' + t(q !== null ? 'fr.done' : 'fr.waiting') + '</em></div>' +
+          '<h4>' + t(evText(id, ev.id, 'title')) + '</h4>' +
+          '<p class="fr2-desc">' + t(evText(id, ev.id, 'desc')) + '</p>' +
+          (missing ? '<p class="fr2-warn">' + I('alert') + t('ev.missing_' + ev.id, { inst: t('inst.' + ev.instrumentBonus + '.short') }) + '</p>' : '') +
           (q !== null
-            ? '<div class="ev-q">' + t('ev.quality') + ' <b>%' + Math.round(q * 100) + '</b></div>' + (ev.id === 'telemetry' ? '<pre class="ev-tlm">' + esc(JSON.stringify(c.telemetry)) + '</pre>' : '') + '<p class="ev-clue">' + I('check') + t('clue.' + id + '.' + ev.id) + '</p>'
-            : '<button class="btn btn-ghost btn-block" data-ev="' + ev.id + '" ' + (rec.diagnosis ? 'disabled' : '') + '>' + I('play') + t('ev.collect', { min: ev.minutes }) + '</button>') +
+            ? '<div class="fr2-q"><span>' + t('ev.quality') + '</span><i><b style="width:' + pct + '%"></b></i><strong>%' + pct + '</strong></div>' +
+              '<p class="fr2-clue">' + I('check') + t('clue.' + id + '.' + ev.id) + '</p>'
+            : '<button class="btn btn-primary btn-block fr2-go" data-ev="' + ev.id + '" ' + (rec.diagnosis ? 'disabled' : '') + '>' + I('play') + t('fr.start', { min: ev.minutes }) + '</button>') +
           '</div>'
         );
       })
@@ -53,29 +70,30 @@
     let diag;
     if (!rec.diagnosis) {
       diag =
-        '<div class="diag"><h4>' + t('fr.diagnose_title') + '</h4>' + story + '<div class="cats">' + cats + '</div>' +
-        (n < S.DATA.forensics.minEvidenceForDiagnosis ? '<p class="pv-note">' + I('alert') + t('fr.need_evidence', { n: S.DATA.forensics.minEvidenceForDiagnosis }) + '</p>' : '') +
-        '<button class="btn btn-primary btn-block" data-diag ' + (n < S.DATA.forensics.minEvidenceForDiagnosis || !sel ? 'disabled' : '') + '>' + I('doc') + t('fr.submit') + '</button></div>';
+        '<div class="fr2-diag"><div class="fr2-diag-l">' + story + '</div><div class="fr2-diag-r"><h4>' + t('fr.diagnose_title') + '</h4><div class="cats fr2-cats">' + cats + '</div>' +
+        (n < need ? '<p class="pv-note">' + I('alert') + t('fr.need_evidence', { n: need }) + '</p>' : '') +
+        '<button class="btn btn-primary btn-block" data-diag ' + (n < need || !sel ? 'disabled' : '') + '>' + I('doc') + t('fr.submit') + '</button></div></div>';
     } else {
       diag =
-        '<div class="finding ' + (rec.correct ? 'ok' : 'bad') + '">' +
+        '<div class="fr2-diag"><div class="finding ' + (rec.correct ? 'ok' : 'bad') + '">' +
         '<div class="finding-head">' + I(rec.correct ? 'check' : 'x') + '<b>' + t(rec.correct ? 'fr.correct' : 'fr.wrong', { cat: t('cat.' + rec.diagnosis), pts: rec.score }) + '</b></div>' +
         '<h4>' + t('fr.nasa_finding') + '</h4><p>' + t('case.' + id + '.finding') + '</p>' +
         '<h4>' + t('fr.lesson') + '</h4><p>' + t('case.' + id + '.lesson') + '</p>' +
         '<p class="pv-note">' + I('signal') + t('fr.queued', { mbit: c.reportMbit }) + '</p>' +
-        SP.salvageHtml(c, rec) +
-        '<a class="src-link" href="' + c.src + '" target="_blank" rel="noopener">' + t('fr.source') + '</a></div>';
+        '<a class="src-link" href="' + c.src + '" target="_blank" rel="noopener">' + t('fr.source') + '</a></div>' +
+        '<div class="fr2-diag-r">' + SP.salvageHtml(c, rec) + '</div></div>';
     }
 
     return (
-      '<div class="panel big-panel fr-panel">' +
-      '<div class="bp-head"><span class="bp-num">' + I('target') + '</span><h2>' + t('fr.title') + ' — ' + esc(c.name) + '</h2>' +
+      '<div class="panel big-panel fr-panel fr2">' +
+      '<div class="fr2-head"><span class="fr2-tag">' + I('target') + t('fr.title') + '</span><h2>' + esc(c.name) + '</h2>' +
       (c.bonus ? '<span class="pass-chip on">BONUS</span>' : '') +
+      '<span class="fr2-count">' + t('fr.progress', { n, total: types.length }) + '</span>' +
       '<button class="icon-btn" data-close>' + I('x') + '</button></div>' +
-      '<div class="fr-meta"><span>' + esc(c.agency) + '</span><span>' + I('calendar') + esc(c.lastContact) + '</span><span>' + I('map') + esc(c.realCoords) + '</span>' +
+      '<div class="fr2-meta"><span>' + esc(c.agency) + '</span><span>' + I('calendar') + esc(c.lastContact) + '</span><span>' + I('map') + esc(c.realCoords) + '</span>' +
       '<span class="' + (ponr.critical ? 'danger' : '') + '">' + I('o2') + t('fr.o2_now', { o2: Math.round(s.suit.o2), req: ponr.requiredO2 }) + '</span></div>' +
-      '<p class="fr-brief">' + t('case.' + id + '.brief') + '</p>' +
-      '<div class="fr-grid"><div class="ev-cards">' + evCards + '</div>' + diag + '</div></div>'
+      '<p class="fr2-brief"><b>' + t('fr.mission') + ':</b> ' + t('case.' + id + '.brief') + '</p>' +
+      '<div class="fr2-steps">' + steps + '</div>' + diag + '</div>'
     );
   };
 
@@ -106,7 +124,11 @@
           const ev = S.Forensics.evidenceCfg(b.dataset.ev);
           S.UI.closeModal('forensic', true);
           // Fotoğraf kanıtı FIELD CAM ile çekilir (vizörde bu enkaz); caseId vizör sahnesini seçer
-          const mg = await S.runMinigame(ev.minigame, { titleKey: 'ev.' + ev.id + '.mg_title', descKey: 'ev.' + ev.id + '.mg_desc', caseId: id });
+          const c = S.Forensics.get(id);
+          const cfg = { titleKey: evText(id, ev.id, 'mg_title'), descKey: evText(id, ev.id, 'mg_desc'), caseId: id };
+          // Kara kutu: gerçek telemetri kanallarını alt sistemlerine bağla
+          if (ev.id === 'telemetry' && c.telemetryMap) Object.assign(cfg, { match: SP.telemetryMatch(c), pairs: Object.keys(c.telemetryMap).length });
+          const mg = await S.runMinigame(ev.minigame, cfg);
           S.Surface.body.actionT = 1;
           S.Forensics.collectEvidence(S.getState(), id, ev.id, mg);
           S.Game.afterAction(() => SP.openForensic(id));

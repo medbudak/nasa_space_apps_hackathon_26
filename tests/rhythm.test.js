@@ -17,7 +17,14 @@ function landed(opts = {}) {
   const s = S.State.reset(opts);
   S.Sim.launch(s);
   S.Sim.land(s, null);
+  baseReady(S, s);
   return { S, s };
+}
+
+/** Üs sistemleri kurulmuş say (bu testler kurulum akışını değil sonrasını sınar; kurulum: explore.test.js) */
+function baseReady(S, s) {
+  for (const id of Object.keys(s.base)) if (S.Sim.deployAvailable(s, id)) s.base[id] = true;
+  s.greenhouse.installed = S.Sim.has(s, 'veggie');
 }
 
 /** Sol 1 içeriden uyuyarak Sol n sabahına gel (krizleri A ile geç) */

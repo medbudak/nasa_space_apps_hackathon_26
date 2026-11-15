@@ -155,13 +155,19 @@
   /* ================================================================ */
   TEMPLATES.wires = function (ctx) {
     const N = ctx.config.pairs || 4;
-    const CODES = [
-      { code: 'PWR 28V', color: '#e8423b' },
-      { code: 'TLM BUS', color: '#3fa9f5' },
-      { code: 'GND ISO', color: '#3fe08a' },
-      { code: 'RS-422', color: '#ffc233' },
-      { code: 'HTR LOOP', color: '#c77dff' }
-    ].slice(0, N);
+    const PALETTE = ['#e8423b', '#3fa9f5', '#3fe08a', '#ffc233', '#c77dff'];
+    // config.match = [{ left, right }]: soldaki uç sağdaki farklı bir etikete bağlanır (ör. telemetri kanalı → alt sistem)
+    const CODES = ctx.config.match
+      ? ctx.config.match.map((m, i) => ({ code: m.left, right: m.right, color: PALETTE[i % PALETTE.length] }))
+      : [
+          { code: 'PWR 28V', color: '#e8423b' },
+          { code: 'TLM BUS', color: '#3fa9f5' },
+          { code: 'GND ISO', color: '#3fe08a' },
+          { code: 'RS-422', color: '#ffc233' },
+          { code: 'HTR LOOP', color: '#c77dff' }
+        ].slice(0, N);
+    // Eşleme modunda sağ uçlar renk ipucu vermez: bağlantıyı bilgiyle kurarsın
+    const rightColor = (c) => (ctx.config.match ? '#8a8f9a' : c.color);
     const right = CODES.map((c, i) => i);
     for (let i = right.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -175,7 +181,7 @@
       CODES.map((c, i) => '<button class="wire-node" data-side="L" data-i="' + i + '" style="--wc:' + c.color + '"><kbd>' + (i + 1) + '</kbd><span>' + c.code + '</span><i class="plug"></i></button>').join('') +
       '</div><svg class="wires-svg"></svg>' +
       '<div class="wires-col right">' +
-      right.map((ci, k) => '<button class="wire-node" data-side="R" data-i="' + ci + '" data-k="' + k + '" style="--wc:' + CODES[ci].color + '"><i class="plug"></i><span>' + CODES[ci].code + '</span><kbd>' + String.fromCharCode(65 + k) + '</kbd></button>').join('') +
+      right.map((ci, k) => '<button class="wire-node" data-side="R" data-i="' + ci + '" data-k="' + k + '" style="--wc:' + rightColor(CODES[ci]) + '"><i class="plug"></i><span>' + (CODES[ci].right || CODES[ci].code) + '</span><kbd>' + String.fromCharCode(65 + k) + '</kbd></button>').join('') +
       '</div></div><div class="wires-status"></div>';
 
     const wrap = ctx.body.querySelector('.wires');

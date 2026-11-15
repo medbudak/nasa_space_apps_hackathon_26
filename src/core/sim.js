@@ -23,6 +23,23 @@
   Sim.has = (s, instrumentId) => s.design.instruments.includes(instrumentId);
   /** ISRU ünitesi (Sabatier yakıt partisi) yalnızca MOXIE seçildiyse kurulur: yoksa MAV yakıtı artmaz */
   Sim.hasIsru = (s) => Sim.has(s, 'moxie');
+  /** Üs sistemi kuruldu mu? (eski kayıtta base alanı yoksa kurulu sayılır) */
+  Sim.deployed = (s, id) => !s.base || s.base[id] !== false;
+  /** Bu tasarımda kurulabilecek mi? ISRU ünitesi MOXIE, sera Veggie ister */
+  Sim.deployAvailable = (s, id) => (id === 'isru' ? Sim.hasIsru(s) : id === 'greenhouse' ? Sim.has(s, 'veggie') : true);
+  /** Yakıt üretimi: ISRU ünitesi ve MAV kurulu olmalı */
+  Sim.isruReady = (s) => Sim.hasIsru(s) && Sim.deployed(s, 'isru') && Sim.deployed(s, 'mav');
+  /** Kargo sandığından üs sistemini kur (kalite: mini oyun skoru) */
+  Sim.deploy = function (s, id, quality = 1) {
+    const cfg = D().gameplay.deploy[id];
+    if (!cfg || !s.base || s.base[id] || !Sim.deployAvailable(s, id)) return { ok: false };
+    s.base[id] = true;
+    if (id === 'greenhouse') s.greenhouse.installed = true;
+    Sim.advance(s, cfg.minutes);
+    S.logDecision({ category: 'engineering', titleKey: 'log.deploy.title', choiceKey: 'deploy.' + id + '.name', resultKey: 'deploy.' + id + '.done', vars: {}, score: 0 }, s);
+    S.bus.emit('base:deployed', { id, quality });
+    return { ok: true, id };
+  };
   /** Seçili aletlerin günlük rutin verisi (gameplay.instrumentData): her röle geçişinde raporlardan önce gider */
   Sim.instrumentDataMbit = (s) =>
     s.design.instruments.reduce((a, id) => a + ((D().instruments.find((x) => x.id === id) || {}).dataMbit || 0), 0);
@@ -228,7 +245,8 @@
     s.inventory.repairKits = s.design.repairKits;
     s.inventory.rhuUnits = 0;
     s.inventory.spareAntenna = false;
-    s.greenhouse.installed = Sim.has(s, 'veggie');
+    // Sera kargo sandığında iner: oyuncu kurunca çalışır (Sim.deploy)
+    s.greenhouse.installed = Sim.has(s, 'veggie') && Sim.deployed(s, 'greenhouse');
     s.downlink.routineMbit = Sim.instrumentDataMbit(s);
     // D-012: mekik üssün iniş alanına (landingPadM) iner; astronot kapaktan iner
     s.player = { x: d.terrain.map.landingPadM + d.terrain.map.landingExitM, inside: false, facing: 1, zone: 'surface', cx: 0 };
@@ -315,7 +333,7 @@
       return base.experimentsW + instW;
     }
     if (id === 'moxie') {
-      if (!Sim.has(s, 'moxie')) return 0;
+      if (!Sim.has(s, 'moxie') || !Sim.deployed(s, 'isru')) return 0;
       if (s.disabledLoads.moxie !== undefined && s.disabledLoads.moxie >= s.sol) return 0;
       return d.instruments.find((x) => x.id === 'moxie').powerW;
     }
@@ -325,7 +343,8 @@
   Sim.stepPower = function (s, dt, ambientC) {
     const site = Sim.site(s);
     const cosZ = E().solarCosZAt(site, Sim.clockMinute(s));
-    const solarW = E().calcSolarPower({ cosZ, dustFactor: s.res.panelDust, tau: s.weather.stormTau });
+    // Güneş paneli kurulmadan üretim yok: üs bataryayla (ve seçildiyse RTG ile) yaşar
+    const solarW = Sim.deployed(s, 'solar') ? E().calcSolarPower({ cosZ, dustFactor: s.res.panelDust, tau: s.weather.stormTau }) : 0;
     const rtgW = Sim.powerCfg(s).rtgW;
     let genKwh = ((solarW + rtgW) * dt) / 60 / 1000;
     let demandW = 0;
@@ -456,7 +475,7 @@
 
     // Habitat O2 rezervi: içerideyken mürettebat tüketir, MOXIE üretir
     if (!outside) s.res.o2ReserveKg -= c.lifeSupport.o2KgPerSol * perMin;
-    if (Sim.loadSupplied(s, 'moxie') && Sim.has(s, 'moxie')) {
+    if (Sim.loadSupplied(s, 'moxie') && Sim.has(s, 'moxie') && Sim.deployed(s, 'isru')) {
       const night = Sim.tod(s) === 'night';
       const boost = 1 + (s.rewards.moxieBoostPct || 0) / 100;
       const gph = (night ? c.moxie.o2GramsPerHourNight : c.moxie.o2GramsPerHourDay) * (night ? boost : 1);
@@ -739,7 +758,8 @@
   Sim.launchMav = function (s, { auto = false } = {}) {
     if (s.ending) return;
     for (const p of s.downlink.queue) if (p.status === 'sent') Sim.markArrived(s, p);
-    const fuelOk = s.res.mavFuel >= 100;
+    // MAV kurulmadıysa güvenli dönüş yok
+    const fuelOk = s.res.mavFuel >= 100 && Sim.deployed(s, 'mav');
     s.ending = {
       auto,
       fuelOk,
@@ -869,6 +889,8 @@
       can(s) {
         const c = D().constants.sabatier;
         if (!Sim.hasIsru(s)) return 'action.err_no_isru';
+        if (!Sim.deployed(s, 'isru')) return 'action.err_isru_packed';
+        if (!Sim.deployed(s, 'mav')) return 'action.err_mav_packed';
         if (s.res.mavFuel >= 100) return 'action.err_fuel_full';
         if (s.res.energyKwh < c.energyKwh) return 'action.err_no_energy';
         if (s.res.waterL < c.waterL) return 'action.err_no_water';

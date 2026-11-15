@@ -412,6 +412,7 @@
     const X = S.Explore;
     if (it.kind === 'ice_cluster') return t('prompt.ice.' + X.iceStep(s, it.id));
     if (it.kind === 'tube') return t('prompt.descend');
+    if (it.kind === 'deploy') return t('prompt.deploy', { what: t('deploy.' + it.id + '.name'), min: S.DATA.gameplay.deploy[it.id].minutes });
     // Kazı: gerçek ve sahte tümsek aynı yazıyı gösterir (ayırt eden yalnızca elbise tarayıcısı / RIMFAX)
     if (it.kind === 'dig') {
       const st = X.site(it.id);

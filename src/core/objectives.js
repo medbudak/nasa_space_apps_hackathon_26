@@ -146,9 +146,17 @@
       if (s.suit.battery <= 0) return goal('return_cold', { m: ponr.distanceM }, homeTarget(s));
     } else if (s.suit.leak) return goal('repair_suit');
 
+    // Üs sistemleri kargo sandıklarında iner (ux-plan #8): önce güneş paneli (enerji olmadan üs yaşamaz)
+    const structM = (id) => {
+      const st = S.Surface && S.Surface.STRUCTURES.find((x) => x.id === id);
+      return st ? { m: S.Surface.pxToM(st.px + st.w / 2) } : null;
+    };
+    if (!S.Sim.deployed(s, 'solar') && !inCave(s)) return goal('deploy_solar', {}, structM('solar'));
+
     // 2) Son Sol: MAV
     if (s.sol >= s.maxSols) {
       if (outside && inCave(s)) return goal('cave_exit', {}, homeTarget(s));
+      if (!S.Sim.deployed(s, 'mav')) return goal('deploy_mav', {}, structM('mav'));
       return p.fuelOk || !p.canFuel ? goal('mav_launch') : goal('mav_fuel', { fuel: p.fuel });
     }
 
@@ -203,7 +211,7 @@
       if (needF) return sourceGoal(s, needF);
       if (needE) return goal('lab_go', expVars, homeTarget(s));
     }
-    if (!p.fuelOk && p.canFuel) return goal('isru', { fuel: p.fuel });
+    if (!p.fuelOk && S.Sim.isruReady(s)) return goal('isru', { fuel: p.fuel });
     return goal('sleep');
   };
 
@@ -211,10 +219,13 @@
     const opts = [];
     const gh = s.greenhouse;
     const ghCfg = D().habitat.greenhouse;
-    if (s.res.panelDust >= 0.3) opts.push(goal('opt_clean', { pct: Math.round(s.res.panelDust * 100) }));
+    // Kurulmayı bekleyen üs sistemleri (MAV, ISRU, sera)
+    const packed = ['mav', 'isru', 'greenhouse'].find((id) => !S.Sim.deployed(s, id) && S.Sim.deployAvailable(s, id));
+    if (packed) opts.push(goal('opt_deploy', { what: S.t('deploy.' + packed + '.name') }));
+    if (s.res.panelDust >= 0.3 && S.Sim.deployed(s, 'solar')) opts.push(goal('opt_clean', { pct: Math.round(s.res.panelDust * 100) }));
     if (gh.installed && !gh.frozen && gh.tendedSol !== s.sol && s.res.waterL >= ghCfg.tendWaterL) opts.push(goal('opt_greenhouse'));
     if (S.Sim.has(s, 'rimfax') && s.iceDugSol !== s.sol && s.res.waterL < 30) opts.push(goal('opt_ice', { l: Math.round(s.res.waterL) }));
-    if (s.res.mavFuel < 100 && s.sol < s.maxSols && S.Sim.hasIsru(s)) opts.push(goal('opt_sabatier', { fuel: Math.round(s.res.mavFuel) }));
+    if (s.res.mavFuel < 100 && s.sol < s.maxSols && S.Sim.isruReady(s)) opts.push(goal('opt_sabatier', { fuel: Math.round(s.res.mavFuel) }));
     // Ana hedefle aynı işi isteğe bağlı olarak tekrar gösterme
     const same = { isru: 'opt_sabatier', mav_fuel: 'opt_sabatier' };
     return opts.find((o) => !main || same[main.id] !== o.id) || null;
@@ -223,7 +234,7 @@
   O.compute = function (s) {
     if (!s || s.sol < 1 || s.ending || s.gameOver) return null;
     const main = O.mainGoal(s);
-    const critical = ['return', 'return_cold', 'repair_suit', 'mav_fuel', 'mav_launch', 'return_night', 'cave_exit'].includes(main.id);
+    const critical = ['return', 'return_cold', 'repair_suit', 'mav_fuel', 'mav_launch', 'return_night', 'cave_exit', 'deploy_mav'].includes(main.id);
     return { main, optional: critical ? null : O.optionalGoal(s, main), progress: O.progress(s) };
   };
 

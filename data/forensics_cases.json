@@ -6,6 +6,7 @@
     { "id": "env", "minigame": "qte", "minutes": 15, "instrumentBonus": "supercam" }
   ],
   "minEvidenceForDiagnosis": 2,
+  "telemetryMapNote": "Black-box task: the player connects each real last-telemetry channel (values above) to the subsystem it belongs to, the first step of a fault tree. The mapping is engineering knowledge, not a measurement.",
   "activeCaseIds": ["opportunity", "insight", "spirit", "phoenix", "beagle2"],
   "activeCaseNote": "All five cases are on the map and buried: east (lava-plain route) Opportunity under dust and InSight under dust; west (glacier route) Spirit in frozen soft sand, Phoenix under CO2 ice, Beagle 2 under an ice overhang. A wreck appears only after its dig site is dug out (explore.dig). Positions and burial are game fiction; the trail signs follow what NASA reported for each mission.",
   "src": "https://nssdc.gsfc.nasa.gov/nmc/",
@@ -23,6 +24,7 @@
       "reportMbit": 18,
       "salvage": { "rhuUnits": 8 },
       "telemetry": { "tau": 10.8, "panelW": 22, "coreTempC": -41 },
+      "telemetryMap": { "tau": "atmos", "panelW": "power", "coreTempC": "thermal" },
       "src": "https://science.nasa.gov/mission/mer-opportunity/"
     },
     {
@@ -38,6 +40,7 @@
       "reportMbit": 18,
       "salvage": { "seis": true },
       "telemetry": { "dustCoverPct": 92, "whPerSol": 285, "maxQuakeM": 4.7 },
+      "telemetryMap": { "dustCoverPct": "panels", "whPerSol": "power", "maxQuakeM": "science" },
       "src": "https://science.nasa.gov/mission/insight/"
     },
     {
@@ -62,6 +65,7 @@
         "wrongPickMinutes": 20
       },
       "telemetry": { "wheelSlipPct": 98, "tiltDeg": -11.5, "heaterTempC": -55 },
+      "telemetryMap": { "wheelSlipPct": "mobility", "tiltDeg": "attitude", "heaterTempC": "thermal" },
       "src": "https://science.nasa.gov/mission/mer-spirit/"
     },
     {
@@ -77,6 +81,7 @@
       "reportMbit": 20,
       "salvage": { "roboticArmPart": true },
       "telemetry": { "co2IceKg": 140, "panelBusV": 0, "ambientC": -96 },
+      "telemetryMap": { "co2IceKg": "structure", "panelBusV": "power", "ambientC": "thermal" },
       "src": "https://science.nasa.gov/mission/phoenix/"
     },
     {
@@ -93,6 +98,7 @@
       "bonus": true,
       "salvage": { "spareAntenna": true },
       "telemetry": { "petalsDeployed": "2/4", "uhfBlocked": true, "rfDb": 0 },
+      "telemetryMap": { "petalsDeployed": "structure", "uhfBlocked": "antenna", "rfDb": "relay" },
       "src": "https://www.esa.int/Science_Exploration/Space_Science/Mars_Express/Beagle-2_lander_found_on_Mars"
     }
   ]

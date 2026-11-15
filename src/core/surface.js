@@ -91,14 +91,12 @@
 
   Surf.interactables = function (s) {
     if (Surf.inCave(s)) return Surf.caveInteractables(s);
-    const list = Surf.STRUCTURES.filter((st) => Surf.structureBuilt(s, st)).map((st) => ({
-      id: st.id,
-      kind: 'structure',
-      px: st.interactPx !== undefined ? st.interactPx : st.px + st.w / 2,
-      action: st.action,
-      labelKey: st.labelKey,
-      range: 34
-    }));
+    const list = Surf.STRUCTURES.filter((st) => Surf.structureBuilt(s, st)).map((st) => {
+      const px = st.interactPx !== undefined ? st.interactPx : st.px + st.w / 2;
+      // Kurulmamış üs sistemi: kargo sandığı (E ile kur)
+      if (st.id !== 'habitat' && !S.Sim.deployed(s, st.id)) return { id: st.id, kind: 'deploy', px, action: 'deploy', range: 34 };
+      return { id: st.id, kind: 'structure', px, action: st.action, labelKey: st.labelKey, range: 34 };
+    }).filter((it) => it.kind !== 'deploy' || S.Sim.deployAvailable(s, it.id));
     if (S.Sim.has(s, 'rimfax')) {
       list.push({ id: 'ice', kind: 'ice', px: Surf.mToPx(S.DATA.terrain.iceDepositM), action: 'dig_ice', labelKey: 'world.ice', range: 26 });
     }
