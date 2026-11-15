@@ -81,6 +81,13 @@
     for (const st of cc.studies) list.push({ id: st.id, kind: 'cave_study', action: 'cave_study', px: Surf.caveMToPx(st.atM), range: r * 0.8 });
     // Kurgusal İZCİ-1 rover'ının parçaları: E ile FIELD CAM fotoğrafı
     for (const pt of cc.scout.parts) list.push({ id: pt.id, kind: 'scout', action: 'scout', px: Surf.caveMToPx(pt.atM), range: r * 0.8 });
+    // Kişi 5: tünel duvarındaki maden damarları (matkapla delinir; bitenler listeden çıkar)
+    if (S.Explore && S.Explore.mineralSites) {
+      const mr = S.DATA.explore.minerals.interactRangeM / G().metersPerPixel;
+      for (const st of S.Explore.mineralSites('cave')) {
+        if (!S.Explore.mineralDone(s, st)) list.push({ id: st.id, kind: 'mineral', action: 'mineral', px: Surf.caveMToPx(st.atM), range: mr });
+      }
+    }
     return list;
   };
 
@@ -131,6 +138,13 @@
       for (const st of S.Explore.digSites()) {
         if (S.Explore.siteDone(s, st)) continue;
         list.push({ id: st.id, kind: 'dig', action: 'dig', px: Surf.mToPx(S.Explore.siteAt(st)), range: dr });
+      }
+    }
+    // Kişi 5: yüzeydeki maden noktaları (tarayıcı yanında öter; bitenler listeden çıkar)
+    if (S.Explore && s.explore && S.Explore.mineralSites) {
+      const mr = S.DATA.explore.minerals.interactRangeM / G().metersPerPixel;
+      for (const st of S.Explore.mineralSites('surface')) {
+        if (!S.Explore.mineralDone(s, st)) list.push({ id: st.id, kind: 'mineral', action: 'mineral', px: Surf.mToPx(st.atM), range: mr });
       }
     }
     // Lav tüneli ağzı (merdiven + röle): pencere kazılıp açılınca

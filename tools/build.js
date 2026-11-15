@@ -257,6 +257,12 @@ const ASSETS = [
   { src: 'sprites/lander_phoenix.png', mode: 'flood', size: { w: 104 } },
   { src: 'sprites/lander_insight.png', mode: 'flood', size: { w: 104 } },
   { src: 'sprites/lander_beagle2.png', mode: 'flood', size: { w: 84 } },
+  // Kişi 5: mineral ikonları (24×24 piksel çizim, kaynak 48×48 = 2× en yakın komşu; envanter + bilgi kartı)
+  { src: 'sprites/mineral_hematite.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
+  { src: 'sprites/mineral_meteorite.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
+  { src: 'sprites/mineral_gypsum.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
+  { src: 'sprites/mineral_olivine.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
+  { src: 'sprites/mineral_basalt.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
   // Üs yapıları
   { src: 'structures/mav_rocket.png', mode: 'flood', size: { h: 150 } },
   { src: 'structures/greenhouse_ok.png', mode: 'flood', size: { w: 150 } },

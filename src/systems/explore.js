@@ -8,6 +8,8 @@
  *            "bulgu raporu" olarak downlink kuyruğuna girer.
  *  Lav tüneli (ayrı alt harita): 3 bulgu + kurgusal İZCİ-1 rover'ının 5 parçası + son odada 3 kısa çalışma;
  *            rapor yalnızca merdiven tabanındaki röleden.
+ *  Mineraller (Kişi 5): yüzeyde maden noktaları (tarayıcı öter, E ile kazılır), tünelde matkapla delinen damarlar;
+ *            bulunan mineral inventory.minerals{ad: adet} içine girer (mineralCount / spendMinerals).
  * DOM'a dokunmaz; tüm durum gameState.explore içinde (kalıcı).
  */
 (function (S) {
@@ -54,7 +56,78 @@
       const d = Math.abs(X.siteAt(st) - s.player.x);
       if (d <= range && (!best || d < best.d)) best = { site: st, d, close: d <= dc.reactRangeM };
     }
+    // Kişi 5: yüzeydeki maden noktaları da tarayıcıyı öttürür (site.atM; X.siteAt ile okunur)
+    for (const st of X.mineralSites('surface')) {
+      if (X.mineralDone(s, st)) continue;
+      const d = Math.abs(st.atM - s.player.x);
+      if (d <= range && (!best || d < best.d)) best = { site: st, d, close: d <= dc.reactRangeM, mineral: st.mineral };
+    }
     return best;
+  };
+
+  /* ---------------- Mineraller (Kişi 5): tarayıcı sinyali -> diz çökme -> E ile kazma -> envanter ---------------- */
+  const MC = () => cfg().minerals || { types: [], sites: [] };
+  X.mineralTypes = () => MC().types;
+  X.mineralType = (id) => MC().types.find((m) => m.id === id);
+  /** zone: 'surface' | 'cave' | undefined (hepsi) */
+  X.mineralSites = (zone) => MC().sites.filter((st) => !zone || st.zone === zone);
+  X.mineralSite = (id) => MC().sites.find((st) => st.id === id);
+  X.mineralHits = (s, st) => (s.explore && s.explore.minerals && s.explore.minerals[st.id]) || 0;
+  /** Bitmiş nokta bir daha kazılamaz: aynı yerden mineral iki kez alınmaz */
+  X.mineralDone = (s, st) => X.mineralHits(s, st) >= st.hits;
+  /** Envanterdeki adet (Kişi 4 tamir, Kişi 6 yükseltme bunu okur) */
+  X.mineralCount = (s, id) => (s.inventory && s.inventory.minerals && s.inventory.minerals[id]) || 0;
+  /** Malzemeyi harca: { hematite: 1, ... }; yetmezse hiçbirine dokunmaz ve false döner */
+  X.spendMinerals = function (s, need) {
+    const inv = (s.inventory.minerals = s.inventory.minerals || {});
+    if (!Object.entries(need || {}).every(([id, n]) => (inv[id] || 0) >= n)) return false;
+    for (const [id, n] of Object.entries(need)) inv[id] -= n;
+    S.bus.emit('inventory:minerals', { spent: need });
+    return true;
+  };
+  /**
+   * Alet kontrolü (matkap: Kişi 4). Kişi 4'ün S.Workshop.hasTool'u (inventory.tools) varsa o karar verir;
+   * yoksa toolPlaceholder açıkken alet var sayılır (PLACEHOLDER, Kişi 4'ün aletleri main'e girince devre dışı kalır).
+   */
+  X.hasTool = function (s, tool) {
+    if (!tool) return true;
+    if (S.Workshop && S.Workshop.hasTool) return S.Workshop.hasTool(s, tool);
+    if (MC().toolPlaceholder) return true;
+    const inv = s.inventory || {};
+    return Boolean(inv.tools && inv.tools[tool]);
+  };
+  /** Kişi 4 kuralı: kazma yoksa her vuruş tools.noPickaxeDigFactor kat uzun sürer (aletler yoksa 1) */
+  X.digFactor = function (s) {
+    const tc = D().tools;
+    if (!tc || !(S.Workshop && S.Workshop.hasTool)) return 1;
+    return S.Workshop.hasTool(s, 'pickaxe') ? 1 : tc.noPickaxeDigFactor;
+  };
+
+  /** Bir kazma/delme vuruşu: oyun dakikası harcar; son vuruşta mineral envantere girer */
+  X.digMineral = function (s, id) {
+    const st = X.mineralSite(id);
+    if (!st || X.mineralDone(s, st)) return { ok: false };
+    if (!X.hasTool(s, st.tool)) return { ok: false, errKey: 'mineral.need_' + st.tool };
+    s.explore.minerals = s.explore.minerals || {};
+    s.explore.minerals[id] = X.mineralHits(s, st) + 1;
+    S.Sim.advance(s, st.minutesPerHit * X.digFactor(s));
+    const hits = s.explore.minerals[id];
+    const out = { ok: true, id, mineral: st.mineral, hits, total: st.hits, done: hits >= st.hits };
+    S.bus.emit('dig:hit', { id, m: st.atM, hits, total: st.hits, kind: 'mineral', zone: st.zone });
+    if (!out.done) {
+      S.bus.emit('audio:play', 'land');
+      return out;
+    }
+    const inv = (s.inventory.minerals = s.inventory.minerals || {});
+    inv[st.mineral] = (inv[st.mineral] || 0) + st.amount;
+    out.amount = st.amount;
+    // İlk buluşta bilgi kartı (her tür için bir kez)
+    const seen = (s.explore.mineralsSeen = s.explore.mineralsSeen || {});
+    out.first = !seen[st.mineral];
+    seen[st.mineral] = true;
+    S.bus.emit('explore:mineral', { id, mineral: st.mineral, amount: st.amount, first: out.first });
+    S.bus.emit('audio:play', 'success');
+    return out;
   };
 
   /** Bir kazma vuruşu: oyun dakikası harcar (O₂, batarya, soğuk sürer); yeterli vuruşta araç çıkar / tünel açılır */

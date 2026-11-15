@@ -811,6 +811,13 @@
         px1(ctx, '#3fe08a', fx + 11, GY - 14, 5, 3);
       } else if (Math.sin(t * 3 + f.atM) > 0) px1(ctx, '#ffc233', fx - 1, GY - 46, 3, 3);
     }
+    // Kişi 5: tünel duvarındaki maden damarları (matkapla delinir)
+    if (S.DigFx && S.Explore.mineralSites) {
+      for (const st of S.Explore.mineralSites('cave')) {
+        const x = FX.worldToScreen(Surf.caveMToPx(st.atM));
+        if (x > -40 && x < W + 40) S.DigFx.drawMineral(ctx, s, st, x, GY, t, { dark: 0 }, true);
+      }
+    }
     // Kurgusal İZCİ-1 rover'ının parçaları (fotoğraflananlara kanıt etiketi)
     for (const pt of cc.scout.parts) {
       const x = FX.worldToScreen(Surf.caveMToPx(pt.atM));

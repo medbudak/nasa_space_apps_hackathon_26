@@ -76,6 +76,8 @@
     const near = (m) => Math.abs(s.player.x - m) < c.noDigNearM;
     if (near(S.DATA.terrain.map.landingPadM) || near(c.siteM)) return { ok: false, errKey: 'station.err_dig_here' };
     if (S.Explore && S.Explore.digSites().some((st) => near(S.Explore.siteAt(st)))) return { ok: false, errKey: 'station.err_dig_here' };
+    // Kişi 5: maden noktasında S regolit değil; mineral E ile kazılır
+    if (S.Explore && S.Explore.mineralSites && S.Explore.mineralSites('surface').some((st) => !S.Explore.mineralDone(s, st) && near(st.atM))) return { ok: false, errKey: 'mineral.err_regolith' };
     addItem(s, 'regolith_bag');
     S.Sim.advance(s, c.regolithDigMinutes);
     return { ok: true, bags: s.inventory.items.regolith_bag };

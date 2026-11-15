@@ -205,6 +205,7 @@ Most of the planned work is done and on `main`. Details live in DECISIONS.md (D-
   - East: lava plain to +1400 m, with a rubble-sealed skylight and the lava tube (fictional SCOUT-1 rover, FIELD CAM photos); past it dunes, yardangs and layered buttes to +3000 m (`terrain.map.eastEndM`).
   - West: K2 glacier to the ice wall at −5000 m (`src/fx/westlands.js`).
   - Wreck tasks follow what NASA/ESA did for each vehicle; the black-box task matches real telemetry channels to subsystems.
+  - Minerals (Kişi 5, `explore.minerals`): `hematite`, `meteorite`, `gypsum` on the surface (scanner pings, E digs), `olivine`, `basalt` as drilled tube veins. Found minerals go to `inventory.minerals{id: n}`; repair/upgrade code reads `S.Explore.mineralCount` and spends with `S.Explore.spendMinerals(s, {id: n})`. The drill is a PLACEHOLDER (`minerals.toolPlaceholder`) until Kişi 4's tool check; remove it before content lock.
 - **Look and sound:**
   - One retro UI font, VT323 (embedded in `styles/fonts.css`). No metre labels on the ground.
   - K5's CC0 recordings (`assets/audio`) play through `src/fx/audio.js`, with a synthesised fallback.

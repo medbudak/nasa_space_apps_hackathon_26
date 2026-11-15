@@ -284,6 +284,25 @@
     Game.afterAction();
   };
 
+  /** Kişi 5: maden noktasını kaz / tünel damarını del; son vuruşta mineral envantere girer (ilk buluşta bilgi kartı) */
+  Game.digMineral = function (id) {
+    const s = S.getState();
+    const st = S.Explore.mineralSite(id);
+    const px = st.zone === 'cave' ? S.Surface.caveMToPx(st.atM) : S.Surface.mToPx(st.atM);
+    const r = S.Explore.digMineral(s, id);
+    if (!r.ok) {
+      if (r.errKey) S.bus.emit('fx:float', { px, text: t(r.errKey), tone: 'warn' });
+      return;
+    }
+    S.Surface.body.actionT = r.done ? 1 : 0.6;
+    S.FX.shake = Math.max(S.FX.shake || 0, r.done ? 0.3 : 0.12);
+    S.bus.emit('fx:puff', { px, size: r.done ? 2 : 1 });
+    if (!r.done) S.bus.emit('fx:float', { px, text: t('dig.progress', { n: r.hits, total: r.total }), tone: 'ok' });
+    else if (r.first) S.WorkshopPanel.openMineralCard(r.mineral, r.amount);
+    else S.UI.toast(S.UI.icon('check') + t('mineral.toast', { name: t('mineral.' + r.mineral + '.name'), n: r.amount }), 'ok', 4500);
+    Game.afterAction();
+  };
+
   /** D-014: S/↓ ile açık zeminde regolit torbası doldur (istasyonun radyasyon kalkanı) */
   Game.digRegolith = function () {
     const s = S.getState();
@@ -475,6 +494,7 @@
     if (it.kind === 'cave_study') return Game.caveStudy(it.id);
     if (it.kind === 'scout') return Game.scoutPhoto(it.id);
     if (it.kind === 'dig') return Game.dig(it.id);
+    if (it.kind === 'mineral') return Game.digMineral(it.id);
     if (it.action === 'pick_part') return Game.pickPart(it.partId);
     if (it.action === 'door') return Game.enterHabitat();
     if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);

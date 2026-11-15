@@ -47,6 +47,8 @@
       reports,
       dig,
       tubeOpen: false,
+      minerals: {}, // Kişi 5: maden noktası vuruş sayısı
+      mineralsSeen: {}, // bilgi kartı gösterilen mineral türleri
       cave: { finds, scout, storyShown: false, temp: { entrance: null, deep: null }, distance: null, vibration: null, visited: false },
       zonesSeen: {}
     };
@@ -82,6 +84,9 @@
     if (s.inventory && !s.inventory.tools) s.inventory.tools = Object.assign({}, S.DATA.tools.start);
     if (!s.rocket) s.rocket = { damage: {} };
     if (s.inventory && !s.inventory.items) s.inventory.items = {};
+    if (s.inventory && !s.inventory.minerals) s.inventory.minerals = {};
+    if (s.explore && !s.explore.minerals) s.explore.minerals = {};
+    if (s.explore && !s.explore.mineralsSeen) s.explore.mineralsSeen = {};
     return s;
   };
 
@@ -167,7 +172,7 @@
       experiments,
       rewards: {},
       // items: atölye malzemeleri (kitler, enkaz parçaları) — S.Workshop
-      inventory: { repairKits: 0, rhuUnits: 0, spareAntenna: false, roboticArmPart: false, wheelPart: false, items: {} },
+      inventory: { repairKits: 0, rhuUnits: 0, spareAntenna: false, roboticArmPart: false, wheelPart: false, items: {}, minerals: {} },
       crisis: { active: null, fired: {}, pending: [] },
       decisionLog: [],
       solHistory: [],
