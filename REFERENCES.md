@@ -145,6 +145,7 @@ Include open-source and free items too. Note the license.
 Sounds were trimmed, mixed to mono, loudness-normalised and converted to 96 kbps MP3 with ffmpeg so the game loads fast. Played by `src/fx/audio.js` (HTMLAudioElement, works over `file://`); the alarm, quake, launch, radio static, camera shutter, wind and storm sounds are wired, the others are kept for later use.
 | `assets/screens/scr_prep_{objective,rocket,habitat,instruments}.jpg` (mission prep previews: astronaut and rover, spacecraft between Earth and Mars, habitat with battery and solar panels, lab bench) | this repository | Supplied by the team lead on 2026-11-15 (origin and AI use to be confirmed; AI-generated art needs a visible watermark) | Mission prep preview panels (`src/ui/design_screens.js`) |
 | `assets/interior/lander_interior.png` (lander cutaway: cockpit, storage, lab, bunks, galley, airlock) | this repository | From Sude's (K2) project copy "16.09 SON HAL" (not pushed to a branch); origin and AI use to be confirmed (AI-generated art needs a visible watermark) | Lander interior and the transit deck (`src/fx/effects.js`, `src/ui/cutscenes.js`) |
+| `assets/interior/gym_bay.jpg` (lander exercise bay: treadmill, exercise bike, weight station, ECG monitor; processed copy has the sign's text blanked) | this repository | AI-generated from a team prompt (supplied by the team lead on 2026-11-15); needs a visible AI watermark (Space Apps rule) | Lander exercise bay (`src/fx/effects.js` landerCutaway) |
 
 ## Use of AI
 

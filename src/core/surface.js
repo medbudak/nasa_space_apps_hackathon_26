@@ -558,16 +558,16 @@
      İstasyonlar görseldeki eşyaların önünde; galleySeat = yemek/içme animasyonunun oturduğu masa sandalyesi. */
   Surf.INTERIOR = {
     left: 34,
-    right: 764,
+    right: 834,
     // Spor bölmesi: kesit laboratuvar ile ranzalar arasındaki direkten ikiye ayrılır, araya bu genişlikte bölme girer
-    gym: { atX: 425, w: 150 },
-    width: 790, // kesitin yerel genişliği (640 + spor bölmesi)
+    gym: { atX: 425, w: 220 }, // bölmeyi assets/interior/gym_bay.jpg doldurur (oranı korunur)
+    width: 860, // kesitin yerel genişliği (640 + spor bölmesi)
     floorY: 128, // kesitin kendi koordinatında (640 px genişlikte); ekrana yerleşimi FX.renderInterior'da
     // Ağırlıksız itişte ayak en fazla bu kadar yükselir: kask tavana (y ≈ 34) değmeden döner
     maxJumpPx: 30,
     driftRisePxPerSecond: 24, // itişle yükselme / geri süzülme hızı
     turnBelowPx: 12, // tavana bu kadar kala geri dönülür; yumuşak dönüş kalan yolu tamamlar
-    galleySeat: { x: 658, facing: -1 },
+    galleySeat: { x: 728, facing: -1 },
     stations: [
       { id: 'comms', x: 50, action: 'comms' },
       { id: 'power', x: 105, action: 'power' },
@@ -576,10 +576,10 @@
       { id: 'lab', x: 258, action: 'lab' },
       { id: 'workshop', x: 330, action: 'workshop' },
       { id: 'workbench', x: 386, action: 'repair_suit' },
-      { id: 'gym', x: 500, action: 'exercise' },
-      { id: 'bunk', x: 602, action: 'sleep' },
-      { id: 'bottles', x: 672, action: 'bottle' }, // D-016 (K2 Sude): su şişesi dolabı yemek masasının yanında (tuvaletin önünde değil)
-      { id: 'airlock', x: 762, action: 'exit' }
+      { id: 'gym', x: 535, action: 'exercise' },
+      { id: 'bunk', x: 672, action: 'sleep' },
+      { id: 'bottles', x: 742, action: 'bottle' }, // D-016 (K2 Sude): su şişesi dolabı yemek masasının yanında (tuvaletin önünde değil)
+      { id: 'airlock', x: 832, action: 'exit' }
     ]
   };
 

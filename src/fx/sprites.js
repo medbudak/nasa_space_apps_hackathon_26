@@ -34,6 +34,7 @@
     vfx_frost_2: 'vfx/vfx_frost_2.png',
     // Lander içi ve transit güvertesi: kesit arka planı (Sude'nin lander kesiti)
     lander_interior: 'interior/lander_interior.png',
+    gym_bay: 'interior/gym_bay.jpg', // lander spor bölmesi (yazısız kopya)
     // Kişi 7 (Sedef): maden noktasında yerde duran mineral (1. aşama)
     min_hematite_ground: 'sprites/minerals/hematite_1.png',
     min_meteorite_ground: 'sprites/minerals/meteorite_1.png',
