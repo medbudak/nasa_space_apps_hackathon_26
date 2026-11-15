@@ -90,7 +90,7 @@
     return s;
   };
 
-  function createState({ lang = S.lang || 'tr', demoMode = false, design = null, seed = 20261114 } = {}) {
+  function createState({ lang = S.lang || 'en', demoMode = false, design = null, seed = 20261114 } = {}) {
     const D = S.DATA;
     const forensics = {};
     for (const c of D.forensics.cases) {

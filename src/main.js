@@ -800,7 +800,7 @@
         lang = null;
       }
     }
-    S.lang = lang === 'en' ? 'en' : 'tr';
+    S.lang = lang === 'tr' ? 'tr' : 'en';
     document.documentElement.lang = S.lang;
     S.State.reset({ lang: S.lang });
 
