@@ -115,11 +115,12 @@ test('Lav tüneli: damar matkapla delinir; matkap yoksa delinmez (Kişi 4 aleti)
   const ph = cfg.toolPlaceholder;
   cfg.toolPlaceholder = false;
   try {
+    s.inventory.tools = Object.assign({}, s.inventory.tools, { drill: false });
     const no = X.digMineral(s, st.id);
     assert.equal(no.ok, false);
     assert.equal(no.errKey, 'mineral.need_drill');
     assert.notEqual(S.t(no.errKey), no.errKey);
-    s.inventory.items.drill = 1;
+    s.inventory.tools.drill = true; // Kişi 4: matkap atölyede kurulunca inventory.tools.drill
     const r = digOut(S, s, st.id);
     assert.ok(r.done);
     assert.equal(X.mineralCount(s, st.mineral), st.amount);

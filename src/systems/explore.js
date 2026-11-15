@@ -85,12 +85,22 @@
     S.bus.emit('inventory:minerals', { spent: need });
     return true;
   };
-  /** Alet kontrolü (matkap: Kişi 4). toolPlaceholder açıkken alet var sayılır (PLACEHOLDER) */
+  /**
+   * Alet kontrolü (matkap: Kişi 4). Kişi 4'ün S.Workshop.hasTool'u (inventory.tools) varsa o karar verir;
+   * yoksa toolPlaceholder açıkken alet var sayılır (PLACEHOLDER, Kişi 4'ün aletleri main'e girince devre dışı kalır).
+   */
   X.hasTool = function (s, tool) {
     if (!tool) return true;
+    if (S.Workshop && S.Workshop.hasTool) return S.Workshop.hasTool(s, tool);
     if (MC().toolPlaceholder) return true;
     const inv = s.inventory || {};
-    return Boolean((inv.items && inv.items[tool] > 0) || (inv.tools && inv.tools[tool]));
+    return Boolean(inv.tools && inv.tools[tool]);
+  };
+  /** Kişi 4 kuralı: kazma yoksa her vuruş tools.noPickaxeDigFactor kat uzun sürer (aletler yoksa 1) */
+  X.digFactor = function (s) {
+    const tc = D().tools;
+    if (!tc || !(S.Workshop && S.Workshop.hasTool)) return 1;
+    return S.Workshop.hasTool(s, 'pickaxe') ? 1 : tc.noPickaxeDigFactor;
   };
 
   /** Bir kazma/delme vuruşu: oyun dakikası harcar; son vuruşta mineral envantere girer */
@@ -100,7 +110,7 @@
     if (!X.hasTool(s, st.tool)) return { ok: false, errKey: 'mineral.need_' + st.tool };
     s.explore.minerals = s.explore.minerals || {};
     s.explore.minerals[id] = X.mineralHits(s, st) + 1;
-    S.Sim.advance(s, st.minutesPerHit);
+    S.Sim.advance(s, st.minutesPerHit * X.digFactor(s));
     const hits = s.explore.minerals[id];
     const out = { ok: true, id, mineral: st.mineral, hits, total: st.hits, done: hits >= st.hits };
     S.bus.emit('dig:hit', { id, m: st.atM, hits, total: st.hits, kind: 'mineral', zone: st.zone });
