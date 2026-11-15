@@ -191,3 +191,15 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
     - The ending adds one slide on what the station leaves behind (six variants). It changes no score.
 - Why: The team chose Medine's prototypes; K1 kept the MAV and the return so the success rules and the report card stay valid. Rejected: the prototype's holed MAV (it removed the return and changed the win condition) and its budget shop (parts bought from Earth would arrive at once, which is not physically sound).
 - Affects: `src/ui/cutscenes.js`, `src/core/sim.js`, `src/minigames/`, `src/systems/station.js` (new), `src/fx/station_fx.js` (new), `src/ui/station_card.js` (new), `src/systems/workshop.js`, `explore.js`, `forensics.js`, `objectives.js`, `data/nasa_data.json` (`gameplay.transit`, `station`, `workshop.recipes`), `data/forensics_cases.json`, `content/story.json`, tests
+
+### D-015: Tools and MAV repair
+- Status: Proposed (Kişi 4 task card, 2026-11-15; team to confirm)
+- Date: 2026-11-15
+- Agreed by: (pending)
+- Decision:
+  - Tools in `inventory.tools`: pickaxe and scanner land with the crew, the drill is built in the workshop from a cargo kit. Without the pickaxe each dig swing takes twice as long; the rubble-sealed skylight needs the drill. The repair kit stays the `repairKits` stock.
+  - The MAV takes repairable damage: a loosened fuel-line fitting on landing and a holed hull panel from the Sol 2 meteorite. Each repair needs materials, a tool, energy and EVA time, and plays a minigame (wires / patch). A failed game costs only time.
+  - A damaged MAV can still launch on the final sol but gives no safe return (same as low fuel). Materials for both repairs exist in every run (2 spare parts at start, 5 scattered crates).
+- Changes D-014: the meteorite now damages the MAV (repairable) instead of missing it.
+- Why: The task card asks for repairs that compete for the same materials, energy and EVA time. The suit repair kit was not used as the rocket tool because it is consumed and may be zero by design, which could make a run unwinnable.
+- Affects: `src/systems/rocket.js` (new), `workshop.js`, `explore.js`, `station.js`, `src/core/sim.js`, `state.js`, `objectives.js`, `src/ui/habitat_panel.js`, `workshop_panel.js`, `cutscenes.js`, `data/nasa_data.json` (`tools`, `rocket`, `workshop`), `data/explore_config.json`, `content/story.json`, tests
