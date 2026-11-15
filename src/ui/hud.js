@@ -42,9 +42,9 @@
           '<div class="ponr-ghost" data-ref="ghost" hidden></div><div class="ponr-jump" data-ref="jump" hidden><span data-ref="jumplbl"></span></div>' +
           '<div class="ponr-notch" data-ref="notch"></div></div></div><i class="hz-div"></i>' +
           '<div class="hz-v"><div class="hz-vh">' + I('battery') + '<b data-ref="sbat"></b></div><div class="hz-bar amber"><div class="bar-fill" data-ref="sbatfill"></div></div></div></div>' +
-          '<div class="hz-home" data-ref="home"></div></section>'
+          '<div class="hz-home" data-ref="home"></div><div class="hz-needs" data-ref="needs"></div></section>'
         : '<section class="hz-card hz-vitals hab"><div class="hz-v"><div class="hz-vh">' + I('power') + '<b data-ref="hbat"></b></div>' +
-          '<div class="hz-bar amber"><div class="bar-fill" data-ref="hbatfill"></div></div></div></section>') +
+          '<div class="hz-bar amber"><div class="bar-fill" data-ref="hbatfill"></div></div></div><div class="hz-needs" data-ref="needs"></div></section>') +
       // Üst orta: hedef (RIT-02) + ipucu (RIT-12) + uyarılar
       '<div class="hz-center"><button class="hz-goal" data-ref="goal" hidden title="' + t('goal.hint_btn') + '"><span class="hz-dia"></span>' +
       '<b data-ref="goaltxt"></b><span class="hz-dist" data-ref="goaldist"></span></button>' +
@@ -107,6 +107,36 @@
     HUD.lastFrozen = false;
     HUD._goalHtml = null;
     HUD._alertsHtml = null;
+    HUD._needsHtml = null;
+  };
+
+  /**
+   * İhtiyaç çubukları (Kişi 2): akıl sağlığı = res.morale, uyku = 100 − yorgunluk, açlık, susuzluk.
+   * Renk: eşikte sarı, kritikte kırmızı (gameplay.needs.warnAt / criticalAt).
+   */
+  HUD.needsRows = function (s) {
+    const n = S.Sim.needs(s);
+    const lvl = S.Sim.needLevel;
+    return [
+      { id: 'morale', icon: UI().icon('morale'), pct: s.res.morale, level: lvl(100 - s.res.morale) },
+      { id: 'sleep', icon: UI().icon('bed'), pct: 100 - n.fatigue, level: lvl(n.fatigue) },
+      { id: 'hunger', icon: '<span class="ico">🍽</span>', pct: n.hunger, level: lvl(n.hunger) },
+      { id: 'thirst', icon: '<span class="ico">💧</span>', pct: n.thirst, level: lvl(n.thirst) }
+    ];
+  };
+
+  HUD.renderNeeds = function (s) {
+    const host = ref('needs');
+    if (!host) return;
+    const html = HUD.needsRows(s)
+      .map(
+        (r) =>
+          '<div class="hz-need ' + r.level + '" title="' + S.util.escape(t('hud.need_' + r.id + '_tip')) + '">' + r.icon +
+          '<span>' + t('hud.need_' + r.id) + '</span><b>%' + Math.round(r.pct) + '</b>' +
+          '<div class="hz-bar"><div class="bar-fill" style="width:' + Math.max(0, Math.min(100, r.pct)) + '%"></div></div></div>'
+      )
+      .join('');
+    if (html !== HUD._needsHtml) host.innerHTML = HUD._needsHtml = html;
   };
 
   HUD.hide = function () {
@@ -123,6 +153,7 @@
     const amb = S.Sim.ambient(s);
     const inHab = HUD.mode === 'habitat';
     ref('sol').textContent = 'SOL ' + s.sol + ' / ' + s.maxSols + ' · ' + S.util.clock(S.Sim.clockMinute(s));
+    HUD.renderNeeds(s);
     const zone = !inHab && S.Explore && s.explore ? S.Explore.zoneAt(s) : null;
     ref('place').textContent = inHab
       ? t('hud.place_hab', { temp: Math.round(s.res.habTempC) })

@@ -153,8 +153,9 @@ function play(design, { demoMode = false, policy = {} } = {}) {
     const sol = s.sol;
     handleCrisis(S, s, log);
 
-    // 1) Sabah: elbiseyi hazırla
+    // 1) Sabah: kahvaltı + elbiseyi hazırla
     s.player.inside = true;
+    tendNeeds(S, s);
     S.Sim.doAction(s, 'refill_suit');
     S.Sim.doAction(s, 'charge_suit');
     if (s.suit.leak || s.suit.integrity < 70) S.Sim.doAction(s, 'repair_suit');
@@ -204,6 +205,7 @@ function play(design, { demoMode = false, policy = {} } = {}) {
       S.Experiments.run(s, exp.id, { hypothesis: exp.correctHypothesis, env: exp.preferredEnv, control: true }, mg);
     }
     S.Sim.doAction(s, 'tend_greenhouse');
+    tendNeeds(S, s);
     handleCrisis(S, s, log);
 
     // 5) Makul oyuncu: batarya düşükse gece MOXIE'yi kapat, doluysa aç (M3)
@@ -217,6 +219,7 @@ function play(design, { demoMode = false, policy = {} } = {}) {
     // 6) Röle geçişleri gece yarısına kadar akar; uyu
     let sleepGuard = 0;
     while (s.sol === sol && !s.gameOver && !s.ending && sleepGuard++ < 10) {
+      tendNeeds(S, s);
       S.Sim.sleep(s);
       handleCrisis(S, s, log);
     }
@@ -232,4 +235,13 @@ function play(design, { demoMode = false, policy = {} } = {}) {
   return { S, s, log, score: S.Score.calc(s), chains: S.Score.chains(s) };
 }
 
-module.exports = { play };
+/** Makul oyuncu ihtiyaçlarını karşılar: aç/susuzsa yer ve içer (Kişi 2 ihtiyaç sistemi) */
+function tendNeeds(S, s) {
+  const inside = s.player.inside;
+  s.player.inside = true;
+  for (let i = 0; i < 4 && s.needs.hunger > 30; i++) if (!S.Sim.doAction(s, 'eat').ok) break;
+  for (let i = 0; i < 4 && s.needs.thirst > 30; i++) if (!S.Sim.doAction(s, 'drink').ok) break;
+  s.player.inside = inside;
+}
+
+module.exports = { play, tendNeeds };

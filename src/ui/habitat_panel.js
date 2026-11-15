@@ -15,6 +15,9 @@
 
   HP.stationToAction = (stationId) => STATION_ACTION[stationId] || null;
 
+  // İhtiyaç eşiği aşılınca uyarı (sarı) / kritik (kırmızı) bildirimi (EVA'da da)
+  S.bus.on('needs:warn', (e) => S.UI.toast(t('needs.' + e.level + '_' + e.id), e.level === 'crit' ? 'danger' : 'warn'));
+
   /** Önizleme verisi (mockup: SÜRE, değer değişimi, kaynak notu, zaman uyarısı) */
   HP.preview = function (s, id) {
     if (id === 'exit') {
@@ -68,6 +71,29 @@
   }
   const levelColor = (v) => (v < 25 ? 'var(--red)' : v < 50 ? 'var(--amber)' : 'var(--green)');
 
+  /* ---------------- İhtiyaç düğmeleri (Kişi 2): Yemek ye / Su iç / Uyu / Tuvalet ---------------- */
+  const NEED_BTNS = [
+    { id: 'eat', icon: '🍽' },
+    { id: 'drink', icon: '💧' },
+    { id: 'sleep', icon: null },
+    { id: 'toilet', icon: '🚻' }
+  ];
+  HP.needsHtml = function (s) {
+    const btn = (b) => {
+      if (b.id === 'sleep') {
+        return '<button type="button" class="hp-need" data-need="sleep">' + I('bed') + '<b>' + t('needs.sleep') + '</b><small>' +
+          t('needs.cost_sleep', { from: Math.round(S.Sim.needs(s).fatigue) }) + '</small></button>';
+      }
+      const act = S.Sim.actions[b.id];
+      const p = act.preview(s);
+      const err = act.can(s);
+      return '<button type="button" class="hp-need" data-need="' + b.id + '"' + (err ? ' disabled title="' + S.util.escape(t(err)) + '"' : '') + '>' +
+        '<span class="ico">' + b.icon + '</span><b>' + t('needs.' + b.id) + '</b><small>' + t(p.costKey, p.costVars) + '</small></button>';
+    };
+    return '<section class="panel hp-needs"><h4>' + t('needs.title') + '</h4><div class="hp-need-row">' + NEED_BTNS.map(btn).join('') + '</div>' +
+      '<p class="hp-trade">💧 ' + t('needs.trade_note', { l: S.DATA.constants.sabatier.waterL, d: S.Sim.drinkL() }) + '</p></section>';
+  };
+
   /* ---------------- Mekik içi alt paneli ---------------- */
   HP.render = function (s) {
     const host = document.getElementById('habitat-panel');
@@ -105,7 +131,8 @@
       '<section class="panel hp-preview"><div class="pv-title">' + I(STATION_ICON[sel] || 'target') + '<span>' + pv.title + '</span></div>' +
       pv.lines.join('') +
       (pv.can ? '<p class="pv-err">' + I('x') + t(pv.can) + '</p>' : '') +
-      '<button type="button" class="hp-go" data-run ' + (pv.can ? 'disabled' : '') + '>' + pv.button + (near && near.id === sel ? ' <kbd>E</kbd>' : '') + '</button></section>';
+      '<button type="button" class="hp-go" data-run ' + (pv.can ? 'disabled' : '') + '>' + pv.button + (near && near.id === sel ? ' <kbd>E</kbd>' : '') + '</button></section>' +
+      HP.needsHtml(s);
     if (html === HP.lastHtml) return;
     HP.lastHtml = html;
     host.innerHTML = html;
@@ -119,6 +146,7 @@
     );
     host.querySelectorAll('[data-panel]').forEach((b) => b.addEventListener('click', () => HP.run(b.dataset.panel)));
     host.querySelector('[data-run]').addEventListener('click', () => HP.run(HP.selected));
+    host.querySelectorAll('[data-need]').forEach((b) => b.addEventListener('click', () => HP.run(b.dataset.need)));
   };
 
   HP.run = function (id) {

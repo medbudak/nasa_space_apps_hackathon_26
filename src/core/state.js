@@ -129,11 +129,14 @@
         o2ReserveKg: 0,
         waterL: 0,
         mavFuel: 0,
+        foodRations: 0,
         morale: 90,
         radiationMsv: 0,
         panelDust: 0.04,
         habTempC: D.gameplay.habitatTargetC
       },
+      // İhtiyaçlar (Kişi 2): 0 = iyi, 100 = kritik. Akıl sağlığı ayrı alan değil, res.morale kullanılır.
+      needs: S.util.deepClone(D.gameplay.needs.start),
       suit: {
         o2: 100,
         battery: 100,

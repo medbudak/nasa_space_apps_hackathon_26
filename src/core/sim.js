@@ -188,6 +188,8 @@
     s.res.energyKwh = round1(s.design.batteryKwh * v.chargeFrac);
     s.res.o2ReserveKg = v.o2;
     s.res.waterL = site.waterStartL;
+    s.res.foodRations = Sim.startRations(s);
+    s.needs = S.util.deepClone(d.gameplay.needs.start);
     s.res.mavFuel = v.fuel;
     s.res.morale = v.morale;
     s.res.radiationMsv = round1(orbit.transitDays * d.constants.radiation.transitDailyMsv);
@@ -425,7 +427,9 @@
       s.res.o2ReserveKg += (gph / 1000) * (dt / 60);
     }
     s.res.o2ReserveKg = Math.max(0, s.res.o2ReserveKg);
-    s.res.waterL = Math.max(0, s.res.waterL - c.lifeSupport.waterLPerSol * perMin * (s.rewards.waterSaver ? 0.8 : 1));
+    // İçme suyu 'drink' eylemiyle harcanır; burada yalnızca yemek için kullanılan su (rehydration) otomatik düşer
+    s.res.waterL = Math.max(0, s.res.waterL - c.lifeSupport.rehydrationWaterLPerSol * perMin * (s.rewards.waterSaver ? 0.8 : 1));
+    Sim.stepNeeds(s, dt, outside);
 
     // Radyasyon ve moral
     s.res.radiationMsv += c.radiation.surfaceDailyMsv * perMin;
@@ -731,6 +735,7 @@
   /* Oyuncu eylemleri (habitat paneli ve yüzey etkileşimleri)             */
   /* ------------------------------------------------------------------ */
   const A = () => D().gameplay.actions;
+  const N = () => D().gameplay.needs;
 
   Sim.actions = {
     refill_suit: {
@@ -807,6 +812,48 @@
         s.res.waterL -= g.tendWaterL;
         s.res.morale = clamp(s.res.morale + g.tendMorale * (s.greenhouse.yieldPct / 100), 0, 100);
         s.greenhouse.tendedSol = s.sol;
+        // Hasat (K6): taze sebze açlığı biraz azaltır
+        Sim.relieveNeed(s, 'hunger', N().harvestHungerRelief * (s.greenhouse.yieldPct / 100));
+      }
+    },
+    // İhtiyaç eylemleri (Kişi 2). Su, Sabatier yakıtıyla AYNI depodan gelir: önizleme bunu gösterir.
+    eat: {
+      minutes: () => N().eatMinutes,
+      preview(s) {
+        const h = Sim.needs(s).hunger;
+        return { from: Math.round(h), to: Math.round(Math.max(0, h - N().eatRelief)), costKey: 'needs.cost_food', costVars: { from: s.res.foodRations, to: s.res.foodRations - 1 } };
+      },
+      can: (s) => (s.res.foodRations < 1 ? 'needs.err_no_food' : null),
+      run(s) {
+        s.res.foodRations -= 1;
+        Sim.relieveNeed(s, 'hunger', N().eatRelief);
+      }
+    },
+    drink: {
+      minutes: () => N().drinkMinutes,
+      preview(s) {
+        const th = Sim.needs(s).thirst;
+        const l = Sim.drinkL();
+        const sab = D().constants.sabatier.waterL;
+        return {
+          from: Math.round(th),
+          to: Math.round(Math.max(0, th - N().drinkRelief)),
+          costKey: 'needs.cost_water',
+          costVars: { from: Math.round(s.res.waterL * 10) / 10, to: Math.round((s.res.waterL - l) * 10) / 10, sab }
+        };
+      },
+      can: (s) => (s.res.waterL < Sim.drinkL() ? 'needs.err_no_water' : null),
+      run(s) {
+        s.res.waterL = Math.max(0, s.res.waterL - Sim.drinkL());
+        Sim.relieveNeed(s, 'thirst', N().drinkRelief);
+      }
+    },
+    toilet: {
+      minutes: () => N().toiletMinutes,
+      preview: (s) => ({ from: Math.round(s.res.morale), to: Math.min(100, Math.round(s.res.morale + N().toiletMorale)), costKey: 'needs.cost_toilet', costVars: {} }),
+      can: () => null,
+      run(s) {
+        s.res.morale = clamp(s.res.morale + N().toiletMorale, 0, 100);
       }
     },
     clean_panels: {
@@ -868,10 +915,55 @@
     const err = act.can(s);
     if (err) return { ok: false, errKey: err };
     const minutes = act.minutes(s); // süre eylemden önce okunur (tamir kiti harcanınca değişir)
+    S.bus.emit('action:start', { id, minutes }); // K1 animasyonları için
     act.run(s);
     Sim.advance(s, minutes);
     S.bus.emit('action:done', { id });
     return { ok: true };
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* İhtiyaçlar: açlık, susuzluk, yorgunluk (0 = iyi, 100 = kritik)        */
+  /* Sayılar: data/nasa_data.json → gameplay.needs, constants.lifeSupport  */
+  /* ------------------------------------------------------------------ */
+  const NEED_IDS = ['hunger', 'thirst', 'fatigue'];
+  Sim.NEED_IDS = NEED_IDS;
+
+  Sim.startRations = (s) => N().mealsPerSol * s.maxSols + N().spareMeals;
+  Sim.drinkL = () => round2(D().constants.lifeSupport.waterLPerSol / N().drinksPerSol);
+  Sim.needs = (s) => s.needs || (s.needs = S.util.deepClone(N().start));
+  /** 'ok' | 'warn' | 'crit' */
+  Sim.needLevel = (v) => (v >= N().criticalAt ? 'crit' : v >= N().warnAt ? 'warn' : 'ok');
+  Sim.needCritical = (s) => NEED_IDS.some((k) => Sim.needs(s)[k] >= N().criticalAt);
+  /** Kritik ihtiyaç yürüyüşü yavaşlatır (surface.js speedFactor ile çarpılır) */
+  Sim.needsSpeedFactor = (s) => (Sim.needCritical(s) ? N().criticalSpeedFactor : 1);
+
+  Sim.relieveNeed = function (s, id, amount) {
+    const n = Sim.needs(s);
+    n[id] = clamp(n[id] - amount, 0, 100);
+  };
+
+  Sim.stepNeeds = function (s, dt, outside, asleep = s.sleeping) {
+    const cfg = N();
+    const n = Sim.needs(s);
+    const hours = dt / 60;
+    let morale = 0;
+    for (const k of NEED_IDS) {
+      const was = Sim.needLevel(n[k]);
+      if (k === 'fatigue' && asleep) {
+        n[k] = clamp(n[k] - cfg.sleepRecoveryPerHour * hours, 0, 100);
+      } else {
+        const f = (outside ? cfg.evaFactor[k] || 1 : 1) * (asleep ? cfg.asleepFactor[k] || 1 : 1);
+        n[k] = clamp(n[k] + cfg.risePerHour[k] * f * hours, 0, 100);
+      }
+      const lvl = Sim.needLevel(n[k]);
+      // Eşik aşıldı: moral düşer (100'de en ağır ceza mevcut kayıp kuralı morale <= 0 üzerinden gelir)
+      if (n[k] >= 100) morale += cfg.criticalMoralePerHour * 2 * hours;
+      else if (lvl === 'crit') morale += cfg.criticalMoralePerHour * hours;
+      else if (lvl === 'warn') morale += cfg.warnMoralePerHour * hours;
+      if (lvl !== was && lvl !== 'ok' && !asleep) S.bus.emit('needs:warn', { id: k, level: lvl });
+    }
+    if (morale) s.res.morale = clamp(s.res.morale + morale, 0, 100);
   };
 
   /** Dinlen: ertesi sabaha kadar uyu (kriz gelirse uyan) */
@@ -880,7 +972,14 @@
     const target = d.gameplay.solStartMinute + d.constants.sol.minutes;
     const startSol = s.sol;
     const minutes = target - s.minute + 0.01;
-    Sim.advance(s, minutes, { stopOnCrisis: true });
+    S.bus.emit('action:start', { id: 'sleep', minutes });
+    s.sleeping = true;
+    try {
+      Sim.advance(s, minutes, { stopOnCrisis: true });
+    } finally {
+      s.sleeping = false;
+    }
+    S.bus.emit('action:done', { id: 'sleep' });
     if (s.sol !== startSol || s.ending) {
       s.res.morale = clamp(s.res.morale + A().sleepMorale, 0, 100);
       s.suit.battery = Math.max(s.suit.battery, 100);

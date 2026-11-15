@@ -311,6 +311,7 @@
 
   Surf.speedFactor = function (s) {
     let f = s.suit.frozen ? S.DATA.constants.eva.frozenSpeedFactor : 1;
+    f *= S.Sim.needsSpeedFactor(s); // kritik açlık/susuzluk/yorgunluk yavaşlatır
     // Sarkaç deneyi ödülü: 0.38g yürüyüş kalibrasyonu kum tuzağındaki hız kaybını azaltır (kum çukurları yalnızca yüzeyde;
     // Ingenuity rotayı önceden keşfettiyse çukurun çevresinden dolaşılır)
     if (!Surf.inCave(s) && Surf.inSandPit(s.player.x) && !Surf.sandPitAvoided(s)) f *= s.rewards.sandPitSpeedFactor || S.DATA.terrain.sandPitSpeedFactor;
