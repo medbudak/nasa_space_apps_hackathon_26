@@ -574,7 +574,7 @@
       { id: 'workshop', x: 330, action: 'workshop' },
       { id: 'workbench', x: 386, action: 'repair_suit' },
       { id: 'bunk', x: 452, action: 'sleep' },
-      { id: 'bottles', x: 566, action: 'bottle' }, // D-016 (K2 Sude): su şişesi rafı hava kilidinin yanında
+      { id: 'bottles', x: 522, action: 'bottle' }, // D-016 (K2 Sude): su şişesi dolabı yemek masasının yanında (tuvaletin önünde değil)
       { id: 'airlock', x: 612, action: 'exit' }
     ]
   };

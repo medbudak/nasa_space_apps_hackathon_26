@@ -1357,29 +1357,32 @@
   West.drawInteriorRack = function (ctx, s, ox, oy, t, nearId) {
     if (!shelter()) return;
     const I = S.Surface.INTERIOR;
-    const x = ox + 554; // wall between the ladder and the door frame
-    const y = oy + I.floorY - 46;
+    // Su şişesi dolabı: istasyonun kendi yerinde, yere oturan küçük dolap (kesitin krem-turuncu panelleriyle aynı)
+    const st = I.stations.find((x) => x.id === 'bottles');
+    const x = ox + (st ? st.x : 522) - 10;
+    const y = oy + I.floorY - 32;
     const R = (dx, dy, w, h, c) => {
       ctx.fillStyle = c;
       ctx.fillRect(x + dx, y + dy, w, h);
     };
-    R(0, 0, 18, 30, '#1c1f25'); // back plate
-    R(1, 1, 16, 28, '#3a4049');
-    R(1, 1, 16, 1, '#5d6570');
-    R(0, 10, 18, 2, '#7d858f'); // upper rail
-    R(0, 24, 18, 2, '#7d858f'); // lower rail
-    R(0, 10, 18, 1, '#aab2bb');
-    R(0, 24, 18, 1, '#aab2bb');
-    for (const [bx, by] of [[1, 2], [15, 2], [1, 27], [15, 27]]) R(bx, by, 2, 2, '#9aa3ad'); // bolts
-    R(7, 3, 4, 2, '#3fa4e6'); // water mark
-    // bottles stand in the lower bay; one slot empties while a bottle is out
+    R(0, 0, 20, 32, '#3a2e26'); // kontur
+    R(1, 1, 18, 30, '#d8c8b0'); // gövde
+    R(1, 1, 18, 2, '#efe3cf');
+    R(1, 27, 18, 4, '#b8a68c');
+    R(1, 4, 18, 2, '#d9752e'); // turuncu şerit
+    R(3, 8, 14, 16, '#3a2e26'); // ön cam
+    R(4, 9, 12, 14, '#2b2622');
+    R(4, 9, 12, 1, '#5a4e44');
+    // şişeler camın arkasında; biri dışarıdaysa yeri boş kalır
     const left = S.Sim.bottle(s) ? 2 : 3;
-    for (let i = 0; i < left; i++) drawBottle(ctx, x + 4 + i * 5, y + 24, false, 0);
+    for (let i = 0; i < left; i++) drawBottle(ctx, x + 6 + i * 4, y + 22, false, 0);
+    R(4, 9, 1, 14, 'rgba(255,255,255,0.18)'); // cam parlaması
+    R(15, 26, 3, 2, '#3fa4e6'); // su işareti
     if (nearId === 'bottles') {
       ctx.globalAlpha = 0.35 + 0.25 * Math.sin(t * 5);
       ctx.strokeStyle = '#3fe0e6';
       ctx.lineWidth = 1;
-      ctx.strokeRect(x - 1.5, y - 1.5, 21, 33);
+      ctx.strokeRect(x - 1.5, y - 1.5, 23, 35);
       ctx.globalAlpha = 1;
     }
   };
