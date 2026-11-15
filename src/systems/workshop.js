@@ -40,6 +40,12 @@
       if (r.requiresModule && !s.station.built[r.requiresModule]) return { state: 'locked', reasonKey: 'ws.err_needs_module', vars: { what: S.t('station.mod.' + r.requiresModule) } };
     }
     if (r.builds && S.Sim.deployed(s, r.builds)) return { state: 'built' };
+    // Seviye 1-2-3 (Kişi 6): yalnızca bir sonraki seviye açılır; bedel (enerji / dış çalışma) karşılanmalı
+    if (r.upgrade) {
+      const lv = S.Sim.upgradeLevel(s, r.upgrade);
+      if (lv >= r.level) return { state: 'built' };
+      if (lv < r.level - 1) return { state: 'locked', reasonKey: 'ws.err_needs_level', vars: { what: S.t('upg.' + r.upgrade), level: r.level - 1 } };
+    }
     if (r.once && (s.workshop || {})[id]) return { state: 'built' };
     if (r.tool && W.hasTool(s, r.tool)) return { state: 'built' };
     if (r.requiresBuilt && !S.Sim.deployed(s, r.requiresBuilt)) return { state: 'locked', reasonKey: 'ws.err_needs_built', vars: { what: S.t('ws.' + r.requiresBuilt + '.name') } };
@@ -47,10 +53,58 @@
     if (r.instrument && !S.Sim.has(s, r.instrument)) return { state: 'locked', reasonKey: 'ws.err_needs_inst', vars: { inst: S.t('inst.' + r.instrument + '.short') } };
     const missing = Object.entries(r.needs || {}).filter(([item, n]) => W.count(s, item) < n).map(([item]) => item);
     if (missing.length) return { state: 'locked', reasonKey: 'ws.err_missing', vars: { list: missing.map((i) => S.t('item.' + i + '.name')).join(', ') }, missing };
+    if (r.upgrade) {
+      const cost = W.upgradeCost(s, r);
+      if (cost.energyKwh && s.res.energyKwh < cost.energyKwh) return { state: 'locked', reasonKey: 'ws.err_energy', vars: { kwh: cost.energyKwh } };
+      if (cost.suitO2Pct && s.suit.o2 < cost.suitO2Pct + 5) return { state: 'locked', reasonKey: 'ws.err_suit_o2', vars: { pct: Math.ceil(cost.suitO2Pct + 5) } };
+    }
     return { state: 'ready' };
   };
 
   const minutesOf = (r, opt) => (opt && opt.minutes) || r.minutes;
+
+  /**
+   * Yükseltmenin malzeme dışı bedeli (Kişi 6): roket = habitat bataryasından tek seferlik enerji;
+   * istasyon = gövdede dış çalışma, elbise O₂ ve bataryası EVA hızıyla harcanır.
+   */
+  W.upgradeCost = function (s, r) {
+    const u = cfg().upgrades[r.upgrade];
+    const eva = D().constants.eva;
+    const cost = {};
+    if (u.energyKwh) cost.energyKwh = u.energyKwh[r.level - 1];
+    if (u.evaMinutes) {
+      const m = u.evaMinutes[r.level - 1];
+      cost.evaMinutes = m;
+      cost.suitO2Pct = round1(eva.suitO2PctPerMin * m);
+      cost.suitBatteryPct = round1(S.Engineering.calcSuitBatteryDrainPctPerMin({ ambientC: S.Sim.ambient(s), integrity: s.suit.integrity }) * m);
+    }
+    return cost;
+  };
+
+  /** Bir yükseltmenin önce → sonra satırları: kazanç ve bedel yan yana (seviye satırı + takas) */
+  function upgradeRows(s, r) {
+    const u = cfg().upgrades[r.upgrade];
+    const from = r.level - 2;
+    const to = r.level - 1;
+    const rows = [{ key: 'level', before: from + 1, after: to + 1 }];
+    if (r.upgrade === 'greenhouse') {
+      const g = D().habitat.greenhouse;
+      rows.push({ key: 'yield_pct', before: s.greenhouse.yieldPct + u.yieldBonusPct[from], after: s.greenhouse.yieldPct + u.yieldBonusPct[to] });
+      rows.push({ key: 'load_w', before: g.powerW + u.extraPowerW[from], after: g.powerW + u.extraPowerW[to] });
+    } else if (r.upgrade === 'station') {
+      const ua = S.Sim.insulationCfg(s).uaWPerK;
+      const night = S.Sim.site(s).nightMinC; // en soğuk gece saatindeki ısı kaybı
+      const loss = (f) => Math.round(ua * f * (D().gameplay.habitatTargetC - night));
+      rows.push({ key: 'heat_loss_w', before: loss(u.uaFactor[from]), after: loss(u.uaFactor[to]) });
+      const c = W.upgradeCost(s, r);
+      rows.push({ key: 'suit_o2', before: Math.round(s.suit.o2), after: Math.round(s.suit.o2 - c.suitO2Pct) });
+    } else if (r.upgrade === 'rocket') {
+      const base = D().constants.sabatier.mavFuelPctPerBatch;
+      rows.push({ key: 'fuel_batch', before: base + u.fuelBonusPct[from], after: base + u.fuelBonusPct[to] });
+      rows.push({ key: 'energy_kwh', before: round1(s.res.energyKwh), after: round1(s.res.energyKwh - u.energyKwh[to]) });
+    }
+    return rows;
+  }
   W.option = (r, optId) => (r.options ? r.options.find((o) => o.id === optId) || r.options[0] : null);
 
   /* ---------------- Etki satırları: aynı formüllerle önce → sonra ---------------- */
@@ -67,6 +121,7 @@
     const r = W.recipe(id);
     const opt = W.option(r, optId);
     const c = D().constants;
+    if (r.upgrade) return upgradeRows(s, r);
     const rows = [];
     const curFrac = S.Sim.deployed(s, 'solar') ? s.base.solarFrac || 1 : 0;
     if (r.builds === 'solar' || r.id === 'solar_extend') {
@@ -115,6 +170,16 @@
     if (r.repairKits) s.inventory.repairKits += r.repairKits;
     if (r.module) s.station.built[r.module] = r.id;
     if (r.tool) s.inventory.tools[r.tool] = true;
+    if (r.upgrade) {
+      const cost = W.upgradeCost(s, r);
+      if (cost.energyKwh) s.res.energyKwh = round1(s.res.energyKwh - cost.energyKwh);
+      if (cost.suitO2Pct) {
+        s.suit.o2 = Math.max(0, round1(s.suit.o2 - cost.suitO2Pct));
+        s.suit.battery = Math.max(0, round1(s.suit.battery - cost.suitBatteryPct));
+      }
+      s.upgrades = s.upgrades || {};
+      s.upgrades[r.upgrade] = r.level;
+    }
     s.workshop = s.workshop || {};
     s.workshop[id] = opt ? opt.id : true;
     S.Sim.advance(s, minutesOf(r, opt));

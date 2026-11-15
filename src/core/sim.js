@@ -26,6 +26,52 @@
   /** Üs sistemi kuruldu mu? (eski kayıtta base alanı yoksa kurulu sayılır) */
   Sim.deployed = (s, id) => !s.base || s.base[id] !== false;
   /** Bu tasarımda kurulabilecek mi? ISRU ünitesi MOXIE, sera Veggie ister */
+  /* ---- Sera büyüme evreleri (Kişi 6): marul, turp, zinya; hepsi çimlenme → filiz → olgun → hasat ----
+   * Bitkiler hasada kadar gereken bakımlı sol sayısıyla ayrışır (plants.<id>.tendedSols); evre bu sayaçtan çıkar. */
+  const GROWTH = () => D().habitat.greenhouse.growth;
+  Sim.ghPlant = (s) => (GROWTH().plants[s.greenhouse.plant] ? s.greenhouse.plant : GROWTH().defaultPlant);
+  Sim.ghPlantCfg = (s) => GROWTH().plants[Sim.ghPlant(s)];
+  /** Bu ekimde bakım yapılmış sol sayısı */
+  Sim.ghProgress = (s) => s.greenhouse.progress || 0;
+  /** Hasada kalan bakımlı sol */
+  Sim.ghSolsLeft = (s) => Math.max(0, Sim.ghPlantCfg(s).tendedSols - Sim.ghProgress(s));
+  Sim.ghStage = (s) => {
+    const p = Sim.ghPlantCfg(s);
+    const last = p.stages.length - 1;
+    return Math.min(last, Math.floor((Sim.ghProgress(s) * last) / p.tendedSols));
+  };
+  Sim.ghStageKey = (s) => Sim.ghPlantCfg(s).stages[Sim.ghStage(s)];
+  Sim.ghMature = (s) => Sim.ghProgress(s) >= Sim.ghPlantCfg(s).tendedSols;
+  /** Ekilecek bitkiyi seç: yalnızca ekim yeniyken (henüz hiç bakım sayılmamışken, ya da hasattan sonra) */
+  Sim.ghCanChoose = (s) => s.greenhouse.installed && !s.greenhouse.frozen && Sim.ghProgress(s) === 0;
+  Sim.choosePlant = function (s, id) {
+    if (!GROWTH().plants[id] || !Sim.ghCanChoose(s)) return false;
+    s.greenhouse.plant = id;
+    return true;
+  };
+  /** Bitkinin bu sol bir evre ilerlemesi için bakım gerekiyor mu (olgunsa büyüme durur, hasat beklenir) */
+  Sim.ghNeedsTending = (s) => s.greenhouse.installed && !s.greenhouse.frozen && !Sim.ghMature(s) && s.greenhouse.tendedSol !== s.sol;
+  /** Sol sonu: o sol bakım yapıldıysa bitki bir sol büyür; yapılmadıysa büyüme durur (sıkıştırılmış süre, simplified) */
+  Sim.growGreenhouse = function (s) {
+    const gh = s.greenhouse;
+    if (!gh.installed || gh.frozen || Sim.ghMature(s)) return false;
+    if (gh.tendedSol !== s.sol) return false;
+    gh.progress = Sim.ghProgress(s) + 1;
+    S.bus.emit('greenhouse:grew', { stage: Sim.ghStage(s), key: Sim.ghStageKey(s), solsLeft: Sim.ghSolsLeft(s) });
+    return true;
+  };
+  /* ---- Seviye 1-2-3 (Kişi 6): her seviye bir takas; sayılar workshop.upgrades ---- */
+  Sim.upgradeLevel = (s, target) => (s.upgrades && s.upgrades[target]) || 1;
+  const UPG = (target) => D().workshop.upgrades[target];
+  const atLevel = (s, target, key) => UPG(target)[key][Sim.upgradeLevel(s, target) - 1];
+  /** Etkin sera verimi: deney ödülü (yieldPct) + sera seviyesi */
+  Sim.ghYieldPct = (s) => s.greenhouse.yieldPct + atLevel(s, 'greenhouse', 'yieldBonusPct');
+  /** Sera yükü: seviye arttıkça daha çok güç (gece de) */
+  Sim.ghPowerW = (s) => D().habitat.greenhouse.powerW + atLevel(s, 'greenhouse', 'extraPowerW');
+  /** Habitat ısı kaybı katsayısı: tasarımdaki yalıtım × istasyon seviyesi */
+  Sim.habitatUA = (s) => Sim.insulationCfg(s).uaWPerK * atLevel(s, 'station', 'uaFactor');
+  /** Bir Sabatier partisinin MAV yakıtına kattığı %: roket seviyesiyle daha az kayıp */
+  Sim.sabatierFuelPct = (s) => D().constants.sabatier.mavFuelPctPerBatch + atLevel(s, 'rocket', 'fuelBonusPct');
   Sim.deployAvailable = (s, id) => (id === 'isru' ? Sim.hasIsru(s) : id === 'greenhouse' ? Sim.has(s, 'veggie') : true);
   /** Yakıt üretimi: ISRU ünitesi ve MAV kurulu olmalı */
   Sim.isruReady = (s) => Sim.hasIsru(s) && Sim.deployed(s, 'isru') && Sim.deployed(s, 'mav');
@@ -267,13 +313,13 @@
     if (id === 'comms') return base.commsW;
     if (id === 'heating') {
       return E().calcHeatingW({
-        uaWPerK: Sim.insulationCfg(s).uaWPerK,
+        uaWPerK: Sim.habitatUA(s),
         targetC: d.gameplay.habitatTargetC,
         ambientC,
         wasteHeatW: Sim.powerCfg(s).rtgWasteHeatW + s.inventory.rhuUnits * d.constants.rhu.thermalW
       });
     }
-    if (id === 'greenhouse') return s.greenhouse.installed && !s.greenhouse.frozen ? d.habitat.greenhouse.powerW : 0;
+    if (id === 'greenhouse') return s.greenhouse.installed && !s.greenhouse.frozen ? Sim.ghPowerW(s) : 0;
     if (id === 'experiments') {
       const instW = s.design.instruments
         .filter((i) => i !== 'moxie' && i !== 'veggie')
@@ -367,7 +413,7 @@
       s.res.habTempC = Math.min(target, s.res.habTempC + dt * 0.5);
     } else {
       const waste = Sim.powerCfg(s).rtgWasteHeatW + s.inventory.rhuUnits * d.constants.rhu.thermalW;
-      const lossW = Sim.insulationCfg(s).uaWPerK * (s.res.habTempC - ambientC);
+      const lossW = Sim.habitatUA(s) * (s.res.habTempC - ambientC);
       const dT = ((waste - lossW) * dt * 60) / d.gameplay.habitatHeatCapacityJPerK;
       s.res.habTempC = Math.min(target, s.res.habTempC + dT);
     }
@@ -386,6 +432,7 @@
     if (cause) {
       gh.frozen = true;
       gh.frozenSol = s.sol;
+      gh.progress = 0; // donan bitki ölür; donma kalıcıdır, sera bu görevde bir daha büyümez
       gh.cause = cause;
       gh.frozenMinute = Math.round(Sim.clockMinute(s));
       s.res.morale = clamp(s.res.morale - 8, 0, 100);
@@ -440,7 +487,7 @@
     if (s.res.habTempC < d.gameplay.habitatComfortMinC) morale += (d.gameplay.lowHabitatTempMoralePerHour * dt) / 60;
     if (s.res.waterL <= 0) morale += (d.gameplay.lowHabitatTempMoralePerHour * dt) / 60;
     if (s.greenhouse.installed && !s.greenhouse.frozen && Sim.loadSupplied(s, 'greenhouse')) {
-      morale += d.habitat.greenhouse.moralePerSolHealthy * perMin * (s.greenhouse.yieldPct / 100);
+      morale += d.habitat.greenhouse.moralePerSolHealthy * perMin * (Sim.ghYieldPct(s) / 100);
     }
     s.res.morale = clamp(s.res.morale + morale, 0, 100);
 
@@ -673,6 +720,7 @@
       final: s.sol >= s.maxSols
     };
     s.solHistory.push(summary);
+    summary.greenhouseGrew = Sim.growGreenhouse(s);
 
     if (s.sol >= s.maxSols) {
       // Son Sol bitti: MAV otomatik kalkar
@@ -800,7 +848,7 @@
         const g = D().habitat.greenhouse;
         return {
           from: Math.round(s.res.morale),
-          to: Math.min(100, Math.round(s.res.morale + g.tendMorale * (s.greenhouse.yieldPct / 100))),
+          to: Math.min(100, Math.round(s.res.morale + g.tendMorale * (Sim.ghYieldPct(s) / 100))),
           costKey: 'action.cost_water',
           costVars: { l: g.tendWaterL }
         };
@@ -815,7 +863,7 @@
       run(s) {
         const g = D().habitat.greenhouse;
         s.res.waterL -= g.tendWaterL;
-        s.res.morale = clamp(s.res.morale + g.tendMorale * (s.greenhouse.yieldPct / 100), 0, 100);
+        s.res.morale = clamp(s.res.morale + g.tendMorale * (Sim.ghYieldPct(s) / 100), 0, 100);
         s.greenhouse.tendedSol = s.sol;
       }
     },
@@ -868,6 +916,35 @@
         s.res.morale = clamp(s.res.morale + N().toiletMorale, 0, 100);
       }
     },
+    harvest_greenhouse: {
+      minutes: () => GROWTH().harvestMinutes,
+      preview(s) {
+        const p = Sim.ghPlantCfg(s);
+        const kg = round1(p.harvestFoodKg * (Sim.ghYieldPct(s) / 100));
+        return {
+          from: Math.round(s.res.morale),
+          to: Math.min(100, Math.round(s.res.morale + p.harvestMorale)),
+          costKey: kg > 0 ? 'action.cost_harvest' : 'action.cost_harvest_flower',
+          costVars: { kg, plant: S.t('plant.' + Sim.ghPlant(s)) }
+        };
+      },
+      can(s) {
+        if (!s.greenhouse.installed) return 'action.err_no_veggie';
+        if (s.greenhouse.frozen) return 'action.err_gh_frozen';
+        if (!Sim.ghMature(s)) return 'action.err_gh_not_ripe';
+        return null;
+      },
+      run(s) {
+        const g = Sim.ghPlantCfg(s);
+        const kg = round1(g.harvestFoodKg * (Sim.ghYieldPct(s) / 100));
+        // Hasat yiyecek stoğuna gider (Kişi 2'nin açlık göstergesi buradan okur) ve yeniden ekilir
+        s.res.foodKg = round1((s.res.foodKg || 0) + kg);
+        s.res.morale = clamp(s.res.morale + g.harvestMorale, 0, 100);
+        s.greenhouse.progress = 0; // yeniden ekim: çimlenmeden başlar
+        s.greenhouse.harvests = (s.greenhouse.harvests || 0) + 1;
+        S.bus.emit('greenhouse:harvest', { plant: Sim.ghPlant(s), foodKg: kg, total: s.res.foodKg, harvests: s.greenhouse.harvests });
+      }
+    },
     clean_panels: {
       minutes: () => A().cleanPanelsMin,
       preview(s) {
@@ -884,7 +961,7 @@
         const c = D().constants.sabatier;
         return {
           from: Math.round(s.res.mavFuel),
-          to: Math.min(100, Math.round(s.res.mavFuel + c.mavFuelPctPerBatch)),
+          to: Math.min(100, Math.round(s.res.mavFuel + Sim.sabatierFuelPct(s))),
           costKey: 'action.cost_sabatier',
           costVars: { kwh: c.energyKwh, l: c.waterL }
         };
@@ -903,7 +980,7 @@
         const c = D().constants.sabatier;
         s.res.energyKwh -= c.energyKwh;
         s.res.waterL -= c.waterL;
-        s.res.mavFuel = Math.min(100, s.res.mavFuel + c.mavFuelPctPerBatch);
+        s.res.mavFuel = Math.min(100, s.res.mavFuel + Sim.sabatierFuelPct(s));
         s.res.o2ReserveKg += c.o2ByproductKg;
       }
     },

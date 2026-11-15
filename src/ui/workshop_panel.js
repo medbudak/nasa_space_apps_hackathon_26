@@ -12,7 +12,8 @@
   const W = () => S.Workshop;
 
   const ICON = { solar_array: 'power', solar_extend: 'power', isru_unit: 'o2', mav_line: 'rocket', greenhouse: 'leaf', antenna: 'signal', repair_kit: 'wrench',
-    station_shell: 'home', station_shield: 'shield', station_heat_rhu: 'heat', station_heat_heater: 'heat', station_power_panel: 'power', station_power_kit: 'power', station_comms_antenna: 'signal', station_comms_relay: 'signal' };
+    station_shell: 'home', station_shield: 'shield', station_heat_rhu: 'heat', station_heat_heater: 'heat', station_power_panel: 'power', station_power_kit: 'power', station_comms_antenna: 'signal', station_comms_relay: 'signal',
+    greenhouse_l2: 'leaf', greenhouse_l3: 'leaf', station_l2: 'home', station_l3: 'home', rocket_l2: 'rocket', rocket_l3: 'rocket' };
 
   function fxRows(rows) {
     return (
@@ -72,7 +73,7 @@
   WP.html = function (s) {
     const recipes = W().recipes().filter((r) => {
       const st = W().status(s, r.id).state;
-      return st !== 'hidden' && (st !== 'built' || r.builds || r.once || r.module);
+      return st !== 'hidden' && (st !== 'built' || r.builds || r.once || r.module || r.upgrade);
     });
     if (!WP.sel || !W().recipe(WP.sel)) WP.sel = (recipes.find((r) => W().status(s, r.id).state === 'ready') || recipes[0]).id;
     const list = recipes
