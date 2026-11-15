@@ -70,18 +70,18 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 
 ## Git workflow
 
-- `main` is the shared version and must always work. Never commit or push directly to `main`.
+- `main` is the shared version and must always work. Pushing directly to `main` is allowed: first do the "Sync before you start" check below (fetch, merge `origin/main` safely, `npm test` passes), then push. Never force-push `main`.
 - Everyone works on a branch named after themselves: first name in lowercase ASCII letters (ş→s, ç→c, ğ→g, ı→i, ö→o, ü→u). Example: `enes`. If two members share a first name, add the surname initial (`enes-s`).
 - For a second branch for parallel work, use `name-topic` with a hyphen, for example `enes-orbit-ui`. Don't use `name/topic`: git can't hold `enes` and `enes/...` at the same time.
-- Push only to your own branches. Never commit to, rebase or force-push someone else's branch. Never force-push `main`.
-- Sync often: run `git pull origin main` on your branch every few hours and always before opening a PR. Resolve conflicts on your branch, not on `main`.
+- Push only to your own branches or to `main`. Never commit to, rebase or force-push someone else's branch. Never force-push `main`.
+- Sync often: run `git pull origin main` on your branch every few hours and always before pushing or opening a PR. Resolve conflicts locally, never by overwriting `main`.
 - **Sync before you start (humans and agents).** Before starting any task, and again before committing, run `git fetch --all --prune` and check for new pushes on `main` and on your own remote branch (`git log --oneline HEAD..origin/main`, `git log --oneline HEAD..origin/<your-branch>`). If there are new commits, bring them in without losing either side's work:
   1. Never discard or overwrite local work: no `git reset --hard`, `git checkout -- .`, `git clean`, `git push --force` or "take theirs/ours for the whole file" to get past a conflict.
   2. With uncommitted changes, first commit them (or `git stash push -u`), then `git merge origin/main` (and `origin/<your-branch>` if it moved). Re-apply a stash with `git stash pop`.
   3. Resolve conflicts hunk by hunk so both changes survive. If two changes really contradict each other, stop and ask the user (or the file's owner, AGENTS.md §1) instead of choosing one.
   4. Generated files (`src/data/*.js`, `assets/processed/**`): don't hand-merge them; take either side, then rebuild (`node tools/build.js data` / `assets`).
   5. Run `npm test` after the merge and before continuing.
-- Changes reach `main` through pull requests. Small, frequent PRs beat one big PR at the end.
+- Changes reach `main` either by a direct push (after the sync check) or through a pull request. Small, frequent pushes/PRs beat one big one at the end.
 - Merge with "Create a merge commit", not "Squash and merge". Personal branches keep living after a merge, and squashing makes later PRs show old changes and conflicts.
 - A PR that touches shared files (listed below) or the shared game model needs a quick OK from one teammate. A PR that only touches your own area can be merged by you once the project runs.
 - Before merging, check that the project starts and the main game flow still works.
