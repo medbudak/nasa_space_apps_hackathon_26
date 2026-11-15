@@ -91,6 +91,41 @@
     "whiteKeptPx": 194
   },
   {
+    "asset": "sprites/mineral_hematite.png",
+    "size": "24x24",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/mineral_meteorite.png",
+    "size": "24x24",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/mineral_gypsum.png",
+    "size": "24x24",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/mineral_olivine.png",
+    "size": "24x24",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/mineral_basalt.png",
+    "size": "24x24",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "structures/mav_rocket.png",
     "size": "110x150",
     "mode": "flood",

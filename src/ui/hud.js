@@ -418,6 +418,13 @@
       const hits = X.siteHits(s, st);
       return t(st.kind === 'rubble' ? 'prompt.dig_rubble' : hits ? 'prompt.dig_more' : 'prompt.dig.' + st.kind, { n: hits, total: st.hits });
     }
+    // Kişi 5: maden noktası (yüzey: kaz, tünel: matkapla del); vuruş sayısı balonda
+    if (it.kind === 'mineral') {
+      const st = X.mineralSite(it.id);
+      const hits = X.mineralHits(s, st);
+      if (!X.hasTool(s, st.tool)) return t('mineral.need_' + st.tool);
+      return t(hits ? 'prompt.dig_more' : st.tool ? 'prompt.mineral_drill' : 'prompt.mineral', { n: hits, total: st.hits });
+    }
     if (it.kind === 'scout') {
       const shot = s.explore.cave.scout[it.id];
       return t(shot !== null && shot !== undefined ? 'prompt.scout_done' : 'prompt.scout', { what: t('scout.' + it.id + '.name') });
@@ -453,6 +460,11 @@
       el.hidden = true;
       HUD.syncWorld(s);
       return;
+    }
+    // Kişi 5: ilk maden noktasında bir kez ipucu (tarayıcı neden öttü, ne yapılır)
+    if (it.kind === 'mineral' && s.explore && !s.explore.mineralHint) {
+      s.explore.mineralHint = true;
+      S.UI.toast(S.UI.icon('target') + t('mineral.hint'), 'info', 7000);
     }
     const wasHidden = el.hidden;
     el.hidden = false;

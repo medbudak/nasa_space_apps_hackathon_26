@@ -144,9 +144,52 @@
     S.UI.openModal('workshop', WP.html(S.getState()), { cls: 'modal-wide', onMount: mount });
   };
 
+  /* ---------------- Kişi 5: mineraller (ikon, envanter kartı, ilk buluş bilgi kartı) ---------------- */
+  /** Mineral ikonu (assets/processed/sprites/mineral_<id>.png, 24×24; büyütmede pikselli) */
+  WP.mineralIcon = (id, size) => '<img class="min-ico" src="assets/processed/sprites/mineral_' + id + '.png" width="' + (size || 24) + '" height="' + (size || 24) + '" alt="">';
+
+  /** Envanterdeki mineraller (inventory.minerals{ad: adet}); nerede bulunduğu ve oyunda neye yaradığı */
+  WP.mineralsHtml = function (s) {
+    const inv = (s.inventory && s.inventory.minerals) || {};
+    const have = S.Explore.mineralTypes().filter((m) => inv[m.id] > 0);
+    if (!have.length) return '';
+    return (
+      '<h3 class="inv-sub">' + t('mineral.inv_title') + '</h3>' +
+      have
+        .map(
+          (m) =>
+            '<div class="inv-card inv-min"><div class="inv-head">' + WP.mineralIcon(m.id, 24) + '<b>' + t('mineral.' + m.id + '.name') + '</b><span class="inv-n">×' + inv[m.id] + '</span></div>' +
+            '<p>' + t('mineral.' + m.id + '.fact') + '</p>' +
+            '<small>' + I('map') + t('mineral.' + m.id + '.from') + '</small>' +
+            '<small class="inv-use">' + I('wrench') + t('mineral.use.' + m.use) + '</small></div>'
+        )
+        .join('')
+    );
+  };
+
+  /** İlk buluşta kısa bilgi kartı: gerçek Mars bulgusu + oyundaki kullanımı + kaynak */
+  WP.openMineralCard = function (id, amount) {
+    const m = S.Explore.mineralType(id);
+    const cave = S.getState().player.zone === 'cave';
+    const host = (m.src.match(/^https?:\/\/([^/]+)/) || [])[1] || '';
+    const html =
+      '<div class="panel min-card">' +
+      '<div class="fr2-head"><span class="fr2-tag">' + I('target') + t('mineral.tag') + '</span><h2>' + t('mineral.' + id + '.name') + '</h2>' +
+      '<button class="icon-btn" data-close>' + I('x') + '</button></div>' +
+      '<div class="min-body">' + WP.mineralIcon(id, 72) +
+      '<div><p class="min-got">' + t('mineral.got', { n: amount }) + '</p>' +
+      '<p><b>' + t('mineral.real') + '</b> ' + t('mineral.' + id + '.fact') + '</p>' +
+      '<p><b>' + t('mineral.game') + '</b> ' + t('mineral.use.' + m.use) + '</p>' +
+      (cave ? '<p class="pv-note">' + t('mineral.cave_note') + '</p>' : '') +
+      '<small class="min-src">' + t('mineral.src', { host }) + '</small></div></div>' +
+      '<div class="min-foot"><button class="btn btn-primary" data-close>' + t('mineral.ok') + '</button></div></div>';
+    S.UI.openModal('mineral', html, { cls: 'modal-narrow' });
+  };
+
   WP.inventoryHtml = function (s) {
     const list = W().inventoryList(s);
-    const cards = list.length
+    const minerals = WP.mineralsHtml(s);
+    const cards = list.length || minerals
       ? list
           .map((it) => {
             const key = it.kind === 'find' ? 'item.' + it.id : 'item.' + it.id;
@@ -166,7 +209,7 @@
       '<div class="fr2-head"><span class="fr2-tag">' + I('doc') + t('inv.tag') + '</span><h2>' + t('inv.title') + '</h2>' +
       (s.player.inside ? '<button class="btn btn-ghost btn-sm" data-ws>' + I('wrench') + t('ws.title') + '</button>' : '') +
       '<button class="icon-btn" data-close>' + I('x') + '</button></div>' +
-      '<p class="fr2-brief">' + t('inv.intro') + '</p><div class="inv-grid">' + cards + '</div></div>'
+      '<p class="fr2-brief">' + t('inv.intro') + '</p><div class="inv-grid">' + cards + minerals + '</div></div>'
     );
   };
 

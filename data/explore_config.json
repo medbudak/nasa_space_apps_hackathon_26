@@ -109,5 +109,28 @@
     "focusSpeed": 0.45,
     "blurEase": 2.2,
     "albumSize": 12
+    },
+  "minerals": {
+    "note": "Kişi 5 (exploration and minerals): mineral spots found with the suit scanner and dug out with E. Every mineral type is a real Mars finding (src per type). Positions, hit counts, minutes, amounts and the in-game use are game values, not measurements. The lava tube is fictional (D-012); its two drilled veins stand for the olivine-rich basalt that Spirit analysed on the Gusev plains. Basalt is a rock, not a single mineral, and the game says so.",
+    "simplified": true,
+    "src": "https://www.spaceappschallenge.org/",
+    "interactRangeM": 14,
+    "toolPlaceholder": true,
+    "toolPlaceholderNote": "PLACEHOLDER until Kişi 4's tool check lands: while true the drill counts as carried. Remove before content lock.",
+    "types": [
+      { "id": "hematite", "color": "#8c5a5a", "use": "iron", "src": "https://www.jpl.nasa.gov/news/mineral-in-mars-berries-adds-to-water-story/" },
+      { "id": "meteorite", "color": "#a8adb4", "use": "metal", "src": "https://www.jpl.nasa.gov/news/opportunity-rover-finds-an-iron-meteorite-on-mars/" },
+      { "id": "gypsum", "color": "#efe6d2", "use": "science", "src": "https://www.jpl.nasa.gov/news/nasas-curiosity-eyes-prominent-mineral-veins-on-mars/" },
+      { "id": "olivine", "color": "#7f9a3c", "use": "shield", "src": "https://www.jpl.nasa.gov/news/nasa-mars-rovers-first-soil-analysis-yields-surprises/" },
+      { "id": "basalt", "color": "#4a4a50", "use": "build", "src": "https://ntrs.nasa.gov/citations/20080026098" }
+    ],
+    "sites": [
+      { "id": "min_hematite_1", "mineral": "hematite", "zone": "surface", "atM": 390, "hits": 3, "minutesPerHit": 4, "amount": 2 },
+      { "id": "min_meteorite_1", "mineral": "meteorite", "zone": "surface", "atM": 1110, "hits": 4, "minutesPerHit": 4, "amount": 1 },
+      { "id": "min_gypsum_1", "mineral": "gypsum", "zone": "surface", "atM": 2250, "hits": 3, "minutesPerHit": 4, "amount": 1 },
+      { "id": "min_meteorite_2", "mineral": "meteorite", "zone": "surface", "atM": -860, "hits": 4, "minutesPerHit": 4, "amount": 1 },
+      { "id": "min_olivine_1", "mineral": "olivine", "zone": "cave", "atM": 133, "hits": 3, "minutesPerHit": 5, "amount": 2, "tool": "drill" },
+      { "id": "min_basalt_1", "mineral": "basalt", "zone": "cave", "atM": 283, "hits": 3, "minutesPerHit": 5, "amount": 2, "tool": "drill" }
+    ]
   }
 }

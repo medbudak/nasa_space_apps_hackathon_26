@@ -571,6 +571,13 @@
       }
       drawMound(ctx, sx, gy, pal, st.kind, hits, st.hits, DF.seedOf(st.id), X.siteReal(st), light, t);
     }
+    // Kişi 5: yüzeydeki maden noktaları (yarı gömülü parlak taş; kazıldıkça küçülür)
+    if (X.mineralSites) {
+      for (const st of X.mineralSites('surface')) {
+        const sx = Math.round(S.Surface.mToPx(st.atM) - camX);
+        if (vis(sx)) DF.drawMineral(ctx, s, st, sx, gy, t, light, false);
+      }
+    }
     // RIMFAX (yer radarı): menzildeki gerçek noktanın üstünde sinyal halkası
     const ping = X.scannerPing(s);
     if (ping && S.Sim.has(s, 'rimfax')) {
@@ -581,6 +588,79 @@
       ctx.beginPath();
       ctx.arc(sx, gy + 2, 6 + pulse * 22, Math.PI, Math.PI * 2);
       ctx.stroke();
+    }
+  };
+
+  /**
+   * Kişi 5: maden noktası, kazı tümseklerinin çizim diliyle: bölge renginde alçak bir tümsek, içinden taşan mineral
+   * parçası (gerçek tümseklerdeki metal köşesi gibi), aynı parıltı ve gece kararması. Tünelde: duvarda düz renkli
+   * damar + tünel buluntularının yanıp sönen sarı işareti. Her vuruşta biraz küçülür; bitince çukur / boş iz kalır.
+   */
+  DF.drawMineral = function (ctx, s, st, x, gy, t, light, cave) {
+    const m = S.Explore.mineralType(st.mineral);
+    const hits = S.Explore.mineralHits(s, st);
+    const done = hits >= st.hits;
+    const left = 1 - hits / Math.max(1, st.hits);
+    const R = (dx, dy, w, h, col) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(x + dx), Math.round(gy + dy), w, h);
+    };
+    const seed = DF.seedOf(st.id);
+    if (cave) {
+      // duvardaki damar: tünel katmanları gibi düz renk, üstte 1 px açık ton
+      const col = m ? m.color : '#9a9690';
+      const len = done ? 0 : Math.max(6, Math.round(22 * (0.4 + 0.6 * left)));
+      for (let i = 0; i < len; i++) {
+        const y = -7 - Math.round(i * 0.3) + (i % 7 === 3 ? 1 : 0); // duvarın dibinde, diz hizası (astronot diz çöküp deler)
+        R(-11 + i, y, 1, 3, col);
+        R(-11 + i, y, 1, 1, hexMix(col, '#ffffff', 0.35));
+      }
+      if (done) R(-8, -9, 16, 2, '#1a1214');
+      else if (Math.sin(t * 3 + st.atM) > 0) R(-1, -46, 3, 3, '#ffc233');
+      return;
+    }
+    const minute = s.minute;
+    if (done) {
+      R(-8, -1, 16, 3, '#2a140d');
+      return;
+    }
+    // alçak tümsek (gerçek tümseklerle aynı basamaklar, daha küçük)
+    const pal = S.Art.palette(s.design.landingSiteId, minute);
+    const kp = KIND_PAL.dust;
+    const wid = 14;
+    const steps = Math.max(1, Math.round(3 * (1 - (hits / st.hits) * 0.6)));
+    for (let i = 0; i < steps; i++) R(-wid + i * 5, -2 - i * 2, (wid - i * 5) * 2, 2, i % 2 ? pal.groundLight : kp.fresh);
+    ctx.fillStyle = pal.groundDark;
+    for (let i = 0; i < 4; i++) ctx.fillRect(Math.round(x - wid + rnd(seed + i) * wid * 2), Math.round(gy - 1 - rnd(seed + i * 3) * 3), 2, 2);
+    // içinden taşan mineral parçası
+    const col = atNight(m ? m.color : '#9a9690', minute);
+    const lit = atNight(hexMix(m ? m.color : '#9a9690', '#ffffff', 0.35), minute);
+    const dk = atNight(hexMix(m ? m.color : '#9a9690', '#000000', 0.4), minute);
+    const up = Math.round(3 * left);
+    if (st.mineral === 'hematite') {
+      for (const [dx, dy] of [[1, -7], [5, -8], [3, -10]]) {
+        R(dx, dy - up, 3, 3, col);
+        R(dx, dy - up, 1, 1, lit);
+      }
+    } else {
+      R(2, -9 - up, 7, 4 + up, col);
+      R(4, -11 - up, 3, 2, col);
+      R(2, -9 - up, 7, 1, lit);
+      R(2, -5, 7, 1, dk);
+      if (st.mineral === 'gypsum') R(3, -8 - up, 5, 1, atNight('#f4efe4', minute));
+      if (st.mineral === 'olivine') R(5, -8 - up, 2, 1, atNight('#8fb33c', minute));
+    }
+    if (hits > 0) R(-3 - hits * 2, -1, 6 + hits * 4, 3, '#2a140d');
+    // parıltı: gerçek tümseklerle aynı (gece söner)
+    if (light.dark < 0.6) {
+      const phase = (t + rnd(seed) * 2) % 1.8;
+      if (phase < 0.35) {
+        ctx.save();
+        ctx.globalAlpha = (1 - phase / 0.35) * (1 - light.dark);
+        R(7, -19, 1, 9, '#fff6d8');
+        R(3, -15, 9, 1, '#fff6d8');
+        ctx.restore();
+      }
     }
   };
 
