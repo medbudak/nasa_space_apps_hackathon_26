@@ -305,9 +305,13 @@
   // im: lander içi yatay hız (S.util.easeVelocity durumu, px/sn)
   // jv: lander içi dikey süzülme hızı (S.util.easeVelocity durumu); rising: tavana doğru itilirken true
   const body = { px: 0, cpx: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560, im: { v: 0, vMid: 0 }, jv: { v: 0, vMid: 0 }, rising: false, crouchK: 0, crouching: false };
-  // Süzülme eylemsizliği: kalkış/duruşun oturma süresi (sn). Lander içi ve transit güvertesi aynı değeri kullanır
-  // (kullanıcı kararı 2026-11-15: mekik içi her zaman Sol 0'daki gibi ağırlıksız; lander'da oyun basitleştirmesi)
+  // Süzülme eylemsizliği (sn): yalnız uzaydaki transit güvertesi (ağırlıksız).
   Surf.DRIFT_ACCEL_TAU = 0.9;
+  // Lander Mars'ta duruyor: içeride 0.38g ile yürünür (K3 Medine kararı 2026-11-15, önceki "mekik içi ağırlıksız"
+  // basitleştirmesinin yerine). Yürüyüşte kalkış/duruş kısa sürer.
+  Surf.WALK_ACCEL_TAU = 0.12;
+  // Mekik içi ölçek: ~60 px'lik mürettebat ≈ 1,8 m boy
+  Surf.INTERIOR_PX_PER_M = 60 / 1.8;
   Surf.body = body;
 
   Surf.gravityPx = () => S.DATA.constants.marsGravity.value * G().spritePxPerMeter;
@@ -588,7 +592,7 @@
     body.moving = input.dir !== 0;
     if (input.dir !== 0) s.player.facing = input.dir;
     // Eylemsizlik: hız yumuşakça hedefe oturur (transit güvertesiyle aynı yöntem); duvarda durur
-    S.util.easeVelocity(body.im, input.dir * G().interiorWalkPxPerSecond, dt, Surf.DRIFT_ACCEL_TAU);
+    S.util.easeVelocity(body.im, input.dir * G().interiorWalkPxPerSecond, dt, Surf.WALK_ACCEL_TAU);
     const nx = body.ix + body.im.v * dt;
     body.ix = Math.max(I.left, Math.min(I.right, nx));
     if (body.ix !== nx) body.im.v = body.im.vMid = 0;
@@ -604,21 +608,23 @@
   };
 
   /**
-   * Mekik içinde zıplama = ağırlıksız itiş (Sol 0 güvertesiyle aynı his): dikey hız aynı yumuşatmayla tavana doğru
-   * artar, tavana yaklaşınca yön değiştirir ve mürettebat yavaşça zemine geri süzülür.
+   * Mekik içinde zıplama: Mars yerçekimiyle (0.38g) yay çizen gerçek zıplama. Yükseklik dışarıdakiyle aynı formül
+   * (Dünya'daki zıplamanın g oranı katı), mekik ölçeğinde; tavana çarpmasın diye maxJumpPx ile sınırlı.
    */
   function updateInteriorJump(input, dt, I) {
+    const c = S.DATA.constants.marsGravity;
+    const g = c.value * Surf.INTERIOR_PX_PER_M;
     if (input.jump && body.onGround) {
+      const hM = G().earthJumpHeightM * (c.earthValue / c.value);
+      const h = Math.min(I.maxJumpPx - 4, hM * Surf.INTERIOR_PX_PER_M);
       body.onGround = false;
-      body.rising = true;
-      body.jv.v = body.jv.vMid = 0;
+      body.vy = Math.sqrt(2 * g * h);
       S.bus.emit('audio:play', 'jump');
     }
     if (body.onGround) return;
-    if (body.rising && body.y >= I.maxJumpPx - I.turnBelowPx) body.rising = false;
-    body.vy = S.util.easeVelocity(body.jv, (body.rising ? 1 : -1) * I.driftRisePxPerSecond, dt, Surf.DRIFT_ACCEL_TAU);
+    body.vy -= g * dt;
     body.y = Math.min(I.maxJumpPx, body.y + body.vy * dt);
-    if (!body.rising && body.y <= 0) {
+    if (body.y <= 0) {
       body.y = 0;
       body.vy = 0;
       body.onGround = true;

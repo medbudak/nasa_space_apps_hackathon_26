@@ -15,7 +15,8 @@
     pickaxe: 'wrench', drill: 'grip', scanner: 'target', repair_kit: 'wrench', rhu: 'heat',
     panel_kit: 'power', solar_kit: 'power', insight_panel: 'power', cable_spool: 'signal', umbilical_kit: 'rocket',
     moxie_kit: 'o2', seed_kit: 'leaf', drill_kit: 'grip', spare_parts: 'wrench', cargo_crate: 'home',
-    regolith_bag: 'weight', rhu_pack: 'heat', heater_kit: 'heat', relay_kit: 'signal', spare_antenna: 'sat', robotic_arm: 'grip'
+    regolith_bag: 'weight', rhu_pack: 'heat', heater_kit: 'heat', relay_kit: 'signal', spare_antenna: 'sat', robotic_arm: 'grip',
+    bottle_empty: 'drop', bottle_full: 'drop'
   };
   HB.icon = (it) => ICON[it.id] || (it.kind === 'find' ? 'camera' : 'doc');
   HB.nameKey = (it) => (it.kind === 'tool' ? 'tool.' : 'item.') + it.id + '.name';
@@ -28,6 +29,16 @@
     return k > 0 && k < 1 ? k : 0;
   };
   HB.selected = (s) => (HB.open ? S.Workshop.inventoryList(s).slice(0, SLOTS)[HB.sel] || null : null);
+  /** Su şişesi elde mi (hotbar'da seçili); değilse envanterde durur, elde çizilmez */
+  HB.holdsBottle = (s) => {
+    const it = HB.selected(s);
+    return Boolean(it && it.id.startsWith('bottle_'));
+  };
+  /** Şişenin hotbar slot numarası (1..9), yoksa null */
+  HB.bottleSlot = (s) => {
+    const i = S.Workshop.inventoryList(s).slice(0, SLOTS).findIndex((it) => it.id.startsWith('bottle_'));
+    return i < 0 ? null : i + 1;
+  };
 
   HB.toggle = function (open = !HB.open) {
     HB.open = open;

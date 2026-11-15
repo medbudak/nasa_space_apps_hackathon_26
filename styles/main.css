@@ -1325,22 +1325,6 @@ body[data-scene='world'] .screen-layer { display: none; }
 .hz-need.crit b, .hz-need.crit .ico { color: #ff8a80; }
 .hz-need.crit .bar-fill { background: var(--red); animation: pulse 0.8s infinite alternate; }
 
-/* Sera büyüme evreleri (Kişi 6); evre görselleri Kişi 7'nin (assets/sprites/plants) */
-.gh-img { width: 48px; height: 48px; image-rendering: pixelated; display: block; }
-.gh-stages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4em; margin: 0.2em 0 0.5em; }
-.gh-step { display: flex; flex-direction: column; align-items: center; gap: 0.25em; padding: 0.4em 0.2em; border: 1px solid var(--line, #3a3430); border-radius: 6px; opacity: 0.45; }
-.gh-step small { font-size: 0.62em; text-align: center; }
-.gh-step.done { opacity: 0.75; }
-.gh-step.now { opacity: 1; border-color: var(--cyan, #3fe0e6); box-shadow: 0 0 0 1px var(--cyan, #3fe0e6) inset; }
-.gh-sci { font-size: 0.66em; opacity: 0.75; margin-top: 0.5em; }
-/* Bitki seçimi (marul / turp / zinya) */
-.gh-plants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4em; margin: 0 0 0.5em; }
-.gh-plant { display: flex; flex-direction: column; align-items: center; gap: 0.2em; padding: 0.45em 0.3em; font-family: inherit; font-size: 1em; color: inherit;
-  background: transparent; border: 1px solid var(--line, #3a3430); border-radius: 6px; cursor: pointer; }
-.gh-plant b { font-size: 0.72em; }
-.gh-plant small { font-size: 0.58em; opacity: 0.75; text-align: center; line-height: 1.25; }
-.gh-plant.sel { border-color: var(--cyan, #3fe0e6); box-shadow: 0 0 0 1px var(--cyan, #3fe0e6) inset; }
-.gh-plant.sel small { color: inherit !important; opacity: 0.85; } /* genel ".sel small" kuralı açık zemin için; burada zemin koyu */
 .ws-mats li .min-ico { vertical-align: middle; margin-right: 0.3em; } /* Kişi 6: yükseltme tariflerinde mineral ikonu adın yanında */
 
 /* En alttaki yol çubuğu kaldırıldı (O₂ dönüş çentiği sol üstteki O₂ çubuğunda kalır) */
@@ -1356,18 +1340,34 @@ body[data-scene='world'] .screen-layer { display: none; }
 .pcam-focus .pf-dir.r { display: block; left: 0.75em; border-left: 0.5em solid #e9eef2; }
 .pcam-focus .pf-dir.l { display: block; right: 0.75em; border-right: 0.5em solid #e9eef2; }
 
-/* Sera saksıları (çoklu ekim) */
-.gh-trays { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.2em, 1fr)); gap: 0.35em; margin-bottom: 0.5em; }
-.gh-tray { display: flex; flex-direction: column; align-items: center; gap: 0.1em; padding: 0.35em 0.2em; border: 1px solid var(--line); border-radius: 0.35em; background: rgba(0,0,0,0.25); color: inherit; font-size: 1em; font-family: inherit; cursor: pointer; }
-.gh-tray:hover { border-color: var(--cyan); }
-.gh-tray.sel { border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan) inset; }
-.gh-tray b { font-size: 0.72em; }
-.gh-tray small { font-size: 0.58em; color: var(--muted); }
-.gh-tray small.ok { color: var(--green); }
-.gh-tray small.warn { color: var(--amber); }
-.gh-tray.empty { border-style: dashed; }
-.gh-tray .gh-plus { font-size: 1.6em; line-height: 48px; height: 48px; color: var(--muted); }
-.gh-pick-t { margin: 0.2em 0 0.3em; font-size: 0.72em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+/* Yakın çekim sahneleri (S.GreenhouseScene, S.GymScene): kanvasın üstünde bilgi çubuğu, altta ince bilgi satırı */
+.scn { font-size: clamp(11px, 1.45vw, 18px); }
+.scn-note { position: absolute; left: 0.8em; bottom: 0.5em; margin: 0; padding: 0.15em 0.5em; font-size: 0.75em; color: #e3d8c4; background: rgba(29, 33, 40, 0.82); border-radius: 0.25em; }
+.scn-top { position: absolute; right: 0.8em; bottom: 0.5em; display: flex; gap: 0.9em; align-items: center; padding: 0.15em 0.6em; font-size: 0.8em; color: #e3d8c4; background: rgba(29, 33, 40, 0.82); border-radius: 0.25em; }
+.scn-top span { display: inline-flex; align-items: center; gap: 0.3em; }
+.scn-top .scn-keys { color: var(--muted); }
+/* bilgi çubuğu üstte: alttaki zemin ve karakter açık kalır */
+.scn-bar { position: absolute; left: 1em; right: 1em; top: 0.7em; display: flex; flex-wrap: wrap; gap: 0.4em 0.9em; align-items: center; padding: 0.5em 0.8em;
+  background: rgba(29, 33, 40, 0.88); border: 1px solid #d9752e; border-radius: 0.35em; color: #e3d8c4; }
+.scn-info { flex: 1 1 18em; display: flex; flex-direction: column; gap: 0.15em; min-width: 0; }
+.scn-info b { font-weight: 400; color: #f1e8dc; }
+.scn-info small { font-size: 0.85em; color: var(--muted); }
+.scn-info small.ok { color: var(--green); }
+.scn-info small.warn { color: var(--amber); }
+.scn-msg { margin: 0; font-size: 0.85em; color: var(--amber); }
+.scn-msg.danger { color: #ff8a80; }
+.scn-msg.info { color: var(--cyan); }
+.scn-pick { display: flex; gap: 0.4em; align-items: center; flex-wrap: wrap; }
+.scn-pick span { font-size: 0.8em; color: var(--muted); }
+.scn-sci { flex: 1 1 100%; order: 3; margin: 0; font-size: 0.7em; color: var(--muted); }
+.scn-acts { display: flex; gap: 0.4em; flex-wrap: wrap; }
+.scn-btn { display: inline-flex; align-items: center; gap: 0.35em; padding: 0.3em 0.65em; font-family: inherit; font-size: 1em; color: #e3d8c4; cursor: pointer;
+  background: #2b2f36; border: 1px solid #5a606b; border-radius: 0.3em; }
+.scn-btn:hover:not(:disabled) { border-color: #d9752e; }
+.scn-btn.go { background: #d9752e; border-color: #d9752e; color: #1d2128; }
+.scn-btn.sel { border-color: var(--cyan); }
+.scn-btn:disabled { opacity: 0.45; cursor: default; }
+.scn-btn kbd { font-size: 0.8em; }
 
 /* Göktaşı sinematiği (tam ekran, atlanabilir) */
 .modal-scene .modal-box { width: 100%; height: 100%; max-width: none; padding: 0; background: #000; display: flex; align-items: center; justify-content: center; }

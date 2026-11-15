@@ -65,3 +65,14 @@ test('Su yetmezse yalnızca yettiği kadar saksı sulanır; hiç su yoksa bakım
   s.res.waterL = 0;
   assert.equal(Sim.actions.tend_greenhouse.can(s), 'action.err_no_water');
 });
+
+test('Sera içi sahnesi: arka plan ve her bitkinin her evre görseli diskte (sprites.js listeyi veriden kurar)', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const S = loadCore();
+  const dir = path.join(__dirname, '..', 'assets', 'processed');
+  assert.ok(fs.existsSync(path.join(dir, 'screens', 'scr_greenhouse.png')), 'sera içi arka planı yok');
+  for (const [id, p] of Object.entries(S.DATA.habitat.greenhouse.growth.plants)) {
+    p.stages.forEach((_, i) => assert.ok(fs.existsSync(path.join(dir, 'sprites', 'plants', id + '_' + (i + 1) + '.png')), id + ' evre ' + (i + 1) + ' görseli yok'));
+  }
+});

@@ -132,3 +132,21 @@ test('Rack: putting a full bottle back pours it into the habitat tank', () => {
   assert.equal(S.Sim.bottle(s), null);
   assert.equal(s.res.waterL, Math.round((w + 2) * 10) / 10);
 });
+
+test('Bottle rides in the inventory (a tool slot after the tools), not in hand; gone when put back', () => {
+  const { S, s } = landed();
+  const ids = () => S.Workshop.inventoryList(s).map((it) => it.id);
+  assert.equal(ids().some((id) => id.startsWith('bottle_')), false);
+  S.Sim.toggleBottle(s);
+  const list = S.Workshop.inventoryList(s);
+  const i = list.findIndex((it) => it.id === 'bottle_empty');
+  assert.ok(i >= 0, 'empty bottle is in the inventory');
+  assert.equal(list[i].kind, 'tool');
+  assert.ok(list.slice(0, i).every((it) => it.kind === 'tool'), 'listed right after the tools (low hotbar slot)');
+  for (const lang of ['tr', 'en']) {
+    S.lang = lang;
+    for (const k of ['tool.bottle_empty.name', 'tool.bottle_full.name', 'prompt.bottle_hold', 'bottle.hold_hint']) assert.notEqual(S.t(k), k, lang + ' ' + k);
+  }
+  S.Sim.toggleBottle(s);
+  assert.equal(ids().some((id) => id.startsWith('bottle_')), false);
+});

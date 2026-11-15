@@ -192,11 +192,11 @@
    */
   const TQ = { queue: [], shown: 0, recent: new Map() };
   const TOAST_MAX = 2;
-  /** Ara sahneler (yolculuk, göktaşı, final) oynarken bildirimler bekler; sahne bitince gösterilir */
+  /** Ara sahneler (yolculuk, göktaşı, final) ve sera / spor odası açıkken bildirimler bekler; sahne bitince gösterilir */
   const toastBlocked = () => {
     const sc = S.Game && S.Game.scene;
     const top = UI.topModal && UI.topModal();
-    return sc === 'transit' || sc === 'ending' || sc === 'report' || Boolean(top && top.id === 'impact-scene');
+    return sc === 'transit' || sc === 'ending' || sc === 'report' || Boolean(top && ['impact-scene', 'greenhouse-scene', 'gym-scene'].includes(top.id));
   };
   if (typeof setInterval === 'function' && typeof document !== 'undefined') setInterval(() => {
     const host = document.getElementById('toast-layer');

@@ -30,7 +30,7 @@ const step = (S, s, input, seconds) => {
   for (let t = 0; t < seconds; t += 1 / 60) S.Surface.updateInterior(s, 1 / 60, { dir: 0, jump: false, ...input });
 };
 
-test('lander içinde zıplama ağırlıksız bir itiştir: tavan sınırını geçmez, yavaşça yere geri süzülür', () => {
+test('lander Mars üstünde: içeride zıplama 0.38g ile yay çizer, tavanı geçmez ve yere geri düşer (süzülme yok)', () => {
   const { S, s } = inside();
   const body = S.Surface.body;
   const I = S.Surface.INTERIOR;
@@ -44,10 +44,9 @@ test('lander içinde zıplama ağırlıksız bir itiştir: tavan sınırını ge
     S.Surface.updateInterior(s, 1 / 60, { dir: 0, jump: false });
     peak = Math.max(peak, body.y);
   }
-  assert.ok(peak > 0, 'mürettebat yükselmedi');
+  assert.ok(peak > I.maxJumpPx / 2, `zıplama çok alçak: ${peak}`);
   assert.ok(peak <= I.maxJumpPx, `tavan sınırı aşıldı: ${peak}`);
-  assert.ok(peak > I.maxJumpPx / 2, `itiş tavana doğru yükselmedi: ${peak}`);
-  assert.ok(airTime > 1.5, `süzülme çok kısa (ağırlıksız değil): ${airTime.toFixed(2)} sn`);
+  assert.ok(airTime < 1.6, `havada çok uzun kaldı (ağırlıksız gibi): ${airTime.toFixed(2)} sn`);
   assert.equal(body.onGround, true);
   assert.equal(body.y, 0);
 });
@@ -61,21 +60,17 @@ test('lander içinde yürüyüş kesitin duvarları arasında kalır', () => {
   assert.equal(S.Surface.body.ix, I.left);
 });
 
-test('lander içinde hız yumuşakça değişir: yavaş kalkış, hedefe oturma, tuş bırakılınca kısa süzülme', () => {
+test('lander içinde yürüyüş: kısa kalkış ve duruş (Mars yerçekimi var, süzülerek kaymaz)', () => {
   const { S, s } = inside();
   const body = S.Surface.body;
   const top = S.DATA.gameplay.interiorWalkPxPerSecond;
-  const settle = 3 * S.Surface.DRIFT_ACCEL_TAU; // iki kademeli yumuşatma bu sürede hedefin %2'sine iner
-  body.ix = S.Surface.INTERIOR.left + 10; // sağa süzülmek için yer olsun
-  S.Surface.updateInterior(s, 1 / 60, { dir: 1, jump: false });
-  assert.ok(body.im.v > 0 && body.im.v < top * 0.1, `ilk karede hız çok yüksek: ${body.im.v}`);
+  const settle = 3 * S.Surface.WALK_ACCEL_TAU;
+  body.ix = S.Surface.INTERIOR.left + 10;
   step(S, s, { dir: 1 }, settle);
-  assert.ok(Math.abs(body.im.v - top) < top * 0.02, `hız hedefe oturmadı: ${body.im.v}`);
-  const before = body.ix;
-  S.Surface.updateInterior(s, 1 / 60, { dir: 0, jump: false });
-  assert.ok(body.ix > before && body.im.v > top * 0.9, 'tuş bırakılınca hemen durmamalı');
+  assert.ok(Math.abs(body.im.v - top) < top * 0.05, `hız yürüyüş hızına oturmadı: ${body.im.v}`);
   step(S, s, { dir: 0 }, settle);
-  assert.ok(Math.abs(body.im.v) < top * 0.02, `süzülme sönmedi: ${body.im.v}`);
+  assert.ok(Math.abs(body.im.v) < top * 0.05, `tuş bırakılınca durmadı: ${body.im.v}`);
+  assert.ok(S.Surface.WALK_ACCEL_TAU < S.Surface.DRIFT_ACCEL_TAU, 'yürüyüş, uzaydaki süzülmeden çabuk oturur');
 });
 
 test('S.util.easeVelocity: S eğrisi (ivme önce artar sonra azalır) ve hedefi aşmaz', () => {
@@ -119,4 +114,63 @@ test('spor bölmesi: istasyon duvarlar arasında; spor moral verir, yorgunluk ek
   assert.equal(s.res.morale >= 50 + e.morale - 1, true, 'moral arttı (zaman geçerken az düşebilir)');
   assert.ok(S.Sim.needs(s).fatigue >= fatigue + e.fatigue - 1, 'yorgunluk arttı');
   assert.ok(s.minute - t0 >= e.minutes, 'süre geçti');
+});
+
+// Spor odası sahnesi (src/ui/gym_scene.js): DOM'a yalnız açılınca dokunur; zaman çizelgesi ve ödül burada denenir
+function withGymScene() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const vm = require('node:vm');
+  const { S, s } = inside();
+  const code = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui', 'gym_scene.js'), 'utf8');
+  vm.runInNewContext(code, { window: { SOL14: S }, Math });
+  return { S, s };
+}
+
+test('spor bölmesi sağdan ikinci bölmede: sağında yalnız ranza-mutfak-hava kilidi bölmesi var', () => {
+  const { S } = inside();
+  const I = S.Surface.INTERIOR;
+  const right = I.stations.filter((st) => st.x > I.gym.atX + I.gym.w).map((st) => st.id);
+  assert.deepEqual([...right], ['bunk', 'bottles', 'airlock']);
+  const gym = I.stations.find((st) => st.id === 'gym');
+  assert.ok(gym.x > I.gym.atX && gym.x < I.gym.atX + I.gym.w);
+});
+
+test('spor odası: dinlenme → kavra → (çek, tut, kontrollü bırak) × tekrar → dinlenme; tutarken tam çekili', () => {
+  const { S } = withGymScene();
+  const GS = S.GymScene;
+  assert.equal(GS.pose(0).rest, 1, 'başta dinlenme pozu');
+  const seen = [];
+  let lastRelease = 2;
+  for (let t = 0; t <= GS.totalS() + 0.2; t += 0.01) {
+    const p = GS.pose(t);
+    if (seen[seen.length - 1] !== p.phase + p.rep) seen.push(p.phase + p.rep);
+    if (p.phase === 'hold') assert.equal(p.pull, 1);
+    if (p.phase === 'release') {
+      assert.ok(p.pull <= lastRelease + 1e-9, 'bırakma geri sıçramaz');
+      lastRelease = p.pull;
+    } else lastRelease = 2;
+  }
+  const reps = GS.PLAN.reps;
+  const expect = ['grip0'];
+  for (let r = 1; r <= reps; r++) expect.push('pull' + r, 'hold' + r, 'release' + r);
+  expect.push('end' + reps, 'done' + reps);
+  assert.deepEqual(seen, expect);
+  assert.equal(GS.pose(GS.totalS() + 1).rest, 1, 'sonda dinlenme pozu');
+});
+
+test('spor odası: egzersizin etkisi bir kez uygulanır; aynı egzersiz ikinci kez ödül vermez', () => {
+  const { S, s } = withGymScene();
+  const e = S.DATA.gameplay.exercise;
+  s.res.morale = 50;
+  const t0 = s.minute;
+  const run = { rewarded: false };
+  assert.equal(S.GymScene.finish(s, run).ok, true);
+  const after = { morale: s.res.morale, minute: s.minute, fatigue: S.Sim.needs(s).fatigue };
+  assert.ok(after.minute - t0 >= e.minutes);
+  const again = S.GymScene.finish(s, run);
+  assert.equal(again.ok, false);
+  assert.equal(s.res.morale, after.morale);
+  assert.equal(s.minute, after.minute);
+  assert.equal(S.Sim.needs(s).fatigue, after.fatigue);
 });

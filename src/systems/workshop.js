@@ -252,6 +252,9 @@
       .filter(([, n]) => n > 0)
       .map(([id, n]) => ({ id, n, kind: 'item' }));
     for (const [id, have] of Object.entries(inv.tools || {})) if (have) list.unshift({ id, n: 1, kind: 'tool' });
+    // D-016 şişesi elde değil envanterde taşınır; hotbar'da seçilince ele alınır (Hotbar.holdsBottle)
+    const bottle = S.Sim.bottle(s);
+    if (bottle) list.splice(list.filter((it) => it.kind === 'tool').length, 0, { id: 'bottle_' + bottle, n: 1, kind: 'tool' });
     if (inv.repairKits > 0) list.push({ id: 'repair_kit', n: inv.repairKits, kind: 'stock' });
     if (inv.rhuUnits > 0) list.push({ id: 'rhu', n: inv.rhuUnits, kind: 'stock' });
     for (const p of (s.salvage && s.salvage.found) || []) list.push({ id: 'find_' + p, n: 1, kind: 'find' });

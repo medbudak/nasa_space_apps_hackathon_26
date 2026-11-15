@@ -24,14 +24,7 @@
     warnedNeeds.add(e.id);
     S.UI.toast(t('needs.warn_' + e.id), 'warn');
   });
-  // Lander içindeki süzülme bir oyun basitleştirmesidir (kullanıcı kararı 2026-11-15): oturumda ilk girişte bir kez söylenir
-  let zeroGNoted = false;
-  S.bus.on('habitat:enter', () => {
-    if (zeroGNoted) return;
-    zeroGNoted = true;
-    const g = S.DATA.constants.marsGravity;
-    S.UI.toast(I('alert') + t('hp.zero_g_note', { pct: Math.round((g.value / g.earthValue) * 100) }), 'info', 7000);
-  });
+  // Lander Mars'ta: içeride 0.38g ile yürünür (eski "mekik içinde süzülme" notu kaldırıldı)
   // Yemek/içme/tuvalet sonucu animasyon ve HUD çubuklarında görünür; "yapıldı" bildirimi yalnız diğer eylemlerde
   const QUIET_ACTIONS = new Set(['eat', 'drink', 'toilet']);
 
@@ -96,7 +89,7 @@
         '<p class="pv-cost">' + I('tank') + t(p.costKey, p.costVars) + '</p>',
         '<p class="pv-note">' + I('alert') + t('pv.time_note') + '</p>'
       ],
-      button: t('action.start'),
+      button: t(id === 'exercise' ? 'gym.scene.enter' : 'action.start'),
       can: act.can(s)
     };
   };
@@ -198,6 +191,10 @@
       S.Game.sleep();
       return;
     }
+    if (id === 'exercise') {
+      S.GymScene.open(); // spor odasının yakın çekimi: egzersiz orada başlatılır
+      return;
+    }
     if (id === 'bottle') {
       S.Game.bottleRack();
       HP.lastHtml = '';
@@ -277,93 +274,9 @@
     if (text) S.bus.emit('fx:float', { text, px: S.Surface.body.px, tone: 'ok' });
   };
 
-  /**
-   * Sera paneli (Kişi 6): bitkinin evresi (görsel + 4 adımlı şerit), sonraki evreye ne kaldığı, bugünkü bakım durumu;
-   * olgunsa "Hasat et", değilse "Seraya bak". Sıkıştırılmış süre ve bilimsel not her zaman görünür.
-   */
-  // Evre görseli (Kişi 7): assets/processed/sprites/plants/<bitki>_<1..3>.png, 48×48, büyütmede pikselli
-  const art = (plant, stage) => {
-    const n = S.DATA.habitat.greenhouse.growth.plants[plant].stages.indexOf(stage) + 1;
-    return '<img class="gh-img" src="assets/processed/sprites/plants/' + plant + '_' + n + '.png" width="48" height="48" alt="">';
-  };
-  HP.ghSel = 0; // seçili saksı
-  HP.greenhouseInfo = function (s) {
-    const gh = s.greenhouse;
-    if (!gh.installed) return '<p class="pv-desc">' + t('gh.not_installed') + '</p>';
-    if (gh.frozen) return '<div class="alert danger">' + I('temp') + '<span>' + t('gh.frozen_info', { sol: gh.frozenSol, cause: t('gh.cause_' + gh.cause) }) + '</span></div>';
-    const Sim = S.Sim;
-    const n = Sim.ghTrayCount(s);
-    if (HP.ghSel >= n) HP.ghSel = 0;
-    const sel = HP.ghSel;
-    // Saksılar: her biri kendi bitkisi ve evresiyle; boş saksıya bitki ekilir (su yettiği sürece hepsi büyür)
-    const trays = [...Array(n).keys()]
-      .map((i) => {
-        const plant = Sim.ghPlant(s, i);
-        const on = i === sel ? ' sel' : '';
-        if (!plant) return '<button type="button" class="gh-tray empty' + on + '" data-tray="' + i + '"><span class="gh-plus">+</span><small>' + t('gh.tray_empty') + '</small></button>';
-        const tr = Sim.ghTray(s, i);
-        const st = Sim.ghMature(s, i) ? ['ok', 'gh.tray_ripe'] : tr.tendedSol === s.sol ? ['ok', 'gh.tray_tended'] : ['warn', 'gh.tray_needs'];
-        return '<button type="button" class="gh-tray' + on + '" data-tray="' + i + '">' + art(plant, Sim.ghStageKey(s, i)) +
-          '<b>' + t('plant.' + plant) + '</b><small class="' + st[0] + '">' + t(st[1]) + '</small></button>';
-      })
-      .join('');
-    const plant = Sim.ghPlant(s, sel);
-    // Seçili saksı boşsa ya da yeni ekildiyse bitki seçilir (marul / turp / zinya); büyümeye başlayınca değişmez
-    const picker = Sim.ghCanChoose(s, sel)
-      ? '<p class="gh-pick-t">' + t('gh.pick_title') + '</p><div class="gh-plants" role="radiogroup">' +
-        Object.keys(S.DATA.habitat.greenhouse.growth.plants)
-          .map((id) => {
-            const last = S.DATA.habitat.greenhouse.growth.plants[id].stages.slice(-1)[0];
-            return '<button type="button" role="radio" aria-checked="' + (id === plant) + '" class="gh-plant' + (id === plant ? ' sel' : '') + '" data-plant="' + id + '">' +
-              art(id, last) + '<b>' + t('plant.' + id) + '</b><small>' + t('plant.' + id + '.desc') + '</small></button>';
-          })
-          .join('') + '</div>'
-      : '';
-    let detail = '';
-    if (plant) {
-      const stages = Sim.ghPlantCfg(s, sel).stages;
-      const st = Sim.ghStage(s, sel);
-      const strip = stages
-        .map((k, i) => '<span class="gh-step' + (i < st ? ' done' : i === st ? ' now' : '') + '">' + art(plant, k) + '<small>' + t('gh.stage.' + k) + '</small></span>')
-        .join('');
-      let next;
-      if (Sim.ghMature(s, sel)) next = '<p class="pv-note ok">' + I('check') + t('gh.ready.' + plant) + '</p>';
-      else if (Sim.ghTray(s, sel).tendedSol === s.sol) next = '<p class="pv-note ok">' + I('check') + t('gh.tended_today', { sols: Sim.ghSolsLeft(s, sel) - 1 }) + '</p>';
-      else next = '<p class="pv-note">' + I('alert') + t('gh.needs_tending', { sols: Sim.ghSolsLeft(s, sel) }) + '</p>';
-      detail = '<div class="gh-stages">' + strip + '</div>' + next;
-    }
-    return (
-      '<div class="gh-trays">' + trays + '</div>' +
-      picker +
-      detail +
-      '<p class="pv-note">' + I('drop') + t('gh.trays_info', { lv: Sim.upgradeLevel(s, 'greenhouse'), n, l: S.DATA.habitat.greenhouse.tendWaterL }) + '</p>' +
-      '<div class="pv-row">' + I('leaf') + '<span>' + t('gh.yield') + '</span><b>%' + Sim.ghYieldPct(s) + '</b></div>' +
-      (gh.yieldPct > 100 ? '<p class="pv-note ok">' + I('check') + t('gh.boosted') + '</p>' : '') +
-      '<p class="pv-desc gh-sci">' + t('gh.science') + '</p>'
-    );
-  };
-
+  /** Veggie seçilmediyse kubbe boş: yalnız açıklama. Kurulu sera kendi iç sahnesinde açılır (S.GreenhouseScene). */
   HP.openGreenhouse = function () {
-    const s = S.getState();
-    const ripe = s.greenhouse.installed && !s.greenhouse.frozen && S.Sim.ghPlanted(s).some((i) => S.Sim.ghMature(s, i));
-    HP.openActionModal(ripe ? 'harvest_greenhouse' : 'tend_greenhouse', HP.greenhouseInfo(s));
-    const reopen = () => {
-      S.bus.emit('audio:play', 'click');
-      S.UI.closeModal('action', true);
-      HP.openGreenhouse();
-    };
-    // saksı seç; seçili saksıya bitki ek, paneli yeniden aç
-    document.querySelectorAll('.action-modal [data-tray]').forEach((b) =>
-      b.addEventListener('click', () => {
-        HP.ghSel = Number(b.dataset.tray);
-        reopen();
-      })
-    );
-    document.querySelectorAll('.action-modal [data-plant]').forEach((b) =>
-      b.addEventListener('click', () => {
-        if (S.Sim.choosePlant(s, b.dataset.plant, HP.ghSel)) reopen();
-      })
-    );
+    HP.openActionModal('tend_greenhouse', '<p class="pv-desc">' + t('gh.not_installed') + '</p>');
   };
 
   /** D-015: hasarlı parçalar; her biri için gerekli / sende olan, alet, enerji ve EVA süresi */

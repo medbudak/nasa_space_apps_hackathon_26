@@ -1342,7 +1342,7 @@
         return;
       }
     }
-    if (!b) return;
+    if (!b || !S.Hotbar.holdsBottle(s)) return; // envanterde: yalnız hotbar'da seçilince elde
     // hand height depends on the pose (sprites face right; walking swings the arm a little)
     const kneel = a.pose === 'action' || a.pose === 'crouch';
     const swing = a.pose === 'walk' ? Math.round(Math.sin(t * 9) * 2) : 0;
@@ -1385,15 +1385,6 @@
       ctx.strokeRect(x - 1.5, y - 1.5, 23, 35);
       ctx.globalAlpha = 1;
     }
-  };
-
-  /** Interior hook after the astronaut: the bottle in hand. */
-  West.drawInteriorCarry = function (ctx, s, x, floorY, t, moving) {
-    const b = S.Sim.bottle(s);
-    if (!b) return;
-    const f = s.player.facing < 0 ? -1 : 1;
-    const swing = moving ? Math.round(Math.sin(t * 9) * 2) : 0;
-    drawBottle(ctx, x + f * (7 + swing), floorY - 22, b === 'full', 0);
   };
 
   S.Westlands = West;

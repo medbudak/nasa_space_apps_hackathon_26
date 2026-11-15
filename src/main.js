@@ -291,7 +291,7 @@
     const px = st.zone === 'cave' ? S.Surface.caveMToPx(st.atM) : S.Surface.mToPx(st.atM);
     const r = S.Explore.digMineral(s, id);
     if (!r.ok) {
-      if (r.errKey) S.bus.emit('fx:float', { px, text: t(r.errKey), tone: 'warn' });
+      if (r.errKey) S.UI.toast(S.UI.icon('alert') + t(r.errKey), 'warn', 5000);
       return;
     }
     S.Surface.body.actionT = r.done ? 1 : 0.6;
@@ -332,6 +332,10 @@
     if (!it) return say('use.empty');
     const prompt = !s.player.inside && S.HUD.prompt;
     const name = t(S.Hotbar.nameKey(it));
+    if (it.id.startsWith('bottle_')) {
+      if (prompt && (prompt.kind === 'ice_vein' || prompt.action === 'water_gh')) return Game.interact();
+      return say('use.bottle_where');
+    }
     // Eldeki aletle MAV tamiri (yakıt hattı: tarayıcı, gövde: matkap)
     if (it.kind === 'tool' && prompt && prompt.action === 'mav') {
       const part = S.Rocket.partForTool(s, it.id);
@@ -409,8 +413,16 @@
     S.UI.toast(S.UI.icon(r.taken ? 'check' : 'x') + t(r.taken ? 'bottle.taken' : r.poured ? 'bottle.returned_full' : 'bottle.returned'), r.taken ? 'ok' : 'info', 4000);
   };
 
+  /** Şişe envanterde ama elde değilse nasıl alınacağını söyler (true: eylem durur) */
+  function needBottleInHand(s) {
+    if (!S.Sim.bottle(s) || S.Hotbar.holdsBottle(s)) return false;
+    S.UI.toast(S.UI.icon('alert') + t('bottle.hold_hint', { n: S.Hotbar.bottleSlot(s) }), 'warn', 5000);
+    return true;
+  }
+
   Game.fillBottle = function () {
     const s = S.getState();
+    if (needBottleInHand(s)) return;
     const r = S.Sim.fillBottle(s);
     if (!r.ok) {
       if (r.errKey) S.UI.toast(S.UI.icon('x') + t(r.errKey), 'warn', 5000);
@@ -426,6 +438,7 @@
   Game.waterGreenhouse = function (px) {
     const s = S.getState();
     s.player.facing = px < S.Surface.body.px ? -1 : 1;
+    if (needBottleInHand(s)) return;
     const r = S.Sim.waterGreenhouse(s);
     if (!r.ok) {
       if (r.errKey) S.UI.toast(S.UI.icon('x') + t(r.errKey), 'warn', 5000);
@@ -576,10 +589,10 @@
     if (it.kind === 'mineral') return Game.digMineral(it.id);
     if (it.action === 'pick_part') return Game.pickPart(it.partId);
     if (it.kind === 'ice_vein') return Game.fillBottle();
-    if (it.action === 'water_gh') return Game.waterGreenhouse(it.px);
+    if (it.action === 'water_gh') return S.Hotbar.holdsBottle(s) ? Game.waterGreenhouse(it.px) : S.GreenhouseScene.open(); // şişe elde değilse seraya girilir
     if (it.action === 'door') return Game.enterHabitat();
     if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);
-    if (it.action === 'greenhouse') return S.HabitatPanel.openGreenhouse();
+    if (it.action === 'greenhouse') return s.greenhouse.installed ? S.GreenhouseScene.open() : S.HabitatPanel.openGreenhouse();
     if (it.action === 'mav') return S.HabitatPanel.openMav();
     if (it.action === 'break_ice') return S.Surface.breakIce(s);
     if (it.action === 'dig_probe') return S.Surface.digProbe(s);

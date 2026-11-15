@@ -35,6 +35,10 @@
     // Lander içi ve transit güvertesi: kesit arka planı (Sude'nin lander kesiti)
     lander_interior: 'interior/lander_interior.png',
     gym_bay: 'interior/gym_bay.jpg', // lander spor bölmesi (yazısız kopya)
+    // sera içi arka planı (K3 Medine): içine çizili bitkiler silindi, saksılardaki bitkileri oyun çizer
+    gh_interior: 'screens/scr_greenhouse.png',
+    // spor odası yakın çekimi: referans GIF'in odası, astronot ve kablolar silindi (kolları, tutacakları, kabloları oyun çizer)
+    gym_room: 'screens/scr_gym_room.png',
     // Kişi 7 (Sedef): maden noktasında yerde duran mineral (1. aşama)
     min_hematite_ground: 'sprites/minerals/hematite_1.png',
     min_meteorite_ground: 'sprites/minerals/meteorite_1.png',
@@ -48,6 +52,7 @@
     astro_drink: 'sprites/astro/astro_drink.png',
     astro_sleep: 'sprites/astro/astro_sleep.png',
     astro_indoor_idle: 'sprites/astro/astro_indoor_idle.png',
+    astro_indoor_gym: 'sprites/astro/astro_indoor_gym.png', // spor odası: kolsuz gövde
     astro_indoor_walk: 'sprites/astro/astro_indoor_walk.png',
     astro_indoor_float: 'sprites/astro/astro_indoor_float.png',
     astro_surface_kneel: 'sprites/astro/astro_surface_kneel.png'
@@ -82,6 +87,11 @@
     ufo_photo_blur: 'ending/ufo_photo_blur.png',
     cover_thumbnail: 'ending/cover_thumbnail.png'
   };
+
+  // Sera evre görselleri (Kişi 7): plant_<bitki>_<1..3>, bitki listesi veriden
+  for (const [id, p] of Object.entries(S.DATA.habitat.greenhouse.growth.plants)) {
+    p.stages.forEach((_, i) => (MANIFEST['plant_' + id + '_' + (i + 1)] = 'sprites/plants/' + id + '_' + (i + 1) + '.png'));
+  }
 
   const cache = new Map();
 

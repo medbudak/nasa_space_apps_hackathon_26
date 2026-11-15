@@ -189,6 +189,13 @@
     "whiteKeptPx": 0
   },
   {
+    "asset": "sprites/astro/astro_indoor_gym.png",
+    "size": "73x133",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "sprites/astro/astro_surface_kneel.png",
     "size": "62x50",
     "mode": "none",
@@ -418,6 +425,13 @@
     "mode": "flood",
     "bgRemovedPx": 939079,
     "whiteKeptPx": 16836
+  },
+  {
+    "asset": "interior/lander_interior.png",
+    "size": "2172x520",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
   },
   {
     "asset": "vfx/vfx_dust_devil.png",

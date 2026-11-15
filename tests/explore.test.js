@@ -266,6 +266,10 @@ test('Hedef: bulunmamış aracın yeri söylenmez (keşif hedefi); kazılınca a
     s.explore.dig[id] = S.Explore.site(id).hits;
   }
   s.player.x = 900;
+  // matkap yoksa önce atölyede kurulur (moloz matkapsız açılmaz); matkapla tünel penceresi hedeflenir
+  s.inventory.tools.drill = false;
+  assert.equal(S.Objectives.compute(s).main.id, 'build_drill');
+  s.inventory.tools.drill = true;
   assert.equal(S.Objectives.compute(s).main.id, 'tube_dig');
   // Batıya dönünce buzul keşfi
   s.player.x = -100;
@@ -410,7 +414,7 @@ test('Tünel penceresi: moloz kazılınca açılır, merdiven etkileşimi o zama
   s.player.x = S.Explore.siteAt(sky);
   const opened = [];
   S.bus.on('explore:tube_open', () => opened.push(1));
-  assert.equal(S.Explore.dig(s, 'skylight').errKey, 'tool.err_need', 'moloz matkapsız açılmaz');
+  assert.equal(S.Explore.dig(s, 'skylight').errKey, 'mineral.need_drill', 'moloz matkapsız açılmaz; mesaj matkabın nereden alınacağını söyler');
   s.inventory.tools.drill = true;
   for (let i = 0; i < sky.hits; i++) S.Explore.dig(s, 'skylight');
   assert.equal(S.Explore.tubeOpen(s), true);
@@ -468,7 +472,7 @@ test('Metinler: yeni rota, kazı, İZCİ-1, FIELD CAM, teşhis hikâyesi ve Mars
     'scout.found', 'scout.story_title', 'scout.story_body', 'scout.story_lesson', 'scout.story_fiction', 'wreckstory.title', 'wreckstory.ask', 'wreckstory.locked',
     'fact.head', 'fact.head_arrive', 'fact.src', 'jump.fact', 'salvage.parts', 'relic.west_lander', 'relic.west_probe', 'packet.west_lander', 'packet.west_probe',
     'cam.help', 'cam.close', 'cam.album', 'cam.album_empty', 'cam.btn_focusing', 'cam.btn_shoot', 'cam.btn_saved', 'cam.focusing', 'cam.sharp', 'cam.saved', 'cam.blurry'];
-  for (const k of ['explore_east', 'explore_west', 'tube_dig']) keys.push('goal.' + k, 'goal.short.' + k, 'goal.hint.' + k);
+  for (const k of ['explore_east', 'explore_west', 'tube_dig', 'build_drill']) keys.push('goal.' + k, 'goal.short.' + k, 'goal.hint.' + k);
   for (const c of S.Forensics.cases()) keys.push('wreckstory.' + c.id);
   for (const cat of S.DATA.forensics.categories) keys.push('catd.' + cat);
   for (const pt of S.DATA.explore.cave.scout.parts) keys.push('scout.' + pt.id + '.name', 'scout.' + pt.id + '.caption');

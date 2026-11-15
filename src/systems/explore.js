@@ -122,7 +122,7 @@
     const st = X.site(id);
     if (!st || X.siteDone(s, st)) return { ok: false };
     // Kişi 4: bazı noktalar alet ister (moloz → matkap); kazma yoksa her vuruş daha uzun sürer
-    if (st.needsTool && !S.Workshop.hasTool(s, st.needsTool)) return { ok: false, errKey: 'tool.err_need', vars: { tool: S.t('tool.' + st.needsTool + '.name') } };
+    if (st.needsTool && !S.Workshop.hasTool(s, st.needsTool)) return { ok: false, errKey: 'mineral.need_' + st.needsTool }; // nereden alınacağını da söyler
     if (X.siteHits(s, st) >= st.hits) s.explore.dig[id] = 0; // çarpmadan önce boş kazılmıştı
     s.explore.dig[id] = X.siteHits(s, st) + 1;
     S.Sim.advance(s, st.minutesPerHit * (S.Workshop.hasTool(s, 'pickaxe') ? 1 : D().tools.noPickaxeDigFactor));

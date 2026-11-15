@@ -286,6 +286,7 @@ const ASSETS = [
   { src: 'sprites/astro/astro_indoor_idle.png', mode: 'none', size: { w: 292, h: 133 }, noCrop: true },
   { src: 'sprites/astro/astro_indoor_walk.png', mode: 'none', size: { w: 320, h: 127 }, noCrop: true },
   { src: 'sprites/astro/astro_indoor_float.png', mode: 'none', size: { w: 448, h: 124 }, noCrop: true },
+  { src: 'sprites/astro/astro_indoor_gym.png', mode: 'none', size: { w: 73, h: 133 }, noCrop: true }, // spor odası: kolsuz gövde (kolları kod çizer)
   { src: 'sprites/astro/astro_surface_kneel.png', mode: 'none', size: { w: 62, h: 50 }, noCrop: true },
   { src: 'sprites/astro/astro_legacy_idle.png', mode: 'none', size: { w: 29, h: 57 }, noCrop: true },
   { src: 'sprites/astro/astro_legacy_jump.png', mode: 'none', size: { w: 34, h: 55 }, noCrop: true },

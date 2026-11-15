@@ -100,6 +100,8 @@
   function sourceGoal(s, src) {
     const dist = Math.round(Math.abs(src.atM - s.player.x));
     if (src.kind === 'wreck') return goal('wreck_go', { name: src.ref.name, dist }, { m: src.atM });
+    // tünel penceresi matkap ister: matkap yoksa önce mekikteki atölyede kurulur
+    if (src.kind === 'tube_dig' && S.Workshop && !S.Workshop.hasTool(s, 'drill')) return goal('build_drill', {}, { m: S.DATA.terrain.map.landingPadM });
     if (src.kind === 'explore_east' || src.kind === 'explore_west' || src.kind === 'tube_dig') return goal(src.kind, { dist }, { m: src.atM });
     if (src.kind === 'ice') {
       const step = S.Explore.iceStep(s, src.ref.id);

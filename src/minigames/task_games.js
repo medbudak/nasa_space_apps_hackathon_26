@@ -159,44 +159,68 @@
     const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
     return x - Math.floor(x);
   };
-  /* ---------------- lab look (experiments): metal wall, bench, outlined bevel devices, LCDs, glass ----------------
-   * Chunky, readable shapes with a dark outline and a light top edge (task-screen style), same palette as the
-   * vehicle task games. Drawing only: the rules and the scoring of each game are unchanged. */
-  const OUT = '#0b0d10';
+  /* ---------------- task-panel look (experiments), after the team's reference image ----------------
+   * Slate-blue metal wall with seams, rivets and orange diagonal accents; devices are cream panels with a dark
+   * outline, orange corner caps, rust specks and screws; screens are navy with cyan lines; orange valve wheels,
+   * dial rings with orange triangle markers, cream cylinders with orange bands. Drawing only: the rules and the
+   * scoring of each game are unchanged. */
+  const OUT = '#1d2128';
+  const CREAM = '#e3d8c4';
+  const ORANGE = '#d9752e';
+  const NAVY = '#1f2633';
+  const CYAN = '#5fd1d6';
   const lighten = (c, k) => hexMix(c, '#ffffff', k);
   const darken = (c, k) => hexMix(c, '#000000', k);
+  const GREYS = new Set(['#3a4049', '#5d6570', '#6c7480', '#7d858f', '#33393f', '#cfd6dc']);
   function labBg(c, benchY) {
     const by = benchY || 150;
-    R(c, 0, 0, W, H, '#262b33');
-    for (let x = 0; x < W; x += 64) {
-      R(c, x, 0, 63, by, (x / 64) % 2 ? '#2b313a' : '#29303a');
-      R(c, x + 63, 0, 1, by, '#1b1f25');
-      for (const yy of [6, by - 8]) {
-        R(c, x + 5, yy, 2, 2, '#4a525e');
-        R(c, x + 56, yy, 2, 2, '#4a525e');
+    R(c, 0, 0, W, H, '#3a4150');
+    // metal plates with seams and rivets
+    for (let x = 0; x < W; x += 80) {
+      for (let y = 0; y < by; y += 58) {
+        R(c, x + 1, y + 1, 78, 56, '#414959');
+        R(c, x + 1, y + 1, 78, 1, '#4d5667');
+        R(c, x + 1, y + 56, 78, 1, '#2c323d');
+        R(c, x + 4, y + 4, 2, 2, '#5d6676');
+        R(c, x + 74, y + 4, 2, 2, '#5d6676');
+        R(c, x + 4, y + 51, 2, 2, '#5d6676');
+        R(c, x + 74, y + 51, 2, 2, '#5d6676');
       }
     }
-    R(c, 0, 0, W, 2, '#1b1f25');
-    for (let x = -10; x < W; x += 14) R(c, x + ((by - 14) % 14), by - 6, 7, 3, 'rgba(255,194,51,0.18)');
-    // steel bench
-    R(c, 0, by, W, H - by, '#4a525e');
-    R(c, 0, by, W, 2, '#8a939f');
-    R(c, 0, by + 2, W, 1, '#2b3038');
-    for (let y = by + 6; y < H; y += 5) R(c, 0, y, W, 1, 'rgba(0,0,0,0.12)');
+    // orange diagonal accents in the corners
+    for (let i = 0; i < 3; i++) {
+      R(c, 10 + i * 7, by - 12 - i, 5, 2, ORANGE);
+      R(c, W - 30 + i * 7, by - 12 - i, 5, 2, ORANGE);
+    }
+    R(c, 0, by - 4, 40, 1, ORANGE);
+    R(c, W - 60, by - 4, 60, 1, ORANGE);
+    // cream ledge
+    R(c, 0, by, W, H - by, '#c4b79f');
+    R(c, 0, by, W, 2, '#f2eadb');
+    R(c, 0, by + 2, W, 1, OUT);
+    for (let x = 8; x < W; x += 36) R(c, x, by + 6, 2, 2, '#9c8e76');
   }
-  /** Raised device box: dark outline, base fill, light top edge, darker bottom */
+  /** Cream device panel: dark outline, light top, shade, orange corner caps, rust specks */
   function box(c, x, y, w, h, base) {
+    const b = !base || GREYS.has(base) ? CREAM : base;
     R(c, x + 1, y, w - 2, h, OUT);
     R(c, x, y + 1, w, h - 2, OUT);
-    R(c, x + 2, y + 2, w - 4, h - 4, base);
-    R(c, x + 2, y + 2, w - 4, 2, lighten(base, 0.28));
-    R(c, x + 2, y + h - 5, w - 4, 3, darken(base, 0.28));
-    R(c, x + 2, y + 2, 2, h - 4, lighten(base, 0.12));
+    R(c, x + 2, y + 2, w - 4, h - 4, b);
+    R(c, x + 2, y + 2, w - 4, 2, lighten(b, 0.35));
+    R(c, x + 2, y + h - 5, w - 4, 3, darken(b, 0.18));
+    R(c, x + w - 4, y + 2, 2, h - 4, darken(b, 0.12));
+    if (b === CREAM && w > 18 && h > 18) {
+      R(c, x + 2, y + 2, 5, 2, ORANGE);
+      R(c, x + 2, y + 2, 2, 5, ORANGE);
+      R(c, x + w - 7, y + h - 4, 5, 2, ORANGE);
+      R(c, x + w - 4, y + h - 7, 2, 5, ORANGE);
+      for (let i = 0; i < 4; i++) R(c, x + 6 + rnd(x + i) * (w - 12), y + 6 + rnd(y + i * 3) * (h - 12), 2, 1, '#b98a5e');
+    }
   }
   function screw(c, x, y) {
-    R(c, x, y, 3, 3, '#1b1f25');
-    R(c, x, y, 2, 2, '#9aa3ad');
-    R(c, x + 1, y + 1, 1, 1, '#5d6570');
+    R(c, x, y, 3, 3, OUT);
+    R(c, x, y, 2, 2, '#8a96a6');
+    R(c, x + 1, y + 1, 1, 1, '#5d6676');
   }
   function screws(c, x, y, w, h) {
     screw(c, x + 4, y + 4);
@@ -204,19 +228,19 @@
     screw(c, x + 4, y + h - 8);
     screw(c, x + w - 7, y + h - 8);
   }
-  /** Green LCD window with scanlines */
+  /** Navy screen with cyan scanlines */
   function lcd(c, x, y, w, h) {
     R(c, x, y, w, h, OUT);
-    R(c, x + 1, y + 1, w - 2, h - 2, '#07150e');
-    for (let yy = y + 2; yy < y + h - 1; yy += 2) R(c, x + 1, yy, w - 2, 1, 'rgba(63,224,138,0.06)');
-    R(c, x + 1, y + 1, w - 2, 1, 'rgba(63,224,138,0.25)');
+    R(c, x + 1, y + 1, w - 2, h - 2, NAVY);
+    for (let yy = y + 2; yy < y + h - 1; yy += 2) R(c, x + 1, yy, w - 2, 1, 'rgba(95,209,214,0.05)');
+    R(c, x + 1, y + 1, w - 2, 1, 'rgba(95,209,214,0.3)');
   }
   function lamp(c, x, y, on, col) {
     R(c, x - 1, y - 1, 6, 6, OUT);
     R(c, x, y, 4, 4, on ? col : darken(col, 0.6));
     if (on) R(c, x, y, 2, 2, lighten(col, 0.5));
   }
-  /** Glass pane: tinted fill + highlight streaks */
+  /** Glass: tinted fill + highlight streaks */
   function glass(c, x, y, w, h, tint) {
     c.globalAlpha = 0.16;
     R(c, x, y, w, h, tint || '#9fd8ff');
@@ -230,28 +254,90 @@
     c.beginPath();
     c.arc(x, y, r + 1.5, 0, Math.PI * 2);
     c.fill();
-    c.fillStyle = col;
+    c.fillStyle = darken(col, 0.25);
     c.beginPath();
     c.arc(x, y, r, 0, Math.PI * 2);
     c.fill();
-    c.fillStyle = darken(col, 0.3);
-    c.beginPath();
-    c.arc(x + r * 0.25, y + r * 0.3, r * 0.7, 0, Math.PI * 2);
-    c.fill();
     c.fillStyle = col;
     c.beginPath();
-    c.arc(x - r * 0.12, y - r * 0.1, r * 0.72, 0, Math.PI * 2);
+    c.arc(x - r * 0.12, y - r * 0.12, r * 0.78, 0, Math.PI * 2);
     c.fill();
     c.fillStyle = lighten(col, 0.65);
     c.fillRect(Math.round(x - r * 0.5), Math.round(y - r * 0.55), Math.max(1, Math.round(r * 0.4)), Math.max(1, Math.round(r * 0.35)));
   }
-  /** Readout device: box + LCD + one big value (+ small line) */
+  /** Readout device: cream panel + navy screen + big cyan value (+ small line) */
   function readout(c, x, y, w, h, big, small, col) {
-    box(c, x, y, w, h, '#3a4049');
+    box(c, x, y, w, h);
     screws(c, x, y, w, h);
-    lcd(c, x + 7, y + 8, w - 14, h - (small ? 26 : 16));
-    txt(c, big, x + w / 2, y + 8 + (h - (small ? 26 : 16)) / 2, col || '#3fe08a', 'center', 15);
-    if (small) txt(c, small, x + w / 2, y + h - 10, '#cfd6dc', 'center', 9);
+    lcd(c, x + 8, y + 9, w - 16, h - (small ? 28 : 18));
+    txt(c, big, x + w / 2, y + 9 + (h - (small ? 28 : 18)) / 2, col === '#3fe08a' ? CYAN : col || CYAN, 'center', 15);
+    if (small) txt(c, small, x + w / 2, y + h - 11, '#2b2f36', 'center', 10);
+  }
+  /** Horizontal cream pipe with orange clamps */
+  function pipe(c, x1, y, x2, th) {
+    const t2 = th || 8;
+    R(c, x1, y - t2 / 2 - 1, x2 - x1, t2 + 2, OUT);
+    R(c, x1, y - t2 / 2, x2 - x1, t2, CREAM);
+    R(c, x1, y - t2 / 2, x2 - x1, 2, '#f2eadb');
+    for (let x = x1 + 10; x < x2 - 6; x += 28) R(c, x, y - t2 / 2 - 2, 5, t2 + 4, ORANGE);
+  }
+  /** Orange valve wheel: rim, 4 spokes, hub (ang turns it) */
+  function valve(c, cx, cy, r, ang) {
+    c.strokeStyle = OUT;
+    c.lineWidth = 6;
+    c.beginPath();
+    c.arc(cx, cy, r, 0, Math.PI * 2);
+    c.stroke();
+    c.strokeStyle = ORANGE;
+    c.lineWidth = 4;
+    c.beginPath();
+    c.arc(cx, cy, r, 0, Math.PI * 2);
+    c.stroke();
+    c.lineWidth = 3;
+    for (let i = 0; i < 4; i++) {
+      const a = ang + (i * Math.PI) / 2;
+      c.beginPath();
+      c.moveTo(cx, cy);
+      c.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+      c.stroke();
+    }
+    ball(c, cx, cy, 4, '#9aa3ad');
+  }
+  /** Dial ring: cream rim with orange triangle markers, navy face */
+  function dialRing(c, cx, cy, r) {
+    c.fillStyle = OUT;
+    c.beginPath();
+    c.arc(cx, cy, r + 5, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = CREAM;
+    c.beginPath();
+    c.arc(cx, cy, r + 3, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = NAVY;
+    c.beginPath();
+    c.arc(cx, cy, r - 3, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = ORANGE;
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2 - Math.PI / 2;
+      const px = cx + Math.cos(a) * (r + 1);
+      const py = cy + Math.sin(a) * (r + 1);
+      c.beginPath();
+      c.moveTo(px + Math.cos(a) * 4, py + Math.sin(a) * 4);
+      c.lineTo(px - Math.cos(a) * 3 + Math.cos(a + Math.PI / 2) * 4, py - Math.sin(a) * 3 + Math.sin(a + Math.PI / 2) * 4);
+      c.lineTo(px - Math.cos(a) * 3 - Math.cos(a + Math.PI / 2) * 4, py - Math.sin(a) * 3 - Math.sin(a + Math.PI / 2) * 4);
+      c.fill();
+    }
+  }
+  /** Cream cylinder (tank) with orange bands and a cap */
+  function tank(c, x, y, w, h) {
+    box(c, x + w / 2 - 7, y - 8, 14, 10);
+    R(c, x, y, w, h, OUT);
+    R(c, x + 2, y + 2, w - 4, h - 4, CREAM);
+    R(c, x + 4, y + 2, 3, h - 4, '#f2eadb');
+    R(c, x + w - 8, y + 2, 5, h - 4, '#c4b79f');
+    R(c, x + 1, y + 10, w - 2, 5, ORANGE);
+    R(c, x + 1, y + h - 15, w - 2, 5, ORANGE);
   }
 
   const expVal = (id) => (S.Experiments && S.Experiments.get ? S.Experiments.get(id) : null) || {};
@@ -306,7 +392,7 @@
           // measuring tape: 1 m
           box(c, 18, 26, 20, 118, '#c9a23a');
           for (let i = 0; i <= 10; i++) R(c, 22, 30 + i * 10.8, i % 5 ? 6 : 10, 1, '#3a2c10');
-          txt(c, '1 m', 28, 152 + 6, '#cfd6dc', 'center', 9);
+          txt(c, '1 m', 28, 152 + 6, '#2b2f36', 'center', 9);
           // light gate at the bottom of the swing: two posts, red beam
           const gy = py + L;
           box(c, px - 22, gy - 14, 9, 28, '#3a4049');
@@ -374,9 +460,9 @@
           box(c, 82, 10, 132, 150, '#33393f');
           for (let i = 0; i <= 4; i++) {
             const y = top + ((bottom - top) * i) / 4;
-            R(c, 100, y, 14, 1, '#cfd6dc');
+            R(c, 100, y, 14, 1, '#2b2f36');
             for (let j = 1; j < 5 && i < 4; j++) R(c, 106, y + ((bottom - top) / 20) * j, 8, 1, '#6c7480');
-            txt(c, num(2 - i * 0.5, 1) + ' m', 96, y, '#cfd6dc', 'right', 9);
+            txt(c, num(2 - i * 0.5, 1) + ' m', 96, y, '#e9eef2', 'right', 9);
           }
           // glass tube
           R(c, 128, top - 8, 2, bottom - top + 16, OUT);
@@ -502,7 +588,7 @@
             R(c, x + 1, 36 + 94 * (1 - v), 18, 94 * v, col);
             R(c, x + 3, 36 + 94 * (1 - v), 3, 94 * v, lighten(col, 0.35));
             R(c, x - 5, 36 + 94 * (1 - line), 30, 2, lineCol);
-            txt(c, label, x + 10, 141, '#cfd6dc', 'center', 9);
+            txt(c, label, x + 10, 141, '#2b2f36', 'center', 9);
           };
           tube(214, t('tg.wash.perc'), perc, '#e8423b', safe, '#3fe08a');
           tube(266, t('tg.wash.nutr'), nutr, '#3fe08a', minNutr, '#ffc233');
@@ -579,24 +665,17 @@
             R(c, 80, 118, 40, 4, '#f2f8ff'); // ice skin on top: it boils and freezes at once
             c.globalAlpha = 1;
           }
-          // pump with hose
-          box(c, 168, 120, 30, 26, '#6c7480');
-          lamp(c, 188, 125, pump, '#3fe08a');
-          R(c, 160, 136, 10, 3, OUT);
-          if (pump) for (let i = 0; i < 3; i++) R(c, 198 + ((tt * 50 + i * 8) % 18), 132, 3, 1, '#9aa3ad');
+          // pump: pipe out of the jar with an orange valve wheel that turns while pumping
+          pipe(c, 160, 134, 224, 8);
+          valve(c, 192, 134, 13, pump ? tt * 6 : 0.3);
+          lamp(c, 214, 118, pump, '#3fe08a');
+          if (pump) for (let i = 0; i < 3; i++) R(c, 226 + ((tt * 50 + i * 8) % 14), 134, 3, 1, '#9aa3ad');
           // dial gauge on a log scale, green Mars band
           const gx = 262;
           const gy = 70;
           const r = 42;
           const ang = (v) => Math.PI * (0.85 + 1.3 * (1 - (Math.log10(v) - Math.log10(mars * 0.5)) / (Math.log10(earth) - Math.log10(mars * 0.5))));
-          c.fillStyle = OUT;
-          c.beginPath();
-          c.arc(gx, gy, r + 4, 0, Math.PI * 2);
-          c.fill();
-          c.fillStyle = '#e8e2d8';
-          c.beginPath();
-          c.arc(gx, gy, r, 0, Math.PI * 2);
-          c.fill();
+          dialRing(c, gx, gy, r);
           c.strokeStyle = 'rgba(63,224,138,0.9)';
           c.lineWidth = 7;
           c.beginPath();
@@ -604,7 +683,7 @@
           c.stroke();
           for (let i = 0; i <= 10; i++) {
             const a = Math.PI * (0.85 + 0.13 * i);
-            R(c, gx + Math.cos(a) * (r - 4), gy + Math.sin(a) * (r - 4), 2, 2, '#3a2c10');
+            R(c, gx + Math.cos(a) * (r - 6), gy + Math.sin(a) * (r - 6), 2, 2, CYAN);
           }
           const na = ang(p);
           c.strokeStyle = '#e8423b';
@@ -614,9 +693,9 @@
           c.lineTo(gx + Math.cos(na) * (r - 8), gy + Math.sin(na) * (r - 8));
           c.stroke();
           screw(c, gx - 1, gy - 1);
-          txt(c, 'kPa', gx, gy + 18, '#3a2c10', 'center', 9);
+          txt(c, 'kPa', gx, gy + 18, CYAN, 'center', 9);
           txt(c, t('tg.vac.band', { m: num(mars, 2) }), gx, gy + r + 14, '#3fe08a', 'center', 9);
-          txt(c, num(p, p < 10 ? 2 : 1), gx, gy + 30, '#1b1f25', 'center', 10);
+          txt(c, num(p, p < 10 ? 2 : 1), gx, gy + 30, '#e9eef2', 'center', 10);
         }
       };
     });
@@ -681,13 +760,13 @@
           box(c, 8, 8, 304, 156, '#3a4049');
           screws(c, 8, 8, 304, 156);
           R(c, 16, 14, 290, 136, OUT);
-          R(c, 18, 16, 286, 132, '#06100c');
-          for (let x = 20; x <= 300; x += 28) R(c, x, 18, 1, 128, '#123326');
-          for (let y = 20; y <= 144; y += 31) R(c, 20, y, 280, 1, '#123326');
+          R(c, 18, 16, 286, 132, NAVY);
+          for (let x = 20; x <= 300; x += 28) R(c, x, 18, 1, 128, '#2b3a4c');
+          for (let y = 20; y <= 144; y += 31) R(c, 20, y, 280, 1, '#2b3a4c');
           R(c, xOf(0), 18, 2, 128, '#ff3b2f'); // laser fire
           txt(c, 't=0', xOf(0) + 4, 26, '#ff8a80', 'left', 9);
           if (n < shots.length) {
-            c.strokeStyle = '#3fe08a';
+            c.strokeStyle = CYAN;
             c.lineWidth = 1.2;
             c.beginPath();
             for (let x = 20; x <= 300; x++) {
@@ -700,7 +779,7 @@
           }
           R(c, xOf(cur), 18, 1, 128, '#ffc233');
           txt(c, num(cur, 1) + ' ms', xOf(cur) + 3, 140, '#ffc233', 'left', 9);
-          for (let i = 0; i <= 5; i++) txt(c, i * 5 + '', xOf(i * 5), 157, '#9fd9db', 'center', 9);
+          for (let i = 0; i <= 5; i++) txt(c, i * 5 + '', xOf(i * 5), 157, '#2b2f36', 'center', 9);
         }
       };
     });
@@ -750,7 +829,7 @@
           R(c, 54, 78, 82, 52, `rgb(${Math.round(70 + k * 185)},${Math.round(26 + k * 100)},${Math.round(18 + k * 30)})`);
           for (let i = 0; i < 5; i++) R(c, 54, 84 + i * 10, 82, 2, heat ? '#ffd27a' : '#2b1a14');
           glass(c, 54, 78, 82, 52, '#ffb347');
-          txt(c, '2CO₂ → 2CO + O₂', 95, 142, '#e9eef2', 'center', 9);
+          txt(c, '2CO₂ → 2CO + O₂', 95, 142, '#2b2f36', 'center', 9);
           // thermometer: glass tube with bulb, green band at ~800 °C
           const yOf = (v) => 140 - ((v - 500) / 400) * 112;
           R(c, 186, 22, 14, 124, OUT);
@@ -760,13 +839,12 @@
           ball(c, 193, 148, 7, '#e8423b');
           txt(c, '800 °C', 208, yOf(800), '#3fe08a', 'left', 9);
           // O₂ tank: cylinder with a fill window and a gauge
-          box(c, 252, 30, 46, 116, '#7d858f');
-          box(c, 262, 22, 26, 12, '#6c7480');
+          tank(c, 252, 30, 46, 116);
           R(c, 262, 46, 26, 84, OUT);
           R(c, 264, 48, 22, 80, '#14181e');
           R(c, 264, 48 + 80 * (1 - scoreNow()), 22, 80 * scoreNow(), '#3fe0e6');
           R(c, 266, 48 + 80 * (1 - scoreNow()), 3, 80 * scoreNow(), '#bff6f8');
-          txt(c, 'O₂', 275, 138, '#0b0d10', 'center', 10);
+          txt(c, 'O₂', 275, 138, '#2b2f36', 'center', 10);
         }
       };
     });

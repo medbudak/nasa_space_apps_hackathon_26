@@ -446,6 +446,7 @@
     // Kazı: gerçek ve sahte tümsek aynı yazıyı gösterir (ayırt eden yalnızca elbise tarayıcısı / RIMFAX)
     if (it.kind === 'dig') {
       const st = X.site(it.id);
+      if (st.needsTool && !S.Workshop.hasTool(s, st.needsTool)) return t('mineral.need_' + st.needsTool);
       const hits = X.siteHits(s, st);
       return t(st.kind === 'rubble' ? 'prompt.dig_rubble' : hits ? 'prompt.dig_more' : 'prompt.dig.' + st.kind, { n: hits, total: st.hits });
     }
@@ -478,6 +479,9 @@
     if (it.action === 'clean_panels') return t('prompt.solar', { pct: Math.round(s.res.panelDust * 100) });
     if (it.action === 'sabatier') return t('prompt.isru', { fuel: Math.round(s.res.mavFuel) });
     if (it.action === 'mav') return t(S.Sim.canLaunchMav(s) ? 'prompt.mav_launch' : 'prompt.mav', { fuel: Math.round(s.res.mavFuel) });
+    // şişe envanterde (elde değil): buzda nasıl eline alınacağı; serada E içeri girer, dökmek için şişe ele alınır
+    if (it.action === 'fill_bottle' && !S.Hotbar.holdsBottle(s)) return t('prompt.bottle_hold', { n: S.Hotbar.bottleSlot(s) });
+    if (it.action === 'water_gh' && !S.Hotbar.holdsBottle(s)) return t('prompt.greenhouse') + ' · ' + t('prompt.bottle_pour', { n: S.Hotbar.bottleSlot(s) });
     if (it.action === 'greenhouse') return t(s.greenhouse.installed ? (s.greenhouse.frozen ? 'prompt.greenhouse_frozen' : 'prompt.greenhouse') : 'prompt.greenhouse_empty');
     return t('prompt.' + it.action);
   };

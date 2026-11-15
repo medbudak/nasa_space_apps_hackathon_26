@@ -267,6 +267,20 @@
     const hand = set.hands[f];
     return { fw, fh: dh, left, top, hand: [hand[0], Math.round(hand[1] * sy)] };
   }
+  /** Kasklı astronot ayrı bir sahnede (sera içi): pose = idle | walk | kneel, ayak hizası (x, footY), tam sayı ölçek */
+  FX.drawSuit = function (c, pose, x, footY, dir, t, scale) {
+    const set = ASTRO[pose] || ASTRO.idle;
+    const img = S.Sprites.get(set.key);
+    if (!img) return;
+    const fw = img.width / set.frames;
+    const f = Math.floor((t * 1000) / set.ms) % set.frames;
+    c.save();
+    c.imageSmoothingEnabled = false;
+    c.translate(Math.round(x), Math.round(footY));
+    if (dir < 0) c.scale(-1, 1);
+    c.drawImage(img, f * fw, 0, fw, img.height, -Math.round((fw * scale) / 2), -img.height * scale, fw * scale, img.height * scale);
+    c.restore();
+  };
 
   function drawOnGround(ctx, key, leftPx, groundY, flip) {
     const img = S.Sprites.get(key);
@@ -1384,15 +1398,42 @@
     const x = Math.round(ox + (st ? st.x : body.ix));
     const flip = s.player.facing < 0;
     if (act.kind === 'sleep') {
-      // ışıklar kısılır; uyku tulumu yatağın önünde, üstünde yükselen "z" işaretleri (kodla çizilir)
+      // Uyku: ışıklar hafifçe kısılır; tulum alt ranzanın yatağına YATAR (başı yastıkta), üstünde "z" işaretleri.
+      // Yatak yeri kesitin kendi koordinatında: yastık ranza istasyonunun 11 px solunda (spor bölmesi kesiti kaydırsa da tutar)
       const fade = Math.min(1, act.t / 0.6, (a.secs - act.t) / 0.6);
-      ctx.fillStyle = 'rgba(4, 6, 14,' + (0.3 * fade).toFixed(3) + ')'; // ışıklar hafifçe kısılır (ekran kararmaz)
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(4, 6, 14,' + (0.3 * fade).toFixed(3) + ')';
+      ctx.fillRect(-W, -H, W * 3, H * 3);
+      const bunk = S.Surface.INTERIOR.stations.find((b) => b.id === 'bunk');
+      const bed = { headX: bunk.x - 11, mattressY: 100 };
+      const len = Math.round(img.height * 0.44); // tulum boyu (yatay)
+      const thick = Math.round(fw * 0.3); // kalınlık: ranza aralığına sığar
+      const hx = Math.round(ox + bed.headX);
+      const my = Math.round(bed.mattressY);
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalAlpha = Math.min(1, act.t / 0.5, (a.secs - act.t) / 0.5);
+      // -90° döndür: görselin üstü (baş) sola, yastığa; alt kenarı yatağın üstüne oturur
+      ctx.translate(hx + len / 2, my - thick / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.drawImage(img, f * fw, 0, fw, img.height, -thick / 2, -len / 2, thick, len);
+      ctx.restore();
+      ctx.fillStyle = '#e8eef5';
+      for (let i = 0; i < 3; i++) {
+        const ph = (act.t * 0.7 + i / 3) % 1;
+        const zx = hx + 6 + Math.round(ph * 8);
+        const zy = Math.round(my - thick - 3 - ph * 16);
+        const sz = 2 + (i % 2);
+        ctx.globalAlpha = Math.sin(ph * Math.PI) * fade;
+        // piksel "z": üst çizgi, çapraz, alt çizgi
+        ctx.fillRect(zx, zy, sz * 2, 1);
+        for (let j = 0; j < sz * 2; j++) ctx.fillRect(zx + sz * 2 - 1 - j, zy + 1 + Math.floor((j * (sz * 2 - 1)) / (sz * 2)), 1, 1);
+        ctx.fillRect(zx, zy + sz * 2, sz * 2, 1);
+      }
+      ctx.globalAlpha = 1;
+      return true;
     }
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    // uyku tulumu yavaşça belirir / kaybolur (aniden ortaya çıkmaz)
-    if (act.kind === 'sleep') ctx.globalAlpha = Math.min(1, act.t / 0.5, (a.secs - act.t) / 0.5);
     if (flip) {
       ctx.translate(x + Math.round(dw / 2), footY - dh);
       ctx.scale(-1, 1);
@@ -1401,21 +1442,6 @@
       ctx.drawImage(img, f * fw, 0, fw, img.height, x - Math.round(dw / 2), footY - dh, dw, dh);
     }
     ctx.restore();
-    if (act.kind === 'sleep') {
-      ctx.fillStyle = '#e8eef5';
-      for (let i = 0; i < 3; i++) {
-        const ph = (act.t * 0.7 + i / 3) % 1;
-        const zx = x + 8 + Math.round(ph * 10);
-        const zy = Math.round(footY - dh - 4 - ph * 22);
-        const sz = 2 + i % 2;
-        ctx.globalAlpha = Math.sin(ph * Math.PI);
-        // piksel "z": üst çizgi, çapraz, alt çizgi
-        ctx.fillRect(zx, zy, sz * 2, 1);
-        for (let j = 0; j < sz * 2; j++) ctx.fillRect(zx + sz * 2 - 1 - j, zy + 1 + Math.floor((j * (sz * 2 - 1)) / (sz * 2)), 1, 1);
-        ctx.fillRect(zx, zy + sz * 2, sz * 2, 1);
-      }
-      ctx.globalAlpha = 1;
-    }
     return true;
   };
   /** Şeridin belirli bir karesi (zıplama gibi zamana değil fiziğe bağlı pozlar için) */
@@ -1479,11 +1505,14 @@
 
   /*
    * Spor bölmesi: kesit laboratuvar–ranza direğinden (gym.atX) ikiye ayrılır. Araya laboratuvar bölmesinin kopyası girer
-   * (aynı çerçeve, köşe payandaları, tavan ışıkları, yan duvarlar ve zemin), arka duvarına spor salonu çizimi (gym_bay:
-   * koşu bandı, bisiklet, ağırlık istasyonu, nabız ekranı) oturur. Kesitin piksel boyutunda bir kez kurulur.
+   * (aynı çerçeve, köşe payandaları, tavan ışıkları, yan duvarlar ve zemin). Arka duvarı kokpit bölmesinin düz paneliyle
+   * kaplanır; ortasında spor odasının kapısı açıktır, içeride spor salonu çizimi (gym_bay) görünür. Böylece bölme diğer
+   * bölmelerle aynı ölçektedir (kapı bir insan boyu); odaya E ile girilir (S.GymScene). Kesitin piksel boyutunda bir kez kurulur.
    */
   const GYM_FRAME = { x0: 230, x1: 417 }; // laboratuvar bölmesi, iki direğinin arası (yerel px)
-  const GYM_ART = { x0: 236, x1: 409, y0: 22, y1: 124 }; // laboratuvarın arka duvarı: ışıkların altı, zemine kadar
+  const GYM_WALL = { x0: 236, x1: 409, y0: 22, y1: 124 }; // laboratuvarın arka duvarı: ışıkların altı, zemine kadar
+  const PLAIN_WALL = { x0: 92, x1: 152 }; // kokpit bölmesinin düz paneli (aynı y aralığı), arka duvara döşenir
+  const GYM_DOOR = { w: 92, h: 80, bottom: 120, frame: 4 }; // kapı açıklığı (yerel px): mürettebat 60 px boyunda
   let cutaway = null;
   function landerCutaway(I) {
     const img = S.Sprites.get('lander_interior');
@@ -1502,11 +1531,37 @@
     g.drawImage(img, 0, 0, at(left), img.height, 0, 0, at(left), img.height);
     g.drawImage(img, at(atX - PIL), 0, img.width - at(atX - PIL), img.height, at(atX - PIL + w), 0, img.width - at(atX - PIL), img.height);
     g.drawImage(img, at(GYM_FRAME.x0), 0, at(GYM_FRAME.x1 - GYM_FRAME.x0), img.height, at(left), 0, at(GYM_FRAME.x1 - GYM_FRAME.x0), img.height);
-    if (art) {
-      g.imageSmoothingEnabled = true;
-      const ax = left + GYM_ART.x0 - GYM_FRAME.x0;
-      g.drawImage(art, at(ax), at(GYM_ART.y0), at(GYM_ART.x1 - GYM_ART.x0), at(GYM_ART.y1 - GYM_ART.y0));
+    // arka duvar: düz panel döşemesi
+    const wx0 = left + GYM_WALL.x0 - GYM_FRAME.x0;
+    const wallW = GYM_WALL.x1 - GYM_WALL.x0;
+    const wallH = GYM_WALL.y1 - GYM_WALL.y0;
+    const tile = PLAIN_WALL.x1 - PLAIN_WALL.x0;
+    for (let x = 0; x < wallW; x += tile) {
+      const tw = Math.min(tile, wallW - x);
+      g.drawImage(img, at(PLAIN_WALL.x0), at(GYM_WALL.y0), at(tw), at(wallH), at(wx0 + x), at(GYM_WALL.y0), at(tw), at(wallH));
     }
+    // spor odasının kapısı: açık kapıdan oda (çizim kapıya sığdırılır, taşan yanlar kesilir)
+    const D = GYM_DOOR;
+    const dx = wx0 + (wallW - D.w) / 2;
+    const dy = D.bottom - D.h;
+    const R = (x, y, ww, hh, col) => {
+      g.fillStyle = col;
+      g.fillRect(at(x), at(y), at(ww), at(hh));
+    };
+    R(dx - D.frame - 1, dy - D.frame - 1, D.w + 2 * D.frame + 2, D.h + D.frame + 1, '#3a2e26');
+    R(dx - D.frame, dy - D.frame, D.w + 2 * D.frame, D.h + D.frame, '#d8c4a6');
+    R(dx - D.frame, dy - D.frame, D.w + 2 * D.frame, 1, '#efe3cf');
+    R(dx - D.frame + 1, dy - D.frame + 1, 8, 2, '#d9752e'); // turuncu köşe şeritleri (kesitin kapı dili)
+    R(dx + D.w + D.frame - 9, dy - D.frame + 1, 8, 2, '#d9752e');
+    R(dx - 1, dy - 1, D.w + 2, D.h + 1, '#3a2e26');
+    if (art) {
+      const k = Math.max(D.w / art.width, D.h / art.height);
+      const sw = D.w / k;
+      const sh = D.h / k;
+      g.imageSmoothingEnabled = true;
+      g.drawImage(art, (art.width - sw) / 2, art.height - sh, sw, sh, at(dx), at(dy), at(D.w), at(D.h));
+    } else R(dx, dy, D.w, D.h, '#2a2430');
+    R(dx + D.w / 2 - 6, dy - D.frame - 4, 12, 2, '#ffd9a0'); // kapı üstü lambası
     cutaway = { src: img, art, cv };
     return cv;
   }
@@ -1552,19 +1607,16 @@
     // D-016 (K2 Sude): hava kilidinin yanındaki su şişesi rafı. Rafın kendi [E] yazısı kesitle birlikte büyüdüğü için
     // verilmez (nearId null): eylem alttaki çekmecede, ad istasyon etiketinde görünür.
     if (S.Westlands && S.Westlands.drawInteriorRack) S.Westlands.drawInteriorRack(ctx, s, 0, 0, t, null);
-    // Transit güvertesiyle birebir aynı ortam: serbest eşyalar her zaman süzülür (biri mürettebatın önünde)
-    const amp = FX.motionAmp();
-    FX.drawFloaters(ctx, 'back', 0, I.floorY, 1, t, amp);
-    // Yemek / su / uyku: takımın GIF animasyonu (FX.drawActivity); yoksa ağırlıksız süzülme (transit güvertesiyle aynı)
+    // Lander Mars'ta: yerçekimi var, eşyalar süzülmez (süzülen eşyalar yalnız uzaydaki transit güvertesinde)
+    // Yemek / su / uyku / tuvalet: takımın GIF animasyonu (FX.drawActivity); yoksa 0.38g'de yürüyen kasksız mürettebat
     const acting = FX.drawActivity(ctx, s, dt, t, 0, I.floorY + 1);
     if (!acting) {
-      const pose = FX.crewMotionPose(t, body.im.v / S.DATA.gameplay.interiorWalkPxPerSecond, amp, !body.onGround);
       const footY = I.floorY + 1 - body.y;
-      FX.drawCrewPosed(ctx, pose, body.ix, footY, s.player.facing, t);
-      crewLift = body.y + pose.lift;
-      if (S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, body.ix, footY - pose.lift, t, body.moving);
+      const walking = Math.abs(body.im.v) > S.DATA.gameplay.interiorWalkPxPerSecond * 0.15;
+      if (!body.onGround) FX.drawCrewFrame(ctx, 'walk', 0, body.ix, footY, s.player.facing); // havada: adım karesi
+      else FX.drawCrew(ctx, walking ? 'walk' : 'idle', body.ix, footY, s.player.facing, t);
+      crewLift = body.y;
     }
-    FX.drawFloaters(ctx, 'front', 0, I.floorY, 1, t, amp);
     ctx.restore();
     if (st && !acting) {
       const headY = view.floorScreenY - (64 + crewLift) * view.k; // mürettebat ~60 px boyunda; etiket süzülmeyle yükselir
