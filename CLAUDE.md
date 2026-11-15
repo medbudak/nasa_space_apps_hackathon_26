@@ -75,6 +75,12 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 - For a second branch for parallel work, use `name-topic` with a hyphen, for example `enes-orbit-ui`. Don't use `name/topic`: git can't hold `enes` and `enes/...` at the same time.
 - Push only to your own branches. Never commit to, rebase or force-push someone else's branch. Never force-push `main`.
 - Sync often: run `git pull origin main` on your branch every few hours and always before opening a PR. Resolve conflicts on your branch, not on `main`.
+- **Sync before you start (humans and agents).** Before starting any task, and again before committing, run `git fetch --all --prune` and check for new pushes on `main` and on your own remote branch (`git log --oneline HEAD..origin/main`, `git log --oneline HEAD..origin/<your-branch>`). If there are new commits, bring them in without losing either side's work:
+  1. Never discard or overwrite local work: no `git reset --hard`, `git checkout -- .`, `git clean`, `git push --force` or "take theirs/ours for the whole file" to get past a conflict.
+  2. With uncommitted changes, first commit them (or `git stash push -u`), then `git merge origin/main` (and `origin/<your-branch>` if it moved). Re-apply a stash with `git stash pop`.
+  3. Resolve conflicts hunk by hunk so both changes survive. If two changes really contradict each other, stop and ask the user (or the file's owner, AGENTS.md §1) instead of choosing one.
+  4. Generated files (`src/data/*.js`, `assets/processed/**`): don't hand-merge them; take either side, then rebuild (`node tools/build.js data` / `assets`).
+  5. Run `npm test` after the merge and before continuing.
 - Changes reach `main` through pull requests. Small, frequent PRs beat one big PR at the end.
 - Merge with "Create a merge commit", not "Squash and merge". Personal branches keep living after a merge, and squashing makes later PRs show old changes and conflicts.
 - A PR that touches shared files (listed below) or the shared game model needs a quick OK from one teammate. A PR that only touches your own area can be merged by you once the project runs.
@@ -111,6 +117,7 @@ If you can't tell which list something belongs to, ask in the team chat. A two-m
 - Build on the accepted decisions in DECISIONS.md and never contradict them.
 - If a task needs something from the "Needs a team decision" list that isn't in DECISIONS.md, stop and say so. Offer 2–3 options with short trade-offs. Add them as a `Proposed` entry only if the user asks. Never mark an entry `Accepted` unless the user says the team agreed.
 - Stay inside the current task and the user's own area. No drive-by refactors in files other people are working on.
+- At the start of every session and before every commit, do the "Sync before you start" check from the Git workflow. Fetching and merging remote work into the current branch is allowed without asking; pushing still needs the user's request.
 - Don't commit, push, merge or open PRs unless the user asks. When you do, follow the Git workflow above.
 - Don't add AI attribution (co-author trailers, "Generated with" lines) to commits or PRs.
 - Real-world values (launch vehicle capacity, mass, power, cost, data rates, orbital parameters) need a source. Cite it in a code comment and in REFERENCES.md. If a value is simplified for gameplay, label it as simplified. Never invent figures and present them as real.
@@ -170,7 +177,9 @@ REFERENCES.md is the running log for all of this. Keep it current so the submiss
 
 Carried over from the v3 source:
 - `content/story.json`: TR/EN with matching placeholders. When adding text, add both languages; `tests/data_integrity.test.js` checks every key in code and data catalogues.
-- `tests/`: `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`), `rhythm`, `explore`, `design_choices` → 80/80 pass (2026-11-15).
+- `tests/`: `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`), `rhythm`, `explore`, `design_choices` → 82/82 pass (2026-11-15, after the workshop).
+- Test gotcha: objects created inside the `vm` context have a different `Object.prototype`, so `assert.deepStrictEqual(x, {})` fails on an empty object from the core. Compare keys or values instead.
+- Shuttle workshop and inventory (ux-plan #8 follow-up, 2026-11-15): the astronaut lives in the lander (door = its ladder at 0 m, `landingPadM` 0; no separate habitat building; interior uses `scr_ship_interior` + `astronaut_indoor`). Base systems land as kits (`workshop.startItems` + `instrumentKits`) and are built at the `workshop` station inside (`S.Workshop`, `src/systems/workshop.js`; UI `src/ui/workshop_panel.js`; `I` opens the inventory). Recipes in `data/nasa_data.json` → `workshop.recipes`: full/half solar array (`s.base.solarFrac` scales solar power) + extend, ISRU (MOXIE), MAV line, greenhouse (Veggie), salvaged antenna → +relay Mbit, robotic arm + cable → repair kit. Each recipe shows before → after rows from the same formulas. The outdoor E "deploy" crate action was removed; built structures appear outside. Salvage now adds `inventory.items` (`robotic_arm`, `spare_antenna`) instead of applying the antenna bonus directly.
 - 2026-11-15 merge of the three archives (ana, sude, medine) and the branches (local-wip, nursedef): see `docs/merge-2026-11-15.md` and D-013. Vehicles are found by digging (`S.Explore.dig`); there is no automatic discovery. East = lava plain + sealed skylight + tube (SCOUT-1). West = K2 glacier (`src/fx/westlands.js`). Runtime-patch prototypes live in `docs/design/prototypes/` and are not loaded. The sections below describe the archive states before the merge.
 - `docs/submission/SPACE_APPS_PROJECT_PAGE_EN.md` is written (GitHub Pages links are `<…>` placeholders).
 - Scientific fix: the speed-of-sound experiment needs `supercam` (the microphone is on SuperCam, not Mastcam-Z).
