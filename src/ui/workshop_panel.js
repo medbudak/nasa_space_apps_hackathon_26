@@ -144,8 +144,7 @@
     S.UI.openModal('workshop', WP.html(S.getState()), { cls: 'modal-wide', onMount: mount });
   };
 
-  // Kişi 4: envanter ızgarası aletler → malzemeler → stok ve buluntular; ikon + adet (alet ikonları Kişi 7'den gelince değişir)
-  const TOOL_ICON = { pickaxe: 'wrench', drill: 'grip', scanner: 'target' };
+  // Kişi 4: envanter ızgarası aletler → malzemeler → stok ve buluntular; ikon + adet (ikonlar S.Hotbar ile aynı)
   const INV_GROUPS = [['tool', 'inv.tools'], ['item', 'inv.materials'], ['stock', 'inv.stock'], ['find', 'inv.finds']];
 
   WP.inventoryHtml = function (s) {
@@ -154,7 +153,7 @@
       const key = (it.kind === 'tool' ? 'tool.' : 'item.') + it.id;
       const used = it.kind === 'item' ? W().usedIn(it.id) : [];
       return (
-        '<div class="inv-card"><div class="inv-head">' + I(it.kind === 'tool' ? TOOL_ICON[it.id] || 'wrench' : ICON[it.id] || 'doc') + '<b>' + t(key + '.name') + '</b><span class="inv-n">×' + it.n + '</span></div>' +
+        '<div class="inv-card"><div class="inv-head">' + I(S.Hotbar.icon(it)) + '<b>' + t(key + '.name') + '</b><span class="inv-n">×' + it.n + '</span></div>' +
         '<p>' + t(key + '.desc') + '</p>' +
         '<small>' + I('map') + t(key + '.from') + '</small>' +
         (used.length ? '<small class="inv-use">' + I('wrench') + t('inv.used_in', { list: used.map((r) => t('ws.' + r + '.name')).join(', ') }) + '</small>' : '') +

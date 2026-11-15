@@ -55,6 +55,7 @@
       (surface
         ? '<div class="hz-mark" data-ref="mkhome">' + I('home') + '</div><div class="hz-mark tgt" data-ref="mktgt" hidden><span class="hz-dia"></span></div>' +
           '<div class="world-prompt" data-ref="prompt" hidden></div>' +
+          '<div class="hotbar" data-ref="hotbar"></div>' +
           '<footer class="hz-foot"><div class="hz-brand">' + DOME + '<b>SOL 14</b></div><i class="hz-sep"></i>' +
           '<span class="hz-walk"><kbd>A</kbd>/<kbd>D</kbd>' + t('hud.walk') + '</span>' +
           '<div class="hz-track"><div class="hz-t-line">' +
@@ -122,6 +123,7 @@
     const site = S.Sim.site(s);
     const amb = S.Sim.ambient(s);
     const inHab = HUD.mode === 'habitat';
+    if (!inHab) S.Hotbar.render(ref('hotbar'), s);
     ref('sol').textContent = 'SOL ' + s.sol + ' / ' + s.maxSols + ' · ' + S.util.clock(S.Sim.clockMinute(s));
     const zone = !inHab && S.Explore && s.explore ? S.Explore.zoneAt(s) : null;
     ref('place').textContent = inHab

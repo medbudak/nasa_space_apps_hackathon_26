@@ -618,6 +618,7 @@
     else if (e.code === 'KeyP') Game.openPanel('power');
     else if (e.code === 'KeyJ') Game.openPanel('log');
     else if (e.code === 'KeyI') Game.openPanel('inventory');
+    else if (/^Digit[1-9]$/.test(e.code)) S.Hotbar.select(Number(e.code.slice(5)) - 1);
     else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && S.Station.impacted(S.getState())) {
       e.preventDefault();
       Game.digRegolith();

@@ -1257,3 +1257,15 @@ body[data-scene='world'] .screen-layer { display: none; }
 .rk-part { display: flex; flex-direction: column; gap: 0.3em; padding: 0.5em 0.6em; margin-bottom: 0.4em; border: 1px solid rgba(255,194,74,0.35); border-radius: 0.4em; background: rgba(255,194,74,0.05); }
 .rk-part small { font-size: 0.72em; color: var(--muted); }
 .rk-part .btn { align-self: flex-start; }
+
+/* ---------------- Alt envanter çubuğu (hotbar) ---------------- */
+.hotbar { position: absolute; left: 50%; bottom: 3.6em; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.25em; pointer-events: none; }
+.hb-name { min-height: 1.1em; font-size: 0.82em; color: #f2ebe2; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; }
+.hb-row { display: flex; gap: 0; padding: 0.18em; background: #2a2622; box-shadow: inset 0 0 0 0.12em #0d0c0b, 0 0.2em 0 rgba(0,0,0,0.45); }
+.hb-slot { position: relative; width: 2.6em; height: 2.6em; display: grid; place-items: center; background: #5b544c; box-shadow: inset 0.14em 0.14em 0 #3a3530, inset -0.14em -0.14em 0 #847a6f; }
+.hb-slot .ico { width: 1.5em; height: 1.5em; color: #e9e3d8; filter: drop-shadow(0.08em 0.08em 0 #1b1815); }
+.hb-slot.tool .ico { color: var(--cyan); }
+.hb-slot.find .ico { color: var(--amber); }
+.hb-slot.sel { z-index: 1; box-shadow: 0 0 0 0.16em #f2ebe2, 0 0 0 0.3em #1b1815, inset 0.14em 0.14em 0 #3a3530, inset -0.14em -0.14em 0 #847a6f; }
+.hb-n { position: absolute; right: 0.18em; bottom: 0.02em; font-size: 0.85em; color: #fff; text-shadow: 0.1em 0.1em 0 #3a3530; }
+.hb-key { position: absolute; left: 0.22em; top: 0.06em; font-size: 0.55em; font-style: normal; color: rgba(242,235,226,0.45); }
