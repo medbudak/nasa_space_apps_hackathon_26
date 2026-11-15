@@ -69,6 +69,11 @@
     scr_ship_reactor: 'screens/scr_ship_reactor.jpeg',
     scr_map_corridor: 'screens/scr_map_corridor.png',
     scr_lab_desk: 'screens/scr_lab_desk.png',
+    // Mission prep previews (2.2:1 illustrations, not technical drawings of a real vehicle)
+    scr_prep_objective: 'screens/scr_prep_objective.jpg',
+    scr_prep_rocket: 'screens/scr_prep_rocket.jpg',
+    scr_prep_habitat: 'screens/scr_prep_habitat.jpg',
+    scr_prep_instruments: 'screens/scr_prep_instruments.jpg',
     scr_downlink: 'screens/scr_downlink.png',
     scr_sol_transition: 'screens/scr_sol_transition.png',
     ufo_liftoff: 'ending/ufo_liftoff.png',

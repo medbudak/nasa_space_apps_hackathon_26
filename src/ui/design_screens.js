@@ -196,12 +196,7 @@
     '...........ggg', '..........g...', '..........g...', '..wwwwwwwwgww.', '.wwwwwwwwwwwww',
     '.woooooooowwww', '.wwwwwwwwwwwww', '..g...g....g..', '.ddd.ddd..ddd.', '.dgd.dgd..dgd.', '.ddd.ddd..ddd.'
   ];
-  const TRIPOD = [
-    '.wwwwwwwwwwww.', '.wdGGGGGGGGdw.', '.wwwwwwwwwwww.', '......gg......', '.....g..g.....',
-    '....g....g....', '....g....g....', '...g......g...', '...g......g...', '..g........g..', '..g........g..'
-  ];
   const DISH = ['.wwww.......', 'wgggww......', 'wggggw..g...', 'wggggw.g....', '.wwwwgg.....', '....gg......', '....gg......', '...gggg.....', '..gggggg....'];
-  const BOX = ['kkkkkk', 'kGkGkk', 'kkkkkk', 'kkkkkk'];
   const SAT = ['bbb.....bbb', 'bBb.....bBb', 'bbbgwwwgbbb', 'bBb.www.bBb', 'bbb.....bbb'];
   /* Small pixel icons for rows and cards (same palette, same scale) */
   const ICONS = {
@@ -293,65 +288,22 @@
   }
 
   /* ---------- Preview scenes (160×100 pixel grid) ---------- */
-  function sprite(key, x, y, w, h) {
-    const im = S.Sprites.get(key);
-    return im ? '<image href="' + im.src + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" preserveAspectRatio="xMidYMax meet" style="image-rendering:pixelated"/>' : '';
-  }
+
   function disc(cx, cy, r, colorAt) {
     let s = '';
     for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + 0.5) s += R(cx + x, cy + y, 1.02, 1.02, colorAt(x, y));
     return s;
   }
-  function stars(n, maxY) {
-    let s = '';
-    let seed = 7;
-    for (let i = 0; i < n; i++) {
-      seed = (seed * 9301 + 49297) % 233280;
-      const x = seed % 160;
-      seed = (seed * 9301 + 49297) % 233280;
-      s += R(x, seed % maxY, 1, 1, i % 4 ? '#58607a' : '#c9cfe0');
-    }
-    return s;
-  }
-  function land(top) {
-    let s = '';
-    for (let x = 0; x < 160; x += 2) {
-      const back = Math.round(5 + 3 * Math.sin(x / 13) + 2 * Math.sin(x / 6 + 1));
-      const front = Math.round(3 + 2 * Math.sin(x / 9 + 2) + 1.5 * Math.sin(x / 4));
-      s += R(x, top - 10 - back, 2, back + 40, '#5e2a27') + R(x, top - front, 2, front + 40, '#7d3529');
-    }
-    s += R(0, top + 6, 160, 40, '#b9512a') + R(0, top + 6, 160, 2, '#d0643a');
-    [[10, top + 14, 6, 2], [52, top + 18, 4, 2], [96, top + 13, 3, 2], [128, top + 17, 7, 3]].forEach(([x, y, w, h]) => (s += R(x, y, w, h, '#4a3a3a')));
-    return s;
-  }
-  /** Habitat: (x, y) = top left, s = scale; height 28·s (legs included) */
-  function habitat(x, y, s) {
-    return (
-      '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')">' +
-      R(2, 0, 40, 2, '#e9e1d3') + R(0, 2, 44, 22, '#e9e1d3') + R(0, 21, 44, 3, '#bdb4a6') + R(0, 12, 44, 3, '#e0632a') +
-      R(14, 8, 9, 16, '#8a8f9a') + R(17, 11, 3, 3, '#2f323b') + R(28, 5, 5, 4, '#2f323b') + R(35, 5, 5, 4, '#2f323b') + R(4, 5, 4, 2, '#2f323b') +
-      R(2, 24, 3, 4, '#5a5d66') + R(39, 24, 3, 4, '#5a5d66') +
-      R(34, -16, 1, 16, '#8a8f9a') + R(33, -18, 3, 2, '#5fd36a') +
-      R(21, -6, 1, 6, '#8a8f9a') + R(17, -10, 7, 2, '#d8d0c4') + R(18, -12, 5, 2, '#d8d0c4') +
-      '</g>'
-    );
-  }
-  const svgWrap = (inner) => '<svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges" aria-hidden="true">' + inner + '</svg>';
+
+
+
   /** Full-screen 960×540 art, scaled down with its aspect ratio kept (cover crop, pixelated) */
   const shot = (key) => '<img src="' + S.Sprites.screen(key) + '" alt="" draggable="false">';
 
-  function sceneFor(step, d) {
-    if (step === 1) {
-      return svgWrap(R(0, 0, 160, 100, '#1a2030') + stars(18, 40) + land(64) + pixRects(TRIPOD, 30, 56, 1.4) + sprite('astronaut_action', 54, 44, 24, 30) + sprite('rover_opportunity', 92, 46, 48, 28));
-    }
-    if (step === 2) return shot('scr_transit');
-    if (step === 3) {
-      const rtg = d.powerSource === 'solar_rtg' ? pixRects(BOX, 106, 66, 2) + R(110, 69, 3, 2, '#ffcf3f') : '';
-      return svgWrap(R(0, 0, 160, 100, '#1a2030') + stars(10, 30) + disc(136, 16, 6, () => '#ffcf3f') + land(66) + habitat(18, 36, 1.35) + sprite('solar_clean', 108, 50, 46, 24) + rtg);
-    }
-    if (step === 4) return shot('scr_lab_desk');
-    return shot('scr_launch');
-  }
+  // Mission prep preview art: one illustration per step, the same 2.2:1 frame on every screen
+  const PREP_ART = { 1: 'scr_prep_objective', 2: 'scr_prep_rocket', 3: 'scr_prep_habitat', 4: 'scr_prep_instruments', 5: 'scr_launch' };
+  const sceneFor = (step) => shot(PREP_ART[step]);
+
 
   /* ---------- Rules read from existing code/data ---------- */
   // Instrument limits are the ones Engineering.calcDesignTotals enforces (design.err_no_instrument / err_too_many).
