@@ -177,3 +177,17 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Why: The player asked for exploration, decisions and interaction instead of ready-made vehicles, with two routes that play differently. It builds on the three archives (K2 glacier, K3 buried wrecks and tube rover, D-012 map and UI). Rejected: keeping D-012's visible wrecks on the right route.
 - Changes D-012: the wreck positions, "InSight, Phoenix and Beagle 2 are not on the map" and the −450 / +600 m bounds. D-012's base-centred map, lava-tube sub-map, ice loop and landing cutscene stay.
 - Affects: `data/nasa_data.json` (terrain.map, westRegion, gameplay.cargoBonus), `data/explore_config.json` (dig, cave.scout, westFinds, fieldCam), `data/forensics_cases.json`, `src/systems/explore.js`, `src/systems/forensics.js`, `src/core/surface.js`, `objectives.js`, `sim.js`, `state.js`, `src/fx/dig_fx.js`, `westlands.js`, `effects.js`, `src/ui/field_cam.js`, `cutscenes.js`, `hud.js`, `science_panels.js`, `design_screens.js`, `content/story.json`, tests
+
+### D-014: Glacier ice cave: shelter and a water bottle carried to the greenhouse
+- Status: Proposed
+- Date: 2026-11-15
+- Agreed by: (pending; proposed by Sude, K2)
+- Decision: A walk-in ice cave deep on the western glacier, past the existing sealed cave (−1460 m) and the Phoenix site, before the glacier and its ice blocks (−1920 … −2020 m, game value; moved closer so a round trip fits an ordinary EVA).
+  - Shelter: the ice-field path runs through it, so the player simply walks in. Inside, the west's extra cold and deep-cold suit heat loss stop (the blizzard starts further west, at −2700 m), and crises wait. Suit O₂ keeps draining, so the player cannot stay forever.
+  - Bottle: the astronaut does not start with one. Taking an empty bottle from the wall rack by the airlock inside the habitat (E) is the player's own choice; E there again puts it back. It is a one-slot inventory item, drawn in the astronaut's hand while carried.
+  - Water: inside the cave, the player chips ice into the bottle: 2 L (game value).
+  - Carrying cost: a full bottle slows walking (suggested 80% speed, game value, team to tune). Suit O2 keeps draining with game time, so the slower walk home costs more O2, and the M4 point-of-no-return calculation includes the slowdown.
+  - Delivery: at the greenhouse, E plays a short watering animation (kneel, tip the bottle). If the greenhouse was not tended that sol, this tends it (same morale as tending) without using habitat water; otherwise the 2 L go to the habitat tank. The empty bottle stays in hand.
+- Why: The player asked for a place on the ice route to hide and survive, with a reward worth the risky walk back. Real basis: Phoenix found water ice just under the surface, and buried ice is exposed at scarps (JPL). A walk-in Mars ice cave is FICTIONAL and labelled as such in the game. Options considered: reuse the sealed cave at −1460 m as the shelter (smaller job, but too close to base); a simple ice-overhang shelter (no "hiding" feel).
+- Open: the exact slowdown value. A checkpoint retry returns the bottle to its state that morning (built that way, team to confirm).
+- Affects: `data/nasa_data.json` (terrain.westRegion.shelterCave), `src/core/sim.js`, `events.js`, `surface.js`, `src/main.js` (E actions), `src/fx/westlands.js` (cave, bottle, rack, watering), `effects.js` (three draw hooks), `content/story.json`, `tests/shelter.test.js`
