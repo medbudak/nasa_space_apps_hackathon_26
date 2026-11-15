@@ -1482,7 +1482,7 @@
    * şeridi döşenir (tavan ışıkları ve zemin dahil) ve iki yanına direk gelir; üstüne ISS'teki gibi koşu bandı (T2),
    * bisiklet (CEVIS) ve duvara bağlı direnç aleti (ARED) çizilir. Kesitin piksel boyutunda bir kez kurulur.
    */
-  const GYM_WALL = { x0: 90, x1: 155 }; // ilk bölmenin düz duvarı (yerel px)
+  const GYM_WALL = { x0: 88, x1: 157 }; // ilk bölmenin düz duvarı, panel ekinden panel ekine (yerel px): döşeyince ek görünmez
   let cutaway = null;
   function landerCutaway(I) {
     const img = S.Sprites.get('lander_interior');
@@ -1512,63 +1512,106 @@
     return cv;
   }
 
-  /** Spor aletleri (yerel px; x0 bölmenin sol kenarı, floorY zemin, bw bölme genişliği) */
+  /*
+   * Spor aletleri, kesitteki dolaplarla aynı 3/4 bakış: üstten görünen açık yüz, ön yüz, sağda koyu yan yüz, koyu kontur;
+   * renkler kesitin kendi paletinden (sıcak krem/kahve, koyu metal, turuncu şerit). Yerel px; x0 bölmenin sol kenarı.
+   */
+  const GYM_PAL = {
+    out: '#202028', metal: '#484048', metalHi: '#5c5260', metalLo: '#2c2834',
+    top: '#f0d0a8', front: '#d8a878', side: '#b07e58', dark: '#403848', belt: '#28242c',
+    orange: '#e0682c', orangeLo: '#a8481c', screen: '#58d0c8', screenLo: '#2a7a78', mat: '#3a3a4e', matTop: '#4a4a60'
+  };
   function drawGym(g, x0, floorY, bw) {
+    const P = GYM_PAL;
     const R = (x, y, w, h, c) => {
       g.fillStyle = c;
       g.fillRect(x0 + x, floorY + y, w, h);
     };
-    const OUT = '#23252b'; // kontur
-    const DARK = '#3a3d45';
-    const MID = '#6b6f78';
-    const CREAM = '#e3dccd';
-    const SHADE = '#bfb6a5';
-    const ORANGE = '#d9652b';
-    const SCREEN = '#3fa9b0';
-    const box = (x, y, w, h, c, shade) => {
-      R(x - 1, y - 1, w + 2, h + 2, OUT);
-      R(x, y, w, h, c);
-      if (shade) R(x, y + h - 2, w, 2, shade);
+    /** 3/4 blok: (x, y) ön yüzün sol üstü, d üst yüzün derinliği; sağdaki yan yüz s px */
+    const block = (x, y, w, h, d, c, sd = 2) => {
+      R(x - 1, y - d - 1, w + sd + 2, h + d + 2, P.out);
+      R(x, y - d, w, d, c.top); // üst yüz
+      R(x + 1, y - d, w - 2, 1, '#fff0d8'); // üst kenar parlaması
+      R(x, y, w, h, c.front); // ön yüz
+      R(x + w, y - d + 1, sd, h + d - 1, c.side); // sağ yan yüz
+      R(x, y + h - 1, w, 1, c.side);
     };
-    // Duvara bağlı direnç aleti (ARED): iki dikme, kaldırma barı, iki vakum silindiri ve ayak plakası
+    const CREAM = { top: P.top, front: P.front, side: P.side };
+    const METAL = { top: P.metalHi, front: P.metal, side: P.metalLo };
+    const shadow = (x, w) => {
+      g.fillStyle = 'rgba(16,12,20,0.35)';
+      g.fillRect(x0 + x - 2, floorY - 1, w + 6, 3);
+    };
+
+    // Zemin minderi (bisiklet ve direnç aletinin altında)
+    R(60, -2, bw - 58, 3, P.out);
+    R(61, -3, bw - 60, 2, P.matTop);
+    R(61, -1, bw - 60, 1, P.mat);
+
+    // Duvar ekranı: nabız eğrisi (yalnız çizgi, yazı yok), emniyet askısının sağında
+    block(52, -92, 30, 16, 3, METAL);
+    R(54, -90, 26, 12, P.screenLo);
+    const pulse = [0, 0, 0, -1, 2, -5, 4, 0, 0, 0, -1, 0, 0, 0, -1, 2, -5, 4, 0, 0, 0, -1, 0, 0];
+    pulse.forEach((dy, i) => R(55 + i, -85 + dy, 1, 1, P.screen));
+    // Havlu askısı (sol kenar)
+    R(2, -78, 8, 2, P.metal);
+    R(3, -76, 6, 12, P.orange);
+    R(3, -65, 6, 1, P.orangeLo);
+
+    // Koşu bandı (T2): uzun 3/4 gövde, koyu bant, yan tutamaklar, ön konsol; emniyet askısı tavana bağlı
+    shadow(4, 58);
+    block(4, -9, 56, 8, 5, CREAM, 3);
+    R(6, -14, 52, 4, P.belt); // bant (üst yüzde)
+    for (let i = 0; i < 52; i += 6) R(6 + i, -13, 3, 1, '#3a3440');
+    R(4, -2, 56, 1, P.orange);
+    block(50, -40, 4, 30, METAL, 2); // ön dikme
+    block(44, -50, 18, 10, 3, CREAM, 2); // konsol
+    R(46, -49, 14, 6, P.screenLo);
+    R(47, -48, 6, 2, P.screen);
+    R(47, -45, 10, 1, P.screen);
+    R(14, -30, 38, 2, P.metal); // tutamak
+    R(14, -30, 2, 18, P.metal);
+    R(14, -31, 38, 1, P.metalHi);
+    R(16, -98, 30, 2, P.metal); // tavan askısı
+    R(18, -96, 2, 40, P.orange); // emniyet bungee'leri
+    R(42, -96, 2, 40, P.orange);
+    R(18, -57, 26, 2, P.orangeLo);
+
+    // Bisiklet ergometresi (CEVIS): krem volan kapağı, koyu volan, sele, gidon, küçük ekran
+    const bx = 74;
+    shadow(bx - 2, 26);
+    block(bx, -18, 18, 16, 3, CREAM, 2);
+    R(bx + 3, -15, 10, 10, P.out);
+    R(bx + 4, -14, 8, 8, P.dark);
+    R(bx + 6, -12, 4, 4, P.metalHi);
+    R(bx + 7, -11, 2, 2, P.orange);
+    R(bx + 1, -24, 3, 7, P.metal); // sele borusu
+    block(bx - 3, -27, 10, 2, 2, METAL, 1); // sele
+    R(bx + 17, -36, 3, 18, P.metal); // gidon borusu
+    R(bx + 13, -39, 12, 2, P.out);
+    R(bx + 13, -40, 12, 1, P.metalHi);
+    block(bx + 16, -46, 8, 5, 2, CREAM, 1);
+    R(bx + 17, -45, 6, 3, P.screen);
+    R(bx + 4, -3, 4, 2, P.orange); // pedal
+
+    // Direnç aleti (ARED): koyu kaide, iki dikme, krem kaldırma barı ve turuncu uçlar, iki vakum silindiri
     const ax = bw - 40;
-    box(ax, -80, 4, 74, MID);
-    box(ax + 28, -80, 4, 74, MID);
-    box(ax - 2, -84, 36, 4, DARK);
-    box(ax + 6, -70, 6, 22, DARK);
-    box(ax + 20, -70, 6, 22, DARK);
-    R(ax + 7, -66, 4, 2, SCREEN);
-    R(ax + 21, -66, 4, 2, SCREEN);
-    box(ax - 6, -44, 44, 3, CREAM);
-    R(ax - 7, -46, 3, 7, ORANGE);
-    R(ax + 36, -46, 3, 7, ORANGE);
-    box(ax - 4, -5, 40, 4, DARK, OUT);
-    // Koşu bandı (T2): krem gövde, koyu bant, yan tutamak, ön direk ve ekran; tavana emniyet askısı bağlantısı
-    box(4, -9, 56, 8, CREAM, SHADE);
-    R(6, -11, 50, 2, OUT);
-    R(4, -3, 56, 1, ORANGE);
-    box(52, -40, 4, 30, CREAM, SHADE);
-    box(44, -48, 18, 9, CREAM, SHADE);
-    R(46, -46, 12, 4, SCREEN);
-    R(60, -45, 1, 2, ORANGE);
-    box(30, -28, 24, 2, MID);
-    R(14, -62, 2, 14, ORANGE);
-    R(38, -62, 2, 14, ORANGE);
-    R(12, -63, 30, 2, MID);
-    // Bisiklet ergometresi (CEVIS): krem volan kapağı, sele, gidon ve ekran
-    const bx = 70;
-    box(bx, -18, 18, 16, CREAM, SHADE);
-    R(bx + 5, -13, 8, 6, DARK);
-    R(bx + 8, -11, 2, 2, ORANGE);
-    box(bx + 2, -30, 3, 12, MID);
-    box(bx - 3, -33, 11, 3, OUT);
-    box(bx + 16, -36, 3, 18, MID);
-    box(bx + 13, -39, 11, 2, DARK);
-    box(bx + 16, -46, 8, 5, CREAM);
-    R(bx + 17, -45, 6, 3, SCREEN);
-    R(bx + 6, -5, 4, 2, ORANGE);
-    box(bx - 4, -2, 28, 2, DARK)
+    shadow(ax - 4, 42);
+    block(ax - 4, -6, 42, 5, 3, METAL, 2); // kaide
+    block(ax, -84, 4, 78, 2, METAL, 2);
+    block(ax + 28, -84, 4, 78, 2, METAL, 2);
+    block(ax - 2, -88, 36, 3, 2, METAL, 2); // üst kiriş
+    block(ax + 7, -72, 6, 22, 2, { top: P.metalHi, front: P.dark, side: P.out }, 1); // silindirler
+    block(ax + 20, -72, 6, 22, 2, { top: P.metalHi, front: P.dark, side: P.out }, 1);
+    R(ax + 8, -66, 3, 10, P.metalHi);
+    R(ax + 21, -66, 3, 10, P.metalHi);
+    block(ax - 8, -44, 48, 3, 2, CREAM, 1); // bar
+    R(ax - 10, -47, 4, 8, P.orange);
+    R(ax + 38, -47, 4, 8, P.orange);
+    R(ax - 10, -40, 4, 1, P.orangeLo);
+    R(ax + 38, -40, 4, 1, P.orangeLo);
   }
+
 
   /** Yakındaki istasyonun adı, mürettebatın başının üstünde (ekran koordinatı, kesit ölçeğinden bağımsız boyut) */
   function drawStationLabel(ctx, label, x, y) {
