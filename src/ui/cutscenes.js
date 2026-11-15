@@ -384,6 +384,8 @@
         S.bus.emit('audio:play', 'launch');
         return 4200;
       },
+      // D-014: göktaşından sonra kurulan istasyon sonraki ekibe kalır; hangi modüllerin durduğu sonu söyler
+      ...(S.Station && S.Station.impacted(s) ? [() => CS.stationSlide(s, slide)] : []),
       () => {
         S.UI.showScreen(slide('ufo_sky', t('end.anomaly'), t('end.anomaly_sub'), 'glint'), 'scene-end');
         S.bus.emit('audio:play', 'ufo_ping');
@@ -414,6 +416,15 @@
     }
     window.addEventListener('keydown', onKey, true);
     next();
+  };
+
+  CS.stationSlide = function (s, slide) {
+    const id = S.Station.endingId(s);
+    const built = S.DATA.station.modules.filter((m) => s.station.built[m]).map((m) => t('station.mod.' + m));
+    const list = built.length ? t('station.end.built', { list: built.join(', ') }) : t('station.end.none');
+    S.UI.showScreen(slide('bg_jezero_sunset', t('station.end.' + id + '.title'), t('station.end.' + id + '.body') + ' ' + list), 'scene-end');
+    S.bus.emit('audio:play', id === 'pioneer' ? 'success' : 'scan');
+    return 5200;
   };
 
   /** Mockup 01: SON İLETİM */

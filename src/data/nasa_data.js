@@ -946,8 +946,161 @@ window.SOL14.DATA = {
     },
     "minutes": 25,
     "repairKits": 1
+   },
+   {
+    "id": "station_shell",
+    "module": "shell",
+    "needs": {
+     "cargo_crate": 3,
+     "cable_spool": 1
+    },
+    "minutes": 60
+   },
+   {
+    "id": "station_shield",
+    "module": "shield",
+    "requiresModule": "shell",
+    "needs": {
+     "regolith_bag": 4
+    },
+    "minutes": 45
+   },
+   {
+    "id": "station_heat_rhu",
+    "module": "heat",
+    "requiresModule": "shell",
+    "needs": {
+     "rhu_pack": 1
+    },
+    "minutes": 30
+   },
+   {
+    "id": "station_heat_heater",
+    "module": "heat",
+    "requiresModule": "shell",
+    "needs": {
+     "heater_kit": 1
+    },
+    "minutes": 30
+   },
+   {
+    "id": "station_power_panel",
+    "module": "power",
+    "requiresModule": "shell",
+    "needs": {
+     "insight_panel": 1,
+     "cable_spool": 1
+    },
+    "minutes": 40
+   },
+   {
+    "id": "station_power_kit",
+    "module": "power",
+    "requiresModule": "shell",
+    "needs": {
+     "solar_kit": 1,
+     "cable_spool": 1
+    },
+    "minutes": 40
+   },
+   {
+    "id": "station_comms_antenna",
+    "module": "comms",
+    "requiresModule": "shell",
+    "needs": {
+     "spare_antenna": 1,
+     "cable_spool": 1
+    },
+    "minutes": 30
+   },
+   {
+    "id": "station_comms_relay",
+    "module": "comms",
+    "requiresModule": "shell",
+    "needs": {
+     "relay_kit": 1
+    },
+    "minutes": 30
    }
   ]
+ },
+ "station": {
+  "simplified": true,
+  "simplifiedNote": "FICTIONAL story (K3 Medine's prototype, D-014 proposed): on Sol 2 a meteorite lands east of the base and scatters cargo. New impact craters do form on Mars (MRO before-and-after images), but one landing next to a base is very unlikely. The MAV is not hit; the return stays the same. Positions, counts and minutes are game values; the station modules are built in the lander's workshop (workshop.recipes with a module field).",
+  "src": "https://www.jpl.nasa.gov/images/pia12215-new-impact-craters-on-mars/",
+  "impactSol": 2,
+  "siteM": 125,
+  "craterM": 380,
+  "modules": [
+   "shell",
+   "shield",
+   "heat",
+   "power",
+   "comms"
+  ],
+  "pickupRangeM": 8,
+  "regolithDigMinutes": 4,
+  "noDigNearM": 20,
+  "pickups": [
+   {
+    "id": "c1",
+    "m": 250,
+    "item": "cargo_crate",
+    "place": "ground"
+   },
+   {
+    "id": "k1",
+    "m": 300,
+    "item": "cable_spool",
+    "place": "ground"
+   },
+   {
+    "id": "c2",
+    "m": 450,
+    "item": "cargo_crate",
+    "place": "ground"
+   },
+   {
+    "id": "c3",
+    "m": 930,
+    "item": "cargo_crate",
+    "place": "boulder"
+   },
+   {
+    "id": "k2",
+    "m": 985,
+    "item": "cable_spool",
+    "place": "boulder"
+   },
+   {
+    "id": "c4",
+    "m": -380,
+    "item": "cargo_crate",
+    "place": "ground"
+   },
+   {
+    "id": "k3",
+    "m": -700,
+    "item": "cable_spool",
+    "place": "ground"
+   },
+   {
+    "id": "s1",
+    "m": 2080,
+    "item": "solar_kit",
+    "place": "ground"
+   },
+   {
+    "id": "k4",
+    "m": 2720,
+    "item": "cable_spool",
+    "place": "ground"
+   }
+  ],
+  "moundItems": {
+   "mound_e1": "heater_kit",
+   "mound_e2": "relay_kit"
+  }
  },
  "scoring": {
   "forensicCorrectPoints": 100,
@@ -1022,7 +1175,10 @@ window.SOL14.DATA = {
     "acceptedSecondary": null,
     "reportMbit": 18,
     "salvage": {
-     "rhuUnits": 8
+     "rhuUnits": 8,
+     "items": {
+      "rhu_pack": 1
+     }
     },
     "telemetry": {
      "tau": 10.8,
@@ -1049,7 +1205,10 @@ window.SOL14.DATA = {
     "acceptedSecondary": null,
     "reportMbit": 18,
     "salvage": {
-     "seis": true
+     "seis": true,
+     "items": {
+      "insight_panel": 1
+     }
     },
     "telemetry": {
      "dustCoverPct": 92,
@@ -1076,7 +1235,10 @@ window.SOL14.DATA = {
     "acceptedSecondary": "thermal",
     "reportMbit": 18,
     "salvage": {
-     "rhuUnits": 8
+     "rhuUnits": 8,
+     "items": {
+      "rhu_pack": 1
+     }
     },
     "salvageChoice": {
      "note": "Engineering decision: which part is still reusable? RHUs keep giving heat for decades (Pu-238 half-life 87.7 years, constants.rhu); the right-front wheel drive actuator failed in March 2006 and was dragged for the rest of the mission; the solar arrays were dust-covered and could not keep the rover warm in its last winter.",

@@ -146,6 +146,7 @@
       s.inventory.spareAntenna = true;
       items.spare_antenna = (items.spare_antenna || 0) + 1;
     }
+    for (const [item, n] of Object.entries(r.items || {})) items[item] = (items[item] || 0) + n; // istasyon parçaları (D-014)
     if (r.seis && !S.Sim.has(s, 'seis')) {
       s.design.instruments.push('seis');
       s.inventory.seisSalvaged = true;

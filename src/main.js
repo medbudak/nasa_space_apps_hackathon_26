@@ -32,6 +32,7 @@
   const Game = {
     scene: 'loading',
     pendingSol: [],
+    pendingImpact: false,
     resumeCb: null,
     lastHud: 0,
     lastHab: 0,
@@ -118,6 +119,7 @@
     S.getState().scene = 'design';
     S.DesignScreens.step = demo ? 5 : 1;
     Game.pendingSol = [];
+    Game.pendingImpact = false;
     Game.setScene('design');
     S.DesignScreens.showDesign(handlers);
   };
@@ -128,6 +130,7 @@
     if (!s) return Game.toMenu();
     s.lang = S.lang;
     Game.pendingSol = [];
+    Game.pendingImpact = false;
     Game.resumeCb = null;
     S.UI.closeAll();
     S.saveGame();
@@ -272,8 +275,26 @@
     S.bus.emit('fx:puff', { px, size: r.done ? 2 : 1 });
     if (!r.done) S.bus.emit('fx:float', { px, text: t('dig.progress', { n: r.hits, total: r.total }), tone: 'ok' });
     else if (r.tube) S.UI.toast(S.UI.icon('map') + t('dig.tube_open'), 'ok', 6500);
+    else if (r.item) S.UI.toast(S.UI.icon('check') + t('station.mound_item', { item: t('item.' + r.item + '.name') }), 'ok', 5000);
     else if (r.empty) S.UI.toast(S.UI.icon('target') + t('dig.empty.' + st.kind), 'info', 3800);
     // Araç çıktıysa forensics:discovered olayı duyurur
+    Game.afterAction();
+  };
+
+  /** D-014: S/↓ ile açık zeminde regolit torbası doldur (istasyonun radyasyon kalkanı) */
+  Game.digRegolith = function () {
+    const s = S.getState();
+    const body = S.Surface.body;
+    if (!body.onGround || body.actionT > 0) return;
+    const r = S.Station.digRegolith(s);
+    if (!r.ok) {
+      if (r.errKey) S.bus.emit('fx:float', { px: body.px, text: t(r.errKey), tone: 'warn' });
+      return;
+    }
+    body.actionT = 0.7;
+    S.bus.emit('fx:puff', { px: body.px + s.player.facing * 6, size: 2 });
+    S.bus.emit('audio:play', 'land');
+    S.bus.emit('fx:float', { px: body.px, text: t('station.regolith', { n: r.bags }), tone: 'ok' });
     Game.afterAction();
   };
 
@@ -484,6 +505,11 @@
       S.Cutscenes.showSolTransition(sum);
       return true;
     }
+    if (Game.pendingImpact) {
+      Game.pendingImpact = false;
+      S.StationCard.showImpact(s);
+      return true;
+    }
     if (Game.checkEnd()) return true;
     if (s.crisis.active) {
       S.DecisionCard.open();
@@ -589,6 +615,10 @@
     else if (e.code === 'KeyP') Game.openPanel('power');
     else if (e.code === 'KeyJ') Game.openPanel('log');
     else if (e.code === 'KeyI') Game.openPanel('inventory');
+    else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && S.Station.impacted(S.getState())) {
+      e.preventDefault();
+      Game.digRegolith();
+    }
   }
 
   /**
@@ -640,6 +670,8 @@
     S.Audio.init();
     S.FX.init();
     S.bus.on('sol:advance', (sum) => Game.pendingSol.push(sum));
+    S.bus.on('station:impact', () => (Game.pendingImpact = true));
+    S.bus.on('station:pickup', (p) => S.bus.emit('fx:float', { px: S.Surface.body.px, text: t('station.pick', { item: t('item.' + p.item + '.name') }), tone: 'ok' }));
     // İlk zıplama (K3 Medine): aynı güçle Mars'ta ne kadar yükseğe ve ne kadar süre (Dünya'yla karşılaştırma)
     S.bus.on('surface:jump', () => {
       const s = S.getState();

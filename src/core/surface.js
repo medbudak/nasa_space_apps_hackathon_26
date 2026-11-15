@@ -399,6 +399,7 @@
       return;
     }
     s.player.x = Surf.pxToM(body.px);
+    if (S.Station) S.Station.collect(s, body.y);
     Surf.updateWest(s, dt);
   };
 

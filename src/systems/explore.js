@@ -31,7 +31,8 @@
   X.siteAt = (st) => (st.case ? S.Forensics.get(st.case).distanceM : st.atM);
   X.siteSide = (st) => (X.siteAt(st) < 0 ? 'west' : 'east');
   X.siteHits = (s, st) => (s.explore && s.explore.dig[st.id]) || 0;
-  X.siteDone = (s, st) => X.siteHits(s, st) >= st.hits;
+  // D-014: çarpmadan sonra sahte tümsekte gömülü kit varsa tümsek yeniden kazılabilir
+  X.siteDone = (s, st) => X.siteHits(s, st) >= st.hits && !(S.Station && S.Station.moundItem(s, st.id));
   /** Altında bir şey var mı (araç ya da tünel)? Sahte tümsek boş çıkar */
   X.siteReal = (st) => Boolean(st.case || st.opens);
   X.tubeOpen = (s) => Boolean(s.explore && s.explore.tubeOpen);
@@ -60,6 +61,7 @@
   X.dig = function (s, id) {
     const st = X.site(id);
     if (!st || X.siteDone(s, st)) return { ok: false };
+    if (X.siteHits(s, st) >= st.hits) s.explore.dig[id] = 0; // çarpmadan önce boş kazılmıştı
     s.explore.dig[id] = X.siteHits(s, st) + 1;
     S.Sim.advance(s, st.minutesPerHit);
     const hits = s.explore.dig[id];
@@ -76,7 +78,10 @@
       s.explore.tubeOpen = true;
       out.tube = true;
       S.bus.emit('explore:tube_open', {});
-    } else out.empty = true;
+    } else {
+      out.item = S.Station ? S.Station.takeMoundItem(s, id) : null;
+      out.empty = !out.item;
+    }
     S.bus.emit('audio:play', out.empty ? 'fail' : 'quake');
     return out;
   };

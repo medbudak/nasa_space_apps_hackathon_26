@@ -686,6 +686,7 @@
         S.bus.emit('fx:weather', { type: 'clear' });
       }
     }
+    if (S.Station) S.Station.checkImpact(s); // D-014: Sol 2'de göktaşı kargoyu saçar
     Sim.snapshotSolStart(s);
     Sim.prepareWarnings(s);
     S.saveGame();

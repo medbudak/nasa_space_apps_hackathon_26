@@ -13,6 +13,7 @@
   const round1 = (v) => Math.round(v * 10) / 10;
 
   W.recipes = () => cfg().recipes;
+  const stationBuilt = (s, r) => (s.station && s.station.built[r.module]) || null;
   W.recipe = (id) => W.recipes().find((r) => r.id === id);
   W.items = (s) => (s.inventory && s.inventory.items) || {};
   W.count = (s, item) => W.items(s)[item] || 0;
@@ -29,6 +30,13 @@
   W.status = function (s, id) {
     const r = W.recipe(id);
     if (!r) return { state: 'locked', reasonKey: 'ws.err_unknown' };
+    // İstasyon modülleri (D-014): göktaşından önce yok; aynı modülün diğer kaynağı kurulunca gizlenir
+    if (r.module) {
+      if (!S.Station || !S.Station.impacted(s)) return { state: 'hidden' };
+      const done = stationBuilt(s, r);
+      if (done) return { state: done === r.id ? 'built' : 'hidden' };
+      if (r.requiresModule && !s.station.built[r.requiresModule]) return { state: 'locked', reasonKey: 'ws.err_needs_module', vars: { what: S.t('station.mod.' + r.requiresModule) } };
+    }
     if (r.builds && S.Sim.deployed(s, r.builds)) return { state: 'built' };
     if (r.once && (s.workshop || {})[id]) return { state: 'built' };
     if (r.requiresBuilt && !S.Sim.deployed(s, r.requiresBuilt)) return { state: 'locked', reasonKey: 'ws.err_needs_built', vars: { what: S.t('ws.' + r.requiresBuilt + '.name') } };
@@ -75,6 +83,9 @@
       rows.push({ key: 'load_w', before: 0, after: g.powerW });
     } else if (r.extraMbit) {
       rows.push({ key: 'relay_mbit', before: relayMbit(s, 0), after: relayMbit(s, r.extraMbit) });
+    } else if (r.module) {
+      const n = S.Station.builtCount(s);
+      rows.push({ key: 'station_modules', before: n, after: n + 1 });
     } else if (r.repairKits) {
       rows.push({ key: 'repair_kits', before: s.inventory.repairKits, after: s.inventory.repairKits + r.repairKits });
     }
@@ -97,6 +108,7 @@
     if (r.id === 'solar_extend') s.base.solarFrac = 1;
     if (r.extraMbit) s.downlink.extraMbit += r.extraMbit;
     if (r.repairKits) s.inventory.repairKits += r.repairKits;
+    if (r.module) s.station.built[r.module] = r.id;
     s.workshop = s.workshop || {};
     s.workshop[id] = opt ? opt.id : true;
     S.Sim.advance(s, minutesOf(r, opt));

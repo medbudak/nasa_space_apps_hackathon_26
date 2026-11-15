@@ -23,7 +23,7 @@
       "correctCategory": "power_dust",
       "acceptedSecondary": null,
       "reportMbit": 18,
-      "salvage": { "rhuUnits": 8 },
+      "salvage": { "rhuUnits": 8, "items": { "rhu_pack": 1 } },
       "telemetry": { "tau": 10.8, "panelW": 22, "coreTempC": -41 },
       "telemetryMap": { "tau": "atmos", "panelW": "power", "coreTempC": "thermal" },
       "src": "https://science.nasa.gov/mission/mer-opportunity/"
@@ -40,7 +40,7 @@
       "correctCategory": "power_dust",
       "acceptedSecondary": null,
       "reportMbit": 18,
-      "salvage": { "seis": true },
+      "salvage": { "seis": true, "items": { "insight_panel": 1 } },
       "telemetry": { "dustCoverPct": 92, "whPerSol": 285, "maxQuakeM": 4.7 },
       "telemetryMap": { "dustCoverPct": "panels", "whPerSol": "power", "maxQuakeM": "science" },
       "src": "https://science.nasa.gov/mission/insight/"
@@ -57,7 +57,7 @@
       "correctCategory": "mechanical",
       "acceptedSecondary": "thermal",
       "reportMbit": 18,
-      "salvage": { "rhuUnits": 8 },
+      "salvage": { "rhuUnits": 8, "items": { "rhu_pack": 1 } },
       "salvageChoice": {
         "note": "Engineering decision: which part is still reusable? RHUs keep giving heat for decades (Pu-238 half-life 87.7 years, constants.rhu); the right-front wheel drive actuator failed in March 2006 and was dragged for the rest of the mission; the solar arrays were dust-covered and could not keep the rover warm in its last winter.",
         "options": [

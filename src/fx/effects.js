@@ -291,6 +291,8 @@
 
     // Kazı noktaları (tümsek, buz, moloz), yoldaki döküntü, RIMFAX sinyali
     if (S.DigFx) S.DigFx.drawSites(ctx, s, FX.camX, W, GY, t, light);
+    // D-014: göktaşı, krater, saçılan kargo ve istasyon
+    if (S.StationFx) S.StationFx.drawWorld(ctx, s, FX.camX, W, GY, light);
 
     // Enkazlar: hazır görünmez; yalnızca kazılıp ortaya çıkarılınca çizilir (sinyal halkası / soluk siluet yok)
     for (const c of S.Forensics.cases()) {

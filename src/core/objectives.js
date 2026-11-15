@@ -224,6 +224,8 @@
     if (gh.installed && !gh.frozen && gh.tendedSol !== s.sol && s.res.waterL >= ghCfg.tendWaterL) opts.push(goal('opt_greenhouse'));
     if (S.Sim.has(s, 'rimfax') && s.iceDugSol !== s.sol && s.res.waterL < 30) opts.push(goal('opt_ice', { l: Math.round(s.res.waterL) }));
     if (s.res.mavFuel < 100 && s.sol < s.maxSols && S.Sim.isruReady(s)) opts.push(goal('opt_sabatier', { fuel: Math.round(s.res.mavFuel) }));
+    // D-014: göktaşından sonra istasyon (isteğe bağlı; başarı kuralları değişmez)
+    if (S.Station && S.Station.impacted(s) && S.Station.builtCount(s) < D().station.modules.length) opts.push(goal('opt_station', { n: S.Station.builtCount(s), total: D().station.modules.length }));
     // Ana hedefle aynı işi isteğe bağlı olarak tekrar gösterme
     const same = { isru: 'opt_sabatier', mav_fuel: 'opt_sabatier' };
     return opts.find((o) => !main || same[main.id] !== o.id) || null;

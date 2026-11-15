@@ -78,6 +78,7 @@
     // Kurulum öncesi kayıtlarda tüm yapılar hazırdı
     if (!s.base) s.base = { solar: true, isru: true, greenhouse: true, mav: true, solarFrac: 1 };
     if (typeof s.base.solarFrac !== 'number') s.base.solarFrac = 1;
+    if (!s.station && S.Station) s.station = S.Station.blank();
     if (s.inventory && !s.inventory.items) s.inventory.items = {};
     return s;
   };
