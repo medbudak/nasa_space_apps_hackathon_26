@@ -76,7 +76,7 @@
       // Mekik güvertesi (K4 Sedef): kesit görseli, sıradaki istasyonun işareti, yürüyen astronot, [E] balonu
       '<div class="sw-deck" data-r="deck" hidden><div class="sw-station" data-r="station"></div>' +
       '<div class="sw-world" data-r="world" style="background-image:url(&quot;' + S.Sprites.screen('scr_ship_interior') + '&quot;)">' +
-      '<button type="button" class="sw-mark" data-r="mark"><span data-r="marklbl"></span><i>▼</i></button>' +
+            '<button type="button" class="sw-mark" data-r="mark"><span data-r="marklbl"></span><i>▼</i></button>' +
       '<img class="sw-crew" data-r="crew" alt="" src="assets/processed/sprites/astronaut_indoor.png">' +
       '<button type="button" class="world-prompt sw-prompt" data-r="swprompt" hidden></button></div>' +
       '<p class="sw-hint" data-r="swhint"></p></div>' +
@@ -147,7 +147,10 @@
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       if (phase === 'liftoff') {
+        const prev = ts;
         ts += dt;
+        // K2 trial: sound cues of the text-free intro (crowd, countdown, roar, cheer)
+        for (const c of O.cues || []) if (c.at > prev && c.at <= ts) S.bus.emit('audio:play', c.name);
         if (ts >= O.T.cruise) startCruise();
       } else if (phase === 'arrive') {
         ts = O.T.arrive + (now - arriveAt) / 1000;
@@ -283,6 +286,7 @@
     const startCruise = () => {
       if (phase !== 'liftoff') return;
       ts = O.T.cruise;
+      root.classList.remove('op-intro'); // the transit UI appears once the cruise begins
       enterDeck('');
     };
     /* --- Mekik güvertesi (K4 Sedef): sıradaki görevin istasyonuna yürü, E ile kartı aç --- */
@@ -450,7 +454,7 @@
       e.stopPropagation();
       // e.repeat: "Fırlatmayı başlat" düğmesinden basılı kalan Enter açılışı hemen geçmesin
       if (e.repeat || performance.now() < guardUntil) return;
-      if (e.key === 'Enter' && phase === 'liftoff') startCruise();
+      if (phase === 'liftoff') startCruise(); // Enter or Esc skips the intro to the cruise
       else if (e.key === 'Enter' && phase === 'card') startTask();
       else if (e.key === 'Escape' || phase === 'approach' || phase === 'arrive') skip();
     };
@@ -466,6 +470,7 @@
     R('ship').innerHTML = shipHtml();
     updateSkip();
     showLiftoff();
+    root.classList.add('op-intro'); // K2 trial: no text on screen during the launch intro (styles/main.css)
     guardUntil = performance.now() + KEY_GUARD_MS;
     factTick();
     raf = requestAnimationFrame(draw);
