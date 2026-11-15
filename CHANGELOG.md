@@ -1,27 +1,27 @@
-# CHANGELOG.md — Sürüm ve Tasarım Geçmişi
+# CHANGELOG.md — Version and Design History
 
-Bu dosya, **SOL 14: RED HORIZON** projesinin ilk GDD taslağından (`v1`) NASA Space Apps Challenge gereksinimlerini eksiksiz karşılayan **Oyun Tasarımı v2** mimarisine geçişini ve geliştirme adımlarını kayıt altına alır.
+This file records how **SOL 14: RED HORIZON** moved from the first design draft (`v1`) to **game design v2**, which covers the NASA Space Apps Challenge requirements, and the steps after it. Later decisions (v3 and on) are in [DECISIONS.md](DECISIONS.md).
 
 ---
 
-## [v2.0.0] — 2026-11-14 (Oyun Tasarımı v2 & Tam Uygulama)
+## [v2.0.0] — 2026-11-14 (game design v2 & full implementation)
 
-### ✨ Eklenenler (Added)
-- **Sol 0 Görev Tasarım Konsolu (5 Ekran):** Görev hedefi seçimi, 3 roket × 2 yörünge (`Hohmann ~8 ay` vs. `Hızlı ~6 ay`), 26 aylık fırlatma penceresi, 3 iniş bölgesi (`Meridiani`, `Jezero`, `Arcadia`), 9 gerçek NASA bilimsel aletinden en fazla 5'inin seçimi, iletişim mimarisi (`UHF Röle` vs. `X-band`) ve Tek Nokta Arıza (`SPOF` - `M8`) uyarı sistemi eklendi.
-- **M1 — Veri Bütçesi ve Downlink Kuyruğu (`Mbit/sol`):** Çekilen enkaz fotoğraflarının, adli raporların ve deney sonuçlarının puana dönüşmesi için `MRO`/`MAVEN` röle geçişlerinde Dünya'ya gönderilmesi mekaniği eklendi.
-- **M2 — Kriz Karar Kartları ve `decisionLog[]`:** Her krizde 2–3 seçenek ve kesin sayısal bedelleri gösteren karar kartı sistemi eklendi.
-- **M3 — Güç Yük Önceliklendirme Paneli (Load Shedding):** Yaşam desteği, ısıtma, sera, MOXIE, deneyler ve iletişim sırasını dinamik değiştirme ve otomatik yük kesme mekaniği eklendi.
-- **M4 — Dönüşsüzlük Noktası Göstergesi (Point of No Return):** EVA sırasında $\text{O}_2$ çubuğu üzerinde anlık $O_{2,\text{gerekli}}$ kırmızı çentiği ve eklem donması (`%40` hız) entegrasyonu eklendi.
-- **M5 — Neden-Sonuç Karnesi (Cause-and-Effect Report Card):** Oyun sonunda her tasarım ve operasyon kararının görev başarısını nasıl şekillendirdiğini gösteren karne ve gerçek NASA görevleriyle karşılaştırma tablosu eklendi.
-- **M7 & M9 — Gecikmeli Görev Kontrol ve `?demo` Hızlı Görev Modu:** Gerçek ışık gecikmesi ($3\text{–}22\text{ dk}$) simülasyonu ve jüri için `5 Sol` hızlı oynanış modu eklendi.
-- **Ana Görev 1 (5 Kayıp Araç Adli İncelemesi):** `Opportunity`, `Spirit`, `Phoenix`, `InSight` ve bonus `Beagle 2` için 3 kanıt toplama, 5 arıza kategorisinden teşhis koyma, parça sökme ve NASA bulgu kartları eklendi.
-- **Ana Görev 2 (6 Bilimsel Deney):** Hipotez → Ortam → Kontrol Grubu → Ölçüm → Sonuç döngüsüyle çalışan 6 deney (*Sarkaç, Serbest Düşüş, Tohum Çimlenmesi, Suyun Kaynaması, Ses Hızı, MOXIE Verimi*) eklendi.
-- **UFO Stinger Finali (~40 sn):** Kamera çözünürlüğü (`Mastcam-Z` vs. el kamerası) ve kalan veri bütçesine göre `%80` net veya `%30` bulanık satır-satır inen telemetri fotoğrafı ve Güneş Kavuşumu (`Solar Conjunction`) kapanışı eklendi.
-- **Görsel Kütüphane:** 32 adet 16-bit Pixel Art görsel varlığı `assets/` klasörlerine eşlendi ve `#FFFFFF` beyaz arka planlar için Flood-Fill Chroma-Key şeffaflaştırma eklendi.
+### ✨ Added
+- **Sol 0 mission design console (5 screens):** mission objective, 3 rockets × 2 trajectories (`Hohmann ~8 months` vs. `fast ~6 months`), the 26-month launch window, 3 landing sites (`Meridiani`, `Jezero`, `Arcadia`), up to 5 of 9 real NASA instruments, comms architecture (`UHF relay` vs. `X-band`) and the single-point-of-failure (`SPOF`, `M8`) warning.
+- **M1 — data budget and downlink queue (`Mbit/sol`):** wreck photos, forensic reports and experiment results only score once sent to Earth during `MRO`/`MAVEN` relay passes.
+- **M2 — crisis decision cards and `decisionLog[]`:** every crisis offers 2–3 options with their exact costs.
+- **M3 — power load priority panel (load shedding):** reorder life support, heating, greenhouse, MOXIE, experiments and comms, with automatic load shedding.
+- **M4 — point-of-no-return gauge:** a live $O_{2,\text{needed}}$ red notch on the $\text{O}_2$ bar during an EVA, including frozen joints (`40%` speed).
+- **M5 — cause-and-effect report card:** shows how each design and operations decision shaped mission success, compared with real NASA missions.
+- **M7 & M9 — delayed Mission Control and the `?demo` quick mission:** the real light delay ($3\text{–}22$ min) and a `5-sol` mode for judges.
+- **Main task 1 (forensics on 5 lost vehicles):** 3 kinds of evidence, a diagnosis from 5 failure categories, part salvage and NASA finding cards for `Opportunity`, `Spirit`, `Phoenix`, `InSight` and bonus `Beagle 2`.
+- **Main task 2 (6 experiments):** hypothesis → environment → control group → measurement → result (*pendulum, free fall, seed germination, boiling water, speed of sound, MOXIE output*).
+- **UFO stinger (~40 s):** a line-by-line telemetry photo that arrives `80%` sharp or `30%` blurred depending on the camera (`Mastcam-Z` vs. hand camera) and the data budget left, closed by solar conjunction.
+- **Image library:** 32 pixel-art assets mapped into the `assets/` folders, with flood-fill chroma keying of the `#FFFFFF` backgrounds.
 
-### 🔬 Bilimsel Düzeltmeler (Scientific Validity Fixes)
-- Mars gece sıcaklığı `-60 °C` ortalamadan gerçek ekvator/orta enlem gece değeri olan **`-80 °C`**'ye güncellendi.
-- Bilimsel olarak hatalı olan *"Mars'ta sıcak hava dalgası"* ifadesi, ince atmosferde (`~0.6 kPa`) **"Isı Atma / Radyatör Tıkanması Arızası"** olarak düzeltildi.
-- *"Şiddetli depremde boşlukta savrulma"* ifadesi, InSight verilerine uygun olarak **`~M4.7` sarsıntı + yakın meteor çarpması ve rafların devrilmesi (`0.38g`)** olarak düzeltildi.
-- *"Radyoaktif izotoptan yakıt sentezi"* ifadesi, **RHU ısısı + Sabatier Reaktörü ($\text{CO}_2 + 4\text{H}_2 \rightarrow \text{CH}_4 + 2\text{H}_2\text{O}$)** olarak düzeltildi.
-- *"14 Sol'da patates/domates hasadı"* ifadesi, **Tohum Çimlenme Oranı ve Perklorat Yıkama Deneyi** olarak düzeltildi.
+### 🔬 Scientific validity fixes
+- Mars night temperature updated from the `-60 °C` global average to the real equatorial/mid-latitude night value of **`-80 °C`**.
+- The scientifically wrong *"heat wave on Mars"* became a **"heat rejection / clogged radiator failure"** in the thin (`~0.6 kPa`) atmosphere.
+- *"Thrown through the air in a violent quake"* became, in line with InSight data, an **`~M4.7` quake + a nearby meteorite impact and tipping shelves (`0.38 g`)**.
+- *"Fuel synthesised from a radioactive isotope"* became **RHU heat + a Sabatier reactor ($\text{CO}_2 + 4\text{H}_2 \rightarrow \text{CH}_4 + 2\text{H}_2\text{O}$)**.
+- *"Potato/tomato harvest within 14 sols"* became a **seed germination and perchlorate-washing experiment** (later a compressed, labelled harvest of fast space-station crops, D-017).

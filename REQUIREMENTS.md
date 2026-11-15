@@ -1,105 +1,105 @@
-# REQUIREMENTS.md — Fonksiyonel, Bilimsel ve Teslim Gereksinimleri
+# REQUIREMENTS.md — Functional, Scientific and Submission Requirements
 
-Bu belge, **SOL 14: RED HORIZON** oyununun karşılaması gereken tüm fonksiyonel mekanikleri, bilimsel simülasyon gereksinimlerini ve NASA Space Apps Challenge global/yerel jüri teslim kriterlerini tanımlar.
+This document lists the gameplay mechanics, the scientific simulation requirements and the NASA Space Apps (global and local) submission criteria that **SOL 14: RED HORIZON** must meet.
 
 ---
 
-## 1. Sol 0: Görev Tasarım Ekranı Gereksinimleri (5 Ekran)
+## 1. Sol 0: mission design requirements (5 screens)
 
-Oyuncu göreve başlamadan önce **Bütçe (`$`), Kütle (`kg`), Güç (`W`) ve Veri (`Mbit/sol`)** kısıtları altında 5 adımlı bir mühendislik tasarımı yapar. Herhangi bir limit aşılırsa **"Fırlat"** butonu kilitlenir (veya uyarı verir) ve yedeksiz kritik sistemler **Tek Nokta Arıza (`SPOF` - M8)** uyarısıyla sarı yanar.
+Before the mission the player makes a 5-step engineering design under **budget (`$`), mass (`kg`), power (`W`) and data (`Mbit/sol`)** limits. Going over a limit locks (or warns on) **"Launch"**, and critical systems without a backup light up amber as a **single point of failure (`SPOF`, M8)**.
 
-| Ekran | Karar Noktası | Seçenekler | Mühendislik Takası (Trade-off) |
+| Screen | Decision | Options | Engineering trade-off |
 | :---: | :--- | :--- | :--- |
-| **1** | **Görev Hedefi** | Adli Ağırlıklı / Deney Ağırlıklı / Dengeli | Puan çarpanlarını ve NASA tarzı **Asgari Başarı** / **Tam Başarı** kriterlerini belirler. |
-| **2** | **Roket + Yörünge** | 3 Roket (`Falcon Heavy` / `Vulcan Centaur` / `SLS Block 1B` sınıfı) × 2 Yörünge (`Hohmann ~8 ay` / `Hızlı Transfer ~6 ay`) | Hızlı yörünge daha az radyasyon dozu ve sarf malzemesi harcar, ancak daha fazla $\Delta v$ yakıtı gerektirdiği için faydalı yük (`payload kg`) kapasitesini düşürür. |
-| **2** | **Fırlatma Penceresi** | Pencereyi Yakala (26 ayda bir hizalanma) / Ertele | Pencereyi kaçırmak/ertelemek bekleme (tutma) maliyeti nedeniyle başlangıç bütçesini (`$`) eritir. |
-| **3** | **İniş Bölgesi** | **Ekvator** (`Meridiani Planum`) / **Jezero Krateri** (`18°K`) / **Orta Enlem** (`Arcadia Planitia, ~40°K`) | *Ekvator:* Çok güneş, nispeten ılık, az buz. *Orta Enlem:* Bol yüzey altı buzu, çok soğuk, kısa gün. *Jezero:* Dengeli + Perseverance/Ingenuity enkazlarına yakın. |
-| **3** | **Enerji, Batarya & Yalıtım** | **Güç:** Güneş Paneli / Panel + RTG (`~110 W, ~45 kg`)<br>**Batarya:** `20` / `40` / `60 kWh`<br>**Yalıtım:** İnce / Kalın | RTG fırtınadan ve tozdan etkilenmez ama çok pahalı ve ağırdır. Kalın yalıtım gece ısıtma gücünü yarıya indirir ama kütleyi artırır. |
-| **4** | **Bilimsel Aletler** | 9 aletten **en fazla 5'i** seçilebilir | Kütle, bütçe ve güç sınırı oyuncuyu seçim yapmaya zorlar; alınmayan her aletin eksikliği yüzeyde hissedilir. |
-| **5** | **İletişim & Yedeklilik** | **İletişim:** Sadece UHF Röle (`MRO/MAVEN`) / Röle + Doğrudan Dünya (`X-band`)<br>**Tamir Kiti:** `0` / `1` / `2`<br>**Kütle Marjı:** `%0–20` | X-band yedekliliği anten arızasında iletişimi korur. Her tamir kiti 1 krizi otomatik çözer. `%10+` kütle marjı karnede mühendislik bonusu verir. |
+| **1** | **Mission objective** | Forensics-heavy / experiment-heavy / balanced | Sets the score multipliers and NASA-style **minimum success** / **full success** criteria. |
+| **2** | **Rocket + trajectory** | 3 rockets (`Falcon Heavy` / `Vulcan Centaur` / `SLS Block 1B` class) × 2 trajectories (`Hohmann ~8 months` / `fast transfer ~6 months`) | The fast trajectory means less radiation dose and fewer consumables, but needs more $\Delta v$ propellant, which lowers payload capacity (`kg`). |
+| **2** | **Launch window** | Catch the window (alignment every 26 months) / delay | Missing or delaying the window eats into the starting budget (`$`) through holding costs. |
+| **3** | **Landing site** | **Equator** (`Meridiani Planum`) / **Jezero Crater** (`18°N`) / **mid-latitude** (`Arcadia Planitia, ~40°N`) | *Equator:* lots of sun, relatively mild, little ice. *Mid-latitude:* plenty of subsurface ice, very cold, short days. *Jezero:* balanced. |
+| **3** | **Power, battery & insulation** | **Power:** solar panels / panels + RTG (`~110 W, ~45 kg`)<br>**Battery:** `20` / `40` / `60 kWh`<br>**Insulation:** thin / thick | An RTG ignores storms and dust but is very expensive and heavy. Thick insulation halves night heating power but adds mass. |
+| **4** | **Instruments** | **Up to 5** of 9 instruments | Mass, budget and power force a choice; every instrument left behind is missed on the surface. |
+| **5** | **Comms & redundancy** | **Comms:** UHF relay only (`MRO/MAVEN`) / relay + direct-to-Earth (`X-band`)<br>**Repair kits:** `0` / `1` / `2`<br>**Mass margin:** `0–20%` | X-band redundancy keeps the link if an antenna fails. Each repair kit solves one crisis. A `10%+` mass margin gives an engineering bonus on the report card. |
 
 ---
 
-## 2. Bilimsel Aletler Kataloğu (9 Alet)
+## 2. Instrument catalogue (9 instruments)
 
-| # | Alet (Gerçek NASA Karşılığı) | Kütle (`kg`) | Güç (`W`) | Veri (`Mbit`) | Oyunda Açtığı Kilit | Alınmazsa Ne Olur? |
+| # | Instrument (real NASA counterpart) | Mass (`kg`) | Power (`W`) | Data (`Mbit`) | Unlocks in the game | Without it |
 | :-: | :--- | :---: | :---: | :---: | :--- | :--- |
-| **1** | **Yüksek Çözünürlüklü Kamera (`Mastcam-Z`)** | ~4.0 | ~17 | 20 Mbit / foto | Enkaz fotoğrafları tam puan, yakınlaştırma, UFO `%80` net foto, Ses hızı deneyi mikrofonu | El kamerası kullanılır: fotoğraflar yarım puan, UFO `%30` bulanık |
-| **2** | **Hava İstasyonu (`MEDA`)** | ~5.5 | ~17 | 1 Mbit / sol | Fırtına ve ani soğuk düşüşünü 1 sol önceden uyarır, Su kaynama deneyi | Fırtına ve aşırı soğuk habersiz gelir |
-| **3** | **Sismometre (`InSight SEIS`)** | ~30.0 | ~8 | 5 Mbit / sol | Sarsıntı/meteor çarpması erken uyarısı (`30 sn` QTE hazırlık süresi) | Sarsıntı anında vurur, raflar devrilir |
-| **4** | **Radyasyon Dedektörü (`RAD`)** | ~1.6 | ~4 | 1 Mbit / sol | Güneş patlaması (`SPE`) erken uyarısı + canlı radyasyon doz göstergesi | Radyasyon dozu gizli kalır; sığınağa geç kalınır |
-| **5** | **Yeraltı Radarı (`RIMFAX`)** | ~3.0 | ~10 | 10 Mbit / tarama | Haritada yüzey altı su buzu yataklarını doğrudan gösterir | Buz kör kazıyla aranır (fazla $O_2$ ve süre harcar) |
-| **6** | **Spektrometre (`SuperCam / PIXL`)** | ~11.0 | ~18 | 8 Mbit / ölçüm | Toprakta perklorat ölçer, enkaz panelindeki toz kalınlığını ölçer (adli kanıt) | Tohumlar yıkanmamış zehirli toprakta ölebilir, 3. adli kanıt eksik kalır |
-| **7** | **Oksijen Üretici (`MOXIE`)** | ~17.0 | ~300 | — | Mars atmosferindeki $\text{CO}_2$'den düzenli $\text{O}_2$ üretir, Deney 6'yı açar | Sadece su elektrolizi + sınırlı yedek tüp kullanılır |
-| **8** | **Bitki Büyütme Odası (`Veggie`)** | ~8.0 | ~100 | 2 Mbit / gün | Kontrollü tohum çimlenme deneyleri + besin desteği + akıl sağlığı (`+Sanity`) | Tohum deneyi sadece dış ortamda yapılabilir (başarısız olur) |
-| **9** | **Keşif Drone'u (`Ingenuity`)** | ~1.8 | Şarjlı | 15 Mbit / uçuş | Uzaktaki enkazları ve güvenli rotayı havadan keşfeder, kuma saplanmayı önler | Her enkaza yürünmek gerekir ($O_2$ ve eklem donması riski) |
+| **1** | **High-resolution camera (`Mastcam-Z`)** | ~4.0 | ~17 | 20 Mbit / photo | Full-score wreck photos, zoom, the `80%` sharp UFO photo, microphone for the sound-speed experiment | A hand camera: half-score photos, a `30%` blurred UFO |
+| **2** | **Weather station (`MEDA`)** | ~5.5 | ~17 | 1 Mbit / sol | Warns of storms and sudden cold 1 sol ahead; the water-boiling experiment | Storms and extreme cold arrive unannounced |
+| **3** | **Seismometer (`InSight SEIS`)** | ~30.0 | ~8 | 5 Mbit / sol | Early warning of quakes / meteorite impacts (`30 s` to prepare) | The quake hits at once, shelves tip over |
+| **4** | **Radiation detector (`RAD`)** | ~1.6 | ~4 | 1 Mbit / sol | Early warning of solar particle events (`SPE`) + a live dose gauge | The dose stays hidden; the shelter is reached too late |
+| **5** | **Ground-penetrating radar (`RIMFAX`)** | ~3.0 | ~10 | 10 Mbit / scan | Shows subsurface water-ice deposits on the map | Ice is found by blind digging (more $O_2$ and time) |
+| **6** | **Spectrometer (`SuperCam / PIXL`)** | ~11.0 | ~18 | 8 Mbit / reading | Measures perchlorate in the soil and dust thickness on wreck panels (forensic evidence) | Seeds may die in unwashed toxic soil; the 3rd forensic clue is missing |
+| **7** | **Oxygen generator (`MOXIE`)** | ~17.0 | ~300 | — | Makes $\text{O}_2$ from atmospheric $\text{CO}_2$; unlocks experiment 6 | Only water electrolysis and a limited spare tank |
+| **8** | **Plant chamber (`Veggie`)** | ~8.0 | ~100 | 2 Mbit / day | Controlled germination experiments + food + morale | The seed experiment can only run outside (and fails) |
+| **9** | **Scout drone (`Ingenuity`)** | ~1.8 | rechargeable | 15 Mbit / flight | Scouts distant wrecks and a safe route from the air, avoids getting stuck in sand | Every wreck must be walked to ($O_2$ and frozen-joint risk) |
 
 ---
 
-## 3. İki Ana Görev Gereksinimleri
+## 3. The two main tasks
 
-### 3.1. Ana Görev 1: Kayıp Araçların Adli İncelemesi (`systems/forensics.js`)
-Oyuncu her enkaz için 5 adımlı dedektif döngüsünü tamamlar:
-1. **Bul:** Haritada sinyal izi veya `Ingenuity` drone keşfiyle enkaza ulaş.
-2. **Kanıt Topla (3 Tip):**
-   - *Görsel Kanıt:* Fotoğraf çekimi (panel, tekerlek, anten durumu).
-   - *Kara Kutu Telemetrisi:* Kablo mini-oyunuyla son telemetri kaydını okuma (güç, sıcaklık, optik derinlik $\tau$).
-   - *Çevre Ölçümü:* Spektrometre/sensör ile toz kalınlığı ve eğim açısı ölçümü.
-3. **Teşhis Et:** 5 arıza kategorisinden birini seç (`Güç/Toz`, `Termal`, `Mekanik`, `Yazılım/Sensör`, `İletişim`).
-4. **Rapor Gönder:** Downlink kuyruğundan Dünya'ya gönder (`Mbit` harcar; gönderilmeyen rapor `0` puandır).
-5. **Ders Al & Parça Sök:** Gerçek NASA/ESA bulgu kartı açılır, oyuncuya operasyonel ders verir ve sökülebilir parça envantere eklenir.
+### 3.1 Main task 1: forensics on lost vehicles (`systems/forensics.js`)
+For each wreck the player completes a 5-step detective loop:
+1. **Find:** dig it out at its site (the suit scanner reacts nearby; `Ingenuity` and RIMFAX help).
+2. **Collect evidence (3 kinds):**
+   - *Visual:* photos of the panels, wheels and antenna.
+   - *Black-box telemetry:* read the last telemetry with the cable minigame (power, temperature, optical depth $\tau$).
+   - *Environment:* measure dust thickness and tilt with the spectrometer/sensors.
+3. **Diagnose:** pick one of 5 failure categories (`Power/Dust`, `Thermal`, `Mechanical`, `Software/Sensor`, `Communication`).
+4. **Send the report:** through the downlink queue (costs `Mbit`; an unsent report scores `0`).
+5. **Learn and salvage:** the real NASA/ESA finding card opens with an operational lesson, and a salvageable part goes into the inventory.
 
-* **Vaka Listesi (4 Zorunlu + 1 Bonus):**
-  1. **Opportunity** (*Haziran 2018* — Küresel toz fırtınası $\tau \approx 10.8$ → `Güç/Toz` → Sökülebilir: `8 adet RHU`).
-  2. **Spirit** (*Mart 2010* — Yumuşak kuma saplandı, kış güneşine dönemedi → `Mekanik + Termal` → Sökülebilir: `8 adet RHU, Tekerlek`).
-  3. **Phoenix** (*Kasım 2008* — Kutup kışı $\text{CO}_2$ buzu güneş panelini kırdı → `Termal` → Sökülebilir: `Robot Kol Parçası`).
-  4. **InSight** (*Aralık 2022* — Paneller tozla kaplandı, güç tükendi → `Güç/Toz` → Sökülebilir: `SEIS Sismometresi`).
-  5. **Bonus: Beagle 2** (*2003 / 2015 MRO* — Paneller tam açılmadı, anteni kapattı → `İletişim + Mekanik` → Sökülebilir: `Yedek Anten`).
+* **Cases (4 required + 1 bonus):**
+  1. **Opportunity** (*June 2018* — global dust storm $\tau \approx 10.8$ → `Power/Dust` → salvage: `8 RHUs`).
+  2. **Spirit** (*March 2010* — stuck in soft sand, could not tilt toward the winter Sun → `Mechanical + Thermal` → salvage: `8 RHUs, a wheel`).
+  3. **Phoenix** (*November 2008* — polar-winter $\text{CO}_2$ ice broke a solar panel → `Thermal` → salvage: `robotic arm part`).
+  4. **InSight** (*December 2022* — panels covered in dust, power ran out → `Power/Dust` → salvage: `SEIS seismometer`, solar panel).
+  5. **Bonus: Beagle 2** (*2003 / found by MRO in 2015* — panels did not fully open and covered the antenna → `Communication + Mechanical` → salvage: `spare antenna`).
 
-### 3.2. Ana Görev 2: Deney Sistemi (`systems/experiments.js`)
-Her deney 6 adımlı bilimsel yöntem döngüsünü izler: **Hipotez Seç (3 şıklı) → Ortam Seç (Habitat İçi vs. Dış Ortam) → Kontrol Grubu Ekle (+%50 puan) → Çalıştır → Ölç (Mini-Oyun) → Sonuç Kartı & Downlink**.
-1. **Sarkaçla Yerçekimi Ölçümü (Tutorial):** 10 salınım süresi → $T = 2\pi\sqrt{L/g} \rightarrow g \approx 3.73\text{ m/s}^2$ (Dünya periyodunun `~1.62` katı).
-2. **Serbest Düşüş / Zıplama (Tutorial):** 2 m'den düşüş süresi $t = \sqrt{2h/g} \approx 1.04\text{ s}$ (Dünya'da `~0.64 s`); `0.38g` zıplama yüksekliği `~2.6` kat.
-3. **Tohum Çimlenmesi (3 Grup):** Yıkanmamış regolit (perklorat toksik) vs. yıkanmış + gübreli regolit (habitatta çimlenir) vs. dış ortam (`~0.6 kPa` basınçta ölür). *Ödül: Sera verimi `+%30`.*
-4. **Suyun Kaynaması (Üçlü Nokta):** Dış ortama konan su düşük basınç (`~0.6 kPa`) nedeniyle üçlü noktada aynı anda kaynar ve donar. *Ödül: Buzu dışarıda eritme hatasından korunma.*
-5. **Ses Hızı:** El çırpma + 50 m mikrofon gecikmesi → $\text{CO}_2$ atmosferinde `~240 m/s` (Dünya'da `~343 m/s`).
-6. **MOXIE Gece vs. Gündüz Verimi:** Soğuk ve yoğun gece atmosferinde $\text{O}_2$ üretim verimi farkı (`~6–12 g/saat`). *Ödül: MOXIE'yi verimli saatte çalıştırma.*
+### 3.2 Main task 2: experiments (`systems/experiments.js`)
+Each experiment follows a 6-step scientific-method loop: **choose a hypothesis (3 options) → choose the environment (inside vs. outside) → add a control group (+50% score) → run → measure (minigame) → result card & downlink**.
+1. **Pendulum gravity (tutorial):** time 10 swings → $T = 2\pi\sqrt{L/g} \rightarrow g \approx 3.73\text{ m/s}^2$ (the period is `~1.62` times Earth's).
+2. **Free fall / jump (tutorial):** a 2 m drop takes $t = \sqrt{2h/g} \approx 1.04\text{ s}$ (`~0.64 s` on Earth); a `0.38 g` jump is `~2.6` times higher.
+3. **Seed germination (3 groups):** unwashed regolith (toxic perchlorate) vs. washed + fertilised regolith (sprouts in the habitat) vs. outside (dies at `~0.6 kPa`). *Reward: greenhouse output `+30%`.*
+4. **Boiling water (triple point):** water put outside boils and freezes at the same time near the triple point because of the low pressure (`~0.6 kPa`). *Reward: you won't try to melt ice outside.*
+5. **Speed of sound:** a clap + a microphone 50 m away → `~240 m/s` in the $\text{CO}_2$ atmosphere (`~343 m/s` on Earth).
+6. **MOXIE night vs. day output:** the difference in $\text{O}_2$ output in the cold, denser night air (`~6–12 g/hour`). *Reward: run MOXIE at the efficient hours.*
 
 ---
 
-## 4. Zorunlu ve Ek Oyun Mekanikleri (`M1–M9`)
+## 4. Required and extra mechanics (`M1–M9`)
 
-| Kod | Mekanik Adı | Öncelik | Açıklama |
+| Code | Mechanic | Priority | Description |
 | :-: | :--- | :---: | :--- |
-| **M1** | **Veri Bütçesi / Downlink Kuyruğu** | **Zorunlu (P1)** | Her solda 2 röle geçişi (`MRO`, `MAVEN`) ve sınırlı `Mbit`. Fotoğraf, deney, adli rapor ve aile mesajı kuyruğa dizilir; gönderilmeyen veri puan sayılmaz. |
-| **M2** | **Karar Kartı + Karar Günlüğü** | **Zorunlu (P1)** | Her kriz 2–3 seçenekli kart olarak açılır; her seçeneğin sayısal bedeli görünür ve seçim `decisionLog[]` dizisine kaydedilir. |
-| **M3** | **Güç Yük Önceliklendirme Paneli** | **Zorunlu (P1)** | *Yaşam Desteği, Isıtma, Sera, MOXIE, Deneyler, İletişim* sıralı listesi. Güç yetmediğinde en alttakiler otomatik kapanır (*load shedding*). |
-| **M4** | **Dönüşsüzlük Noktası Göstergesi** | **Zorunlu (P1)** | EVA sırasında $\text{O}_2$ çubuğunda habitata dönmek için gereken $O_{2,\text{gerekli}}$ kırmızı çentiği; eklem donunca hız düşer ve çentik sağa kayar. |
-| **M5** | **Neden-Sonuç Karnesi** | **Zorunlu (P1)** | Oyun sonunda `decisionLog[]` üzerinden en etkili kararların sonuç zincirini ve gerçek NASA görevleriyle karşılaştırmasını gösterir. |
-| **M6** | **Sol Planlama Özeti** | İsteğe Bağlı | Gün geçişlerinde (`SOL X → SOL X+1`) mavi gün batımı ve enerji/telemetri özeti. |
-| **M7** | **Gecikmeli Görev Kontrol** | **Zorunlu (P1)** | Dünya'ya yardım sorulduğunda yanıt $2 \times t_{\text{gecikme}}$ sonra gelir; astronotun otonom karar verme zorunluluğunu yaşatır. |
-| **M8** | **Tek Nokta Arıza (SPOF) Uyarısı** | **Zorunlu (P1)** | `Sol 0` tasarım ekranında yedeksiz bırakılan kritik sistemler sarı uyarı verir. |
-| **M9** | **Hızlı Görev / `?demo` Modu** | **Zorunlu (P1)** | Jürinin 2–3 dakikada tüm temel döngüyü ve UFO finalini görebileceği `5 Sol` hızlı mod. |
+| **M1** | **Data budget / downlink queue** | **Required (P1)** | 2 relay passes per sol (`MRO`, `MAVEN`) and a limited `Mbit`. Photos, experiments, forensic reports and family messages queue up; unsent data does not score. |
+| **M2** | **Decision card + decision log** | **Required (P1)** | Each crisis opens as a 2–3 option card; every option shows its cost, and the choice is saved to `decisionLog[]`. |
+| **M3** | **Power load priority panel** | **Required (P1)** | An ordered list: *life support, heating, greenhouse, MOXIE, experiments, comms*. When power runs short the lowest switch off automatically (*load shedding*). |
+| **M4** | **Point-of-no-return gauge** | **Required (P1)** | During an EVA a red notch on the $\text{O}_2$ bar marks the $O_{2,\text{needed}}$ to get home; frozen joints slow you and move the notch right. |
+| **M5** | **Cause-and-effect report card** | **Required (P1)** | At the end, the most important decisions and their chains of consequences from `decisionLog[]`, compared with real NASA missions. |
+| **M6** | **Sol planning summary** | Optional | A blue-sunset energy/telemetry summary between sols (`SOL X → SOL X+1`). |
+| **M7** | **Delayed Mission Control** | **Required (P1)** | An answer from Earth comes $2 \times t_{\text{delay}}$ later, so the astronaut has to decide alone. |
+| **M8** | **Single-point-of-failure (SPOF) warning** | **Required (P1)** | Critical systems without a backup show an amber warning in the `Sol 0` design screens. |
+| **M9** | **Quick mission / `?demo` mode** | **Required (P1)** | A `5-sol` mode in which judges see the whole core loop and the UFO finale in 2–3 minutes. |
 
 ---
 
-## 5. Puanlama, Başarı Eşikleri ve Kayıp Koşulları
+## 5. Scoring, success thresholds and loss conditions
 
-* **Görev Başarı Puanı (GBP) Formülü:**
-  $$\text{GBP} = \text{Adli Raporlar (Downlink)} + \text{Deney Sonuçları (Downlink)} + \text{Hayatta Kalma Puanı} + \text{Kütle Marjı Bonusu} - \text{Kaybedilen Sistem Cezası}$$
-* **Asgari Başarı Eşiği (Minimum Mission Success):** En az **2 Adli Rapor + 2 Deney Sonucu** Dünya'ya gönderildi.
-* **Tam Başarı Eşiği (Full Mission Success):** En az **4 Adli Rapor + 4 Deney Sonucu** Dünya'ya gönderildi **ve** `Sol 14` sonunda MAV ile sağ dönüş gerçekleştirildi.
-* **4 Kayıp Koşulu (Game Over — Karne Yine Gösterilir):**
-  1. Oksijen ($\text{O}_2$) seviyesinin sıfırlanması.
-  2. Vücut/elbise ısısının kritik eşiğin altında 2 oyun saati kalması (hipotermi).
-  3. Kümülatif radyasyon dozunun görev limitini aşması.
-  4. Akıl sağlığının (`Sanity`) sıfırlanması (Görev Kontrol görevi iptal eder).
+* **Mission score:**
+  $$\text{score} = \text{forensic reports (arrived)} + \text{experiment results (arrived)} + \text{survival} + \text{mass-margin bonus} - \text{lost systems}$$
+* **Minimum mission success:** at least **2 forensic reports + 2 experiment results** reached Earth.
+* **Full mission success:** at least **4 forensic reports + 4 experiment results** reached Earth **and** a safe return on the MAV at the end of `Sol 14`.
+* **4 loss conditions (game over — the report card is still shown):**
+  1. Oxygen ($\text{O}_2$) at zero.
+  2. Body/suit temperature below the critical threshold for 2 game hours (hypothermia).
+  3. Cumulative radiation dose over the mission limit.
+  4. Morale at zero (Mission Control aborts the mission).
 
 ---
 
-## 6. NASA Space Apps Teslim Gereksinimleri
+## 6. NASA Space Apps submission requirements
 
-* **Dil Desteği:** Oyun içi tam `TR / EN` dil geçişi; proje sayfası, 7 slayt ve demo videosu altyazıları tamamen **İngilizce**.
-* **Global Demo Formatı:** En fazla **30 saniyelik video** (İngilizce altyazılı) veya en fazla **7 slayt**.
-* **Açık Kaynak ve Canlı Link:** GitHub Pages üzerinde doğrudan çalışan link + açık kaynak GitHub deposu.
-* **Şeffaflık Beyanları:** Kullanılan tüm NASA veri kaynaklarının (`NSSDCA`, `Planetary Fact Sheet`, `ELV`, `Horizons`, `DSN`) linkleri, AI görsel üretim beyanı ve *"UFO sahnesi kurgudur"* notu.
+* **Language:** the game starts in English with a full in-game `EN / TR` switch; the project page, the 7 slides and the demo video subtitles are entirely **in English**.
+* **Global demo format:** a video of at most **30 seconds** (English subtitles) or at most **7 slides**.
+* **Open source and live link:** a link that runs directly on GitHub Pages + an open-source GitHub repository.
+* **Transparency statements:** links to every NASA data source used (`NSSDCA`, `Planetary Fact Sheet`, `ELV`, `Horizons`, `DSN`), the AI image-generation statement and the note *"the UFO scene is fiction"*.

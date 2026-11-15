@@ -1,42 +1,43 @@
-# CONTRIBUTING.md — Katkı Rehberi ve Ekip Çalışma Kuralları
+# CONTRIBUTING.md — Contribution Guide and Team Rules
 
-**SOL 14: RED HORIZON** projesine katkıda bulunurken 30 saatlik hackathon temposunda çakışmaları önlemek ve bilimsel doğruluğu korumak için aşağıdaki kurallara uyulmalıdır.
-
----
-
-## 1. Altın Kurallar (Özet)
-
-1. **Sadece Kendi Dosyanı Düzenle:** `AGENTS.md` içindeki rol dağılımına (`K1–K6`) göre her dosyanın tek bir sahibi vardır. Başka bir modülde değişiklik gerekiyorsa dosya sahibine bildir veya `bus.emit('olay:adi', veri)` üzerinden haberleş.
-2. **Sayı Uydurma (`data/nasa_data.json`):** Oyun içinde kullanılan her kütle, güç, sıcaklık, basınç ve yörünge parametresi `data/nasa_data.json` içinde resmi NASA/ESA `src` bağlantısıyla yer almalıdır.
-3. **Koda Düz Metin Yazma (`content/story.json`):** Oyuncuya gösterilen tüm metinler `content/story.json` içinde hem Türkçe (`tr`) hem İngilizce (`en`) olarak tanımlanmalı ve `t('anahtar')` ile çağrılmalıdır.
-4. **Main Dalı Her Zaman Çalışır Olmalı:** Kırık veya konsolda hata veren kodu `main` dalına gönderme.
+To avoid conflicts at hackathon pace and to keep **SOL 14: RED HORIZON** scientifically accurate, contributors follow these rules. CLAUDE.md has the full Git workflow.
 
 ---
 
-## 2. Git Akışı ve Commit Mesaj Standardı
+## 1. Golden rules
 
-* **Senkronizasyon:** Her saat başı çalışmaya devam etmeden önce:
+1. **Edit only your own files:** every file has one owner according to the roles in `AGENTS.md` (`K1–K6`). If another module needs a change, tell its owner or communicate through `bus.emit('event:name', data)`.
+2. **No invented numbers (`data/nasa_data.json`):** every mass, power, temperature, pressure and orbit parameter used in the game sits in `data/*.json` with an official NASA/ESA `src` link, or is labelled `simplified: true` as a game value.
+3. **No text in code (`content/story.json`):** all text shown to the player is defined in `content/story.json` in both English (`en`) and Turkish (`tr`) and read with `t('key')`.
+4. **`main` always works:** never push broken code or code that throws in the console to `main`.
+
+---
+
+## 2. Git flow and commit messages
+
+* **Sync:** before you carry on, every hour:
   ```bash
-  git pull --rebase origin main
+  git fetch --all --prune
+  git merge origin/main
   ```
-* **Commit Biçimi:** Commit mesajlarının başında rol kodu (`[K1]`..`[K6]`) yer almalıdır:
+* **Commit format:** short, English, imperative. A role prefix (`[K1]`..`[K6]`) and a type are welcome:
   ```text
-  [K1] feat: engineering.js güneş gücü ve dönüşsüzlük noktası formülleri eklendi
-  [K2] feat: fırtına ve eklem donması kriz kartı tetikleyicileri bağlandı
-  [K3] ui: Sol 0 tasarım ekranı bütçe çubukları ve SPOF uyarısı tamamlandı
-  [K4] art: vizör buzlanması ve UFO satır satır foto inme efekti eklendi
-  [K5] content: 5 kayıp araç NSSDCA verileri ve TR/EN metinleri doğrulandı
-  [K6] feat: 6 bilimsel deney döngüsü ve birim testleri eklendi
+  [K1] feat: Add the solar power and point-of-no-return formulas
+  [K2] feat: Wire the storm and frozen-joint crisis-card triggers
+  [K3] ui: Finish the Sol 0 budget bars and SPOF warning
+  [K4] art: Add visor frost and the line-by-line UFO photo
+  [K5] content: Check the 5 lost-vehicle cases against NSSDCA, EN/TR texts
+  [K6] feat: Add the 6 experiment loops and their unit tests
   ```
 
 ---
 
-## 3. "Bitti" Tanımı (Definition of Done - DoD)
+## 3. Definition of Done
 
-Bir görevin veya özelliğin **Tamamlandı (Done)** sayılması için aşağıdaki 5 kutunun tamamı işaretlenebilmelidir:
+A task or feature is **done** only when all five boxes can be ticked:
 
-- [ ] Tarayıcı geliştirici konsolunda (`F12`) çalışma zamanı hatası (`ReferenceError`, `TypeError`) yok.
-- [ ] `node --test tests/` komutu `%100` başarıyla geçiyor.
-- [ ] Eklenen tüm bilimsel/mühendislik sayıları `data/nasa_data.json` içinde `src` alanıyla mevcut.
-- [ ] Eklenen tüm kullanıcı metinleri `content/story.json` içinde hem `tr` hem `en` karşılığıyla mevcut.
-- [ ] Özellik oyun içinden baştan başlayarak (veya `?demo=1` modunda) bizzat test edildi.
+- [ ] No runtime errors (`ReferenceError`, `TypeError`) in the browser console (`F12`).
+- [ ] `npm test` passes `100%`.
+- [ ] Every new scientific or engineering number is in `data/*.json` with a `src` field.
+- [ ] Every new player-facing text is in `content/story.json` in both `en` and `tr`.
+- [ ] The feature was tried in the game from the start (or in `?demo=1` mode).

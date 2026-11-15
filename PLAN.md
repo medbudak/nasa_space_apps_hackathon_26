@@ -1,75 +1,60 @@
-# PLAN.md — 30 Saatlik Görev Planı ve Adım Adım Uygulama Yol Haritası
+# PLAN.md — The 30-Hour Mission Plan and Build Order
 
-Bu belge, **SOL 14: RED HORIZON** projesinin 30 saatlik (`S0–S30`) geliştirme takvimini, kilometre taşlarını, onaylanan kapsam/kesim kararlarını ve yazılımı inşa ederken izleyeceğimiz adım adım uygulama sırasını içerir.
+This document holds the 30-hour (`S0–S30`) schedule of **SOL 14: RED HORIZON**, its milestones, the agreed scope and cut decisions, and the order in which the software was built. It is the original hackathon plan; [DECISIONS.md](DECISIONS.md) records what changed since.
 
 ---
 
-## 1. Ortak Kilometre Taşları (Milestones)
+## 1. Shared milestones
 
-| Hedef | Saat | Kilometre Taşı | Başarı / Çıkış Kriteri |
+| Target | Time | Milestone | Exit criterion |
 | :---: | :---: | :--- | :--- |
-| 🎯 **S6** | `Cmt 19:30` | **Dikey Dilim (Vertical Slice)** | `Sol 0` tasarım → Mars iniş → 1 enkazın adli döngüsü (`Opportunity`) → Sarkaç deneyi → Gece donma kriz kartı uçtan uca oynanabilir durumda. |
-| 🎯 **S14** | `Paz 03:30` | **Alfa Sürümü (Alpha)** | Tüm temel sistemler (`M1–M5`, 4 enkaz, 6 deney, olay motoru, karne) uçtan uca çökmeden çalışıyor. |
-| 🎯 **S20** | `Paz 09:30` | **İçerik Kilidi (Content Lock)** | UFO Stinger finali bağlandı, `story.json` (TR/EN) tamamlandı. Yeni metin veya yeni özellik eklenmez. |
-| 🎯 **S24** | `Paz 13:30` | **Özellik Dondurma (Feature Freeze)** | `?demo` / Hızlı Görev modu, dil anahtarı ve klavye erişilebilirliği tamamlandı. Bu saatten sonra yalnızca hata düzeltmesi yapılır. |
-| 🎯 **S28** | `Paz 17:30` | **Yayında + Video Hazır** | GitHub Pages canlı sürümü güncellendi, 30 saniyelik İngilizce altyazılı demo videosu ve 7 slayt hazır. |
-| 🎯 **S30** | `Paz 19:30` | **Resmi Teslim** | Space Apps portalına tüm bağlantılar, NASA kaynak matrisi ve yedek paket yüklendi. |
+| 🎯 **S6** | `Sat 19:30` | **Vertical slice** | `Sol 0` design → Mars landing → one wreck's forensics loop (`Opportunity`) → pendulum experiment → night-freeze crisis card, playable end to end. |
+| 🎯 **S14** | `Sun 03:30` | **Alpha** | All core systems (`M1–M5`, 4 wrecks, 6 experiments, event engine, report card) run end to end without crashing. |
+| 🎯 **S20** | `Sun 09:30` | **Content lock** | UFO stinger connected, `story.json` (EN/TR) complete. No new text or features after this. |
+| 🎯 **S24** | `Sun 13:30` | **Feature freeze** | `?demo` / quick mission, language switch and keyboard access done. Bug fixes only after this. |
+| 🎯 **S28** | `Sun 17:30` | **Live + video ready** | GitHub Pages build updated; 30-second demo video with English subtitles and 7 slides ready. |
+| 🎯 **S30** | `Sun 19:30` | **Submission** | All links, the NASA source matrix and a backup package uploaded to the Space Apps portal. |
 
 ---
 
-## 2. Saat Saat Görev Dağılımı (`K1–K6`)
+## 2. Hour-by-hour roles (`K1–K6`)
 
-| Saat Dilimi | K1 (Lider / Sistem) | K2 (Simülasyon / Olay) | K3 (UI / Mini-Oyun) | K4 (Pixel Art / VFX) | K5 (Senaryo / Bilim / Ses) | K6 (Adli / Deney / QA) |
+| Slot | K1 (Lead / Systems) | K2 (Simulation / Events) | K3 (UI / Minigames) | K4 (Pixel art / VFX) | K5 (Story / Science / Audio) | K6 (Forensics / Experiments / QA) |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- |
-| **S0–S1** | Repo, mimari kurulum, dokümanlar | Mimari ve state şemasını incele | UI bileşen şemasını hazırla | Renk paleti + `48 px` ızgara rehberi | Proje sayfası iskeleti (EN) | Adli ve deney şemalarını incele |
-| **S1–S4** | `nasa_data.json` + `engineering.js` formülleri | 0.38g yürüme/zıplama, gece-gündüz, enerji simülasyonu | `Sol 0`: 5 tasarım ekranı iskeleti + SPOF (`M8`) | Astronot sprite'ları (dur, yürü, zıpla, donmuş, aksiyon) | 5 enkaz vakasını NSSDCA'dan doğrula, metinleri yaz | `forensics.js`: kanıt toplama + 5 kategori teşhis + puan |
-| **S4–S6** | `decisionLog[]` + GBP puan modeli (asgari/tam başarı) | Olay motoru + Kriz Kartı mantığı (`M2`) | Karar Kartı UI + `Converter` ve `Wires` mini-oyunları | Habitat, Sera, MAV, Güneş Paneli + 5 enkaz sprite'ı | 12+ kriz kartı metni (`TR` + `EN`) | Deney 1–2 (Sarkaç, Serbest Düşüş) + kronometre ölçümü |
-| **S6–S10** | Neden-Sonuç Karnesi (`M5`) + NASA karşılaştırma | Dönüşsüzlük Noktası (`M4`) + Güç Yükü mantığı (`M3`) | Downlink Kuyruğu (`M1`) + `Align` / `QTE` mini-oyunları | Mars arka planları (`Jezero`, `Meridiani`, `Arcadia`, Gece, Mavi Gün Batımı) | Deney 3–6 metinleri; `story.json` İngilizce çevirisi | 4 zorunlu enkazın tam adli döngüsü + NASA bulgu kartları |
-| **S10–S14** | Yörünge, fırlatma penceresi ve iniş bölgesi etkileri; birim testler | Olaylar: Fırtına, sarsıntı, SPE, kavuşum, toz şeytanı, perklorat | Güç Yük Paneli UI (`M3`) + Telemetri ve HUD çubukları | Fırtına parçacıkları, vizör buzu (`frost 1-2`), toz şeytanı, halüsinasyon | Uyku vardiyası (`S11–S14`) | Deney 3 (Tohum) başlangıcı + Uyku vardiyası (`S11–S14`) |
-| **S14–S18** | Uyku vardiyası (`S15–S18`) | Sera yönetimi + Gecikmeli Görev Kontrol (`M7`) + `ufoStinger` tetikleyici | Uyku vardiyası (`S15–S18`) | UFO sahnesi animasyonu (MAV kalkışı, ışık, satır satır inen net/bulanık foto) | UFO storyboard + analist notu + Web Audio / CC0 ses efektleri | Deney 3–6 tamamlama (Tohum, Su kaynaması, Ses hızı, MOXIE) |
-| **S18–S20** | Denge oturumu + UFO finalini 3 sonuca bağlama | Uyku vardiyası (`S18–S21`) | UFO downlink ilerleme çubuğu + Akıl sağlığı (`Sanity`) UI | Uyku vardiyası (`S18–S21`) | Proje sayfası (EN): NASA kaynakları, gereksinim matrisi, bilimsel düzeltmeler | `Beagle 2` bonus vakası + `K1` ile ilk tam oyun denge testi |
-| **S20–S24** | Hızlı Görev / `?demo` modu (`M9`) + `localStorage` kayıt testi | `Sol 14` son sekans (anten → donmuş valf → MAV kalkış) | `TR/EN` dil anahtarı + klavye kısayolları ve erişilebilirlik | Kalkış + gün geçişi (`SOL X → X+1`) animasyonu ve görsel cilalama | 7 slaytlık sunum (EN) | QA: 3 farklı tasarımla tam oynayış, hata raporu ve doğrulama |
-| **S24–S30** | Son deploy, teslim kontrol listesi ve Space Apps gönderimi | Hata avı + "Altın Yol" (Golden Path) oynayışı | UI hata avı + ekran görüntüleri | Kapak görseli (`cover_thumbnail.png`) + video kurgu desteği | 30 sn demo video çekimi, EN altyazı ve yerel sunum provası | Son QA: canlı linkte sıfırdan test |
+| **S0–S1** | Repo, architecture, docs | Review architecture and state shape | Prepare the UI component plan | Colour palette + `48 px` grid guide | Project page skeleton (EN) | Review forensics and experiment shapes |
+| **S1–S4** | `nasa_data.json` + `engineering.js` formulas | 0.38 g walk/jump, day–night, energy simulation | `Sol 0`: 5 design screens + SPOF (`M8`) | Astronaut sprites (idle, walk, jump, frozen, action) | Check the 5 wreck cases against NSSDCA, write the texts | `forensics.js`: evidence + 5-category diagnosis + score |
+| **S4–S6** | `decisionLog[]` + score model (minimum/full success) | Event engine + crisis-card logic (`M2`) | Decision-card UI + first minigames | Habitat, greenhouse, MAV, solar panels + 5 wreck sprites | 12+ crisis-card texts (`EN` + `TR`) | Experiments 1–2 (pendulum, free fall) + stopwatch measurement |
+| **S6–S10** | Cause-and-effect report card (`M5`) + NASA comparison | Point of no return (`M4`) + power-load logic (`M3`) | Downlink queue (`M1`) + more minigames | Mars backgrounds (`Jezero`, `Meridiani`, `Arcadia`, night, blue sunset) | Experiment 3–6 texts; English pass on `story.json` | Full forensics loop for the 4 required wrecks + NASA finding cards |
+| **S10–S14** | Trajectory, launch window and landing-site effects; unit tests | Events: storm, quake, SPE, conjunction, dust devil, perchlorate | Power-panel UI (`M3`) + telemetry and HUD bars | Storm particles, visor frost (`frost 1-2`), dust devil, hallucination | Sleep shift (`S11–S14`) | Experiment 3 (seeds) start + sleep shift (`S11–S14`) |
+| **S14–S18** | Sleep shift (`S15–S18`) | Greenhouse + delayed Mission Control (`M7`) + `ufoStinger` trigger | Sleep shift (`S15–S18`) | UFO scene animation (MAV liftoff, light, line-by-line sharp/blurred photo) | UFO storyboard + analyst note + Web Audio / CC0 sounds | Finish experiments 3–6 (seeds, boiling water, speed of sound, MOXIE) |
+| **S18–S20** | Balance session + wire the UFO finale to its 3 outcomes | Sleep shift (`S18–S21`) | UFO download progress bar + morale UI | Sleep shift (`S18–S21`) | Project page (EN): NASA sources, requirement matrix, scientific corrections | `Beagle 2` bonus case + first full balance test with `K1` |
+| **S20–S24** | Quick mission / `?demo` mode (`M9`) + `localStorage` save test | `Sol 14` final sequence (antenna → frozen valve → MAV liftoff) | `EN/TR` switch + keyboard shortcuts and accessibility | Liftoff + sol transition (`SOL X → X+1`) animation and polish | 7-slide presentation (EN) | QA: full runs with 3 designs, bug reports and checks |
+| **S24–S30** | Final deploy, submission checklist, Space Apps submission | Bug hunt + "golden path" playthrough | UI bug hunt + screenshots | Cover image (`cover_thumbnail.png`) + video editing help | Record the 30 s demo video, EN subtitles, local presentation rehearsal | Final QA: test the live link from scratch |
 
 ---
 
-## 3. Kapsam ve Kesim Kararları (`C1–C7`)
+## 3. Scope and cut decisions (`C1–C7`)
 
-6 kişilik plan doğrultusunda zaman/etki verimliliği için aşağıdaki kapsam kararları uygulanır:
+With 6 people, these scope decisions keep the time-to-impact ratio high:
 
-* **Kesilen / Sadeleştirilenler (`C1, C4, C7`):**
-  - **C1 (Uzay Yolculuğu Sol 1–3):** Uzun oynanabilir uzay bölümü yerine **15 saniyelik sinematik yaklaşma ekranı + 1 mikrometeorit kablo tamir mini-oyunu** olarak sadeleştirildi.
-  - **C4 (Sabah 4 Slotlu Taktik Planlama Ekranı - M6):** Ayrı bir sabah slot ekranı yerine doğrudan yüzey HUD'u üzerinden aksiyon seçimi ve gün sonu özeti kullanıldı.
-  - **C7 (Canlı JPL Horizons API İsteği):** Ağ hatası riskini önlemek için `data/nasa_data.json` içinde **önceden hesaplanmış gerçek JPL Horizons mesafe ve ışık gecikmesi tablosu** kullanıldı.
-* **Planda Tutulanlar (`C2, C3, C5, C6`):**
-  - **C5:** Deney 5 (Ses Hızı) ve Deney 6 (MOXIE Verimi) tam olarak içerikte yer alır.
-  - **C6:** `Beagle 2` 5. bonus adli inceleme vakası olarak yer alır.
-  - **C2 & C3:** Sabatier ISRU yakıt desteği ve Akıl Sağlığı (`Sanity`) sahte alarm + gölge halüsinasyonu efektleri oyunda yer alır.
+* **Cut / simplified (`C1, C4, C7`):**
+  - **C1 (space transit, Sol 1–3):** instead of a long playable space section, a short cinematic approach (later a walkable shuttle deck with no tasks, D-014).
+  - **C4 (morning 4-slot planning screen, M6):** no separate morning slot screen; actions are chosen on the surface HUD with an end-of-sol summary.
+  - **C7 (live JPL Horizons API call):** to avoid network failures, a **precomputed table of real JPL Horizons distances and light delays** in `data/nasa_data.json`.
+* **Kept (`C2, C3, C5, C6`):**
+  - **C5:** experiment 5 (speed of sound) and experiment 6 (MOXIE output) are fully in.
+  - **C6:** `Beagle 2` is the 5th, bonus forensics case.
+  - **C2 & C3:** Sabatier ISRU fuel support and the morale false-alarm + shadow-hallucination effects are in the game.
 
 ---
 
-## 4. Yazılım İnşa Adımları (Adım Adım Uygulama Sırası)
+## 4. Build order
 
-Bu dokümantasyon tamamlandıktan hemen sonra projeyi aşağıdaki 6 fazda kodlayarak tamamlayacağız:
+The project was built in 6 phases:
 
-1. **Faz 1 — Varlık (Asset) Organizasyonu ve Altyapı:**
-   - Kök dizindeki 32 adet PNG görselini `assets/backgrounds/`, `assets/sprites/`, `assets/structures/`, `assets/screens/`, `assets/vfx/` ve `assets/ending/` klasörlerine standart isimleriyle kopyalama.
-   - `package.json` ve proje klasör yapısını (`src/core/`, `src/systems/`, `src/ui/`, `src/minigames/`, `src/fx/`, `data/`, `content/`, `styles/`, `tests/`) oluşturma.
-2. **Faz 2 — Bilimsel Veri, Çeviri ve Mühendislik Çekirdeği (`K1` + `K5`):**
-   - `data/nasa_data.json` (tüm NASA sabitleri, 3 roket, 3 iniş bölgesi, 9 alet, 5 enkaz vakası, 6 deney verisi ve kaynak URL'leri).
-   - `content/story.json` (tam TR ve EN dil paketi).
-   - `src/core/engineering.js` (güneş gücü, $\Delta v$, ışık gecikmesi, sarkaç periyodu, dönüşsüzlük noktası $O_2$, GBP puan hesaplamaları) ve `src/core/state.js` (`gameState` + Event Bus + `localStorage`).
-   - `tests/engineering.test.js` birim testlerinin yazılıp çalıştırılması.
-3. **Faz 3 — Simülasyon, Olaylar, Adli İnceleme ve Deney Sistemleri (`K2` + `K6`):**
-   - `src/core/sim.js` ve `src/core/events.js` (günlük kaynak tüketimi, güç yükü kesintisi, 15 zorluk/olay kataloğu, kriz kartları, gecikmeli görev kontrol).
-   - `src/systems/forensics.js` (5 kayıp araç dedektif sistemi) ve `src/systems/experiments.js` (6 deney bilimsel yöntem döngüsü).
-4. **Faz 4 — Görsel Motor (Canvas + Chroma-Key VFX) ve Ses (`K4` + `K5`):**
-   - `src/fx/sprites.js` (`#FFFFFF` beyaz arka planı şeffaf yapan pixel-art sprite yükleyici ve 0.38g karakter/yüzey sahnesi çizici).
-   - `src/fx/effects.js` (toz fırtınası, vizör buzlanması, sarsıntı, toz şeytanı, gölge halüsinasyonu ve UFO satır-satır foto inme animasyonu).
-   - `src/fx/audio.js` (Web Audio API ile rüzgâr, alarm, tıklama, radar ve UFO sinyal sesleri).
-5. **Faz 5 — Arayüz Ekranları ve 4 Mini-Oyun (`K3`):**
-   - `src/ui/design_screens.js` (`Sol 0` 5 tasarım ekranı, canlı bütçe/kütle/güç/veri çubukları, SPOF uyarıları).
-   - `src/ui/hud.js`, `src/ui/downlink.js`, `src/ui/power_panel.js`, `src/ui/decision_card.js` ve `src/ui/report_card.js`.
-   - `src/minigames/` (`wires.js`, `align.js`, `qte.js`, `converter.js`).
-6. **Faz 6 — Entegrasyon, `?demo` Modu ve Doğrulama:**
-   - `index.html`, `styles/main.css` ve `src/main.js` ile tüm akışın birleştirilmesi, testlerin çalıştırılması ve tarayıcı doğrulaması.
+1. **Phase 1 — Assets and infrastructure:** move the generated images into `assets/backgrounds/`, `assets/sprites/`, `assets/structures/`, `assets/screens/`, `assets/vfx/` and `assets/ending/` under standard names; create `package.json` and the folder layout (`src/core/`, `src/systems/`, `src/ui/`, `src/minigames/`, `src/fx/`, `data/`, `content/`, `styles/`, `tests/`).
+2. **Phase 2 — Data, text and the engineering core (`K1` + `K5`):** `data/nasa_data.json` (NASA constants, 3 rockets, 3 landing sites, 9 instruments, 5 wreck cases, 6 experiments, source URLs); `content/story.json` (full EN and TR); `src/core/engineering.js` (solar power, $\Delta v$, light delay, pendulum, point-of-no-return $O_2$) and `src/core/state.js` (`gameState`, save/load); unit tests in `tests/engineering.test.js`.
+3. **Phase 3 — Simulation, events, forensics and experiments (`K2` + `K6`):** `src/core/sim.js` and `src/core/events.js` (daily resource use, load shedding, the event catalogue, crisis cards, delayed Mission Control); `src/systems/forensics.js` and `src/systems/experiments.js`.
+4. **Phase 4 — Visual engine and audio (`K4` + `K5`):** `src/fx/sprites.js` (sprite loader; the white background is removed by the asset build), `src/fx/effects.js` (dust storm, visor frost, shaking, dust devil, shadow hallucination, line-by-line UFO photo) and `src/fx/audio.js` (wind, alarm, click, radar and UFO signal sounds).
+5. **Phase 5 — UI screens and minigames (`K3`):** `src/ui/design_screens.js` (`Sol 0` with live budget/mass/power/data bars and SPOF warnings), the HUD, downlink, power, decision-card and report-card panels, and `src/minigames/`.
+6. **Phase 6 — Integration, `?demo` mode and checks:** wire the whole flow through `index.html`, `styles/main.css` and `src/main.js`, run the tests and check in the browser.

@@ -1,42 +1,44 @@
-# DEPLOYMENT.md — Yayınlama (Deploy) ve Space Apps Teslim Kontrol Listesi
+# DEPLOYMENT.md — Hosting and the Space Apps Submission Checklist
 
-Bu belge, **SOL 14: RED HORIZON** projesinin yerel ortamda çalıştırılmasını, GitHub Pages / statik sunucu üzerinden yayınlanmasını ve NASA Space Apps global jüri teslim standartlarını açıklar.
+This document explains how to run **SOL 14: RED HORIZON** locally, how to publish it on GitHub Pages or any static server, and the NASA Space Apps submission checks.
 
 ---
 
-## 1. Yerel Çalıştırma ve Statik Dağıtım
+## 1. Running locally and static hosting
 
-Proje tamamen istemci taraflı (client-side) standart ES Modülleri, HTML5, CSS3 ve JSON dosyalarından oluşur; derleme (build) adımı gerektirmez ve herhangi bir statik dosya sunucusunda doğrudan çalışır.
+The project is entirely client-side: classic scripts, HTML5, CSS3 and pre-built data files. The generated files (`src/data/*.js`, `assets/processed/**`) are committed, so a static server needs no build step. It also runs by double-clicking `index.html` (`file://`).
 
 ```bash
-# Seçenek 1: Node.js npx serve ile
+# Option 1: Node.js
 npx serve . -l 8080
 
-# Seçenek 2: Python HTTP sunucusu ile
+# Option 2: Python HTTP server
 python -m http.server 8080
 ```
 
-### GitHub Pages Yayını (`K1`)
-1. Repo `main` dalı kök dizini (`/ (root)`) GitHub Pages kaynağı olarak seçilir.
-2. Tüm dosya yolları göreli (`./assets/...`, `./src/...`, `./data/...`) olarak tanımlandığı için alt dizinlerde (`/sol14-red-horizon/`) sorunsuz çalışır.
-3. Jüri için iki doğrudan bağlantı sunulur:
-   - **Tam Oyun (14 Sol):** `https://<kullanici>.github.io/<repo>/`
-   - **Jüri Hızlı Demo Modu (5 Sol):** `https://<kullanici>.github.io/<repo>/?demo=1`
+### GitHub Pages (`K1`)
+1. Choose the root (`/ (root)`) of the `main` branch as the GitHub Pages source.
+2. All paths are relative (`./assets/...`, `./src/...`), so it also works under a sub-path (`/<repo>/`).
+3. Two direct links for the judges:
+   - **Full game (14 sols):** `https://<user>.github.io/<repo>/`
+   - **Judges' quick demo (5 sols):** `https://<user>.github.io/<repo>/?demo=1`
+
+The game starts in English; `?lang=tr` opens it in Turkish.
 
 ---
 
-## 2. NASA Space Apps Teslim Kontrol Listesi (`S27–S30`)
+## 2. NASA Space Apps submission checklist (`S27–S30`)
 
-Global jüri değerlendirmesine (`Impact, Creativity, Validity, Relevance, Presentation`) girmek için aşağıdaki maddelerin tamamı teslim öncesi doğrulanır:
+To enter global judging (`Impact, Creativity, Validity, Relevance, Presentation`), check all of these before submitting:
 
-- [x] **Proje Sayfası Dili:** Space Apps proje sayfası, özet ve 7 slayt tamamen **İngilizce** hazırlandı.
-- [x] **30 Saniyelik Demo Videosu (veya 7 Slayt):**
-  - `0–5 sn`: Takım + Challenge tanımı.
-  - `5–12 sn`: `Sol 0` tasarım ekranı (bütçe, kütle, alet seçimi ve kırmızı uyarılar).
-  - `12–20 sn`: Kum fırtınası + Dönüşsüzlük noktası Kriz Kartı + Opportunity adli teşhisi.
-  - `20–25 sn`: Neden-Sonuç Karnesi (*"Bu mühendislik kararı şu sonucu doğurdu"*).
-  - `25–30 sn`: MAV kalkışı ve UFO Stinger sahnesi (satır satır inen telemetri fotoğrafı).
-- [x] **Herkese Açık Bağlantılar:** Demo video linki, canlı oyun linki (GitHub Pages) ve açık kaynak repo linki gizli sekmede (incognito) test edildi.
-- [x] **NASA Veri Kaynakları Matrisi:** `NSSDCA Master Catalog`, `Planetary Fact Sheet`, `ELV Performance`, `Trajectory Browser`, `JPL Horizons` ve `DSN Now` bağlantıları proje sayfasına ve `data/nasa_data.json` içine eklendi.
-- [x] **Yapay Zekâ ve Telif Beyanı:** Görsel üretim prompt kütüphanesi (`16-bit Pixel Art`), CC0/Web Audio ses kullanımı ve telifli materyal bulunmadığı beyan edildi.
-- [x] **Bilimsel Kurgu Notu:** *"Oyun sonundaki UFO sahnesi Viking 1976 Pareidolia olayına atıfta bulunan bir kurgudur; cevabı oyuncunun kamera ve veri bant genişliği seçimi belirler"* notu eklendi.
+- [ ] **Project page language:** the Space Apps project page, summary and 7 slides are entirely **in English**.
+- [ ] **30-second demo video (or 7 slides):**
+  - `0–5 s`: team + the challenge.
+  - `5–12 s`: the `Sol 0` design screens (budget, mass, instrument choice and red warnings).
+  - `12–20 s`: dust storm + point-of-no-return crisis card + the Opportunity diagnosis.
+  - `20–25 s`: the cause-and-effect report card (*"this engineering decision led to this result"*).
+  - `25–30 s`: MAV liftoff and the UFO stinger (the line-by-line telemetry photo).
+- [ ] **Public links:** the demo video link, the live game link (GitHub Pages) and the open-source repo link were opened in a private (incognito) window.
+- [ ] **NASA data source matrix:** links to `NSSDCA Master Catalog`, `Planetary Fact Sheet`, `ELV Performance`, `Trajectory Browser`, `JPL Horizons` and `DSN Now` are on the project page and in `data/nasa_data.json`.
+- [ ] **AI and copyright statement:** the image prompt library, AI tool use (from REFERENCES.md), CC0/Web Audio sound use and the absence of copyrighted material are stated; AI-generated images carry a visible watermark.
+- [ ] **Fiction note:** *"The UFO scene at the end is fiction referring to the Viking 1976 pareidolia case; the player's camera and bandwidth choices decide what it shows."*

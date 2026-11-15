@@ -31,7 +31,7 @@
   };
 
   /* ---------- Çeviri: t('anahtar', {degisken}) (sözleşme #3) ---------- */
-  S.lang = 'tr';
+  S.lang = 'en'; // English by default (judges, submission); Turkish stays a menu option
   S.t = function t(key, vars) {
     const story = S.STORY || { tr: {}, en: {} };
     const dict = story[S.lang] || story.tr;

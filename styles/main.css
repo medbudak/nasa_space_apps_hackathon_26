@@ -631,7 +631,7 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .dz-art { flex: none; width: 100%; aspect-ratio: 2.2 / 1; overflow: hidden; background: #0c1220; border-bottom: 1px solid var(--dz-line); }
 .dz-side.dz-s5 .dz-art { aspect-ratio: 3 / 1; }
 .dz-side.dz-s5.has-iss .dz-art { aspect-ratio: 5 / 1; }
-.dz-art svg, .dz-art img { display: block; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.dz-art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; image-rendering: pixelated; }
 .dz-info { flex: 1; min-height: 0; padding: 0.6em 0.9em 0.7em; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; }
 .dz-info h2 { margin: 0 0 0.35em; font-size: 1.12em; font-weight: 800; }
 .dz-enter .dz-main, .dz-enter .dz-info, .dz-enter .dz-head { animation: dzIn 0.16s ease-out; }

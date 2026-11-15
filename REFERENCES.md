@@ -140,6 +140,7 @@ Include open-source and free items too. Note the license.
 | | | | |
 
 Sounds were trimmed, mixed to mono, loudness-normalised and converted to 96 kbps MP3 with ffmpeg so the game loads fast. Played by `src/fx/audio.js` (HTMLAudioElement, works over `file://`); the alarm, quake, launch, radio static, camera shutter, wind and storm sounds are wired, the others are kept for later use.
+| `assets/screens/scr_prep_{objective,rocket,habitat,instruments}.jpg` (mission prep previews: astronaut and rover, spacecraft between Earth and Mars, habitat with battery and solar panels, lab bench) | this repository | Supplied by the team lead on 2026-11-15 (origin and AI use to be confirmed; AI-generated art needs a visible watermark) | Mission prep preview panels (`src/ui/design_screens.js`) |
 
 ## Use of AI
 

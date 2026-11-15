@@ -1,55 +1,59 @@
-# TESTING.md — Test Stratejisi, Doğrulama Senaryoları ve QA Rehberi
+# TESTING.md — Test Strategy, Verification Scenarios and QA Guide
 
-Bu belge, **SOL 14: RED HORIZON** projesinin otomatik birim testlerini, oyun içi hata ayıklama (debug) araçlarını ve `K6` (QA) liderliğinde yürütülen uçtan uca oynanış doğrulama senaryolarını içerir.
+This document covers the automated tests of **SOL 14: RED HORIZON**, the in-game debug tools and the end-to-end gameplay scenarios run under `K6` (QA).
 
 ---
 
-## 1. Otomatik Birim Testleri (`node --test tests/`)
+## 1. Automated tests
 
-Node.js yerleşik test çalıştırıcısı (`node:test` ve `node:assert/strict`) kullanılarak tüm mühendislik formülleri, veri bütünlüğü ve puanlama kuralları otomatik olarak doğrulanır:
+All engineering formulas, data integrity and scoring rules are checked with Node's built-in test runner (`node:test` and `node:assert/strict`):
 
 ```bash
 npm test
-# = node tools/build.js data && node --test "tests/*.test.js"   (Node 22+ dizin değil glob ister)
+# = node tools/build.js data && node --test "tests/*.test.js"   (Node 22+ wants a glob, not a folder)
 ```
 
-Test dosyaları: `tests/engineering.test.js` (formüller), `tests/data_integrity.test.js` (src URL'leri + TR/EN bütünlüğü + anahtar kapsamı), `tests/qa_profiles.test.js` (§2'deki 3 profil + demo modu, `tests/helpers/bot.js` ile başsız oynanır).
+The core and systems scripts run headless in a `vm` context (`tests/helpers/load_core.js`); `tests/helpers/bot.js` plays whole missions without a browser.
 
-### Test Kapsamı (`tests/engineering.test.js`):
-1. **Güneş Gücü Hesabı (`calcSolarPower`):**
-   - Temiz panel (`dustFactor = 0`) vs. fırtına sonrası tozlu panel (`dustFactor = 0.8`) güç üretimi doğrulaması.
-   - Ekvator (`Meridiani`) vs. Orta Enlem (`Arcadia`) güneş açısı ($\cos Z$) farkı.
-2. **Roket Denklemi (`calcDeltaV`):**
-   - `m0 > mf` için pozitif $\Delta v$ hesabı ve sınır değer kontrolü.
-3. **Işık Gecikmesi (`calcLightDelay`):**
-   - En yakın ($5.5 \times 10^7\text{ km} \rightarrow \sim 3.05\text{ dk}$) ve en uzak ($4.0 \times 10^8\text{ km} \rightarrow \sim 22.2\text{ dk}$) Dünya-Mars mesafelerinde doğru gecikme hesabı.
-4. **Sarkaç Periyodu (`calcPendulumPeriod`):**
-   - $L = 1\text{ m}$ için Mars ($g = 3.73\text{ m/s}^2 \rightarrow T \approx 3.25\text{ sn}$) ve Dünya ($g = 9.81\text{ m/s}^2 \rightarrow T \approx 2.00\text{ sn}$) oranı ($\approx 1.62\times$).
-5. **Dönüşsüzlük Noktası (`calcPointOfNoReturnO2` - `M4`):**
-   - `900 m` mesafede normal hız vs. donmuş eklem (`%40` hız) durumunda gerekli $\text{O}_2$ çentiğinin yükselmesi ve kriz kartını tetiklemesi.
-6. **NASA Veri Doğrulaması (`data/nasa_data.json`):**
-   - Tüm aletlerin, roketlerin, iniş bölgelerinin ve kayıp araç vakalarının geçerli `src` URL alanına sahip olduğunun kontrolü.
-7. **Çift Dilli Metin Bütünlüğü (`content/story.json`):**
-   - `tr` ve `en` sözlüklerindeki tüm anahtarların birebir eşleştiğinin kontrolü.
+| File | What it checks |
+| :--- | :--- |
+| `engineering.test.js` | The formulas (§1.1), landing and the sol loop |
+| `data_integrity.test.js` | Every number has a `src`; EN/TR keys match; every text key used in code and data exists |
+| `qa_profiles.test.js` | The 3 design profiles in §2 + demo mode, played by the bot |
+| `design_choices.test.js` | Each Sol 0 choice changes the game the way its tooltip says |
+| `rhythm.test.js` | One main goal and at most one optional goal at a time; goal priority |
+| `explore.test.js`, `minerals.test.js`, `shelter.test.js` | Map, digging, ice, lava tube, minerals, the glacier ice cave |
+| `station.test.js`, `rocket.test.js`, `upgrades.test.js` | Station side story, tools and MAV repair, level upgrades |
+| `greenhouse.test.js`, `needs.test.js`, `interior.test.js` | Greenhouse growth and harvest, hunger/thirst/fatigue, the lander interior |
+
+### 1.1 Formula coverage (`tests/engineering.test.js`)
+1. **Solar power (`calcSolarPower`):** clean panel (`dustFactor = 0`) vs. dusty panel after a storm (`dustFactor = 0.8`); equator (`Meridiani`) vs. mid-latitude (`Arcadia`) zenith angle ($\cos Z$).
+2. **Rocket equation (`calcDeltaV`):** positive $\Delta v$ for `m0 > mf` and edge values.
+3. **Light delay (`calcLightDelay`):** closest ($5.5 \times 10^7\text{ km} \rightarrow \sim 3.05\text{ min}$) and farthest ($4.0 \times 10^8\text{ km} \rightarrow \sim 22.2\text{ min}$) Earth–Mars distances.
+4. **Pendulum period (`calcPendulumPeriod`):** for $L = 1\text{ m}$, Mars ($g = 3.73\text{ m/s}^2 \rightarrow T \approx 3.25\text{ s}$) vs. Earth ($g = 9.81\text{ m/s}^2 \rightarrow T \approx 2.00\text{ s}$), ratio $\approx 1.62\times$.
+5. **Point of no return (`calcPointOfNoReturnO2`, `M4`):** at `900 m`, frozen joints (`40%` speed) raise the $\text{O}_2$ notch and trigger the crisis card.
+6. **NASA data (`data/nasa_data.json`):** every instrument, rocket, landing site and wreck case has a valid `src` URL.
+7. **Bilingual text (`content/story.json`):** the `en` and `tr` dictionaries have exactly the same keys.
 
 ---
 
-## 2. Oyun İçi QA Senaryoları (3 Farklı Tasarım Profili)
+## 2. In-game QA scenarios (3 design profiles)
 
-`K6` (QA sorumlusu) oyunu aşağıdaki 3 zıt mühendislik profiliyle baştan sona test eder:
+`K6` plays the game start to finish with these three opposite engineering profiles:
 
-| Test Profili | Sol 0 Tasarım Seçimi | Beklenen Oyun İçi Sonuç ve Karne Çıktısı |
+| Profile | Sol 0 design | Expected result and report card |
 | :--- | :--- | :--- |
-| **1. Altın Yol (Dengeli & Güvenli)** | `Jezero`, Panel + RTG, `40 kWh` batarya, Kalın yalıtım, `Mastcam-Z + MEDA + SEIS + MOXIE + Veggie`, `%12` kütle marjı | Fırtına 1 sol önceden bilinir (`MEDA`), gece sera donmaz, 4 adli rapor + 4 deney Dünya'ya ulaşır → **Tam Başarı + `%80` Net UFO Fotoğrafı**. |
-| **2. Açgözlü Bilim (Kırılgan Tasarım)** | `Arcadia` (soğuk), Sadece Güneş Paneli, `20 kWh` batarya, İnce yalıtım, `%0` kütle marjı, 0 tamir kiti | `Sol 6–9` fırtınasında ve `-80 °C` gecede güç yükü çöker (`M3`), sera donar, karne **"20 kWh batarya + ince yalıtım → Sol 9 gecesi sera kaybı (-120 puan)"** neden-sonuç analizini gösterir. |
-| **3. İletişim / Kamera Eksikliği** | `Mastcam-Z` alınmadı (sadece el kamerası), sadece UHF röle, düşük veri bütçesi | Fotoğraflar yarım puan verir, Downlink kuyruğu (`M1`) tıkanır, finaldeki UFO sahnesinde fotoğraf **`%30` bulanık** iner. |
+| **1. Golden path (balanced & safe)** | `Jezero`, panels + RTG, `40 kWh` battery, thick insulation, `Mastcam-Z + MEDA + SEIS + MOXIE + Veggie`, `12%` mass margin | The storm is known 1 sol ahead (`MEDA`), the greenhouse doesn't freeze, 4 forensic reports + 4 experiments reach Earth → **full success + an `80%` sharp UFO photo**. |
+| **2. Greedy science (fragile design)** | `Arcadia` (cold), solar only, `20 kWh` battery, thin insulation, `0%` mass margin, 0 repair kits | The power load collapses in the `Sol 6–9` storm and the `-80 °C` night (`M3`), the greenhouse freezes; the report card shows **"20 kWh battery + thin insulation → greenhouse lost on the night of Sol 9"**. |
+| **3. Comms / camera gap** | No `Mastcam-Z` (hand camera only), UHF relay only, low data budget | Photos score half, the downlink queue (`M1`) clogs, and the final UFO photo arrives **`30%` blurred**. |
 
 ---
 
-## 3. Hızlı Görev / Jüri Demo Modu (`?demo=1`) ve Debug Kısayolları
+## 3. Quick mission / judges' demo (`?demo=1`) and debug tools
 
-* **Jüri Demo Modu (`?demo=1` veya Başlangıç Ekranındaki "Hızlı Görev (5 Sol)" Butonu):**
-  - Hazır dengeli bir `Sol 0` tasarımı yükler (oyuncu isterse 1 tıkla değiştirebilir).
-  - Süreyi `5 Sol`'a sıkıştırır: `Sol 1` (Sarkaç Deneyi + Opportunity Adli İnceleme) → `Sol 2` (Eklem Donması Dönüşsüzlük Noktası Kriz Kartı) → `Sol 3` (Kum Fırtınası + Güç Yük Kesintisi + Downlink) → `Sol 4` (Tohum Deneyi + InSight Enkazı) → `Sol 5` (MAV Kalkışı + 40 sn UFO Stinger + Neden-Sonuç Karnesi).
-* **Geliştirici Debug Konsolu (`window.SOL14_DEBUG`):**
-  - Tarayıcı konsolundan `SOL14_DEBUG.nextSol()`, `SOL14_DEBUG.triggerCrisis('joint_freeze')`, `SOL14_DEBUG.playUfoEnding()` çağrılarıyla her sahne saniyeler içinde test edilebilir.
+* **Judges' demo (`?demo=1` or "Quick mission (5 sols)" in the main menu):**
+  - Loads a ready, balanced `Sol 0` design (the player can still change it).
+  - Compresses the mission to `5 sols`, so the core loop, a crisis, a storm, the MAV liftoff, the UFO stinger and the report card are all reached in a few minutes.
+* **Developer debug console (`window.SOL14_DEBUG`):**
+  - From the browser console: `SOL14_DEBUG.nextSol()`, `SOL14_DEBUG.triggerCrisis('joint_freeze')`, `SOL14_DEBUG.playUfoEnding()`, `SOL14_DEBUG.showReport()`, `SOL14_DEBUG.missingKeys()` and the playtest log (`playtestLog()`, `exportPlaytest()`).
+* **Browser checks:** Edge headless screenshots (see CLAUDE.md → Commands); check every visual change at 1920×1080 and 1366×768 and over `file://`.

@@ -34,7 +34,7 @@ npm start                      # npx serve . -l 8080   (or: python -m http.serve
 
 ## Real architecture (where it differs from the design docs)
 
-- **Not ES modules.** `ARCHITECTURE.md`, `API.md` and ADR 0001 say ES modules, but the code uses classic `<script>` files and the `window.SOL14` namespace (`S` for short). Every file is an IIFE: `(function (S) { ... })(window.SOL14 = window.SOL14 || {})`. Do not use `import`/`export`, `fetch` or runtime `getImageData`: they fail under `file://`.
+- **Not ES modules.** ADR 0001 originally said ES modules (amended there; ARCHITECTURE.md and API.md describe the real setup): the code uses classic `<script>` files and the `window.SOL14` namespace (`S` for short). Every file is an IIFE: `(function (S) { ... })(window.SOL14 = window.SOL14 || {})`. Do not use `import`/`export`, `fetch` or runtime `getImageData`: they fail under `file://`.
 - **Script order matters.** Keep the order in `index.html` and the `CORE_SCRIPTS` array in `tests/helpers/load_core.js` in sync. Update both when adding a file. Core and systems files must not touch the DOM: the tests run them DOM-less in a `vm` context.
 - **Shared core `src/core/base.js`:** `S.bus` (on/emit), `S.t(key, vars)` (`{name}` placeholders; a missing key shows the key), `S.util`, `S.makeRng(seed)` (deterministic RNG: use it instead of `Math.random` for QA).
 - **Generated files, never edit by hand:** `src/data/*.js` (build data) and `assets/processed/**` + `manifest.json` (build assets). Change the source JSON or PNG and rerun the build.
@@ -47,7 +47,7 @@ npm start                      # npx serve . -l 8080   (or: python -m http.serve
 ## Folders
 
 - `assets/`: original images (build input) and `assets/processed/` (what the game loads). The old root copies and the v2 `_legacy/` folder were removed; both are in git history.
-- `docs/design/`: design sources: PDFs (design doc v2, roadmap, K4 task card), `menu-references/` (menu UI reference images), `ai-image-prompts.md` (image prompt library), `prompt-panel-cleaning-and-watering.md` (panel-cleaning and watering task spec).
+- `docs/design/`: design sources: PDFs (design doc v2, roadmap, K4 task card), `menu-references/` (menu UI reference images), `ai-image-prompts.md` (image prompt library), `prompt-panel-cleaning-and-watering.md` (panel-cleaning and watering task spec), `design-rules.md` (shared design and interaction rules: tokens, HUD densities, mission prep, interiors).
 
 ## How decisions are made
 
@@ -126,7 +126,8 @@ Write the smallest clear change that solves the task. Readable code beats clever
 
 - Code, comments, commit messages, PRs, issues and repo docs are in English.
 - Team chat and conversations with Claude can be in any language. Claude replies in the language it is addressed in.
-- The v3 design docs (`README.md`, `ARCHITECTURE.md`, `API.md`, `DESIGN.md`, `PLAN.md`, ...) are in Turkish. The submission texts in `docs/submission/` are in English.
+- Everything on GitHub is in English, including the design docs (`README.md`, `ARCHITECTURE.md`, `API.md`, `DESIGN.md`, `PLAN.md`, `docs/`) and the submission texts in `docs/submission/`. Code comments written in Turkish may stay until the file is next touched.
+- The game starts in English; Turkish stays a language option (`content/story.json` keeps both `en` and `tr`).
 
 ## Rules for Claude
 

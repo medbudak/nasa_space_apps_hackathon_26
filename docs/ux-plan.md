@@ -13,7 +13,7 @@ Player feedback after the first full playthrough of v3, turned into tasks. Goal:
 | 5 | Sol 0 tooltips (What · Why · What changes) on every prep option and instrument; real effects for repair kits, MOXIE, Ingenuity, data volume, launch window | local-wip, merged 2026-11-15 |
 | 9 | Missions by action: no automatic discovery; wrecks are dug out, the skylight is dug open, SCOUT-1 parts and evidence photos need FIELD CAM; goals follow what was done | D-013, merge 2026-11-15 |
 | 8 | Base systems built by the player: solar array, ISRU/MOXIE, greenhouse and MAV land in cargo crates; E + minigame + game minutes; no solar power before the array, no fuel before ISRU + MAV | `Sim.deploy`, `gameplay.deploy` |
-| 6 | Transit: 4-task engineering chain (arrays `align`, O2 leak `wires`, TCM `qte`, thermal `converter`); bar moves only on completion; typewriter "GEZEGENE YAKLAŞILIYOR..."; outcomes feed landing (`gameplay.transit`, `Sim.transitOutcome`); skip asks twice and degrades | transit commit |
+| 6 | Transit: 4-task engineering chain (arrays `align`, O2 leak `wires`, TCM `qte`, thermal `converter`); bar moves only on completion; typewriter "APPROACHING THE PLANET..."; outcomes feed landing (`gameplay.transit`, `Sim.transitOutcome`); skip asks twice and degrades | transit commit |
 
 ## To do (in this order)
 
@@ -26,11 +26,11 @@ Player feedback after the first full playthrough of v3, turned into tasks. Goal:
 - `moxie`: the ISRU sprite and `sabatier` action exist even without MOXIE (`effects.js:179-182`) → tie them to the choice.
 
 ### 3. Habitat interior: clear purpose and hierarchy
-`src/ui/habitat_panel.js` (4×2 `.act-card` grid, DURUM column, ÖNİZLEME). Problems: tiny labels, no grouping, "O₂" bar is actually the suit O2, no "why".
-- Group cards: **EVA hazırlığı** (O₂ doldur, Elbiseyi şarj et, Elbiseyi onar) · **Bilim ve iletişim** (Laboratuvar, İletişim) · **Üs yönetimi** (Güç paneli, Karar günlüğü) · **Gün** (Günü tamamla).
-- Each card: readable name, one-line purpose, live consequence ("Elbise O₂ %11 → %100 · 20 dk · habitat O₂ −0.8 kg"), disabled state with the reason.
+`src/ui/habitat_panel.js` (4×2 `.act-card` grid, STATUS column, PREVIEW). Problems: tiny labels, no grouping, "O₂" bar is actually the suit O2, no "why".
+- Group cards: **EVA prep** (refill O₂, charge the suit, repair the suit) · **Science and comms** (lab, comms) · **Base management** (power panel, decision log) · **Day** (end the sol).
+- Each card: readable name, one-line purpose, live consequence ("Suit O₂ 11% → 100% · 20 min · habitat O₂ −0.8 kg"), disabled state with the reason.
 - Highlight the recommended next action from `src/core/objectives.js`.
-- Preview: "Bu nedir? → Ne işe yarar? → Neden şimdi? → Ne değişir?".
+- Preview: "What is it? → What does it do? → Why now? → What changes?".
 - Label bars precisely (Elbise O₂ vs Habitat O₂).
 
 ### 4. HUD consistency
