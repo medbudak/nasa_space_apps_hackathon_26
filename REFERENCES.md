@@ -65,9 +65,20 @@ Running log of everything external the project uses. The submission form asks fo
 
 Include open-source and free items too. Note the license.
 
+Sounds were trimmed, mixed to mono, loudness-normalised and converted to 96 kbps MP3 with ffmpeg so the game loads fast.
+
 | Item | URL | License | Used for |
 |---|---|---|---|
-| | | | |
+| "Monologue Wind.wav" by dlgebert (Freesound) | https://freesound.org/people/dlgebert/sounds/527281/ | CC0 | `assets/audio/wind_loop` · surface wind |
+| Storm sound by Vrymaa (Freesound) | https://freesound.org/people/Vrymaa/sounds/825860/ | CC0 | `assets/audio/storm_loop` · dust storm |
+| "Alarm.wav" by DylanTheFish (Freesound) | https://freesound.org/people/DylanTheFish/sounds/440307/ | CC0 | `assets/audio/alarm` · crisis card alert |
+| "FX - Earthquake" by bolkmar (Freesound) | https://freesound.org/people/bolkmar/sounds/529244/ | CC0 | `assets/audio/quake_rumble` · marsquake |
+| "Footsteps_Mountain_Boots_Gravel_Mono.wav" by Nox_Sound (Freesound) | https://freesound.org/people/Nox_Sound/sounds/556002/ | CC0 | `assets/audio/footsteps` · walking |
+| Radio static by giddster (Freesound) | https://freesound.org/people/giddster/sounds/805685/ | CC0 | `assets/audio/radio_static` · Mission Control, UFO scene |
+| "shuttlelaunch.wav" by klangfabrik (Freesound) | https://freesound.org/people/klangfabrik/sounds/220127/ | CC0 | `assets/audio/rocket_rumble` · MAV launch, UFO scene |
+| "Dark Voice Drone 01 - Loop" by kkenny101 (Freesound) | https://freesound.org/people/kkenny101/sounds/871594/ | CC0 | `assets/audio/drone_ambience` · UFO scene |
+| "Camera Shutter Click" by Kodack (Freesound) | https://freesound.org/people/Kodack/sounds/271010/ | CC0 | `assets/audio/camera_shutter` · automatic photo, evidence photo |
+| Data tick (60 ms, 1.2 kHz beep) | Made by the team with ffmpeg (sine generator), no external source | Own work | `assets/audio/data_tick` · downlink ticks. The Freesound pick (661435, a 7-minute track) did not fit and was not used |
 
 ## Use of AI
 
