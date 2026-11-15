@@ -207,8 +207,8 @@
     const res = S.Sim.doAction(s, id);
     if (!res.ok) S.UI.toast(t(res.errKey), 'warn');
     else if (!QUIET_ACTIONS.has(id)) S.UI.toast(I('check') + t('action.done.' + id), 'ok');
-    // yemek / su içme: takımın GIF animasyonu astronotun durduğu yerde
-    if (res.ok && (id === 'eat' || id === 'drink') && S.FX.playActivity) S.FX.playActivity(id);
+    // yemek / su içme / tuvalet: animasyon astronotun durduğu yerde
+    if (res.ok && (id === 'eat' || id === 'drink' || id === 'toilet') && S.FX.playActivity) S.FX.playActivity(id);
     HP.lastHtml = '';
     S.Game.afterAction();
   };

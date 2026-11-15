@@ -1386,3 +1386,9 @@ body[data-scene='world'] .screen-layer { display: none; }
 .gh-tray.empty { border-style: dashed; }
 .gh-tray .gh-plus { font-size: 1.6em; line-height: 48px; height: 48px; color: var(--muted); }
 .gh-pick-t { margin: 0.2em 0 0.3em; font-size: 0.72em; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Göktaşı sinematiği (tam ekran, atlanabilir) */
+.modal-scene .modal-box { width: 100%; height: 100%; max-width: none; padding: 0; background: #000; display: flex; align-items: center; justify-content: center; }
+.imp-scene { position: relative; width: min(100vw, 177.78vh); aspect-ratio: 16 / 9; }
+.imp-scene canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.imp-skip { position: absolute; right: 1em; top: 1em; font-size: 1em; font-family: inherit; }

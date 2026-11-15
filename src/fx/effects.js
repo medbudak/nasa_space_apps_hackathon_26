@@ -1304,13 +1304,14 @@
   const ACTIVITY = {
     eat: { key: 'astro_eat', frames: 4, ms: 240, secs: 2.6 },
     drink: { key: 'astro_drink', frames: 4, ms: 320, secs: 2.6 },
-    sleep: { key: 'astro_sleep', frames: 4, ms: 450, secs: 3.2, at: 'bunk' }
+    sleep: { key: 'astro_sleep', frames: 4, ms: 450, secs: 3.2, at: 'bunk' },
+    toilet: { key: null, frames: 1, ms: 1000, secs: 2.6 } // GIF yok: kodla çizilen kabin (dolu lambası)
   };
   FX.activity = null;
   /** Bir etkinlik animasyonu başlat; bitince (ya da oyuncu yürüyünce) onDone çağrılır */
   FX.playActivity = function (kind, onDone) {
     const a = ACTIVITY[kind];
-    if (!a || !S.Sprites.get(a.key)) {
+    if (!a || (a.key && !S.Sprites.get(a.key))) {
       if (onDone) onDone();
       return false;
     }
@@ -1322,6 +1323,42 @@
     FX.activity = null;
     if (cb) cb();
   }
+  /** Tuvalet molası: astronotun yerinde katlanır gizlilik kabini; kapı kapanır, "dolu" lambası kırmızı,
+   *  sonunda yeşile döner, kapı açılır (karakter yeniden görünür). Prosedürel piksel çizim. */
+  function drawToilet(ctx, x, footY, t, secs) {
+    const open = Math.min(1, t / 0.35, (secs - t) / 0.35); // 0 açık .. 1 kapalı
+    const w = 30;
+    const h = 72;
+    const left = x - w / 2;
+    const top = footY - h;
+    const R = (dx, dy, ww, hh, col) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(left + dx), Math.round(top + dy), Math.round(ww), Math.round(hh));
+    };
+    R(-1, -1, w + 2, h + 1, '#0b0d10'); // kabin
+    R(0, 0, w, h, '#5d6570');
+    R(0, 0, w, 3, '#8a939f');
+    R(2, 6, w - 4, 4, '#3a4049'); // havalandırma
+    R(5, 7, w - 10, 1, '#1b1f25');
+    // kapı paneli: kapanırken soldan sağa kayar
+    const dw = Math.round((w - 6) * open);
+    R(3, 14, dw, h - 16, '#7d858f');
+    R(3, 14, dw, 2, '#aab2bb');
+    if (open > 0.9) R(w - 8, 40, 2, 6, '#2b3038'); // kapı kolu
+    // WC işareti (piksel insan figürleri)
+    R(9, 20, 12, 10, '#e9eef2');
+    R(11, 21, 2, 2, '#22335c');
+    R(10, 23, 4, 5, '#22335c');
+    R(17, 21, 2, 2, '#b5622a');
+    R(16, 23, 4, 5, '#b5622a');
+    // dolu / boş lambası
+    const busy = t < secs - 0.45;
+    R(w / 2 - 3, -6, 6, 5, '#0b0d10');
+    R(w / 2 - 2, -5, 4, 3, busy ? '#ff3b2f' : '#3fe08a');
+    // sonda kısa su sesi damlacıkları
+    if (t > secs - 0.9 && t < secs - 0.45) for (let i = 0; i < 3; i++) R(w / 2 - 6 + i * 5, h - 10 - ((t * 40 + i * 5) % 8), 2, 2, '#9fd8ff');
+  }
+
   /** Çizildiyse true (o karede normal mürettebat çizilmez) */
   FX.drawActivity = function (ctx, s, dt, t, ox, footY) {
     const act = FX.activity;
@@ -1332,6 +1369,10 @@
     if (act.t >= a.secs || (body.moving && act.kind !== 'sleep')) {
       endActivity();
       return false;
+    }
+    if (act.kind === 'toilet') {
+      drawToilet(ctx, Math.round(ox + body.ix), footY, act.t, a.secs);
+      return true;
     }
     const img = S.Sprites.get(a.key);
     const fw = img.width / a.frames;
