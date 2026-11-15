@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SOL 14: RED HORIZON — Ara Sahneler (K3 + K4)
  *  1) Transit (Sol 0 -> Sol 1): sıralı görev zinciri (paneller, O₂ sızıntısı, TCM, ısı dengesi) + daktilo yaklaşma + EDL
  *  2) Sol geçişi (M6): mavi Mars gün batımı, SOL X -> SOL X+1 telemetri özeti
@@ -32,7 +32,7 @@
     const results = {};
     const marks = tasks.map((tk, i) => '<i class="tt-mark" data-m="' + i + '" style="left:' + ((i + 1) / tasks.length) * 100 + '%"></i>').join('');
     const html =
-      '<div class="cutscene transit" style="--bg:url(\'' + S.Sprites.screen('scr_ship_interior') + '\')"><div class="cs-bg"></div><div class="cs-stars"></div>' +
+      '<div class="cutscene transit" style="--bg:url(\'' + S.Sprites.screen('scr_transit') + '\')"><div class="cs-bg"></div><div class="cs-stars"></div>' +
       UI_header() +
       '<div class="transit-track"><span class="tt-earth">' + t('transit.earth') + '</span><div class="tt-line"><div class="tt-fill"></div>' + marks +
       '<span class="tt-ship">' + I('rocket') + '</span></div><span class="tt-mars">' + t('transit.mars') + '</span></div>' +
@@ -46,7 +46,7 @@
       '<div class="cs-type" data-r="type" hidden><span class="cs-type-ghost">' + t('transit.approach') + '<i class="cs-caret"></i></span>' +
       '<span><span data-r="typetext"></span><i class="cs-caret"></i></span></div>' +
       '<div class="edl" data-r="edl" hidden><span>' + t('transit.edl') + '</span><b data-r="alt">125 km</b><small data-r="edlphase"></small></div>' +
-      '<img id="transit-crew-actor" src="assets/processed/sprites/astronaut_indoor.png" alt="" style="position:absolute;left:22%;bottom:18%;height:22%;transform:translateX(-50%);image-rendering:pixelated;pointer-events:none;z-index:2;filter:drop-shadow(0 6px 10px rgba(0,0,0,0.85));transition:bottom 0.15s;"/><div class="cs-flash" data-r="flash"></div></div>';
+      '<div class="cs-flash" data-r="flash"></div></div>';
     const root = S.UI.showScreen(html, 'scene-transit');
     const R = (n) => root.querySelector('[data-r="' + n + '"]');
     const card = R('card');
@@ -147,8 +147,6 @@
       done = true;
       cancelAnimationFrame(raf);
       timers.forEach(clearTimeout);
-      window.removeEventListener('keydown', onCrewKeyDown);
-      window.removeEventListener('keyup', onCrewKeyUp);
       window.removeEventListener('keydown', onKey, true);
       // Geçilen görevler BOZUK sayılır (otomatik sistem); Sim.land cezaları uygular
       for (const tk of tasks) if (!results[tk.id]) results[tk.id] = { success: false, score: 0, timeUsed: 0, skipped: true };
@@ -167,9 +165,6 @@
 
     /* --- Akış: kart -> mini oyun -> sonuç + ilerleme -> sonraki kart / yaklaşma --- */
     const showCard = (note) => {
-      const bgMap = { arrays: 'shuttle_engineering_bay', leak: 'scr_ship_o2_leak', tcm: 'shuttle_cockpit_interior', thermal: 'scr_ship_reactor' };
-      const bgKey = bgMap[tasks[idx].id] || 'scr_ship_interior';
-      root.style.setProperty('--bg', 'url("' + S.Sprites.screen(bgKey) + '")');
       phase = 'card';
       card.innerHTML = cardHtml(note);
       card.querySelector('[data-start]').addEventListener('click', startTask);
@@ -261,42 +256,6 @@
     };
     window.addEventListener('keydown', onKey, true);
     skipBtn.addEventListener('click', skip);
-
-    const crewEl = document.getElementById('transit-crew-actor');
-    let crewX = 22;
-    let crewDir = 1;
-    let crewStepT = 0;
-    let manualDir = 0;
-    const onCrewKeyDown = (e) => {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') manualDir = -1;
-      else if (e.code === 'ArrowRight' || e.code === 'KeyD') manualDir = 1;
-    };
-    const onCrewKeyUp = (e) => {
-      if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && manualDir === -1) manualDir = 0;
-      if ((e.code === 'ArrowRight' || e.code === 'KeyD') && manualDir === 1) manualDir = 0;
-    };
-    window.addEventListener('keydown', onCrewKeyDown);
-    window.addEventListener('keyup', onCrewKeyUp);
-    let crewLastT = performance.now();
-    const crewTick = (now) => {
-      if (done) return;
-      const dt = Math.min(0.05, (now - crewLastT) / 1000);
-      crewLastT = now;
-      const move = manualDir !== 0 ? manualDir : crewDir;
-      const speed = manualDir !== 0 ? 22 : 11;
-      crewX += move * speed * dt;
-      if (crewX >= 78) { crewX = 78; crewDir = -1; }
-      else if (crewX <= 22) { crewX = 22; crewDir = 1; }
-      crewStepT += dt * (manualDir !== 0 ? 12 : 7);
-      const bob = Math.abs(Math.sin(crewStepT)) * 0.8;
-      if (crewEl) {
-        crewEl.style.left = crewX + '%';
-        crewEl.style.bottom = (18 + bob) + '%';
-        crewEl.style.transform = 'translateX(-50%) scaleX(' + move + ')';
-      }
-      requestAnimationFrame(crewTick);
-    };
-    requestAnimationFrame(crewTick);
 
     setProgress(0);
     R('ship').innerHTML = shipHtml();
@@ -466,5 +425,3 @@
 
   S.Cutscenes = CS;
 })((window.SOL14 = window.SOL14 || {}));
-
-
