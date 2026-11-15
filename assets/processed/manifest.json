@@ -126,6 +126,69 @@
     "whiteKeptPx": 0
   },
   {
+    "asset": "sprites/plants/lettuce_1.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/lettuce_2.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/lettuce_3.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/radish_1.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/radish_2.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/radish_3.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/zinnia_1.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/zinnia_2.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
+    "asset": "sprites/plants/zinnia_3.png",
+    "size": "48x48",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "structures/mav_rocket.png",
     "size": "110x150",
     "mode": "flood",

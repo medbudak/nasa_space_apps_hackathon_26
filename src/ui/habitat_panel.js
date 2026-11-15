@@ -251,8 +251,11 @@
    * Sera paneli (Kişi 6): bitkinin evresi (görsel + 4 adımlı şerit), sonraki evreye ne kaldığı, bugünkü bakım durumu;
    * olgunsa "Hasat et", değilse "Seraya bak". Sıkıştırılmış süre ve bilimsel not her zaman görünür.
    */
-  // Evre görseli: genel evre sınıfı (yer tutucu) + bitkiye özel sınıf (Kişi 7'nin görseli buna bağlanır)
-  const art = (plant, stage) => '<span class="gh-art gh-art-' + stage + ' gh-art-' + plant + '-' + stage + '"></span>';
+  // Evre görseli (Kişi 7): assets/processed/sprites/plants/<bitki>_<1..3>.png, 48×48, büyütmede pikselli
+  const art = (plant, stage) => {
+    const n = S.DATA.habitat.greenhouse.growth.plants[plant].stages.indexOf(stage) + 1;
+    return '<img class="gh-img" src="assets/processed/sprites/plants/' + plant + '_' + n + '.png" width="48" height="48" alt="">';
+  };
   HP.greenhouseInfo = function (s) {
     const gh = s.greenhouse;
     if (!gh.installed) return '<p class="pv-desc">' + t('gh.not_installed') + '</p>';

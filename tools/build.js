@@ -263,6 +263,16 @@ const ASSETS = [
   { src: 'sprites/mineral_gypsum.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
   { src: 'sprites/mineral_olivine.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
   { src: 'sprites/mineral_basalt.png', mode: 'none', size: { w: 24, h: 24 }, noCrop: true },
+  // Kişi 6 sera: bitki evreleri (Kişi 7'nin görselleri); kırpma yok, böylece çimlenme küçük, olgun büyük kalır
+  { src: 'sprites/plants/lettuce_1.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/lettuce_2.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/lettuce_3.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/radish_1.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/radish_2.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/radish_3.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/zinnia_1.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/zinnia_2.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
+  { src: 'sprites/plants/zinnia_3.png', mode: 'none', size: { w: 48, h: 48 }, noCrop: true },
   // Üs yapıları
   { src: 'structures/mav_rocket.png', mode: 'flood', size: { h: 150 } },
   { src: 'structures/greenhouse_ok.png', mode: 'flood', size: { w: 150 } },
