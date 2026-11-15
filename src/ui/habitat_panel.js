@@ -221,15 +221,16 @@
     const R = S.Rocket;
     if (!R.isDamaged(s)) return '<p class="pv-note ok">' + I('check') + t('rocket.all_ok') + '</p>';
     return (
-      '<h5 class="rk-head">' + I('alert') + t('rocket.damaged_title') + '</h5>' +
+      '<h5 class="rk-head">' + I('alert') + t('rocket.damaged_title') + '</h5><p class="pv-note">' + I('doc') + t('rocket.how') + '</p>' +
       R.damaged(s)
         .map((id) => {
           const p = R.part(id);
           const c = R.check(s, id);
-          const have = (ok, label, val) => '<li class="' + (ok ? 'ok' : 'miss') + '">' + I(ok ? 'check' : 'x') + '<span>' + label + '</span><b>' + val + '</b></li>';
+          // eksik satırın altında nereden bulunacağı yazar
+          const have = (ok, label, val, fromKey) => '<li class="' + (ok ? 'ok' : 'miss') + '">' + I(ok ? 'check' : 'x') + '<span>' + label + (ok || !fromKey ? '' : '<small class="rk-from">' + t(fromKey) + '</small>') + '</span><b>' + val + '</b></li>';
           const rows =
-            Object.entries(p.needs).map(([item, n]) => have(S.Workshop.count(s, item) >= n, t('item.' + item + '.name'), S.Workshop.count(s, item) + ' / ' + n)).join('') +
-            have(S.Workshop.hasTool(s, p.tool), t('rocket.tool'), t('tool.' + p.tool + '.name')) +
+            Object.entries(p.needs).map(([item, n]) => have(S.Workshop.count(s, item) >= n, t('item.' + item + '.name'), S.Workshop.count(s, item) + ' / ' + n, 'item.' + item + '.from')).join('') +
+            have(S.Workshop.hasTool(s, p.tool), t('rocket.tool'), t('tool.' + p.tool + '.name'), 'tool.' + p.tool + '.from') +
             have(s.res.energyKwh >= p.energyKwh, t('rocket.energy'), p.energyKwh + ' kWh');
           return (
             '<div class="rk-part"><b>' + t('rocket.part.' + id) + '</b><small>' + t('rocket.src.' + R.state(s).damage[id]) + '</small>' +

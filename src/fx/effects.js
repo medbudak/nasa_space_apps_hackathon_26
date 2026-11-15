@@ -366,6 +366,8 @@
       const sh = Math.max(6, 20 - (body.y - floorH) * 0.2);
       ctx.fillRect(ax - sh / 2, GY + 1 - floorH, sh, 2);
       ctx.globalAlpha = 1;
+      // Seçili envanter eşyası elde (hotbar)
+      if (S.Hotbar && !landingAstro) drawHeld(ctx, S.Hotbar.selected(s), ax + s.player.facing * Math.round(img.width * 0.28), ay - Math.round(img.height * 0.42), s.player.facing);
       // Elbise tarayıcısı: gerçek bir gömülü noktanın yanında "!" (sahte tümsek tepki vermez)
       if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, ay - img.height, t);
     }
@@ -992,6 +994,31 @@
       if (i < shown) ctx.fillRect(Math.round(d.x), Math.round(top + d.y * H + Math.sin((d.x + d.y * 1000) * 0.02) * 6), d.len, 1);
     }
     ctx.restore();
+  }
+
+  /** Elde tutulan eşya: aletler küçük piksel çizimi, diğer eşyalar eldeki küçük bir paket */
+  function drawHeld(ctx, it, hx, hy, dir) {
+    if (!it) return;
+    const px = (dx, dy, w, h, c) => {
+      ctx.fillStyle = c;
+      ctx.fillRect(hx + (dir < 0 ? -dx - w : dx), hy + dy, w, h);
+    };
+    if (it.id === 'pickaxe') {
+      px(0, -10, 2, 12, '#8a5a32'); // sap
+      px(-4, -12, 10, 2, '#b8bec6'); // kafa
+      px(-5, -11, 2, 2, '#8d939b');
+      px(5, -11, 2, 2, '#8d939b');
+    } else if (it.id === 'drill') {
+      px(-1, -2, 4, 6, '#2a2d33'); // kabza
+      px(-2, -6, 9, 4, '#e8742e'); // gövde
+      px(7, -5, 5, 2, '#b8bec6'); // uç
+    } else if (it.id === 'scanner') {
+      px(-1, -7, 6, 8, '#2a2d33');
+      px(0, -6, 4, 3, Math.floor(performance.now() / 400) % 2 ? '#3fe0e6' : '#1d6f73'); // ekran
+    } else {
+      px(-1, -5, 7, 6, '#c9ccd2'); // paket
+      px(-1, -5, 7, 1, '#ff7a1a');
+    }
   }
 
   FX.drawCrew = function (c, img, x, footY, h, dir, phase, moving) {

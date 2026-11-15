@@ -301,6 +301,46 @@
     Game.afterAction();
   };
 
+  /**
+   * F: seçili eşyayı kullan. Aletler yakındaki işi yapar (kazı, regolit, tarama); roket parçaları MAV'ın yanında
+   * tamir ekranını açar; diğer malzemeler mekikte atölyeyi açar. İşe yaramadığı yerde nerede kullanılacağını söyler.
+   */
+  Game.useItem = function () {
+    const s = S.getState();
+    const it = S.Hotbar.selected(s);
+    const say = (key, vars, tone = 'info') => S.UI.toast(S.UI.icon('alert') + t(key, vars), tone, 4500);
+    if (!it) return say('use.empty');
+    const prompt = !s.player.inside && S.HUD.prompt;
+    const name = t(S.Hotbar.nameKey(it));
+    if (it.id === 'pickaxe' || it.id === 'drill') {
+      if (prompt && prompt.kind === 'dig') return Game.dig(prompt.id);
+      if (S.Station.impacted(s) && !s.player.inside) return Game.digRegolith();
+      return say('use.dig_where', { item: name });
+    }
+    if (it.id === 'scanner') {
+      const ping = S.Explore.scannerPing(s);
+      return ping ? say('use.scan_hit', { m: Math.round(ping.d) }, 'ok') : say('use.scan_none');
+    }
+    const forRocket = S.Rocket.parts().some((p) => p.needs[it.id]);
+    if (forRocket && prompt && prompt.action === 'mav') return S.HabitatPanel.openMav();
+    const recipes = S.Workshop.usedIn(it.id).filter((id) => S.Workshop.status(s, id).state !== 'hidden');
+    if (s.player.inside && recipes.length) {
+      S.WorkshopPanel.sel = recipes[0];
+      return Game.openPanel('workshop');
+    }
+    if (forRocket) return say('use.at_mav', { item: name });
+    if (recipes.length) return say('use.at_workshop', { item: name, list: recipes.map((id) => t('ws.' + id + '.name')).join(', ') });
+    return say('use.passive', { item: name });
+  };
+
+  /** D-015: roket hasar alınca ne yapılacağını adım adım söyle */
+  function explainRocketDamage(p) {
+    const s = S.getState();
+    const part = t('rocket.part.' + p.part);
+    const steps = S.Sim.deployed(s, 'mav') ? t('rocket.help_built') : t('rocket.help_build');
+    S.UI.toast(S.UI.icon('rocket') + t('rocket.help', { part }) + ' ' + steps, 'warn', 9000);
+  }
+
   /** Kargo aracı parçasını al (batı buzulu) */
   Game.pickPart = function (partId) {
     const s = S.getState();
@@ -619,6 +659,7 @@
     else if (e.code === 'KeyJ') Game.openPanel('log');
     else if (e.code === 'KeyI') Game.openPanel('inventory');
     else if (/^Digit[1-9]$/.test(e.code)) S.Hotbar.select(Number(e.code.slice(5)) - 1);
+    else if (e.code === 'KeyF') Game.useItem();
     else if ((e.code === 'KeyS' || e.code === 'ArrowDown') && S.Station.impacted(S.getState())) {
       e.preventDefault();
       Game.digRegolith();
@@ -675,6 +716,7 @@
     S.FX.init();
     S.bus.on('sol:advance', (sum) => Game.pendingSol.push(sum));
     S.bus.on('station:impact', () => (Game.pendingImpact = true));
+    S.bus.on('rocket:damaged', (p) => setTimeout(() => explainRocketDamage(p), 1500));
     S.bus.on('station:pickup', (p) => S.bus.emit('fx:float', { px: S.Surface.body.px, text: t('station.pick', { item: t('item.' + p.item + '.name') }), tone: 'ok' }));
     // İlk zıplama (K3 Medine): aynı güçle Mars'ta ne kadar yükseğe ve ne kadar süre (Dünya'yla karşılaştırma)
     S.bus.on('surface:jump', () => {

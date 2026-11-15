@@ -221,7 +221,7 @@
     // Kurulmayı bekleyen üs sistemleri (MAV, ISRU, sera)
     const packed = ['mav', 'isru', 'greenhouse'].find((id) => !S.Sim.deployed(s, id) && S.Sim.deployAvailable(s, id));
     if (packed) opts.push(goal('opt_deploy', { what: S.t('deploy.' + packed + '.name') }));
-    if (S.Rocket && S.Rocket.isDamaged(s) && S.Sim.deployed(s, 'mav')) opts.push(goal('mav_repair', { n: S.Rocket.damaged(s).length }));
+    if (S.Rocket && S.Rocket.isDamaged(s)) opts.push(S.Sim.deployed(s, 'mav') ? goal('mav_repair', { n: S.Rocket.damaged(s).length }) : goal('opt_mav_first'));
     if (s.res.panelDust >= 0.3 && S.Sim.deployed(s, 'solar')) opts.push(goal('opt_clean', { pct: Math.round(s.res.panelDust * 100) }));
     if (gh.installed && !gh.frozen && gh.tendedSol !== s.sol && s.res.waterL >= ghCfg.tendWaterL) opts.push(goal('opt_greenhouse'));
     if (S.Sim.has(s, 'rimfax') && s.iceDugSol !== s.sol && s.res.waterL < 30) opts.push(goal('opt_ice', { l: Math.round(s.res.waterL) }));

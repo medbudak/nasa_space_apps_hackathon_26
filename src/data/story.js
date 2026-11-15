@@ -1982,7 +1982,20 @@ window.SOL14.STORY = {
   "log.mav.res_damaged": "Roket hasarlıyken kalktı: güvenli dönüş yok.",
   "end.liftoff_damaged_sub": "Yakıt %{fuel}, ama tamir edilmemiş bir parça var. Kalkış sarsıntılı; yörüngeye ulaşmak belirsiz.",
   "goal.mav_repair": "MAV'ı tamir et ({n} hasarlı parça)",
-  "goal.hint.mav_repair": "MAV'ın yanında E ile tamir ekranını aç: her parça malzeme, alet, enerji ve EVA süresi ister. Hasarlı roket güvenli kalkamaz."
+  "goal.hint.mav_repair": "MAV'ın yanında E ile tamir ekranını aç: her parça malzeme, alet, enerji ve EVA süresi ister. Hasarlı roket güvenli kalkamaz.",
+  "use.hint": "kullan",
+  "use.empty": "Bu slot boş. 1–9 ile eşyası olan bir slot seç.",
+  "use.dig_where": "{item}: bir kazı noktasının yanında kullan (göktaşından sonra açık zeminde regolit de kazar).",
+  "use.scan_hit": "Tarayıcı: yakında gömülü bir şey var (~{m} m).",
+  "use.scan_none": "Tarayıcı: yakında gömülü bir şey yok. Yürümeye devam et.",
+  "use.at_mav": "{item}: roket tamirinde kullanılır. MAV'ın yanına git ve F ya da E'ye bas.",
+  "use.at_workshop": "{item}: mekikteki atölyede kullanılır ({list}).",
+  "use.passive": "{item}: taşıdığın sürece işe yarar, ayrıca kullanılmaz.",
+  "rocket.help": "MAV hasar aldı: {part}.",
+  "rocket.help_build": "Önce mekikteki atölyede \"MAV yakıt hattı\"nı kur; sonra dışarıda MAV'ın yanında E'ye bas.",
+  "rocket.help_built": "Dışarıda MAV'ın yanına git ve E'ye bas: tamir ekranı neyin eksik olduğunu gösterir.",
+  "rocket.how": "Tamir: 1) eksik malzemeyi ve aleti topla (satırların altında nereden bulunacağı yazar) 2) MAV'ın yanında Tamir et 3) mini oyunu bitir.",
+  "goal.opt_mav_first": "Roket hasarlı: önce atölyede MAV yakıt hattını kur"
  },
  "en": {
   "ui.back": "Back",
@@ -3965,6 +3978,19 @@ window.SOL14.STORY = {
   "log.mav.res_damaged": "Launched with the rocket damaged: no safe return.",
   "end.liftoff_damaged_sub": "Fuel {fuel}%, but one part was never repaired. The ascent shakes; reaching orbit is uncertain.",
   "goal.mav_repair": "Repair the MAV ({n} damaged parts)",
-  "goal.hint.mav_repair": "Press E next to the MAV to open the repair screen: each part needs materials, a tool, energy and EVA time. A damaged rocket can't launch safely."
+  "goal.hint.mav_repair": "Press E next to the MAV to open the repair screen: each part needs materials, a tool, energy and EVA time. A damaged rocket can't launch safely.",
+  "use.hint": "use",
+  "use.empty": "This slot is empty. Pick a slot with an item using 1–9.",
+  "use.dig_where": "{item}: use it next to a dig site (after the meteorite it also digs regolith on open ground).",
+  "use.scan_hit": "Scanner: something is buried nearby (~{m} m).",
+  "use.scan_none": "Scanner: nothing buried nearby. Keep walking.",
+  "use.at_mav": "{item}: used for the rocket repair. Go to the MAV and press F or E.",
+  "use.at_workshop": "{item}: used in the lander's workshop ({list}).",
+  "use.passive": "{item}: works while you carry it; no separate use.",
+  "rocket.help": "The MAV is damaged: {part}.",
+  "rocket.help_build": "First build the \"MAV fuel line\" in the lander's workshop; then press E next to the MAV outside.",
+  "rocket.help_built": "Go to the MAV outside and press E: the repair screen shows what is missing.",
+  "rocket.how": "Repair: 1) collect the missing materials and tool (each row says where to find them) 2) press Repair at the MAV 3) finish the minigame.",
+  "goal.opt_mav_first": "Rocket damaged: first build the MAV fuel line in the workshop"
  }
 };

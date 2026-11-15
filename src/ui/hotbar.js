@@ -1,7 +1,8 @@
 /**
  * SOL 14: RED HORIZON — Alt envanter çubuğu (hotbar)
  * Yüzeyde ekranın altında 9 kare slot: önce aletler, sonra malzemeler, stok ve buluntular; ikon + adet.
- * 1–9 slot seçer (seçilenin adı çubuğun üstünde görünür), I tam envanteri açar. Veri S.Workshop.inventoryList.
+ * 1–9 slot seçer: seçilen eşya astronotun elinde görünür (effects.js) ve F ile kullanılır (main.js Game.useItem).
+ * I tam envanteri açar. Veri S.Workshop.inventoryList.
  */
 (function (S) {
   'use strict';
@@ -19,6 +20,8 @@
   HB.icon = (it) => ICON[it.id] || (it.kind === 'find' ? 'camera' : 'doc');
   HB.nameKey = (it) => (it.kind === 'tool' ? 'tool.' : 'item.') + it.id + '.name';
 
+  HB.selected = (s) => S.Workshop.inventoryList(s).slice(0, SLOTS)[HB.sel] || null;
+
   HB.select = function (i) {
     HB.sel = i;
     HB.lastHtml = '';
@@ -29,7 +32,7 @@
     if (!host) return;
     const list = S.Workshop.inventoryList(s).slice(0, SLOTS);
     const picked = list[HB.sel];
-    let html = '<div class="hb-name">' + (picked ? S.t(HB.nameKey(picked)) : '') + '</div><div class="hb-row">';
+    let html = '<div class="hb-name">' + (picked ? S.t(HB.nameKey(picked)) + ' <kbd>F</kbd> ' + S.t('use.hint') : '') + '</div><div class="hb-row">';
     for (let i = 0; i < SLOTS; i++) {
       const it = list[i];
       html +=

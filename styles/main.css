@@ -1269,3 +1269,5 @@ body[data-scene='world'] .screen-layer { display: none; }
 .hb-slot.sel { z-index: 1; box-shadow: 0 0 0 0.16em #f2ebe2, 0 0 0 0.3em #1b1815, inset 0.14em 0.14em 0 #3a3530, inset -0.14em -0.14em 0 #847a6f; }
 .hb-n { position: absolute; right: 0.18em; bottom: 0.02em; font-size: 0.85em; color: #fff; text-shadow: 0.1em 0.1em 0 #3a3530; }
 .hb-key { position: absolute; left: 0.22em; top: 0.06em; font-size: 0.55em; font-style: normal; color: rgba(242,235,226,0.45); }
+.rk-from { display: block; font-size: 0.8em; color: var(--muted); }
+.hb-name kbd { font-size: 0.85em; }
