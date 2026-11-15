@@ -755,9 +755,10 @@
     if (['ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
     if (e.repeat) return;
     if (e.code === 'KeyE') Game.interact();
-    else if (e.code === 'KeyL') Game.openPanel('downlink');
-    else if (e.code === 'KeyP') Game.openPanel('power');
-    else if (e.code === 'KeyJ') Game.openPanel('log');
+    // Veri / sistemler / günlük yalnızca mekiğin içinden (istasyonlar); dışarıda kısayol yok
+    else if (e.code === 'KeyL' && S.getState().player.inside) Game.openPanel('downlink');
+    else if (e.code === 'KeyP' && S.getState().player.inside) Game.openPanel('power');
+    else if (e.code === 'KeyJ' && S.getState().player.inside) Game.openPanel('log');
     else if (e.code === 'KeyI') S.getState().player.inside ? Game.openPanel('inventory') : S.Hotbar.toggle();
     else if (/^Digit[1-9]$/.test(e.code)) S.Hotbar.select(Number(e.code.slice(5)) - 1);
     else if (e.code === 'KeyF') Game.useItem();

@@ -64,9 +64,7 @@
           '<span class="hz-t-me" data-ref="mmme"></span></div></div></footer>'
         : '') +
       '<nav class="hz-nav">' +
-      navBtn('downlink', 'L', t('hud.q_data')) + '<i class="hz-sep"></i>' +
-      navBtn('log', 'J', t('hud.q_log')) + '<i class="hz-sep"></i>' +
-      navBtn('power', 'P', t('hud.q_systems')) + '<i class="hz-sep"></i>' +
+      // Veri, günlük ve sistemler mekiğin içindeki istasyonlardan açılır (İletişim, Güç paneli, Karar Günlüğü)
       navBtn('pause', 'Esc', t('hud.q_menu')) +
       '</nav>' +
       '<div class="touch-controls">' +

@@ -585,6 +585,12 @@ window.SOL14.DATA = {
    "growth": {
     "defaultPlant": "lettuce",
     "harvestMinutes": 30,
+    "traysPerLevel": [
+     3,
+     4,
+     6
+    ],
+    "traysNote": "Game values: growing trays by greenhouse level; each tray is watered on its own (tendWaterL per tray), so more plants need more water.",
     "simplified": true,
     "simplifiedNote": "Growth is compressed for the 14-sol mission: every plant shows three stages (germination, sprout, mature) and needs a number of tended sols to mature that keeps the real order (radish about 27 days < lettuce about 33 days < zinnia about 60 days to flower) as 2 < 3 < 4 tended sols. A skipped sol pauses growth; freezing kills the plant. Harvest amounts, 30 game minutes and morale gains are game values.",
     "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/",
@@ -1233,11 +1239,67 @@ window.SOL14.DATA = {
      "hematite": 1
     },
     "minutes": 60
+   },
+   {
+    "id": "solar_l2",
+    "upgrade": "solar",
+    "level": 2,
+    "requiresBuilt": "solar",
+    "needs": {
+     "cable_spool": 1,
+     "cargo_crate": 1
+    },
+    "minerals": {
+     "hematite": 1
+    },
+    "minutes": 45
+   },
+   {
+    "id": "solar_l3",
+    "upgrade": "solar",
+    "level": 3,
+    "requiresBuilt": "solar",
+    "needs": {
+     "cable_spool": 1,
+     "cargo_crate": 1
+    },
+    "minerals": {
+     "hematite": 1
+    },
+    "minutes": 60
+   },
+   {
+    "id": "isru_l2",
+    "upgrade": "isru",
+    "level": 2,
+    "requiresBuilt": "isru",
+    "needs": {
+     "cable_spool": 1,
+     "regolith_bag": 2
+    },
+    "minerals": {
+     "olivine": 1
+    },
+    "minutes": 40
+   },
+   {
+    "id": "isru_l3",
+    "upgrade": "isru",
+    "level": 3,
+    "requiresBuilt": "isru",
+    "needs": {
+     "cable_spool": 1,
+     "regolith_bag": 3
+    },
+    "minerals": {
+     "olivine": 1
+    },
+    "minutes": 60
    }
   ],
   "upgrades": {
    "simplified": true,
-   "note": "Level 1-2-3 upgrades (Kişi 6). Every level is a trade-off, never only 'better'. All numbers are game values. Mineral costs use Kişi 5's minerals (explore_config.minerals) by their in-game use: basalt = build, hematite = iron, olivine = shield, meteorite = metal. The map holds fewer minerals than all six upgrades need (basalt 3 needed, 2 found), so the player has to choose what to upgrade.",
+   "note": "Level 1-2-3 upgrades (Kişi 6). Every level is a trade-off, never only 'better'. All numbers are game values. Mineral costs use Kişi 5's minerals (explore_config.minerals) by their in-game use: basalt = build, hematite = iron, olivine = shield, meteorite = metal. The map holds fewer minerals than all six upgrades need (hematite: the upgrades need more than the map holds, and the MAV hull patch needs one too), so the player has to choose what to upgrade.",
    "src": "https://www.spaceappschallenge.org/",
    "greenhouse": {
     "yieldBonusPct": [
@@ -1277,6 +1339,32 @@ window.SOL14.DATA = {
      6
     ],
     "note": "Better seals and a colder storage line: each Sabatier batch keeps more propellant; the parts take minerals and a one-time charge from the habitat battery."
+   },
+   "solar": {
+    "panelFactor": [
+     1,
+     1.2,
+     1.4
+    ],
+    "evaMinutes": [
+     0,
+     45,
+     60
+    ],
+    "note": "More panel rows: more power at the same sunlight; setting them out is outside work that uses suit O2 and battery."
+   },
+   "isru": {
+    "o2Factor": [
+     1,
+     1.25,
+     1.5
+    ],
+    "extraPowerW": [
+     0,
+     60,
+     120
+    ],
+    "note": "A second and third electrolysis stack: more O2 per hour, but MOXIE draws more power, also at night."
    }
   }
  },
@@ -2714,7 +2802,7 @@ window.SOL14.DATA = {
      "atM": 390,
      "hits": 3,
      "minutesPerHit": 4,
-     "amount": 2
+     "amount": 3
     },
     {
      "id": "min_meteorite_1",
@@ -2723,7 +2811,7 @@ window.SOL14.DATA = {
      "atM": 1110,
      "hits": 4,
      "minutesPerHit": 4,
-     "amount": 1
+     "amount": 2
     },
     {
      "id": "min_gypsum_1",
@@ -2758,6 +2846,16 @@ window.SOL14.DATA = {
      "mineral": "basalt",
      "zone": "cave",
      "atM": 283,
+     "hits": 3,
+     "minutesPerHit": 5,
+     "amount": 3,
+     "tool": "drill"
+    },
+    {
+     "id": "min_olivine_2",
+     "mineral": "olivine",
+     "zone": "cave",
+     "atM": 430,
      "hits": 3,
      "minutesPerHit": 5,
      "amount": 2,

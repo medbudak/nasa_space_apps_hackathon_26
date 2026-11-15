@@ -123,12 +123,13 @@
       { "id": "basalt", "color": "#4a4a50", "use": "build", "src": "https://ntrs.nasa.gov/citations/20080026098" }
     ],
     "sites": [
-      { "id": "min_hematite_1", "mineral": "hematite", "zone": "surface", "atM": 390, "hits": 3, "minutesPerHit": 4, "amount": 2 },
-      { "id": "min_meteorite_1", "mineral": "meteorite", "zone": "surface", "atM": 1110, "hits": 4, "minutesPerHit": 4, "amount": 1 },
+      { "id": "min_hematite_1", "mineral": "hematite", "zone": "surface", "atM": 390, "hits": 3, "minutesPerHit": 4, "amount": 3 },
+      { "id": "min_meteorite_1", "mineral": "meteorite", "zone": "surface", "atM": 1110, "hits": 4, "minutesPerHit": 4, "amount": 2 },
       { "id": "min_gypsum_1", "mineral": "gypsum", "zone": "surface", "atM": 2250, "hits": 3, "minutesPerHit": 4, "amount": 1 },
       { "id": "min_meteorite_2", "mineral": "meteorite", "zone": "surface", "atM": -860, "hits": 4, "minutesPerHit": 4, "amount": 1 },
       { "id": "min_olivine_1", "mineral": "olivine", "zone": "cave", "atM": 133, "hits": 3, "minutesPerHit": 5, "amount": 2, "tool": "drill" },
-      { "id": "min_basalt_1", "mineral": "basalt", "zone": "cave", "atM": 283, "hits": 3, "minutesPerHit": 5, "amount": 2, "tool": "drill" }
+      { "id": "min_basalt_1", "mineral": "basalt", "zone": "cave", "atM": 283, "hits": 3, "minutesPerHit": 5, "amount": 3, "tool": "drill" },
+      { "id": "min_olivine_2", "mineral": "olivine", "zone": "cave", "atM": 430, "hits": 3, "minutesPerHit": 5, "amount": 2, "tool": "drill" }
     ]
   }
 }

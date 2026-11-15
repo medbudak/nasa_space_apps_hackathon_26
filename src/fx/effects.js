@@ -341,7 +341,20 @@
       if (!Surf.structureBuilt(s, st)) continue;
       // Üs sistemi mekikteki atölyede üretilip kurulana kadar dışarıda yok
       if (!S.Sim.deployed(s, st.id)) continue;
-      drawOnGround(ctx, key, st.px, GY);
+      const stImg = drawOnGround(ctx, key, st.px, GY);
+      // Seviye 1-2-3 göstergesi: yapının üstünde 3 küçük kutu, seviye kadarı dolu (atölyede yükseltilir)
+      const upg = { solar: 'solar', isru: 'isru', greenhouse: 'greenhouse', mav: 'rocket' }[st.id];
+      if (stImg && upg) {
+        const lv = S.Sim.upgradeLevel(s, upg);
+        const cx = Math.round(FX.worldToScreen(st.px) + stImg.width / 2);
+        const top = Math.round(GY - stImg.height - 6);
+        ctx.fillStyle = 'rgba(10,12,16,0.75)';
+        ctx.fillRect(cx - 9, top - 1, 19, 6);
+        for (let i = 0; i < 3; i++) {
+          ctx.fillStyle = i < lv ? '#3fe0e6' : '#3a4049';
+          ctx.fillRect(cx - 8 + i * 6, top, 5, 4);
+        }
+      }
       if (st.id === 'greenhouse' && !s.greenhouse.frozen && light.dark > 0.3) {
         ctx.globalAlpha = 0.25 * light.dark;
         ctx.fillStyle = '#ff7ad9';
@@ -1221,11 +1234,13 @@
     if (act.kind === 'sleep') {
       // ışıklar kısılır; uyku tulumu yatağın önünde, üstünde yükselen "z" işaretleri (kodla çizilir)
       const fade = Math.min(1, act.t / 0.6, (a.secs - act.t) / 0.6);
-      ctx.fillStyle = 'rgba(4, 6, 14,' + (0.7 * fade).toFixed(3) + ')';
+      ctx.fillStyle = 'rgba(4, 6, 14,' + (0.3 * fade).toFixed(3) + ')'; // ışıklar hafifçe kısılır (ekran kararmaz)
       ctx.fillRect(0, 0, W, H);
     }
     ctx.save();
     ctx.imageSmoothingEnabled = false;
+    // uyku tulumu yavaşça belirir / kaybolur (aniden ortaya çıkmaz)
+    if (act.kind === 'sleep') ctx.globalAlpha = Math.min(1, act.t / 0.5, (a.secs - act.t) / 0.5);
     if (flip) {
       ctx.translate(x + Math.round(dw / 2), footY - dh);
       ctx.scale(-1, 1);
@@ -1295,7 +1310,8 @@
     if (!FX.drawActivity(ctx, s, dt, t, ox, OFF_Y + I.floorY + 1) && !drawIndoor(ctx, s, t, ox + body.ix, OFF_Y + I.floorY + 1, body.moving)) {
       FX.drawCrew(ctx, S.Sprites.get('astronaut_indoor'), ox + body.ix, OFF_Y + I.floorY + 1, 66, s.player.facing, body.stepPh, body.moving);
     }
-    if (S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, ox + body.ix, OFF_Y + I.floorY + 1, t, body.moving);
+    // elde şişe: yemek / su / uyku animasyonu sırasında çizilmez (tulumun üstünde görünmesin)
+    if (!FX.activity && S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, ox + body.ix, OFF_Y + I.floorY + 1, t, body.moving);
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);
   };

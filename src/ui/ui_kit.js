@@ -186,15 +186,46 @@
   UI.isOpen = (id) => stack.some((e) => e.id === id);
 
   /* ---------------- Bildirimler ---------------- */
-  UI.toast = function (text, tone = 'info', ms = 2800) {
+  /**
+   * Bildirimler sıraya girer: aynı anda en fazla 2 görünür, aynı metin tekrar gösterilmez,
+   * acil olanlar (danger / warn) sıranın önüne geçer, sıra uzarsa eski bilgi bildirimleri düşer.
+   */
+  const TQ = { queue: [], shown: 0, recent: new Map() };
+  const TOAST_MAX = 2;
+  function toastNext() {
     const host = document.getElementById('toast-layer');
     if (!host) return;
-    const el = document.createElement('div');
-    el.className = 'toast ' + tone;
-    el.innerHTML = text;
-    host.appendChild(el);
-    setTimeout(() => el.classList.add('out'), ms);
-    setTimeout(() => el.remove(), ms + 400);
+    while (TQ.shown < TOAST_MAX && TQ.queue.length) {
+      const it = TQ.queue.shift();
+      const el = document.createElement('div');
+      el.className = 'toast ' + it.tone;
+      el.innerHTML = it.text;
+      host.appendChild(el);
+      TQ.shown++;
+      setTimeout(() => el.classList.add('out'), it.ms);
+      setTimeout(() => {
+        el.remove();
+        TQ.shown = Math.max(0, TQ.shown - 1);
+        toastNext();
+      }, it.ms + 400);
+    }
+  }
+  UI.toast = function (text, tone = 'info', ms = 2800) {
+    const now = Date.now();
+    const last = TQ.recent.get(text);
+    if (last && now - last < 8000) return; // aynı bildirim kısa sürede tekrar etmez
+    TQ.recent.set(text, now);
+    const urgent = tone === 'danger' || tone === 'warn';
+    const it = { text, tone, ms };
+    if (urgent) TQ.queue.unshift(it);
+    else TQ.queue.push(it);
+    // sıra uzarsa en eski bilgi bildirimlerini at (acil olanlar kalır)
+    while (TQ.queue.length > 3) {
+      const i = TQ.queue.findIndex((x) => x.tone !== 'danger' && x.tone !== 'warn');
+      if (i < 0) break;
+      TQ.queue.splice(i, 1);
+    }
+    toastNext();
   };
 
   /* ---------------- Ekran (tam sayfa DOM sahneleri) ---------------- */

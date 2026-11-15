@@ -1323,38 +1323,38 @@
     drawBottle(ctx, a.x + f * ((kneel ? 14 : 7) + swing), a.y - 22, b === 'full', 0);
   };
 
-  /** Interior hook: the bottle rack on the wall by the airlock (design coords, offset ox/oy). */
+  /**
+   * Interior hook: the bottle rack, a slim metal holder on the wall left of the airlock, under the keypad,
+   * at hand height (design coords, offset ox/oy). Matches the lander art: dark frame, steel rails, bolts.
+   * The station name label and the panel button say what E does, so no extra text is drawn here.
+   */
   West.drawInteriorRack = function (ctx, s, ox, oy, t, nearId) {
     if (!shelter()) return;
-    const rack = S.Surface.INTERIOR.stations.find((st) => st.id === 'bottles');
-    const x = ox + rack.x - 12;
-    const y = oy + 66;
-    ctx.fillStyle = '#2b2420';
-    ctx.fillRect(x, y, 24, 42);
-    ctx.fillStyle = '#4a3d35';
-    ctx.fillRect(x + 1, y + 1, 22, 40);
-    ctx.fillStyle = '#7a6a5c';
-    ctx.fillRect(x, y + 19, 24, 2);
-    ctx.fillRect(x, y + 39, 24, 2);
-    ctx.fillStyle = '#3fa4e6';
-    ctx.fillRect(x + 4, y + 3, 16, 2); // blue water stripe
+    const I = S.Surface.INTERIOR;
+    const x = ox + 554; // wall between the ladder and the door frame
+    const y = oy + I.floorY - 46;
+    const R = (dx, dy, w, h, c) => {
+      ctx.fillStyle = c;
+      ctx.fillRect(x + dx, y + dy, w, h);
+    };
+    R(0, 0, 18, 30, '#1c1f25'); // back plate
+    R(1, 1, 16, 28, '#3a4049');
+    R(1, 1, 16, 1, '#5d6570');
+    R(0, 10, 18, 2, '#7d858f'); // upper rail
+    R(0, 24, 18, 2, '#7d858f'); // lower rail
+    R(0, 10, 18, 1, '#aab2bb');
+    R(0, 24, 18, 1, '#aab2bb');
+    for (const [bx, by] of [[1, 2], [15, 2], [1, 27], [15, 27]]) R(bx, by, 2, 2, '#9aa3ad'); // bolts
+    R(7, 3, 4, 2, '#3fa4e6'); // water mark
+    // bottles stand in the lower bay; one slot empties while a bottle is out
     const left = S.Sim.bottle(s) ? 2 : 3;
-    const slots = [[6, 18], [17, 18], [12, 38]];
-    for (let i = 0; i < left; i++) drawBottle(ctx, x + slots[i][0], y + slots[i][1], false, 0);
+    for (let i = 0; i < left; i++) drawBottle(ctx, x + 4 + i * 5, y + 24, false, 0);
     if (nearId === 'bottles') {
-      ctx.save();
-      ctx.font = '8px \"VT323\", monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const txt = '[E] ' + S.t(S.Sim.bottle(s) ? 'bottle.rack_put' : 'bottle.rack_take');
-      const tw = ctx.measureText(txt).width + 8;
-      ctx.fillStyle = 'rgba(8,10,14,0.8)';
-      // under the rack, above the astronaut's helmet (the HUD shortcut bar covers the wall above it)
-      const ly = oy + 116;
-      ctx.fillRect(Math.round(x + 12 - tw / 2), ly - 6, Math.round(tw), 12);
-      ctx.fillStyle = '#3fe0e6';
-      ctx.fillText(txt, x + 12, ly);
-      ctx.restore();
+      ctx.globalAlpha = 0.35 + 0.25 * Math.sin(t * 5);
+      ctx.strokeStyle = '#3fe0e6';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x - 1.5, y - 1.5, 21, 33);
+      ctx.globalAlpha = 1;
     }
   };
 

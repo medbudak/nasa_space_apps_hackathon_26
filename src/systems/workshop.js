@@ -129,6 +129,18 @@
       rows.push({ key: 'heat_loss_w', before: loss(u.uaFactor[from]), after: loss(u.uaFactor[to]) });
       const c = W.upgradeCost(s, r);
       rows.push({ key: 'suit_o2', before: Math.round(s.suit.o2), after: Math.round(s.suit.o2 - c.suitO2Pct) });
+    } else if (r.upgrade === 'solar') {
+      // daha çok panel sırası: aynı güneşte daha çok güç; bedeli dışarıda kurulum (elbise O2)
+      const frac = (s.base && s.base.solarFrac) || 1;
+      rows.push({ key: 'noon_w', before: noonSolarW(s, frac * u.panelFactor[from]), after: noonSolarW(s, frac * u.panelFactor[to]) });
+      const c = W.upgradeCost(s, r);
+      rows.push({ key: 'suit_o2', before: Math.round(s.suit.o2), after: Math.round(s.suit.o2 - c.suitO2Pct) });
+    } else if (r.upgrade === 'isru') {
+      // ek elektroliz yığını: daha çok O2, ama MOXIE daha çok güç çeker
+      const c = D().constants;
+      const mox = D().instruments.find((x) => x.id === 'moxie').powerW;
+      rows.push({ key: 'o2_day', before: Math.round(c.moxie.o2GramsPerHourDay * u.o2Factor[from]), after: Math.round(c.moxie.o2GramsPerHourDay * u.o2Factor[to]) });
+      rows.push({ key: 'moxie_w', before: mox + u.extraPowerW[from], after: mox + u.extraPowerW[to] });
     } else if (r.upgrade === 'rocket') {
       const base = D().constants.sabatier.mavFuelPctPerBatch;
       rows.push({ key: 'fuel_batch', before: base + u.fuelBonusPct[from], after: base + u.fuelBonusPct[to] });

@@ -262,16 +262,31 @@
     const n = S.DATA.habitat.greenhouse.growth.plants[plant].stages.indexOf(stage) + 1;
     return '<img class="gh-img" src="assets/processed/sprites/plants/' + plant + '_' + n + '.png" width="48" height="48" alt="">';
   };
+  HP.ghSel = 0; // seçili saksı
   HP.greenhouseInfo = function (s) {
     const gh = s.greenhouse;
     if (!gh.installed) return '<p class="pv-desc">' + t('gh.not_installed') + '</p>';
     if (gh.frozen) return '<div class="alert danger">' + I('temp') + '<span>' + t('gh.frozen_info', { sol: gh.frozenSol, cause: t('gh.cause_' + gh.cause) }) + '</span></div>';
-    const plant = S.Sim.ghPlant(s);
-    const stages = S.Sim.ghPlantCfg(s).stages;
-    const st = S.Sim.ghStage(s);
-    // Tohum evresinde ekilecek bitki seçilir (marul / turp / zinya); büyümeye başlayınca değişmez
-    const picker = S.Sim.ghCanChoose(s)
-      ? '<div class="gh-plants" role="radiogroup">' +
+    const Sim = S.Sim;
+    const n = Sim.ghTrayCount(s);
+    if (HP.ghSel >= n) HP.ghSel = 0;
+    const sel = HP.ghSel;
+    // Saksılar: her biri kendi bitkisi ve evresiyle; boş saksıya bitki ekilir (su yettiği sürece hepsi büyür)
+    const trays = [...Array(n).keys()]
+      .map((i) => {
+        const plant = Sim.ghPlant(s, i);
+        const on = i === sel ? ' sel' : '';
+        if (!plant) return '<button type="button" class="gh-tray empty' + on + '" data-tray="' + i + '"><span class="gh-plus">+</span><small>' + t('gh.tray_empty') + '</small></button>';
+        const tr = Sim.ghTray(s, i);
+        const st = Sim.ghMature(s, i) ? ['ok', 'gh.tray_ripe'] : tr.tendedSol === s.sol ? ['ok', 'gh.tray_tended'] : ['warn', 'gh.tray_needs'];
+        return '<button type="button" class="gh-tray' + on + '" data-tray="' + i + '">' + art(plant, Sim.ghStageKey(s, i)) +
+          '<b>' + t('plant.' + plant) + '</b><small class="' + st[0] + '">' + t(st[1]) + '</small></button>';
+      })
+      .join('');
+    const plant = Sim.ghPlant(s, sel);
+    // Seçili saksı boşsa ya da yeni ekildiyse bitki seçilir (marul / turp / zinya); büyümeye başlayınca değişmez
+    const picker = Sim.ghCanChoose(s, sel)
+      ? '<p class="gh-pick-t">' + t('gh.pick_title') + '</p><div class="gh-plants" role="radiogroup">' +
         Object.keys(S.DATA.habitat.greenhouse.growth.plants)
           .map((id) => {
             const last = S.DATA.habitat.greenhouse.growth.plants[id].stages.slice(-1)[0];
@@ -279,19 +294,26 @@
               art(id, last) + '<b>' + t('plant.' + id) + '</b><small>' + t('plant.' + id + '.desc') + '</small></button>';
           })
           .join('') + '</div>'
-      : '<p class="pv-row">' + I('leaf') + '<span>' + t('gh.plant') + '</span><b>' + t('plant.' + plant) + '</b></p>';
-    const strip = stages
-      .map((k, i) => '<span class="gh-step' + (i < st ? ' done' : i === st ? ' now' : '') + '">' + art(plant, k) + '<small>' + t('gh.stage.' + k) + '</small></span>')
-      .join('');
-    let next;
-    if (S.Sim.ghMature(s)) next = '<p class="pv-note ok">' + I('check') + t('gh.ready.' + plant) + '</p>';
-    else if (gh.tendedSol === s.sol) next = '<p class="pv-note ok">' + I('check') + t('gh.tended_today', { sols: S.Sim.ghSolsLeft(s) - 1 }) + '</p>';
-    else next = '<p class="pv-note">' + I('alert') + t('gh.needs_tending', { sols: S.Sim.ghSolsLeft(s) }) + '</p>';
+      : '';
+    let detail = '';
+    if (plant) {
+      const stages = Sim.ghPlantCfg(s, sel).stages;
+      const st = Sim.ghStage(s, sel);
+      const strip = stages
+        .map((k, i) => '<span class="gh-step' + (i < st ? ' done' : i === st ? ' now' : '') + '">' + art(plant, k) + '<small>' + t('gh.stage.' + k) + '</small></span>')
+        .join('');
+      let next;
+      if (Sim.ghMature(s, sel)) next = '<p class="pv-note ok">' + I('check') + t('gh.ready.' + plant) + '</p>';
+      else if (Sim.ghTray(s, sel).tendedSol === s.sol) next = '<p class="pv-note ok">' + I('check') + t('gh.tended_today', { sols: Sim.ghSolsLeft(s, sel) - 1 }) + '</p>';
+      else next = '<p class="pv-note">' + I('alert') + t('gh.needs_tending', { sols: Sim.ghSolsLeft(s, sel) }) + '</p>';
+      detail = '<div class="gh-stages">' + strip + '</div>' + next;
+    }
     return (
+      '<div class="gh-trays">' + trays + '</div>' +
       picker +
-      '<div class="gh-stages">' + strip + '</div>' +
-      next +
-      '<div class="pv-row">' + I('leaf') + '<span>' + t('gh.yield') + '</span><b>%' + gh.yieldPct + '</b></div>' +
+      detail +
+      '<p class="pv-note">' + I('drop') + t('gh.trays_info', { lv: Sim.upgradeLevel(s, 'greenhouse'), n, l: S.DATA.habitat.greenhouse.tendWaterL }) + '</p>' +
+      '<div class="pv-row">' + I('leaf') + '<span>' + t('gh.yield') + '</span><b>%' + Sim.ghYieldPct(s) + '</b></div>' +
       (gh.yieldPct > 100 ? '<p class="pv-note ok">' + I('check') + t('gh.boosted') + '</p>' : '') +
       '<p class="pv-desc gh-sci">' + t('gh.science') + '</p>'
     );
@@ -299,15 +321,23 @@
 
   HP.openGreenhouse = function () {
     const s = S.getState();
-    const ripe = s.greenhouse.installed && !s.greenhouse.frozen && S.Sim.ghMature(s);
+    const ripe = s.greenhouse.installed && !s.greenhouse.frozen && S.Sim.ghPlanted(s).some((i) => S.Sim.ghMature(s, i));
     HP.openActionModal(ripe ? 'harvest_greenhouse' : 'tend_greenhouse', HP.greenhouseInfo(s));
-    // bitki seçimi: seç, paneli yeniden aç (evre şeridi ve hasat bilgisi yeni bitkiye göre)
+    const reopen = () => {
+      S.bus.emit('audio:play', 'click');
+      S.UI.closeModal('action', true);
+      HP.openGreenhouse();
+    };
+    // saksı seç; seçili saksıya bitki ek, paneli yeniden aç
+    document.querySelectorAll('.action-modal [data-tray]').forEach((b) =>
+      b.addEventListener('click', () => {
+        HP.ghSel = Number(b.dataset.tray);
+        reopen();
+      })
+    );
     document.querySelectorAll('.action-modal [data-plant]').forEach((b) =>
       b.addEventListener('click', () => {
-        if (!S.Sim.choosePlant(s, b.dataset.plant)) return;
-        S.bus.emit('audio:play', 'click');
-        S.UI.closeModal('action', true);
-        HP.openGreenhouse();
+        if (S.Sim.choosePlant(s, b.dataset.plant, HP.ghSel)) reopen();
       })
     );
   };

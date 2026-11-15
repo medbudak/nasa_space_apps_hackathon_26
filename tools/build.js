@@ -272,14 +272,14 @@ const ASSETS = [
   { src: 'sprites/astro/astro_sleep.png', mode: 'none', size: { w: 268, h: 129 }, noCrop: true },
   // Kasksız (mekik içi, yolculuk) kareleri: kask silinip yemek GIF'indeki baş takıldı; diz çökme (kazı / tarayıcı);
   // eski anahtarlar (astronaut_idle vb.) için yeni karakterin tek kareleri
-  { src: 'sprites/astro/astro_indoor_idle.png', mode: 'none', size: { w: 272, h: 133 }, noCrop: true },
+  { src: 'sprites/astro/astro_indoor_idle.png', mode: 'none', size: { w: 292, h: 133 }, noCrop: true },
   { src: 'sprites/astro/astro_indoor_walk.png', mode: 'none', size: { w: 320, h: 127 }, noCrop: true },
-  { src: 'sprites/astro/astro_indoor_float.png', mode: 'none', size: { w: 444, h: 124 }, noCrop: true },
+  { src: 'sprites/astro/astro_indoor_float.png', mode: 'none', size: { w: 448, h: 124 }, noCrop: true },
   { src: 'sprites/astro/astro_surface_kneel.png', mode: 'none', size: { w: 62, h: 50 }, noCrop: true },
   { src: 'sprites/astro/astro_legacy_idle.png', mode: 'none', size: { w: 29, h: 57 }, noCrop: true },
   { src: 'sprites/astro/astro_legacy_jump.png', mode: 'none', size: { w: 34, h: 55 }, noCrop: true },
   { src: 'sprites/astro/astro_legacy_action.png', mode: 'none', size: { w: 30, h: 49 }, noCrop: true },
-  { src: 'sprites/astro/astro_legacy_indoor.png', mode: 'none', size: { w: 68, h: 131 }, noCrop: true },
+  { src: 'sprites/astro/astro_legacy_indoor.png', mode: 'none', size: { w: 73, h: 131 }, noCrop: true },
   { src: 'sprites/astronaut_frozen.png', mode: 'flood', size: { h: 58 } },
   { src: 'sprites/astronaut_action.png', mode: 'flood', size: { h: 48 } },
   { src: 'sprites/drone_ingenuity.png', mode: 'flood', size: { h: 34 } },

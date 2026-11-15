@@ -219,7 +219,7 @@
     return (
       '<div class="panel big-panel ws-panel">' +
       '<div class="fr2-head"><span class="fr2-tag">' + I('doc') + t('inv.tag') + '</span><h2>' + t('inv.title') + '</h2>' +
-      (s.player.inside ? '<button class="btn btn-ghost btn-sm" data-ws>' + I('wrench') + t('ws.title') + '</button>' : '') +
+
       '<button class="icon-btn" data-close>' + I('x') + '</button></div>' +
       '<p class="fr2-brief">' + t('inv.intro') + '</p><div class="inv-grid">' + cards + minerals + '</div></div>'
     );

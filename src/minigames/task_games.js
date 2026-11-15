@@ -159,6 +159,101 @@
     const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
     return x - Math.floor(x);
   };
+  /* ---------------- lab look (experiments): metal wall, bench, outlined bevel devices, LCDs, glass ----------------
+   * Chunky, readable shapes with a dark outline and a light top edge (task-screen style), same palette as the
+   * vehicle task games. Drawing only: the rules and the scoring of each game are unchanged. */
+  const OUT = '#0b0d10';
+  const lighten = (c, k) => hexMix(c, '#ffffff', k);
+  const darken = (c, k) => hexMix(c, '#000000', k);
+  function labBg(c, benchY) {
+    const by = benchY || 150;
+    R(c, 0, 0, W, H, '#262b33');
+    for (let x = 0; x < W; x += 64) {
+      R(c, x, 0, 63, by, (x / 64) % 2 ? '#2b313a' : '#29303a');
+      R(c, x + 63, 0, 1, by, '#1b1f25');
+      for (const yy of [6, by - 8]) {
+        R(c, x + 5, yy, 2, 2, '#4a525e');
+        R(c, x + 56, yy, 2, 2, '#4a525e');
+      }
+    }
+    R(c, 0, 0, W, 2, '#1b1f25');
+    for (let x = -10; x < W; x += 14) R(c, x + ((by - 14) % 14), by - 6, 7, 3, 'rgba(255,194,51,0.18)');
+    // steel bench
+    R(c, 0, by, W, H - by, '#4a525e');
+    R(c, 0, by, W, 2, '#8a939f');
+    R(c, 0, by + 2, W, 1, '#2b3038');
+    for (let y = by + 6; y < H; y += 5) R(c, 0, y, W, 1, 'rgba(0,0,0,0.12)');
+  }
+  /** Raised device box: dark outline, base fill, light top edge, darker bottom */
+  function box(c, x, y, w, h, base) {
+    R(c, x + 1, y, w - 2, h, OUT);
+    R(c, x, y + 1, w, h - 2, OUT);
+    R(c, x + 2, y + 2, w - 4, h - 4, base);
+    R(c, x + 2, y + 2, w - 4, 2, lighten(base, 0.28));
+    R(c, x + 2, y + h - 5, w - 4, 3, darken(base, 0.28));
+    R(c, x + 2, y + 2, 2, h - 4, lighten(base, 0.12));
+  }
+  function screw(c, x, y) {
+    R(c, x, y, 3, 3, '#1b1f25');
+    R(c, x, y, 2, 2, '#9aa3ad');
+    R(c, x + 1, y + 1, 1, 1, '#5d6570');
+  }
+  function screws(c, x, y, w, h) {
+    screw(c, x + 4, y + 4);
+    screw(c, x + w - 7, y + 4);
+    screw(c, x + 4, y + h - 8);
+    screw(c, x + w - 7, y + h - 8);
+  }
+  /** Green LCD window with scanlines */
+  function lcd(c, x, y, w, h) {
+    R(c, x, y, w, h, OUT);
+    R(c, x + 1, y + 1, w - 2, h - 2, '#07150e');
+    for (let yy = y + 2; yy < y + h - 1; yy += 2) R(c, x + 1, yy, w - 2, 1, 'rgba(63,224,138,0.06)');
+    R(c, x + 1, y + 1, w - 2, 1, 'rgba(63,224,138,0.25)');
+  }
+  function lamp(c, x, y, on, col) {
+    R(c, x - 1, y - 1, 6, 6, OUT);
+    R(c, x, y, 4, 4, on ? col : darken(col, 0.6));
+    if (on) R(c, x, y, 2, 2, lighten(col, 0.5));
+  }
+  /** Glass pane: tinted fill + highlight streaks */
+  function glass(c, x, y, w, h, tint) {
+    c.globalAlpha = 0.16;
+    R(c, x, y, w, h, tint || '#9fd8ff');
+    c.globalAlpha = 0.45;
+    R(c, x + 3, y + 3, 2, h - 6, '#e9f6ff');
+    R(c, x + 7, y + 3, 1, Math.max(0, h - 30), '#e9f6ff');
+    c.globalAlpha = 1;
+  }
+  function ball(c, x, y, r, col) {
+    c.fillStyle = OUT;
+    c.beginPath();
+    c.arc(x, y, r + 1.5, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = col;
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = darken(col, 0.3);
+    c.beginPath();
+    c.arc(x + r * 0.25, y + r * 0.3, r * 0.7, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = col;
+    c.beginPath();
+    c.arc(x - r * 0.12, y - r * 0.1, r * 0.72, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = lighten(col, 0.65);
+    c.fillRect(Math.round(x - r * 0.5), Math.round(y - r * 0.55), Math.max(1, Math.round(r * 0.4)), Math.max(1, Math.round(r * 0.35)));
+  }
+  /** Readout device: box + LCD + one big value (+ small line) */
+  function readout(c, x, y, w, h, big, small, col) {
+    box(c, x, y, w, h, '#3a4049');
+    screws(c, x, y, w, h);
+    lcd(c, x + 7, y + 8, w - 14, h - (small ? 26 : 16));
+    txt(c, big, x + w / 2, y + 8 + (h - (small ? 26 : 16)) / 2, col || '#3fe08a', 'center', 15);
+    if (small) txt(c, small, x + w / 2, y + h - 10, '#cfd6dc', 'center', 9);
+  }
+
   const expVal = (id) => (S.Experiments && S.Experiments.get ? S.Experiments.get(id) : null) || {};
 
   /* ================================================================ */
@@ -199,37 +294,41 @@
           flash = Math.max(0, flash - dt);
         },
         draw(c, tt) {
-          panelBg(c);
-          const px = 160;
-          const py = 22;
-          const L = 118;
-          R(c, 80, 16, 160, 6, '#5c6370');
-          R(c, 158, 22, 4, 4, '#9aa0a8');
-          // gate
-          R(c, 150, py + L - 6, 2, 28, '#5c6370');
-          R(c, 168, py + L - 6, 2, 28, '#5c6370');
-          c.globalAlpha = 0.5 + flash * 2;
-          R(c, 152, py + L + 6, 16, 1, '#ff3b2f');
+          labBg(c, 152);
+          const px = 150;
+          const py = 30;
+          const L = 108;
+          // stand: base on the bench, post, top arm, pivot
+          box(c, 96, 144, 108, 12, '#5d6570');
+          box(c, 100, 18, 10, 130, '#6c7480');
+          box(c, 96, 14, 72, 12, '#7d858f');
+          screw(c, px - 1, py - 6);
+          // measuring tape: 1 m
+          box(c, 18, 26, 20, 118, '#c9a23a');
+          for (let i = 0; i <= 10; i++) R(c, 22, 30 + i * 10.8, i % 5 ? 6 : 10, 1, '#3a2c10');
+          txt(c, '1 m', 28, 152 + 6, '#cfd6dc', 'center', 9);
+          // light gate at the bottom of the swing: two posts, red beam
+          const gy = py + L;
+          box(c, px - 22, gy - 14, 9, 28, '#3a4049');
+          box(c, px + 13, gy - 14, 9, 28, '#3a4049');
+          lamp(c, px - 20, gy - 9, true, '#ff3b2f');
+          c.globalAlpha = 0.45 + flash * 2;
+          R(c, px - 13, gy - 7, 26, 2, '#ff3b2f');
           c.globalAlpha = 1;
           const a = angle(tt);
           const bx = px + Math.sin(a) * L;
           const by = py + Math.cos(a) * L;
-          c.strokeStyle = '#c9c2b8';
-          c.lineWidth = 1;
+          c.strokeStyle = '#e8e2d8';
+          c.lineWidth = 1.2;
           c.beginPath();
-          c.moveTo(px, py + 2);
+          c.moveTo(px, py);
           c.lineTo(bx, by);
           c.stroke();
-          R(c, bx - 5, by - 5, 10, 10, '#f2c230');
-          R(c, bx - 5, by - 5, 10, 2, '#fff3b0');
-          // stopwatch
-          R(c, 248, 120, 62, 44, '#1b1e24');
-          R(c, 250, 122, 58, 40, '#0b0c0e');
+          ball(c, bx, by, 7, '#f2c230');
+          // stopwatch device
           const run = presses.length ? tt - presses[0] : 0;
-          txt(c, num(run, 2) + ' s', 279, 136, '#3fe08a', 'center', 14);
-          txt(c, presses.length + '/' + need, 279, 152, '#9aa3ad', 'center', 9);
-          txt(c, '1 m', 30, 80, '#9aa3ad');
-          R(c, 22, 22, 1, L, '#4a505a');
+          readout(c, 226, 88, 84, 58, num(run, 2) + ' s', presses.length + ' / ' + need, '#3fe08a');
+          lamp(c, 296, 92, flash > 0, '#ffc233');
         }
       };
     });
@@ -270,37 +369,44 @@
         },
         timeout: scoreNow,
         draw(c, tt) {
-          panelBg(c);
-          // tube with height marks
-          R(c, 120, top - 6, 2, bottom - top + 12, '#4a505a');
-          R(c, 200, top - 6, 2, bottom - top + 12, '#4a505a');
+          labBg(c, 160);
+          // scale board behind the tube
+          box(c, 82, 10, 132, 150, '#33393f');
           for (let i = 0; i <= 4; i++) {
             const y = top + ((bottom - top) * i) / 4;
-            R(c, 112, y, 8, 1, '#5c6370');
-            txt(c, num(2 - i * 0.5, 1) + ' m', 108, y, '#9aa3ad', 'right', 8);
+            R(c, 100, y, 14, 1, '#cfd6dc');
+            for (let j = 1; j < 5 && i < 4; j++) R(c, 106, y + ((bottom - top) / 20) * j, 8, 1, '#6c7480');
+            txt(c, num(2 - i * 0.5, 1) + ' m', 96, y, '#cfd6dc', 'right', 9);
           }
-          R(c, 150, top - 12, 20, 6, '#b5622a'); // magnet
-          R(c, 122, bottom + 4, 78, 1, '#ff3b2f'); // light gate
-          R(c, 118, bottom + 1, 4, 7, '#2a2d33');
-          R(c, 200, bottom + 1, 4, 7, '#2a2d33');
+          // glass tube
+          R(c, 128, top - 8, 2, bottom - top + 16, OUT);
+          R(c, 190, top - 8, 2, bottom - top + 16, OUT);
+          glass(c, 130, top - 8, 60, bottom - top + 16, '#9fd8ff');
+          // electromagnet with coil
+          box(c, 144, top - 16, 32, 12, '#b5622a');
+          for (let i = 0; i < 6; i++) R(c, 148 + i * 4, top - 13, 2, 6, '#7a3a14');
           const since = tt - releaseAt;
+          lamp(c, 180, top - 13, since < 0, '#3fe08a');
+          // light gate housing at the bottom
+          box(c, 120, bottom + 2, 14, 12, '#3a4049');
+          box(c, 186, bottom + 2, 14, 12, '#3a4049');
+          c.globalAlpha = 0.7;
+          R(c, 134, bottom + 6, 52, 2, '#ff3b2f');
+          c.globalAlpha = 1;
           let k = since < 0 ? 0 : pos(since, real);
           if (stopped !== null) k = pos(stopped, real);
           const by = top + (bottom - top) * k;
           // Earth ghost: the same drop under Earth gravity, for comparison
           if (since > 0 && stopped === null) {
             const ke = pos(since, earth);
-            c.globalAlpha = 0.25;
-            R(c, 170, top + (bottom - top) * ke - 4, 8, 8, '#3f8ff5');
+            c.globalAlpha = 0.3;
+            ball(c, 176, top + (bottom - top) * ke, 4, '#3f8ff5');
             c.globalAlpha = 1;
-            txt(c, t('transit.earth'), 214, top + (bottom - top) * ke, '#3f8ff5', 'left', 8);
+            txt(c, t('transit.earth'), 196, top + (bottom - top) * ke, '#6fb0ff', 'left', 8);
           }
-          R(c, 156, by - 4, 8, 8, '#e8692a');
-          R(c, 156, by - 4, 8, 2, '#ffb37a');
-          R(c, 236, 70, 70, 40, '#1b1e24');
-          R(c, 238, 72, 66, 36, '#0b0c0e');
+          ball(c, 160, by, 5, '#e8692a');
           const shown = stopped !== null ? stopped : Math.max(0, since);
-          txt(c, num(shown, 2) + ' s', 271, 90, stopped !== null ? '#ffc233' : '#3fe08a', 'center', 14);
+          readout(c, 228, 58, 82, 56, num(shown, 2) + ' s', null, stopped !== null ? '#ffc233' : '#3fe08a');
         }
       };
     });
@@ -350,45 +456,57 @@
           }
         },
         draw(c, tt) {
-          panelBg(c);
-          // beaker
-          const bx = 70;
-          const bw = 90;
-          const top = 30;
+          labBg(c, 156);
+          const bx = 62;
+          const bw = 96;
+          const top = 34;
           const bot = 150;
-          R(c, bx - 3, top, 3, bot - top + 3, '#9fd8ff');
-          R(c, bx + bw, top, 3, bot - top + 3, '#9fd8ff');
-          R(c, bx - 3, bot, bw + 6, 3, '#9fd8ff');
+          // beaker: outline, glass, graduations
+          R(c, bx - 4, top, 3, bot - top + 4, OUT);
+          R(c, bx + bw + 1, top, 3, bot - top + 4, OUT);
+          R(c, bx - 4, bot + 1, bw + 8, 3, OUT);
+          R(c, bx - 6, top - 2, 6, 3, OUT);
+          for (let i = 1; i < 5; i++) R(c, bx + 2, top + i * 22, 8, 1, 'rgba(233,246,255,0.5)');
           // soil layer, colour shifts as perchlorate leaves
           const soilTop = bot - 40;
-          R(c, bx, soilTop, bw, 40, '#8a4a30');
-          for (let i = 0; i < 40; i++) R(c, bx + rnd(i) * (bw - 2), soilTop + rnd(i * 2.7) * 38, 2, 1, i % 3 ? '#a65d3c' : '#6e3a24');
-          c.globalAlpha = perc * 0.5;
-          for (let i = 0; i < 18; i++) R(c, bx + rnd(i * 5.1) * (bw - 2), soilTop + rnd(i * 7.3) * 38, 2, 2, '#f2f0e8');
+          R(c, bx, soilTop, bw, 41, '#8a4a30');
+          R(c, bx, soilTop, bw, 3, '#a65d3c');
+          for (let i = 0; i < 46; i++) R(c, bx + rnd(i) * (bw - 2), soilTop + 3 + rnd(i * 2.7) * 36, 2, 1, i % 3 ? '#a65d3c' : '#6e3a24');
+          c.globalAlpha = perc * 0.6;
+          for (let i = 0; i < 20; i++) R(c, bx + rnd(i * 5.1) * (bw - 3), soilTop + 3 + rnd(i * 7.3) * 34, 3, 2, '#f2f0e8');
           c.globalAlpha = 1;
-          // water
+          // water with a bright surface line
           const wy = soilTop - water * 70;
-          c.globalAlpha = 0.55;
-          R(c, bx, wy, bw, soilTop - wy, '#3f8ff5');
-          c.globalAlpha = 1;
+          if (water > 0.01) {
+            c.globalAlpha = 0.6;
+            R(c, bx, wy, bw, soilTop - wy, '#3f8ff5');
+            c.globalAlpha = 1;
+            for (let x = 0; x < bw; x += 6) R(c, bx + x, wy + Math.round(Math.sin(tt * 6 + x) * 1), 4, 1, '#bfe2ff');
+          }
+          glass(c, bx, top, bw, bot - top, '#9fd8ff');
+          // jug pouring
           if (pouring) {
-            R(c, bx + 40, 8, 10, 6, '#5c6370');
-            R(c, bx + 43, 14, 4, wy - 14, '#6fb0ff');
+            box(c, bx + 26, 2, 34, 20, '#6c7480');
+            R(c, bx + 42, 22, 5, wy - 22, '#6fb0ff');
+            R(c, bx + 43, 22, 1, wy - 22, '#cfe8ff');
           }
-          if (draining) {
-            R(c, bx + bw / 2 - 2, bot + 3, 4, 12, '#6fb0ff');
-            for (let i = 0; i < 3; i++) R(c, bx + bw / 2 - 1, bot + 16 + ((tt * 60 + i * 9) % 14), 2, 2, '#6fb0ff');
-          }
-          // meters
-          const meter = (x, label, v, col, line, lineCol) => {
-            R(c, x, 30, 18, 120, '#1b1e24');
-            R(c, x + 2, 32 + 116 * (1 - v), 14, 116 * v, col);
-            R(c, x - 3, 32 + 116 * (1 - line), 24, 1, lineCol);
-            txt(c, label, x + 9, 160, '#cfd6dc', 'center', 8);
+          // drain tap under the beaker
+          box(c, bx + bw / 2 - 6, bot + 4, 12, 8, '#7d858f');
+          if (draining) for (let i = 0; i < 3; i++) R(c, bx + bw / 2 - 1, bot + 12 + ((tt * 60 + i * 6) % 10), 2, 2, '#6fb0ff');
+          // test-tube meters on a rack
+          box(c, 192, 22, 116, 128, '#3a4049');
+          screws(c, 192, 22, 116, 128);
+          const tube = (x, label, v, col, line, lineCol) => {
+            R(c, x - 1, 34, 22, 98, OUT);
+            R(c, x + 1, 36, 18, 94, '#14181e');
+            R(c, x + 1, 36 + 94 * (1 - v), 18, 94 * v, col);
+            R(c, x + 3, 36 + 94 * (1 - v), 3, 94 * v, lighten(col, 0.35));
+            R(c, x - 5, 36 + 94 * (1 - line), 30, 2, lineCol);
+            txt(c, label, x + 10, 141, '#cfd6dc', 'center', 9);
           };
-          meter(210, t('tg.wash.perc'), perc, '#e8423b', safe, '#3fe08a');
-          meter(262, t('tg.wash.nutr'), nutr, '#3fe08a', minNutr, '#ffc233');
-          txt(c, 'ClO₄⁻ + H₂O', 115, 18, '#9fd9db', 'center', 9);
+          tube(214, t('tg.wash.perc'), perc, '#e8423b', safe, '#3fe08a');
+          tube(266, t('tg.wash.nutr'), nutr, '#3fe08a', minNutr, '#ffc233');
+          txt(c, 'ClO₄⁻ + H₂O', bx + bw / 2, 26, '#9fd9db', 'center', 10);
         }
       };
     });
@@ -425,42 +543,80 @@
           } else api.status(t('tg.vac.read', { p: num(p, p < 10 ? 2 : 1) }));
         },
         draw(c, tt) {
-          panelBg(c);
-          // chamber bell jar with a water cup: bubbles grow and ice forms as the pressure nears the band
-          R(c, 40, 150, 120, 6, '#5c6370');
-          c.strokeStyle = '#9fd8ff';
-          c.lineWidth = 2;
+          labBg(c, 156);
+          // base plate with bolts, bell jar dome
+          box(c, 26, 146, 148, 12, '#5d6570');
+          for (let x = 34; x < 170; x += 22) screw(c, x, 150);
+          c.fillStyle = 'rgba(159,216,255,0.16)';
           c.beginPath();
-          c.moveTo(48, 150);
-          c.lineTo(48, 60);
-          c.quadraticCurveTo(100, 18, 152, 60);
-          c.lineTo(152, 150);
+          c.moveTo(40, 146);
+          c.lineTo(40, 70);
+          c.quadraticCurveTo(100, 14, 160, 70);
+          c.lineTo(160, 146);
+          c.fill();
+          c.strokeStyle = OUT;
+          c.lineWidth = 3;
           c.stroke();
-          R(c, 80, 118, 40, 32, '#cfd6dc');
-          R(c, 82, 120, 36, 28, '#3f8ff5');
+          c.strokeStyle = '#bfe6ff';
+          c.lineWidth = 1;
+          c.beginPath();
+          c.moveTo(48, 140);
+          c.lineTo(48, 74);
+          c.quadraticCurveTo(70, 46, 90, 38);
+          c.stroke();
+          // water cup: bubbles grow and ice forms as the pressure nears the band
+          box(c, 76, 112, 48, 36, '#cfd6dc');
+          R(c, 80, 118, 40, 26, '#3f8ff5');
+          R(c, 80, 118, 40, 2, '#9fd8ff');
           const near = clamp((Math.log10(earth) - Math.log10(p)) / (Math.log10(earth) - Math.log10(mars)), 0, 1);
-          const nb = Math.round(near ** 3 * 14);
+          const nb = Math.round(near ** 3 * 16);
           for (let i = 0; i < nb; i++) {
             const ph = (tt * (1 + rnd(i) * 2) + rnd(i * 3.1)) % 1;
-            R(c, 84 + rnd(i * 7.7) * 32, 146 - ph * 26, 2, 2, '#d8ecff');
+            R(c, 82 + rnd(i * 7.7) * 34, 142 - ph * 24, 2, 2, '#e9f6ff');
           }
           if (near > 0.92) {
             c.globalAlpha = (near - 0.92) / 0.08;
-            R(c, 82, 120, 36, 4, '#f2f8ff'); // ice skin on top: it boils and freezes at once
+            R(c, 80, 118, 40, 4, '#f2f8ff'); // ice skin on top: it boils and freezes at once
             c.globalAlpha = 1;
           }
-          // log gauge
-          const gx = 200;
-          const gy0 = 22;
-          const gh = 128;
-          const yOf = (v) => gy0 + gh * (1 - (Math.log10(v) - Math.log10(mars * 0.5)) / (Math.log10(earth) - Math.log10(mars * 0.5)));
-          R(c, gx, gy0, 22, gh, '#1b1e24');
-          R(c, gx - 2, yOf(hi), 26, yOf(lo) - yOf(hi), 'rgba(63,224,138,0.35)');
-          R(c, gx + 2, yOf(p), 18, gy0 + gh - yOf(p), '#3fe0e6');
-          txt(c, num(earth, 1), gx + 28, yOf(earth), '#9aa3ad', 'left', 8);
-          txt(c, t('tg.vac.band', { m: num(mars, 2) }), gx + 28, yOf(mars), '#3fe08a', 'left', 8);
-          txt(c, 'kPa', gx + 11, 160, '#9aa3ad', 'center', 8);
-          if (pump) for (let i = 0; i < 3; i++) R(c, 160 + ((tt * 50 + i * 8) % 24), 152, 3, 1, '#9aa3ad');
+          // pump with hose
+          box(c, 168, 120, 30, 26, '#6c7480');
+          lamp(c, 188, 125, pump, '#3fe08a');
+          R(c, 160, 136, 10, 3, OUT);
+          if (pump) for (let i = 0; i < 3; i++) R(c, 198 + ((tt * 50 + i * 8) % 18), 132, 3, 1, '#9aa3ad');
+          // dial gauge on a log scale, green Mars band
+          const gx = 262;
+          const gy = 70;
+          const r = 42;
+          const ang = (v) => Math.PI * (0.85 + 1.3 * (1 - (Math.log10(v) - Math.log10(mars * 0.5)) / (Math.log10(earth) - Math.log10(mars * 0.5))));
+          c.fillStyle = OUT;
+          c.beginPath();
+          c.arc(gx, gy, r + 4, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = '#e8e2d8';
+          c.beginPath();
+          c.arc(gx, gy, r, 0, Math.PI * 2);
+          c.fill();
+          c.strokeStyle = 'rgba(63,224,138,0.9)';
+          c.lineWidth = 7;
+          c.beginPath();
+          c.arc(gx, gy, r - 7, ang(hi), ang(lo));
+          c.stroke();
+          for (let i = 0; i <= 10; i++) {
+            const a = Math.PI * (0.85 + 0.13 * i);
+            R(c, gx + Math.cos(a) * (r - 4), gy + Math.sin(a) * (r - 4), 2, 2, '#3a2c10');
+          }
+          const na = ang(p);
+          c.strokeStyle = '#e8423b';
+          c.lineWidth = 2;
+          c.beginPath();
+          c.moveTo(gx, gy);
+          c.lineTo(gx + Math.cos(na) * (r - 8), gy + Math.sin(na) * (r - 8));
+          c.stroke();
+          screw(c, gx - 1, gy - 1);
+          txt(c, 'kPa', gx, gy + 18, '#3a2c10', 'center', 9);
+          txt(c, t('tg.vac.band', { m: num(mars, 2) }), gx, gy + r + 14, '#3fe08a', 'center', 9);
+          txt(c, num(p, p < 10 ? 2 : 1), gx, gy + 30, '#1b1f25', 'center', 10);
         }
       };
     });
@@ -520,14 +676,19 @@
           if (right) cur = clamp(cur + dt * 6, 0, maxMs);
         },
         draw(c) {
-          panelBg(c, '#06100c');
-          for (let x = 20; x <= 300; x += 28) R(c, x, 20, 1, 124, '#123326');
+          labBg(c, 166);
+          // oscilloscope body: bezel, knobs, screws
+          box(c, 8, 8, 304, 156, '#3a4049');
+          screws(c, 8, 8, 304, 156);
+          R(c, 16, 14, 290, 136, OUT);
+          R(c, 18, 16, 286, 132, '#06100c');
+          for (let x = 20; x <= 300; x += 28) R(c, x, 18, 1, 128, '#123326');
           for (let y = 20; y <= 144; y += 31) R(c, 20, y, 280, 1, '#123326');
           R(c, xOf(0), 18, 2, 128, '#ff3b2f'); // laser fire
-          txt(c, 't=0', xOf(0) + 4, 26, '#ff8a80', 'left', 8);
+          txt(c, 't=0', xOf(0) + 4, 26, '#ff8a80', 'left', 9);
           if (n < shots.length) {
             c.strokeStyle = '#3fe08a';
-            c.lineWidth = 1;
+            c.lineWidth = 1.2;
             c.beginPath();
             for (let x = 20; x <= 300; x++) {
               const y = 82 - sig(msOf(x)) * 52;
@@ -535,11 +696,11 @@
               else c.lineTo(x, y);
             }
             c.stroke();
-            txt(c, shots[n] + ' m', 296, 26, '#9fd9db', 'right', 9);
+            txt(c, shots[n] + ' m', 296, 26, '#9fd9db', 'right', 10);
           }
           R(c, xOf(cur), 18, 1, 128, '#ffc233');
-          txt(c, num(cur, 1) + ' ms', xOf(cur) + 3, 150, '#ffc233', 'left', 8);
-          for (let i = 0; i <= 5; i++) txt(c, i * 5 + '', xOf(i * 5), 160, '#5c8f7a', 'center', 8);
+          txt(c, num(cur, 1) + ' ms', xOf(cur) + 3, 140, '#ffc233', 'left', 9);
+          for (let i = 0; i <= 5; i++) txt(c, i * 5 + '', xOf(i * 5), 157, '#9fd9db', 'center', 9);
         }
       };
     });
@@ -567,34 +728,45 @@
           api.status(Math.round(T) + ' °C · ' + t('tg.mox.o2') + ' %' + Math.round(scoreNow() * 100), T >= lo && T <= hi ? 'ok' : '');
         },
         draw(c, tt) {
-          panelBg(c);
+          labBg(c, 158);
           const night = clamp(tt / 18, 0, 1);
-          R(c, 0, 0, W, 14, night > 0.5 ? '#1a1830' : '#a8573a');
-          // gece / gündüz işareti: piksel ay ya da güneş (emoji değil)
+          // window to the outside: sky gets dark as the night comes (the box cools faster)
+          box(c, 8, 8, 70, 40, '#3a4049');
+          R(c, 13, 13, 60, 30, hexMix('#c9875a', '#1a1830', night));
+          R(c, 13, 34, 60, 9, hexMix('#8a4a30', '#2a1a20', night));
           if (night > 0.5) {
-            R(c, 10, 3, 6, 8, '#f2ebe2');
-            R(c, 13, 3, 4, 7, '#1a1830');
+            R(c, 50, 17, 7, 8, '#f2ebe2');
+            R(c, 53, 17, 5, 7, hexMix('#c9875a', '#1a1830', night));
           } else {
-            R(c, 11, 4, 6, 6, '#f2ebe2');
-            for (const [dx, dy] of [[13, 1], [13, 11], [8, 6], [18, 6]]) R(c, dx, dy, 2, 2, '#f2ebe2');
+            R(c, 49, 18, 7, 7, '#fff3c4');
+            for (const [dx, dy] of [[51, 15], [51, 26], [46, 20], [57, 20]]) R(c, dx, dy, 2, 2, '#fff3c4');
           }
-          // the cell: glows with temperature
+          // MOXIE housing with the hot cell window and heater coils
+          box(c, 30, 56, 130, 96, '#5d6570');
+          screws(c, 30, 56, 130, 96);
+          for (let i = 0; i < 5; i++) R(c, 38, 64 + i * 4, 26, 2, '#3a4049'); // vents
           const k = clamp((T - 500) / 400, 0, 1);
-          R(c, 40, 40, 110, 90, '#2a2d33');
-          R(c, 50, 50, 90, 70, `rgb(${Math.round(80 + k * 175)},${Math.round(30 + k * 90)},${Math.round(20 + k * 20)})`);
-          for (let i = 0; i < 6; i++) R(c, 50, 56 + i * 11, 90, 2, '#1b1e24');
-          txt(c, '2CO₂ → 2CO + O₂', 95, 140, '#9fd9db', 'center', 9);
-          // thermometer
-          const yOf = (v) => 150 - ((v - 500) / 400) * 128;
-          R(c, 190, 22, 16, 128, '#1b1e24');
-          R(c, 186, yOf(hi), 24, yOf(lo) - yOf(hi), 'rgba(63,224,138,0.35)');
-          R(c, 194, yOf(clamp(T, 500, 900)), 8, 150 - yOf(clamp(T, 500, 900)), '#e8692a');
-          txt(c, '800 °C', 214, yOf(800), '#3fe08a', 'left', 8);
-          // O₂ tank filling
-          R(c, 262, 40, 30, 100, '#1b1e24');
-          R(c, 264, 42 + 96 * (1 - scoreNow()), 26, 96 * scoreNow(), '#3fe0e6');
-          txt(c, 'O₂', 277, 150, '#cfd6dc', 'center', 9);
-          if (heat) for (let i = 0; i < 4; i++) R(c, 56 + i * 22, 126 + ((tt * 30 + i * 3) % 4), 10, 2, '#ffb347');
+          R(c, 52, 76, 86, 56, OUT);
+          R(c, 54, 78, 82, 52, `rgb(${Math.round(70 + k * 185)},${Math.round(26 + k * 100)},${Math.round(18 + k * 30)})`);
+          for (let i = 0; i < 5; i++) R(c, 54, 84 + i * 10, 82, 2, heat ? '#ffd27a' : '#2b1a14');
+          glass(c, 54, 78, 82, 52, '#ffb347');
+          txt(c, '2CO₂ → 2CO + O₂', 95, 142, '#e9eef2', 'center', 9);
+          // thermometer: glass tube with bulb, green band at ~800 °C
+          const yOf = (v) => 140 - ((v - 500) / 400) * 112;
+          R(c, 186, 22, 14, 124, OUT);
+          R(c, 188, 24, 10, 120, '#14181e');
+          R(c, 184, yOf(hi), 18, yOf(lo) - yOf(hi), 'rgba(63,224,138,0.45)');
+          R(c, 190, yOf(clamp(T, 500, 900)), 6, 144 - yOf(clamp(T, 500, 900)), '#e8423b');
+          ball(c, 193, 148, 7, '#e8423b');
+          txt(c, '800 °C', 208, yOf(800), '#3fe08a', 'left', 9);
+          // O₂ tank: cylinder with a fill window and a gauge
+          box(c, 252, 30, 46, 116, '#7d858f');
+          box(c, 262, 22, 26, 12, '#6c7480');
+          R(c, 262, 46, 26, 84, OUT);
+          R(c, 264, 48, 22, 80, '#14181e');
+          R(c, 264, 48 + 80 * (1 - scoreNow()), 22, 80 * scoreNow(), '#3fe0e6');
+          R(c, 266, 48 + 80 * (1 - scoreNow()), 3, 80 * scoreNow(), '#bff6f8');
+          txt(c, 'O₂', 275, 138, '#0b0d10', 'center', 10);
         }
       };
     });

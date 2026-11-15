@@ -205,7 +205,9 @@
         '<img class="pcam-body" alt="" src="assets/ui/field_cam.png">' +
         '<div class="pcam-hud"><canvas class="pcam-br" width="' + VF.w + '" height="' + VF.h + '" style="position:absolute;inset:0;width:100%;height:100%"></canvas>' +
         '<span class="pcam-help"><b>' + esc(subject.name) + '</b><br>' + esc(t('cam.help')) + '</span>' +
-        '<span class="pcam-count"></span><span class="pcam-status"></span></div>' +
+        '<span class="pcam-count"></span><span class="pcam-status"></span>' +
+        // odak çubuğu: odak halkasının nerede olduğu ve hangi yöne çevrildiği (←/→); netleştikçe işaret yeşillenir
+        '<div class="pcam-focus" aria-hidden="true"><i class="pf-ticks"></i><b class="pf-mark"><i class="pf-dir"></i></b></div></div>' +
         '<div class="pcam-album" hidden></div><div class="pcam-flash"></div></div>' +
         '<div class="pcam-bar"><button type="button" data-pcam-close><kbd>Esc</kbd>' + esc(t('cam.close')) + '</button>' +
         '<button type="button" class="pcam-shoot" data-pcam-shoot></button><button type="button" data-pcam-album></button></div></div>';
@@ -216,6 +218,10 @@
       const bctx = box.querySelector('.pcam-br').getContext('2d');
       const countEl = box.querySelector('.pcam-count');
       const statusEl = box.querySelector('.pcam-status');
+      const markEl = box.querySelector('.pf-mark');
+      const dirEl = box.querySelector('.pf-dir');
+      let lastFocus = null;
+      let dirShown = 0;
       const shootBtn = box.querySelector('[data-pcam-shoot]');
       const albumBtn = box.querySelector('[data-pcam-album]');
       const albumEl = box.querySelector('.pcam-album');
@@ -361,6 +367,14 @@
             refreshBar();
           }
           if (now > msgUntil) setStatus(ready ? 'cam.sharp' : 'cam.focusing', ready ? 'ok' : '');
+          // odak çubuğu: işaret = halkanın konumu; ok = son çevirme yönü; renk = netliğe yakınlık
+          const moved = lastFocus === null ? 0 : focus - lastFocus;
+          lastFocus = focus;
+          if (Math.abs(moved) > 1e-4) dirShown = Math.sign(moved) * 0.6;
+          else dirShown = Math.sign(dirShown) * Math.max(0, Math.abs(dirShown) - dt);
+          markEl.style.left = (focus * 100).toFixed(2) + '%';
+          markEl.className = 'pf-mark ' + (err < P.tolerance * 1.4 ? 'sharp' : err < 0.15 ? 'near' : '');
+          dirEl.className = 'pf-dir' + (dirShown > 0 ? ' r' : dirShown < 0 ? ' l' : '');
           if (tt > P.seconds) {
             finish(false, 0.3, false);
             return;
