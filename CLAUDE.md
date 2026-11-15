@@ -208,7 +208,7 @@ Most of the planned work is done and on `main`. Details live in DECISIONS.md (D-
 - **Look and sound:**
   - One retro UI font, VT323 (embedded in `styles/fonts.css`). No metre labels on the ground.
   - K5's CC0 recordings (`assets/audio`) play through `src/fx/audio.js`, with a synthesised fallback.
-- **Tests:** `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`), `rhythm`, `explore`, `design_choices`, `station` → 87/87 pass.
+- **Tests:** `engineering`, `data_integrity`, `qa_profiles` (3 TESTING.md profiles + demo, headless via `tests/helpers/bot.js`), `rhythm`, `explore`, `design_choices`, `station`, `rocket` → 91/91 pass.
 - **Coordinates:** `Surface.mToPx/pxToM` are piecewise (`terrain.map`); the base area −120…0 m is drawn at sprite scale. The cave is a separate space: `s.player.zone === 'cave'`, position `s.player.cx`. It uses the same scale and the same movement code as the surface; do not give it its own.
 - **Old saves:** fields added later are filled by `S.ensureExploreState` (called on load, checkpoint, `enterWorld`, `Sim.land`).
 - **Still open:**
