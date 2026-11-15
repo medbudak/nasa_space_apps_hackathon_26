@@ -156,7 +156,7 @@
       S.UI.toast(r.errors.map((k) => t(k)).join(' · '), 'warn');
       return;
     }
-    S.bus.emit('audio:play', 'launch');
+    // K2 trial: the launch roar now plays at ignition, after the intro (src/fx/opening.js O.cues)
     Game.setScene('transit');
     // Açılış bir kez: kalkış + yolculuk görevleri → (kayıt: iniş tamamlanmış durum) → oyun dünyasında iniş sahnesi.
     // Transit görev sonuçları { arrays, leak, tcm, thermal } -> iniş kaynakları (Sim.transitOutcome).

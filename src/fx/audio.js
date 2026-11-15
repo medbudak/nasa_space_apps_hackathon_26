@@ -125,7 +125,34 @@
     },
     sol: () => [392, 523, 659].forEach((f, i) => tone({ type: 'sine', f0: f, dur: 0.5, vol: 0.04, delay: i * 0.18 })),
     ufo_ping: () => [740, 1110, 740, 1480].forEach((f, i) => tone({ type: 'sine', f0: f, dur: 0.12, vol: 0.05, delay: i * 0.14 })),
-    static: () => noise({ dur: 0.8, vol: 0.06, freq: 2500, type: 'bandpass', q: 0.3 })
+    static: () => noise({ dur: 0.8, vol: 0.06, freq: 2500, type: 'bandpass', q: 0.3 }),
+    // K2 trial: sounds of the text-free launch intro (src/fx/opening.js O.cues)
+    intro_music: () => {
+      // slow A-minor chords, then a rising A major as the rocket leaves (about 14 s)
+      const chords = [[110, 130.81, 164.81], [87.31, 110, 130.81], [98, 123.47, 146.83], [82.41, 103.83, 123.47], [110, 138.59, 164.81, 220]];
+      chords.forEach((ch, i) => ch.forEach((f) => {
+        tone({ type: 'triangle', f0: f, dur: 3.2, vol: 0.05, delay: i * 2.6 });
+        tone({ type: 'sawtooth', f0: f * 2, dur: 2.6, vol: 0.008, delay: i * 2.6 });
+      }));
+      [0, 2.6, 5.2, 7.8].forEach((d) => tone({ type: 'sine', f0: 55, f1: 45, dur: 1.2, vol: 0.12, delay: d }));
+    },
+    crowd: () => {
+      for (let i = 0; i < 14; i++) noise({ dur: 0.7, vol: 0.035, freq: 500 + Math.random() * 300, type: 'bandpass', q: 0.5, delay: i * 0.5 });
+    },
+    heartbeat: () => {
+      tone({ type: 'sine', f0: 70, f1: 40, dur: 0.16, vol: 0.22 });
+      tone({ type: 'sine', f0: 62, f1: 38, dur: 0.16, vol: 0.14, delay: 0.21 });
+    },
+    countdown: () => tone({ type: 'square', f0: 880, dur: 0.14, vol: 0.05 }),
+    roar: () => {
+      noise({ dur: 0.5, vol: 0.3, freq: 400 });
+      for (let i = 0; i < 8; i++) noise({ dur: 1.2, vol: 0.22 - i * 0.022, freq: 150, delay: i * 0.9 });
+      tone({ type: 'sine', f0: 60, f1: 30, dur: 2.5, vol: 0.18 });
+    },
+    cheer: () => {
+      for (let i = 0; i < 8; i++) noise({ dur: 0.9, vol: 0.05, freq: 1000 + Math.random() * 400, type: 'bandpass', q: 0.6, delay: i * 0.4 });
+      for (let i = 0; i < 160; i++) tone({ type: 'square', f0: 1800 + Math.random() * 2200, dur: 0.03, vol: 0.006 + Math.random() * 0.008, delay: Math.random() * 3 });
+    }
   };
 
   function play(name, payload) {
