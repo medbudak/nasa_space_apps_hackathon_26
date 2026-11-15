@@ -264,7 +264,7 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .hp-res .hp-gh.ok { color: var(--green); }
 .hp-res .hp-gh.warn { color: var(--amber); }
 .hp-res .hp-gh.danger { color: #ff9f97; }
-.hp-actions { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr; gap: 0.5em; }
+.hp-actions { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: 1fr 1fr; gap: 0.5em; }
 .act-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35em; border: 1px solid var(--line); border-radius: 0.45em; background: rgba(255,255,255,0.03); cursor: pointer; padding: 0.4em; transition: border-color 0.15s, box-shadow 0.15s; }
 .act-card:hover { border-color: var(--line2); background: rgba(255,255,255,0.06); }
 .act-card.near { border-color: rgba(63,224,230,0.5); }

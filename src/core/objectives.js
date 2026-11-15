@@ -147,16 +147,14 @@
     } else if (s.suit.leak) return goal('repair_suit');
 
     // Üs sistemleri kargo sandıklarında iner (ux-plan #8): önce güneş paneli (enerji olmadan üs yaşamaz)
-    const structM = (id) => {
-      const st = S.Surface && S.Surface.STRUCTURES.find((x) => x.id === id);
-      return st ? { m: S.Surface.pxToM(st.px + st.w / 2) } : null;
-    };
-    if (!S.Sim.deployed(s, 'solar') && !inCave(s)) return goal('deploy_solar', {}, structM('solar'));
+    // Üretim mekikteki atölyede: dışarıdaysan hedef mekiğin kapısı
+    const toLander = () => (outside ? homeTarget(s) : null);
+    if (!S.Sim.deployed(s, 'solar') && !inCave(s)) return goal('deploy_solar', {}, toLander());
 
     // 2) Son Sol: MAV
     if (s.sol >= s.maxSols) {
       if (outside && inCave(s)) return goal('cave_exit', {}, homeTarget(s));
-      if (!S.Sim.deployed(s, 'mav')) return goal('deploy_mav', {}, structM('mav'));
+      if (!S.Sim.deployed(s, 'mav')) return goal('deploy_mav', {}, toLander());
       return p.fuelOk || !p.canFuel ? goal('mav_launch') : goal('mav_fuel', { fuel: p.fuel });
     }
 

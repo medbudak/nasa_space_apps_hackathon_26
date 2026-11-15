@@ -140,22 +140,18 @@ window.SOL14.DATA = {
   "demoGameMinutesPerRealSecond": 4,
   "deploy": {
    "simplified": true,
-   "note": "Base systems land packed in cargo crates and are set up by the player on EVA (ux-plan #8). Minutes are game values; the minigame stands for the work (pointing the array, wiring MOXIE and the MAV, starting the greenhouse). Until the array is deployed the base runs on its battery (and RTG if chosen).",
+   "note": "Default set-up minutes when a base system is enabled directly (tests, QA bot); in play the workshop recipe sets the minutes (nasa_data.workshop).",
    "solar": {
-    "minutes": 30,
-    "minigame": "align"
+    "minutes": 60
    },
    "isru": {
-    "minutes": 40,
-    "minigame": "wires"
+    "minutes": 40
    },
    "greenhouse": {
-    "minutes": 30,
-    "minigame": "converter"
+    "minutes": 30
    },
    "mav": {
-    "minutes": 45,
-    "minigame": "wires"
+    "minutes": 45
    }
   },
   "cargoBonus": {
@@ -655,7 +651,7 @@ window.SOL14.DATA = {
    "baseLeftM": -120,
    "baseLeftPx": -700,
    "baseRightM": 100,
-   "landingPadM": 85,
+   "landingPadM": 0,
    "landingExitM": 40,
    "tubeMouthM": 1400,
    "zones": [
@@ -877,6 +873,94 @@ window.SOL14.DATA = {
     "simplifiedNote": "FICTIONAL game values. The ice field is up to 35 C colder than the landing site, and from 1900 m the cold pulls heat out of the suit faster than its heaters can replace (up to 1.2 C per game minute at the ice wall). Phoenix, at a high northern latitude, measured the colder conditions that inspire this, but these numbers are not its measurements."
    }
   }
+ },
+ "workshop": {
+  "simplified": true,
+  "note": "Shuttle workshop (2026-11-15, ux-plan #8): base systems land as kits and are built in the lander; salvaged wreck parts become upgrades. Minutes, kit counts and the half-array option are game values; the effects shown come from the existing formulas and sourced data (solar model, constants.moxie, constants.sabatier, habitat.greenhouse, relay passes).",
+  "src": "https://www.spaceappschallenge.org/",
+  "startItems": {
+   "panel_kit": 1,
+   "umbilical_kit": 1,
+   "cable_spool": 2
+  },
+  "instrumentKits": {
+   "moxie": "moxie_kit",
+   "veggie": "seed_kit"
+  },
+  "recipes": [
+   {
+    "id": "solar_array",
+    "builds": "solar",
+    "needs": {
+     "panel_kit": 1
+    },
+    "minutes": 60,
+    "options": [
+     {
+      "id": "full",
+      "minutes": 60,
+      "solarFrac": 1
+     },
+     {
+      "id": "half",
+      "minutes": 30,
+      "solarFrac": 0.5
+     }
+    ]
+   },
+   {
+    "id": "solar_extend",
+    "requiresBuilt": "solar",
+    "onlyIfPartial": true,
+    "needs": {},
+    "minutes": 30
+   },
+   {
+    "id": "isru_unit",
+    "builds": "isru",
+    "instrument": "moxie",
+    "needs": {
+     "moxie_kit": 1,
+     "cable_spool": 1
+    },
+    "minutes": 40
+   },
+   {
+    "id": "mav_line",
+    "builds": "mav",
+    "needs": {
+     "umbilical_kit": 1
+    },
+    "minutes": 45
+   },
+   {
+    "id": "greenhouse",
+    "builds": "greenhouse",
+    "instrument": "veggie",
+    "needs": {
+     "seed_kit": 1
+    },
+    "minutes": 30
+   },
+   {
+    "id": "antenna",
+    "once": true,
+    "needs": {
+     "spare_antenna": 1
+    },
+    "minutes": 20,
+    "extraMbit": 10
+   },
+   {
+    "id": "repair_kit",
+    "needs": {
+     "robotic_arm": 1,
+     "cable_spool": 1
+    },
+    "minutes": 25,
+    "repairKits": 1
+   }
+  ]
  },
  "scoring": {
   "forensicCorrectPoints": 100,

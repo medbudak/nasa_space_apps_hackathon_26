@@ -237,12 +237,8 @@
     if (S.DigFx) S.DigFx.drawBackdrop(ctx, s, FX.camX, W, minute);
     const map = S.DATA.terrain.map;
     const west = S.DATA.terrain.westRegion;
+    // Zeminde metre işareti yok: yön ve uzaklık HUD'daki hedef kartında ve rota şeridinde
     const markers = [];
-    // D-012: iki yönlü 100 m işaretleri (sol buz rotası eksi, sağ rota artı)
-    for (let m = Math.ceil(map.leftLimitM / 100) * 100; m <= map.tubeMouthM - 50; m += 100) {
-      if (m === 0 || (m > map.baseLeftM && m < 0)) continue;
-      markers.push({ px: Surf.mToPx(m), label: m + 'm', color: m < 0 ? '#bfe6ff' : undefined });
-    }
     const sandPits = S.DATA.terrain.sandPits.map((p) => ({ x0: Surf.mToPx(p.fromM), x1: Surf.mToPx(p.toM) }));
     S.Art.drawGround(ctx, site, minute, FX.camX, W, BASE_H, GY, {
       markers,
@@ -272,10 +268,7 @@
 
     // Üs yapıları
     for (const st of Surf.STRUCTURES) {
-      if (st.id === 'habitat') {
-        S.Art.drawHabitat(ctx, Math.round(st.px - FX.camX), GY, minute, s);
-        continue;
-      }
+      if (st.id === 'habitat') continue; // astronot iniş mekiğinde yaşar (mekik ayrıca çizilir)
       let key = st.sprite;
       if (st.id === 'solar') key = s.res.panelDust > 0.35 ? 'solar_dusty' : 'solar_clean';
       if (st.id === 'greenhouse') {
@@ -284,11 +277,8 @@
       }
       // MOXIE seçilmediyse ISRU ünitesi hiç kurulmaz (Sabatier yakıt partisi yok)
       if (!Surf.structureBuilt(s, st)) continue;
-      // Kurulmamış sistem kargo sandığında bekler (ux-plan #8)
-      if (!S.Sim.deployed(s, st.id)) {
-        if (S.Sim.deployAvailable(s, st.id) && S.DigFx) S.DigFx.drawCrate(ctx, FX.worldToScreen(st.px + st.w / 2), GY, st.id, t);
-        continue;
-      }
+      // Üs sistemi mekikteki atölyede üretilip kurulana kadar dışarıda yok
+      if (!S.Sim.deployed(s, st.id)) continue;
       drawOnGround(ctx, key, st.px, GY);
       if (st.id === 'greenhouse' && !s.greenhouse.frozen && light.dark > 0.3) {
         ctx.globalAlpha = 0.25 * light.dark;
@@ -971,17 +961,53 @@
     // 640 px'lik kesit geniş tuvalde ortalanır; uzun tuvalde yüzeydeki gibi OFF_Y kadar aşağı iner,
     // böylece alttaki habitat paneliyle (em ölçülü) ilişkisi her pencere oranında 16:9'daki gibi kalır.
     const ox = Math.round((W - BASE_W) / 2);
-    S.Art.drawInterior(ctx, s, st ? st.id : null, t, { w: W, h: H, ox, oy: OFF_Y });
+    const I = S.Surface.INTERIOR;
     const body = S.Surface.body;
-    const pose = body.moving ? 'walk' : 'idle';
-    const img = S.Sprites.get('astronaut_' + pose);
-    if (img) {
-      const floor = OFF_Y + S.Surface.INTERIOR.floorY + 1;
-      if (!(body.moving && drawWalk(ctx, ox + body.ix, floor, s.player.facing < 0, t, 1))) {
-        let y = S.Surface.INTERIOR.floorY + 1 - img.height;
-        if (body.moving && Math.abs(Math.sin(t * 9)) > 0.5) y -= 1;
-        drawSprite(ctx, 'astronaut_' + pose, ox + body.ix - img.width / 2, OFF_Y + y, s.player.facing < 0);
-      }
+    // Mekik kesiti (K4 Sedef): 640 px genişliğe ölçeklenir, güverte zemini (görselin %75.5'i) floorY'ye oturur
+    ctx.fillStyle = '#05060a';
+    ctx.fillRect(0, 0, W, H);
+    const ship = S.Sprites.get('ship_interior');
+    if (ship) {
+      const sh = Math.round((BASE_W * ship.height) / ship.width);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(ship, ox, Math.round(OFF_Y + I.floorY - sh * 0.755), BASE_W, sh);
+      ctx.imageSmoothingEnabled = false;
+    } else {
+      S.Art.drawInterior(ctx, s, st ? st.id : null, t, { w: W, h: H, ox, oy: OFF_Y });
+    }
+    // Yakındaki istasyonun işareti
+    if (st) {
+      const label = S.t('station.' + st.id);
+      ctx.font = 'bold 9px "VT323", "Segoe UI", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      const tw = Math.ceil(ctx.measureText(label).width) + 8;
+      const lx = Math.round(ox + st.x);
+      const ly = Math.round(OFF_Y + I.floorY - 78 + Math.sin(t * 4) * 1.5);
+      ctx.fillStyle = 'rgba(15,16,21,0.9)';
+      ctx.fillRect(lx - tw / 2, ly - 9, tw, 12);
+      ctx.strokeStyle = '#3fe0e6';
+      ctx.strokeRect(lx - tw / 2 + 0.5, ly - 8.5, tw - 1, 11);
+      ctx.fillStyle = '#3fe0e6';
+      ctx.fillText(label, lx, ly);
+      ctx.fillRect(lx - 1, ly + 4, 3, 3);
+      ctx.textAlign = 'left';
+    }
+    // Kasksız mürettebat (mekik içinde): yürürken adım sallanması
+    const crew = S.Sprites.get('astronaut_indoor');
+    if (crew) {
+      const ch = 66;
+      const cw = Math.round((crew.width * ch) / crew.height);
+      const bob = body.moving ? (Math.floor(t * 7) % 2) * 1.5 : 0;
+      const x = Math.round(ox + body.ix);
+      const y = Math.round(OFF_Y + I.floorY + 1 - ch - bob);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      if (s.player.facing < 0) {
+        ctx.translate(x, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(crew, -Math.round(cw / 2), y, cw, ch);
+      } else ctx.drawImage(crew, x - Math.round(cw / 2), y, cw, ch);
+      ctx.restore();
     }
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);

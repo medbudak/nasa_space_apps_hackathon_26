@@ -140,6 +140,7 @@
       ['L', 'help.downlink'],
       ['P', 'help.power'],
       ['J', 'help.log'],
+      ['I', 'help.inventory'],
       ['Esc', 'help.pause']
     ];
     const body = () => {

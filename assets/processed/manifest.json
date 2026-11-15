@@ -28,6 +28,13 @@
     "whiteKeptPx": 31037
   },
   {
+    "asset": "sprites/astronaut_indoor.png",
+    "size": "37x132",
+    "mode": "none",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 0
+  },
+  {
     "asset": "sprites/astronaut_frozen.png",
     "size": "37x58",
     "mode": "flood",

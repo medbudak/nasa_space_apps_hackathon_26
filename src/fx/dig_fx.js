@@ -505,29 +505,6 @@
     ctx.fillRect(sx - 1, topY - 6, 3, 3);
   };
 
-  /* ---------------- Kargo sandıkları: kurulmamış üs sistemleri (ux-plan #8) ---------------- */
-  const CRATE_ICON = { solar: '#3b6fb4', isru: '#c9e8ff', greenhouse: '#5fd36a', mav: '#e0632a' };
-  DF.drawCrate = function (ctx, x, gy, id, t) {
-    const big = id === 'mav';
-    const w = big ? 34 : 26;
-    const h = big ? 22 : 16;
-    const R = (dx, dy, ww, hh, col) => {
-      ctx.fillStyle = col;
-      ctx.fillRect(Math.round(x + dx), Math.round(gy + dy), ww, hh);
-    };
-    R(-w / 2 - 2, -2, w + 4, 3, 'rgba(0,0,0,0.25)'); // gölge
-    R(-w / 2, -h, w, h, '#7c6a52');
-    R(-w / 2, -h, w, 2, '#a89274');
-    R(-w / 2, -h, 2, h, '#5e503e');
-    R(w / 2 - 2, -h, 2, h, '#5e503e');
-    R(-w / 2, -h / 2 - 1, w, 2, '#5e503e'); // kayış
-    R(-4, -h + 4, 8, 6, CRATE_ICON[id] || '#cccccc'); // içerik rengi
-    R(-w / 2 + 3, -4, 6, 2, '#ffcf3f'); // sarı-siyah uyarı bandı
-    R(-w / 2 + 9, -4, 6, 2, '#222222');
-    // Sönüp yanan durum ışığı: kurulmayı bekliyor
-    if ((t * 1.5) % 1 < 0.5) R(w / 2 - 6, -h + 3, 2, 2, '#3fe08a');
-  };
-
   /* ---------------- İZCİ-1 parçaları (kurgusal rover; lav tüneli ve FIELD CAM) ---------------- */
   DF.drawPart = function (c, kind, x, gy, k, tagged) {
     const R = (dx, dy, w, h, col) => {

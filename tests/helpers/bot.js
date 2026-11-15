@@ -141,10 +141,9 @@ function play(design, { demoMode = false, policy = {} } = {}) {
   // Transit: dört seyir görevi de iyi oynandı (Sim.transitOutcome -> nominal iniş)
   const good = { success: true, score: 0.95, skipped: false };
   S.Sim.land(s, Object.fromEntries(S.DATA.gameplay.transit.tasks.map((tk) => [tk.id, good])));
-  // Sol 1 sabahı: kargo sandıklarındaki üs sistemlerini kur (önce panel)
-  s.player.inside = false;
-  for (const id of ['solar', 'mav', 'isru', 'greenhouse']) if (S.Sim.deployAvailable(s, id)) S.Sim.deploy(s, id, 0.95);
+  // Sol 1 sabahı: mekikteki atölyede üs sistemlerini üret (önce tam güneş dizisi)
   s.player.inside = true;
+  for (const id of ['solar_array', 'mav_line', 'isru_unit', 'greenhouse']) if (S.Workshop.status(s, id).state === 'ready') S.Workshop.build(s, id, 'full');
 
   const mg = { success: true, score: 0.95 };
   // Yakından uzağa (doğu ve batı rotası karışık): araç önce kazılıp ortaya çıkarılır

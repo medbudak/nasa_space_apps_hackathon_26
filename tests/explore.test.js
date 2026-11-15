@@ -36,8 +36,9 @@ test('Harita: parçalı koordinat gidiş-dönüş, sınırlarda süreklilik; bat
   assert.ok(Math.abs(Surf.mToPx(map.baseLeftM - 0.001) - Surf.mToPx(map.baseLeftM)) < 0.01, '−120 m sınırında sıçrama yok');
   assert.ok(Math.abs(Surf.pxToM(Surf.worldLeftPx()) - map.leftLimitM) < 1e-9);
   assert.ok(Surf.pxToM(Surf.worldRightPx()) > map.tubeMouthM && Surf.pxToM(Surf.worldRightPx()) < map.tubeMouthM + 40);
-  // Üs yapıları eski piksel konumlarında kalır (habitat kapısı −10 px)
-  assert.equal(Surf.STRUCTURES.find((x) => x.id === 'habitat').interactPx, -10);
+  // Astronot iniş mekiğinde yaşar: kapı mekiğin merdiveni, hava kilidi 0 m
+  assert.equal(Surf.STRUCTURES.find((x) => x.id === 'habitat').interactPx, 0);
+  assert.equal(S.DATA.terrain.map.landingPadM, 0);
 });
 
 test('Rotalar: doğuda gömülü Opportunity + InSight ve tünel penceresi, batıda buzulda Spirit, Phoenix, Beagle 2; araçlar baştan görünmez', () => {
@@ -481,42 +482,73 @@ test('Metinler: yeni rota, kazı, İZCİ-1, FIELD CAM, teşhis hikâyesi ve Mars
   assert.equal(S.DATA.forensics.evidenceTypes.find((e) => e.id === 'photo').minigame, 'fieldcam');
 });
 
-test('Üs kurulumu: sistemler kargo sandığında iner; panel kurulmadan güneş enerjisi yok, ISRU + MAV kurulmadan yakıt yok', () => {
+test('Atölye: üs sistemleri kit hâlinde iner, mekikte üretilir; seçim gücü değiştirir; enkaz parçası yükseltmeye dönüşür', () => {
   const S = loadCore();
-  const s = S.State.reset({});
+  const s = S.State.reset({ design: Object.assign({}, S.State.DEFAULT_DESIGN, { instruments: ['mastcam_z', 'meda', 'moxie', 'veggie', 'rad'] }) });
   S.Sim.launch(s);
   S.Sim.land(s, null);
-  assert.deepEqual(Object.values(s.base), [false, false, false, false]);
-  assert.equal(s.greenhouse.installed, false);
-  // İlk hedef paneli kurmak; sandıklar etkileşim listesinde, yapılar değil
+  const W = S.Workshop;
+  // Kargodaki kitler: temel kitler + seçilen aletlere bağlı kitler
+  assert.equal(W.count(s, 'panel_kit'), 1);
+  assert.equal(W.count(s, 'moxie_kit'), 1);
+  assert.equal(W.count(s, 'seed_kit'), 1);
+  // Dışarıda sandık ya da kurulmamış yapı yok; ilk hedef atölyede güneş dizisi
+  assert.ok(!S.Surface.interactables(s).some((it) => it.kind === 'deploy' || (it.kind === 'structure' && it.id !== 'habitat')));
   assert.equal(S.Objectives.compute(s).main.id, 'deploy_solar');
-  const its = S.Surface.interactables(s);
-  assert.ok(its.some((it) => it.kind === 'deploy' && it.id === 'solar'));
-  assert.ok(!its.some((it) => it.kind === 'structure' && it.id === 'solar'));
-  // Öğlen bile panel yokken üretim sıfır
   s.minute = 720;
   S.Sim.step(s, 1);
-  assert.equal(s.power.solarW, 0);
-  // Yakıt: ISRU/MAV kurulmadan Sabatier yapılamaz
-  if (S.Sim.hasIsru(s)) assert.ok(S.Sim.actions.sabatier.can(s));
+  assert.equal(s.power.solarW, 0, 'dizi yokken üretim yok');
+  // Üretim yalnızca mekiğin içinde
+  s.player.inside = false;
+  assert.equal(W.build(s, 'solar_array', 'half').ok, false);
+  s.player.inside = true;
+  // Mühendislik seçimi: yarım dizi = yarı güç, yarı süre; etkiler önceden aynı formülle hesaplanır
+  const pre = W.effects(s, 'solar_array', 'half');
   const t0 = s.totalMinutes;
-  assert.equal(S.Sim.deploy(s, 'solar', 0.9).ok, true);
-  assert.equal(S.Sim.deploy(s, 'solar', 0.9).ok, false, 'iki kez kurulmaz');
-  assert.ok(s.totalMinutes - t0 >= S.DATA.gameplay.deploy.solar.minutes - 1e-6, 'kurulum zaman alır');
+  const r = W.build(s, 'solar_array', 'half');
+  assert.equal(r.ok, true);
+  assert.equal(W.count(s, 'panel_kit'), 0, 'kit harcandı');
+  assert.ok(Math.abs(s.totalMinutes - t0 - W.minutes('solar_array', 'half')) < 1e-6);
+  assert.deepEqual(r.rows, pre);
+  const noon = r.rows.find((x) => x.key === 'noon_w');
+  assert.equal(noon.before, 0);
+  assert.ok(noon.after > 0);
+  s.minute = 720;
   S.Sim.step(s, 1);
-  assert.ok(s.power.solarW > 0, 'panel kurulunca gündüz üretim');
-  assert.notEqual(S.Objectives.compute(s).main.id, 'deploy_solar');
-  if (S.Sim.hasIsru(s)) {
-    S.Sim.deploy(s, 'isru');
-    assert.equal(S.Sim.isruReady(s), false, 'MAV kurulmadan yakıt yok');
-    S.Sim.deploy(s, 'mav');
-    assert.equal(S.Sim.isruReady(s), true);
-  }
-  // Eski kayıt (base alanı yok): yapılar kurulu sayılır
+  const halfW = s.power.solarW;
+  assert.equal(W.status(s, 'solar_extend').state, 'ready');
+  W.build(s, 'solar_extend');
+  S.Sim.step(s, 1);
+  assert.ok(Math.abs(s.power.solarW - 2 * halfW) <= Math.max(2, halfW * 0.02), 'tam dizi iki kat güç');
+  assert.equal(W.status(s, 'solar_extend').state, 'built');
+  // ISRU + MAV hattı → yakıt; yapı dışarıda görünür ve etkileşime açılır
+  W.build(s, 'isru_unit');
+  assert.equal(S.Sim.isruReady(s), false);
+  W.build(s, 'mav_line');
+  assert.equal(S.Sim.isruReady(s), true);
+  assert.ok(S.Surface.interactables(s).some((it) => it.kind === 'structure' && it.id === 'mav'));
+  // Sera: Veggie kiti ile
+  W.build(s, 'greenhouse');
+  assert.equal(s.greenhouse.installed, true);
+  // Enkaz parçası: Beagle 2 anteni envantere girer, atölyede röle kapasitesini artırır
+  assert.equal(W.status(s, 'antenna').state, 'locked');
+  s.inventory.items.spare_antenna = 1;
+  const mb = s.downlink.extraMbit;
+  const ra = W.build(s, 'antenna');
+  assert.equal(s.downlink.extraMbit, mb + S.DATA.workshop.recipes.find((x) => x.id === 'antenna').extraMbit);
+  assert.equal(ra.rows[0].after - ra.rows[0].before, s.downlink.extraMbit - mb);
+  assert.equal(W.status(s, 'antenna').state, 'built', 'tek seferlik');
+  // Envanter listesi: kalan kablo, kim nerede kullanır
+  assert.ok(W.inventoryList(s).some((it) => it.id === 'cable_spool'));
+  assert.ok(W.usedIn('cable_spool').includes('repair_kit'));
+  // Eski kayıt: base yok → kurulu; items yok → boş
   const old = JSON.parse(JSON.stringify(s));
   delete old.base;
+  delete old.inventory.items;
   S.ensureExploreState(old);
-  assert.ok(Object.values(old.base).every(Boolean));
+  assert.ok(old.base.solar && old.base.mav);
+  // vm bağlamında oluşan nesnenin prototipi farklıdır; deepStrictEqual({}) yerine anahtar sayısına bak
+  assert.equal(Object.keys(old.inventory.items).length, 0);
 });
 
 test('Araç incelemesi: her vakanın kanıt görevi o araca özgü (TR + EN) ve kara kutu gerçek telemetri kanallarını alt sistemlere bağlatır', () => {

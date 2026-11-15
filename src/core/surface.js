@@ -65,7 +65,8 @@
     { id: 'isru', sprite: 'moxie_unit', px: -540, w: 78, action: 'sabatier', labelKey: 'world.isru' },
     { id: 'solar', sprite: 'solar_clean', px: -444, w: 104, action: 'clean_panels', labelKey: 'world.solar' },
     { id: 'greenhouse', sprite: 'greenhouse_ok', px: -324, w: 150, action: 'greenhouse', labelKey: 'world.greenhouse' },
-    { id: 'habitat', sprite: null, px: -162, w: 160, action: 'door', labelKey: 'world.door', interactPx: -10 }
+    // Astronot iniş mekiğinde yaşar: kapı mekiğin merdiveni (hava kilidi = 0 m); ayrı habitat binası yok
+    { id: 'habitat', sprite: null, px: -40, w: 80, action: 'door', labelKey: 'world.door', interactPx: 0 }
   ];
 
   /** Lav tüneli içindeki etkileşimler (px: tünel pikseli) */
@@ -91,12 +92,15 @@
 
   Surf.interactables = function (s) {
     if (Surf.inCave(s)) return Surf.caveInteractables(s);
-    const list = Surf.STRUCTURES.filter((st) => Surf.structureBuilt(s, st)).map((st) => {
-      const px = st.interactPx !== undefined ? st.interactPx : st.px + st.w / 2;
-      // Kurulmamış üs sistemi: kargo sandığı (E ile kur)
-      if (st.id !== 'habitat' && !S.Sim.deployed(s, st.id)) return { id: st.id, kind: 'deploy', px, action: 'deploy', range: 34 };
-      return { id: st.id, kind: 'structure', px, action: st.action, labelKey: st.labelKey, range: 34 };
-    }).filter((it) => it.kind !== 'deploy' || S.Sim.deployAvailable(s, it.id));
+    // Üs sistemleri mekikteki atölyede üretilip kurulunca dışarıda görünür ve etkileşime açılır
+    const list = Surf.STRUCTURES.filter((st) => Surf.structureBuilt(s, st) && (st.id === 'habitat' || S.Sim.deployed(s, st.id))).map((st) => ({
+      id: st.id,
+      kind: 'structure',
+      px: st.interactPx !== undefined ? st.interactPx : st.px + st.w / 2,
+      action: st.action,
+      labelKey: st.labelKey,
+      range: 34
+    }));
     if (S.Sim.has(s, 'rimfax')) {
       list.push({ id: 'ice', kind: 'ice', px: Surf.mToPx(S.DATA.terrain.iceDepositM), action: 'dig_ice', labelKey: 'world.ice', range: 26 });
     }
@@ -467,19 +471,21 @@
   };
 
   /* ---------------- Habitat içi (kesit görünüm) ---------------- */
+  /* Mekik içi (K4 Sedef'in mekik kesiti, scr_ship_interior): istasyonlar görseldeki yerlerinde (640 px genişlikte) */
   Surf.INTERIOR = {
-    left: 70,
-    right: 590,
+    left: 112,
+    right: 612,
     floorY: 186,
     stations: [
-      { id: 'bunk', x: 112, action: 'sleep' },
-      { id: 'locker', x: 196, action: 'refill_suit' },
-      { id: 'charger', x: 262, action: 'charge_suit' },
-      { id: 'workbench', x: 318, action: 'repair_suit' },
-      { id: 'power', x: 372, action: 'power' },
-      { id: 'lab', x: 448, action: 'lab' },
-      { id: 'comms', x: 520, action: 'comms' },
-      { id: 'airlock', x: 576, action: 'exit' }
+      { id: 'comms', x: 140, action: 'comms' },
+      { id: 'power', x: 205, action: 'power' },
+      { id: 'charger', x: 270, action: 'charge_suit' },
+      { id: 'locker', x: 340, action: 'refill_suit' },
+      { id: 'lab', x: 418, action: 'lab' },
+      { id: 'workshop', x: 478, action: 'workshop' },
+      { id: 'workbench', x: 528, action: 'repair_suit' },
+      { id: 'bunk', x: 572, action: 'sleep' },
+      { id: 'airlock', x: 612, action: 'exit' }
     ]
   };
 

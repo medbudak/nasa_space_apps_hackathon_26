@@ -136,10 +136,15 @@
     const r = c.salvage || {};
     if (r.rhuUnits) s.inventory.rhuUnits += r.rhuUnits;
     if (r.wheelPart) s.inventory.wheelPart = true;
-    if (r.roboticArmPart) s.inventory.roboticArmPart = true;
+    // Sökülen parçalar envantere girer; atölyede mühendislik çözümüne dönüşür (S.Workshop)
+    const items = (s.inventory.items = s.inventory.items || {});
+    if (r.roboticArmPart) {
+      s.inventory.roboticArmPart = true;
+      items.robotic_arm = (items.robotic_arm || 0) + 1;
+    }
     if (r.spareAntenna) {
       s.inventory.spareAntenna = true;
-      s.downlink.extraMbit += 10;
+      items.spare_antenna = (items.spare_antenna || 0) + 1;
     }
     if (r.seis && !S.Sim.has(s, 'seis')) {
       s.design.instruments.push('seis');

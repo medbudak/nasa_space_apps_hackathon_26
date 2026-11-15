@@ -30,12 +30,12 @@
   /** Yakıt üretimi: ISRU ünitesi ve MAV kurulu olmalı */
   Sim.isruReady = (s) => Sim.hasIsru(s) && Sim.deployed(s, 'isru') && Sim.deployed(s, 'mav');
   /** Kargo sandığından üs sistemini kur (kalite: mini oyun skoru) */
-  Sim.deploy = function (s, id, quality = 1) {
+  Sim.deploy = function (s, id, quality = 1, minutes) {
     const cfg = D().gameplay.deploy[id];
     if (!cfg || !s.base || s.base[id] || !Sim.deployAvailable(s, id)) return { ok: false };
     s.base[id] = true;
     if (id === 'greenhouse') s.greenhouse.installed = true;
-    Sim.advance(s, cfg.minutes);
+    Sim.advance(s, minutes === undefined ? cfg.minutes : minutes);
     S.logDecision({ category: 'engineering', titleKey: 'log.deploy.title', choiceKey: 'deploy.' + id + '.name', resultKey: 'deploy.' + id + '.done', vars: {}, score: 0 }, s);
     S.bus.emit('base:deployed', { id, quality });
     return { ok: true, id };
@@ -244,6 +244,8 @@
     s.res.habTempC = d.gameplay.habitatTargetC;
     s.inventory.repairKits = s.design.repairKits;
     s.inventory.rhuUnits = 0;
+    // Atölye malzemeleri: kargodaki kitler (seçilen alete göre)
+    s.inventory.items = S.Workshop ? S.Workshop.startItems(s.design) : {};
     s.inventory.spareAntenna = false;
     // Sera kargo sandığında iner: oyuncu kurunca çalışır (Sim.deploy)
     s.greenhouse.installed = Sim.has(s, 'veggie') && Sim.deployed(s, 'greenhouse');
@@ -344,7 +346,7 @@
     const site = Sim.site(s);
     const cosZ = E().solarCosZAt(site, Sim.clockMinute(s));
     // Güneş paneli kurulmadan üretim yok: üs bataryayla (ve seçildiyse RTG ile) yaşar
-    const solarW = Sim.deployed(s, 'solar') ? E().calcSolarPower({ cosZ, dustFactor: s.res.panelDust, tau: s.weather.stormTau }) : 0;
+    const solarW = Sim.deployed(s, 'solar') ? E().calcSolarPower({ cosZ, dustFactor: s.res.panelDust, tau: s.weather.stormTau }) * ((s.base && s.base.solarFrac) || 1) : 0;
     const rtgW = Sim.powerCfg(s).rtgW;
     let genKwh = ((solarW + rtgW) * dt) / 60 / 1000;
     let demandW = 0;

@@ -278,19 +278,6 @@
     Game.afterAction();
   };
 
-  /** Kargo sandığından üs sistemini kur: kısa iş (mini oyun) + oyun dakikası */
-  Game.deploy = async function (id) {
-    const s = S.getState();
-    const cfg = S.DATA.gameplay.deploy[id];
-    if (!cfg || S.Sim.deployed(s, id)) return;
-    const mg = await S.runMinigame(cfg.minigame, { titleKey: 'deploy.' + id + '.mg_title', descKey: 'deploy.' + id + '.mg_desc' });
-    const r = S.Sim.deploy(s, id, mg.skipped ? 0.5 : mg.score);
-    if (!r.ok) return;
-    S.Surface.body.actionT = 1;
-    S.UI.toast(S.UI.icon('check') + t('deploy.' + id + '.done'), 'ok', 5000);
-    Game.afterAction();
-  };
-
   /** Kargo aracı parçasını al (batı buzulu) */
   Game.pickPart = function (partId) {
     const s = S.getState();
@@ -387,6 +374,8 @@
     else if (name === 'power') S.PowerPanel.open();
     else if (name === 'log') S.SciencePanels.openLog();
     else if (name === 'lab') S.SciencePanels.openLab();
+    else if (name === 'workshop') S.WorkshopPanel.open();
+    else if (name === 'inventory') S.WorkshopPanel.openInventory();
     else if (name === 'pause') S.DesignScreens.openPause(handlers);
   };
 
@@ -422,7 +411,6 @@
     if (it.kind === 'cave_study') return Game.caveStudy(it.id);
     if (it.kind === 'scout') return Game.scoutPhoto(it.id);
     if (it.kind === 'dig') return Game.dig(it.id);
-    if (it.kind === 'deploy') return Game.deploy(it.id);
     if (it.action === 'pick_part') return Game.pickPart(it.partId);
     if (it.action === 'door') return Game.enterHabitat();
     if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);
@@ -601,6 +589,7 @@
     else if (e.code === 'KeyL') Game.openPanel('downlink');
     else if (e.code === 'KeyP') Game.openPanel('power');
     else if (e.code === 'KeyJ') Game.openPanel('log');
+    else if (e.code === 'KeyI') Game.openPanel('inventory');
   }
 
   /**

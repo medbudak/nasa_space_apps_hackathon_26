@@ -15,9 +15,11 @@
     { id: 'lab', icon: 'flask', station: 'lab' },
     { id: 'comms', icon: 'signal', station: 'comms' },
     { id: 'power', icon: 'power', station: 'power' },
+    { id: 'workshop', icon: 'wrench', station: 'workshop' },
+    { id: 'inventory', icon: 'doc', station: null },
     { id: 'log', icon: 'log', station: null }
   ];
-  const PANEL_ACTIONS = { lab: 'lab', comms: 'downlink', power: 'power', log: 'log' };
+  const PANEL_ACTIONS = { lab: 'lab', comms: 'downlink', power: 'power', log: 'log', workshop: 'workshop', inventory: 'inventory' };
 
   HP.stationToAction = (stationId) => {
     const c = CARDS.find((x) => x.station === stationId);

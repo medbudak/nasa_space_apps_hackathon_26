@@ -76,7 +76,9 @@
     }
     if (!s.lander) s.lander = { landed: s.sol >= 1 };
     // Kurulum öncesi kayıtlarda tüm yapılar hazırdı
-    if (!s.base) s.base = { solar: true, isru: true, greenhouse: true, mav: true };
+    if (!s.base) s.base = { solar: true, isru: true, greenhouse: true, mav: true, solarFrac: 1 };
+    if (typeof s.base.solarFrac !== 'number') s.base.solarFrac = 1;
+    if (s.inventory && !s.inventory.items) s.inventory.items = {};
     return s;
   };
 
@@ -143,7 +145,7 @@
       player: { x: -40, inside: true, facing: 1, zone: 'surface', cx: 0 },
       explore: blankExplore(D),
       // Üs sistemleri kargo sandıklarında iner; oyuncu kurar (ux-plan #8). Habitat ve iniş aracı hazırdır.
-      base: { solar: false, isru: false, greenhouse: false, mav: false },
+      base: { solar: false, isru: false, greenhouse: false, mav: false, solarFrac: 1 },
       lander: { landed: false },
       loads: [
         { id: 'life_support', on: true, shed: false },
@@ -161,7 +163,8 @@
       forensics,
       experiments,
       rewards: {},
-      inventory: { repairKits: 0, rhuUnits: 0, spareAntenna: false, roboticArmPart: false, wheelPart: false },
+      // items: atölye malzemeleri (kitler, enkaz parçaları) — S.Workshop
+      inventory: { repairKits: 0, rhuUnits: 0, spareAntenna: false, roboticArmPart: false, wheelPart: false, items: {} },
       crisis: { active: null, fired: {}, pending: [] },
       decisionLog: [],
       solHistory: [],
