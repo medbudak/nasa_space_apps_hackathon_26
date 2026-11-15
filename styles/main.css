@@ -1252,14 +1252,13 @@ body[data-scene='world'] .screen-layer { display: none; }
 .inv-use { display: flex; align-items: center; gap: 0.3em; color: var(--green) !important; }
 
 /* Sera büyüme evreleri (Kişi 6). .gh-art = evre görseli; Kişi 7'nin görselleri gelene kadar CSS yer tutucu */
-.gh-stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4em; margin: 0.2em 0 0.5em; }
+.gh-stages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4em; margin: 0.2em 0 0.5em; }
 .gh-step { display: flex; flex-direction: column; align-items: center; gap: 0.25em; padding: 0.4em 0.2em; border: 1px solid var(--line, #3a3430); border-radius: 6px; opacity: 0.45; }
 .gh-step small { font-size: 0.62em; text-align: center; }
 .gh-step.done { opacity: 0.75; }
 .gh-step.now { opacity: 1; border-color: var(--cyan, #3fe0e6); box-shadow: 0 0 0 1px var(--cyan, #3fe0e6) inset; }
 .gh-art { width: 32px; height: 32px; image-rendering: pixelated; background-repeat: no-repeat; background-position: center bottom;
   background-image: linear-gradient(#7a4a2c, #7a4a2c); background-size: 28px 6px; }
-.gh-art-seed { background-image: radial-gradient(circle at 50% 60%, #c9a46a 0 3px, transparent 4px), linear-gradient(#7a4a2c, #7a4a2c); background-size: 32px 32px, 28px 6px; }
 .gh-art-germination { background-image: linear-gradient(#5fbf4a, #5fbf4a), radial-gradient(ellipse at 50% 100%, #7fd85a 0 5px, transparent 6px), linear-gradient(#7a4a2c, #7a4a2c);
   background-size: 2px 8px, 16px 14px, 28px 6px; background-position: center 20px, center 14px, center bottom; }
 .gh-art-sprout { background-image: linear-gradient(#4c9a3a, #4c9a3a), radial-gradient(ellipse at 30% 50%, #6fcf4f 0 6px, transparent 7px), radial-gradient(ellipse at 70% 50%, #6fcf4f 0 6px, transparent 7px), linear-gradient(#7a4a2c, #7a4a2c);
@@ -1267,3 +1266,15 @@ body[data-scene='world'] .screen-layer { display: none; }
 .gh-art-mature { background-image: radial-gradient(circle at 50% 55%, #3f8f34 0 9px, #5fbf4a 10px 12px, transparent 13px), radial-gradient(circle at 50% 50%, #8a2f24 0 4px, transparent 5px), linear-gradient(#7a4a2c, #7a4a2c);
   background-size: 32px 28px, 32px 28px, 28px 6px; background-position: center top, center top, center bottom; }
 .gh-sci { font-size: 0.66em; opacity: 0.75; margin-top: 0.5em; }
+/* Bitki seçimi (marul / turp / zinya) ve bitkiye özel olgun evre yer tutucuları */
+.gh-plants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4em; margin: 0 0 0.5em; }
+.gh-plant { display: flex; flex-direction: column; align-items: center; gap: 0.2em; padding: 0.45em 0.3em; font-family: inherit; font-size: 1em; color: inherit;
+  background: transparent; border: 1px solid var(--line, #3a3430); border-radius: 6px; cursor: pointer; }
+.gh-plant b { font-size: 0.72em; }
+.gh-plant small { font-size: 0.58em; opacity: 0.75; text-align: center; line-height: 1.25; }
+.gh-plant.sel { border-color: var(--cyan, #3fe0e6); box-shadow: 0 0 0 1px var(--cyan, #3fe0e6) inset; }
+.gh-art-radish-mature { background-image: radial-gradient(ellipse at 50% 62%, #d8344a 0 7px, transparent 8px), linear-gradient(#4c9a3a, #4c9a3a), radial-gradient(ellipse at 50% 100%, #6fcf4f 0 7px, transparent 8px), linear-gradient(#7a4a2c, #7a4a2c);
+  background-size: 32px 32px, 2px 8px, 18px 12px, 28px 6px; background-position: center, center 6px, center 0, center bottom; }
+.gh-art-zinnia-mature { background-image: radial-gradient(circle at 50% 30%, #ffd23a 0 3px, #ff6a2a 4px 8px, transparent 9px), linear-gradient(#4c9a3a, #4c9a3a), radial-gradient(ellipse at 30% 70%, #6fcf4f 0 5px, transparent 6px), radial-gradient(ellipse at 70% 70%, #6fcf4f 0 5px, transparent 6px), linear-gradient(#7a4a2c, #7a4a2c);
+  background-size: 32px 32px, 2px 16px, 24px 20px, 24px 20px, 28px 6px; background-position: center, center 10px, center 8px, center 8px, center bottom; }
+.gh-plant.sel small { color: inherit !important; opacity: 0.85; } /* genel ".sel small" kuralı açık zemin için; burada zemin koyu */

@@ -537,19 +537,49 @@ window.SOL14.DATA = {
    "germinationYieldBonusPct": 30,
    "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/",
    "growth": {
-    "stages": [
-     "seed",
-     "germination",
-     "sprout",
-     "mature"
-    ],
+    "defaultPlant": "lettuce",
     "harvestMinutes": 30,
-    "harvestFoodKg": 1,
-    "harvestMorale": 12,
-    "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/",
-    "note": "Veggie on the ISS grew red romaine lettuce from seed to harvest in about a month (33 days for the first crop eaten in 2015).",
     "simplified": true,
-    "simplifiedNote": "Growth is compressed for the 14-sol mission: one stage per sol in which the greenhouse is tended (seed -> germination -> sprout -> mature, so 3 tended sols instead of about a month). A skipped sol pauses growth; freezing resets it to seed. Harvest food (1 kg fresh lettuce, scaled by yield), 30 game minutes and +12 morale are game values."
+    "simplifiedNote": "Growth is compressed for the 14-sol mission: every plant shows three stages (germination, sprout, mature) and needs a number of tended sols to mature that keeps the real order (radish about 27 days < lettuce about 33 days < zinnia about 60 days to flower) as 2 < 3 < 4 tended sols. A skipped sol pauses growth; freezing kills the plant. Harvest amounts, 30 game minutes and morale gains are game values.",
+    "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/",
+    "plants": {
+     "lettuce": {
+      "stages": [
+       "germination",
+       "sprout",
+       "mature"
+      ],
+      "tendedSols": 3,
+      "harvestFoodKg": 1,
+      "harvestMorale": 12,
+      "src": "https://www.nasa.gov/missions/station/iss-research/growing-plants-in-space/",
+      "note": "Veggie grew red romaine lettuce from seed to harvest in about a month (33 days for the first crop eaten in 2015)."
+     },
+     "radish": {
+      "stages": [
+       "germination",
+       "sprout",
+       "mature"
+      ],
+      "tendedSols": 2,
+      "harvestFoodKg": 0.6,
+      "harvestMorale": 8,
+      "src": "https://www.nasa.gov/missions/station/astronauts-harvest-radish-crop-on-international-space-station/",
+      "note": "Plant Habitat-02 radishes were harvested on the station on day 27 (30 Nov 2020); chosen because they are edible and mature quickly."
+     },
+     "zinnia": {
+      "stages": [
+       "germination",
+       "sprout",
+       "mature"
+      ],
+      "tendedSols": 4,
+      "harvestFoodKg": 0,
+      "harvestMorale": 22,
+      "src": "https://www.nasa.gov/image-article/first-flower-grown-space-stations-veggie-facility-2/",
+      "note": "Veggie zinnias flowered in January 2016 after about 60 days; a harder crop that taught the team about care. Not food: in the game it gives morale only."
+     }
+    }
    }
   }
  },
@@ -1036,8 +1066,115 @@ window.SOL14.DATA = {
      "relay_kit": 1
     },
     "minutes": 30
+   },
+   {
+    "id": "greenhouse_l2",
+    "upgrade": "greenhouse",
+    "level": 2,
+    "requiresBuilt": "greenhouse",
+    "needs": {
+     "regolith_bag": 2,
+     "cable_spool": 1
+    },
+    "minutes": 40
+   },
+   {
+    "id": "greenhouse_l3",
+    "upgrade": "greenhouse",
+    "level": 3,
+    "requiresBuilt": "greenhouse",
+    "needs": {
+     "regolith_bag": 4,
+     "cable_spool": 1
+    },
+    "minutes": 60
+   },
+   {
+    "id": "station_l2",
+    "upgrade": "station",
+    "level": 2,
+    "needs": {
+     "regolith_bag": 3
+    },
+    "minutes": 60
+   },
+   {
+    "id": "station_l3",
+    "upgrade": "station",
+    "level": 3,
+    "needs": {
+     "regolith_bag": 5
+    },
+    "minutes": 90
+   },
+   {
+    "id": "rocket_l2",
+    "upgrade": "rocket",
+    "level": 2,
+    "requiresBuilt": "mav",
+    "needs": {
+     "regolith_bag": 2,
+     "cable_spool": 1
+    },
+    "minutes": 45
+   },
+   {
+    "id": "rocket_l3",
+    "upgrade": "rocket",
+    "level": 3,
+    "requiresBuilt": "mav",
+    "needs": {
+     "regolith_bag": 4,
+     "cable_spool": 1
+    },
+    "minutes": 60
    }
-  ]
+  ],
+  "upgrades": {
+   "simplified": true,
+   "placeholder": true,
+   "note": "Level 1-2-3 upgrades (Kişi 6). Every level is a trade-off, never only 'better'. All numbers are game values. PLACEHOLDER: the mineral costs use regolith bags until Kişi 5's mineral names are agreed; swap the item ids in the recipes above.",
+   "src": "https://www.spaceappschallenge.org/",
+   "greenhouse": {
+    "yieldBonusPct": [
+     0,
+     25,
+     50
+    ],
+    "extraPowerW": [
+     0,
+     40,
+     90
+    ],
+    "note": "More light and growing area: higher yield, but the greenhouse load draws more power, also at night."
+   },
+   "station": {
+    "uaFactor": [
+     1,
+     0.8,
+     0.65
+    ],
+    "evaMinutes": [
+     0,
+     60,
+     90
+    ],
+    "note": "Extra insulation layers on the hull lower the heat loss (UA); fitting them is outside work that uses suit O2 and battery."
+   },
+   "rocket": {
+    "fuelBonusPct": [
+     0,
+     2,
+     4
+    ],
+    "energyKwh": [
+     0,
+     4,
+     6
+    ],
+    "note": "Better seals and a colder storage line: each Sabatier batch keeps more propellant; the parts take minerals and a one-time charge from the habitat battery."
+   }
+  }
  },
  "station": {
   "simplified": true,
