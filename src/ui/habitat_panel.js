@@ -1,33 +1,25 @@
 /**
- * SOL 14: RED HORIZON — Habitat Kontrol Paneli (mockup 05) + eylem önizleme kartları (K3)
+ * SOL 14: RED HORIZON — Mekik içi kontrol paneli (K3; düzen Medine'nin prototipinden)
+ * Solda durum, ortada odadaki sırayla istasyon şeridi (önünde durduğun istasyon seçilir), sağda seçili istasyonun önizlemesi.
  */
 (function (S) {
   'use strict';
   const t = (k, v) => S.t(k, v);
   const I = (n) => S.UI.icon(n);
-  const HP = { selected: 'refill_suit', lastHtml: '' };
+  const HP = { selected: 'refill_suit', selStation: null, lastHtml: '' };
 
-  const CARDS = [
-    { id: 'refill_suit', icon: 'tank', station: 'locker' },
-    { id: 'charge_suit', icon: 'battery', station: 'charger' },
-    { id: 'repair_suit', icon: 'wrench', station: 'workbench' },
-    { id: 'sleep', icon: 'bed', station: 'bunk' },
-    { id: 'lab', icon: 'flask', station: 'lab' },
-    { id: 'comms', icon: 'signal', station: 'comms' },
-    { id: 'power', icon: 'power', station: 'power' },
-    { id: 'workshop', icon: 'wrench', station: 'workshop' },
-    { id: 'inventory', icon: 'doc', station: null },
-    { id: 'log', icon: 'log', station: null }
-  ];
+  // İstasyon → eylem (hava kilidi çıkış)
+  const STATION_ACTION = { locker: 'refill_suit', charger: 'charge_suit', workbench: 'repair_suit', bunk: 'sleep', lab: 'lab', comms: 'comms', power: 'power', workshop: 'workshop', airlock: 'exit' };
   const PANEL_ACTIONS = { lab: 'lab', comms: 'downlink', power: 'power', log: 'log', workshop: 'workshop', inventory: 'inventory' };
+  const STATION_ICON = { comms: 'signal', power: 'power', charger: 'battery', locker: 'tank', lab: 'flask', workshop: 'wrench', workbench: 'suit', bunk: 'bed', airlock: 'arrowL' };
 
-  HP.stationToAction = (stationId) => {
-    const c = CARDS.find((x) => x.station === stationId);
-    return c ? c.id : null;
-  };
+  HP.stationToAction = (stationId) => STATION_ACTION[stationId] || null;
 
   /** Önizleme verisi (mockup: SÜRE, değer değişimi, kaynak notu, zaman uyarısı) */
   HP.preview = function (s, id) {
+    if (id === 'exit') {
+      return { title: t('station.airlock'), lines: ['<p class="pv-desc">' + t('hp.exit_desc') + '</p>'], button: t('hp.exit'), can: null };
+    }
     if (PANEL_ACTIONS[id]) {
       return { title: t('action.' + id), lines: ['<p class="pv-desc">' + t('action.' + id + '.desc') + '</p>'], button: t('action.open'), can: null };
     }
@@ -68,65 +60,74 @@
     return '<div class="pv-row">' + I(icon) + '<span>' + label + '</span><b>' + value + '</b></div>';
   }
 
-  function statusRow(icon, label, pct, tone, valText) {
+  function statusRow(icon, label, pct, color, valText) {
     return (
-      '<div class="st-row">' + I(icon) + '<div class="st-main"><div class="st-head"><span>' + label + '</span><b>' + (valText || '%' + Math.round(pct)) + '</b></div>' +
-      S.UI.bar(pct, tone) + '</div></div>'
+      '<div class="hp-row">' + I(icon) + '<span>' + label + '</span><b>' + (valText || '%' + Math.round(pct)) + '</b>' +
+      '<div class="hp-bar"><i style="width:' + Math.max(0, Math.min(100, pct)) + '%;background:' + color + '"></i></div></div>'
     );
   }
+  const levelColor = (v) => (v < 25 ? 'var(--red)' : v < 50 ? 'var(--amber)' : 'var(--green)');
 
-  /* ---------------- Habitat alt paneli ---------------- */
+  /* ---------------- Mekik içi alt paneli ---------------- */
   HP.render = function (s) {
     const host = document.getElementById('habitat-panel');
     if (!host) return;
+    const stations = S.Surface.INTERIOR.stations;
     const near = S.Surface.nearestStation();
-    if (near && HP.lastStation !== near.id) {
-      HP.lastStation = near.id;
-      const a = HP.stationToAction(near.id);
-      if (a) HP.selected = a;
-    }
-    const pv = HP.preview(s, HP.selected) || { title: '', lines: [], button: '', can: null };
+    if (near && HP.lastStation !== near.id) HP.selStation = near.id; // önüne gelinen istasyon seçilir
+    HP.lastStation = near ? near.id : null;
+    if (!HP.selStation) HP.selStation = 'locker';
+    const sel = HP.selStation;
+    HP.selected = HP.stationToAction(sel);
+    const pv = HP.preview(s, HP.selected);
     const gh = S.HUD.greenhouseStatus(s);
+    const here = near ? t('hp.here', { name: t('station.' + near.id) }) : t('hp.go_station');
     const html =
       '<section class="panel hp-status"><h4>' + t('hp.status') + '</h4>' +
-      statusRow('o2', 'O₂', s.suit.o2, 'cyan') +
-      statusRow('battery', t('hp.suit_battery'), s.suit.battery, 'amber') +
-      statusRow('suit', t('hp.suit'), s.suit.integrity, s.suit.leak ? 'red' : 'cyan') +
-      statusRow('morale', t('hp.morale'), s.res.morale, 'cyan') +
+      statusRow('o2', t('hp.suit_o2'), s.suit.o2, levelColor(s.suit.o2)) +
+      statusRow('battery', t('hp.suit_battery'), s.suit.battery, levelColor(s.suit.battery)) +
+      statusRow('suit', t('hp.suit'), s.suit.integrity, s.suit.leak ? 'var(--red)' : 'var(--cyan)') +
+      statusRow('morale', t('hp.morale'), s.res.morale, 'var(--cyan)') +
       '<div class="hp-res"><span>' + I('tank') + s.res.o2ReserveKg.toFixed(1) + ' kg O₂</span><span>' + I('power') + s.res.energyKwh.toFixed(1) + ' kWh</span><span>💧 ' + Math.round(s.res.waterL) + ' L</span>' +
       (gh ? '<span class="hp-gh ' + gh.tone + '" title="' + S.util.escape(t('hp.greenhouse') + ': ' + gh.text) + '">' + I('leaf') + (s.greenhouse.frozen ? '✗' : '%' + s.greenhouse.yieldPct) + '</span>' : '') +
       '</div></section>' +
-      '<section class="panel hp-actions">' +
-      CARDS.map(
-        (c) =>
-          '<button class="act-card' + (HP.selected === c.id ? ' sel' : '') + (near && near.id === c.station ? ' near' : '') + '" data-act="' + c.id + '">' +
-          '<span class="act-ico">' + I(c.icon) + '</span><span class="act-name">' + t('action.' + c.id) + '</span></button>'
-      ).join('') +
-      '</section>' +
-      '<section class="panel hp-preview"><h4>' + t('hp.preview') + '</h4>' +
-      '<div class="pv-title">' + I(CARDS.find((c) => c.id === HP.selected).icon) + '<span>' + pv.title + '</span></div>' +
+      '<section class="panel hp-stations"><h4>' + t('hp.stations') + '</h4><div class="hp-strip" style="--n:' + stations.length + '">' +
+      stations
+        .map(
+          (st) =>
+            '<button type="button" class="hp-st' + (sel === st.id ? ' sel' : '') + (near && near.id === st.id ? ' near' : '') + '" data-st="' + st.id + '">' +
+            I(STATION_ICON[st.id] || 'target') + '<span>' + t('station.' + st.id) + '</span></button>'
+        )
+        .join('') +
+      '</div><p class="hp-hint"><span>' + here + '</span>' +
+      '<button type="button" data-panel="inventory">' + I('doc') + t('action.inventory') + ' <kbd>I</kbd></button>' +
+      '<button type="button" data-panel="log">' + I('log') + t('action.log') + ' <kbd>J</kbd></button></p></section>' +
+      '<section class="panel hp-preview"><div class="pv-title">' + I(STATION_ICON[sel] || 'target') + '<span>' + pv.title + '</span></div>' +
       pv.lines.join('') +
       (pv.can ? '<p class="pv-err">' + I('x') + t(pv.can) + '</p>' : '') +
-      '<button class="btn btn-primary btn-block" data-run ' + (pv.can ? 'disabled' : '') + '>' + pv.button + '</button></section>' +
-      '<button class="btn btn-exit" data-exit>' + I('arrowL') + t('hp.exit') + '</button>';
+      '<button type="button" class="hp-go" data-run ' + (pv.can ? 'disabled' : '') + '>' + pv.button + (near && near.id === sel ? ' <kbd>E</kbd>' : '') + '</button></section>';
     if (html === HP.lastHtml) return;
     HP.lastHtml = html;
     host.innerHTML = html;
-    host.querySelectorAll('[data-act]').forEach((b) =>
+    host.querySelectorAll('[data-st]').forEach((b) =>
       b.addEventListener('click', () => {
-        HP.selected = b.dataset.act;
+        HP.selStation = b.dataset.st;
         HP.lastHtml = '';
         S.bus.emit('audio:play', 'click');
         HP.render(S.getState());
       })
     );
+    host.querySelectorAll('[data-panel]').forEach((b) => b.addEventListener('click', () => HP.run(b.dataset.panel)));
     host.querySelector('[data-run]').addEventListener('click', () => HP.run(HP.selected));
-    host.querySelector('[data-exit]').addEventListener('click', () => S.Game.exitHabitat());
   };
 
   HP.run = function (id) {
     const s = S.getState();
     S.bus.emit('audio:play', 'click');
+    if (id === 'exit') {
+      S.Game.exitHabitat();
+      return;
+    }
     if (PANEL_ACTIONS[id]) {
       S.Game.openPanel(PANEL_ACTIONS[id]);
       return;

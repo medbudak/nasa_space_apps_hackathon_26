@@ -306,7 +306,6 @@ window.SOL14.STORY = {
   "hp.suit": "Elbise Bütünlüğü",
   "hp.morale": "Moral",
   "hp.greenhouse": "Sera",
-  "hp.preview": "ÖNİZLEME",
   "hp.exit": "Hava kilidinden çık",
   "pv.duration": "SÜRE",
   "pv.morale": "Moral",
@@ -1838,7 +1837,12 @@ window.SOL14.STORY = {
   "cc.minigame.patch": "Mini oyun: yama",
   "zone.yardangs": "Yardang Sırtları",
   "zone.buttes": "Katmanlı Tepeler",
-  "zone.dunes_east": "Doğu Kum Tepeleri"
+  "zone.dunes_east": "Doğu Kum Tepeleri",
+  "hp.suit_o2": "Elbise O₂",
+  "hp.stations": "İSTASYONLAR",
+  "hp.here": "Buradasın: {name}",
+  "hp.go_station": "Bir istasyonun önüne yürü ya da şeritten seç.",
+  "hp.exit_desc": "Elbise O₂ ve bataryası dolu mu? Dışarıda her dakika elbiseden gider; dönüş yolunu hesaba kat."
  },
  "en": {
   "ui.back": "Back",
@@ -2145,7 +2149,6 @@ window.SOL14.STORY = {
   "hp.suit": "Suit Integrity",
   "hp.morale": "Morale",
   "hp.greenhouse": "Greenhouse",
-  "hp.preview": "PREVIEW",
   "hp.exit": "Exit through the airlock",
   "pv.duration": "DURATION",
   "pv.morale": "Morale",
@@ -3677,6 +3680,11 @@ window.SOL14.STORY = {
   "cc.minigame.patch": "Minigame: patch",
   "zone.yardangs": "Yardang Ridges",
   "zone.buttes": "Layered Buttes",
-  "zone.dunes_east": "Eastern Dunes"
+  "zone.dunes_east": "Eastern Dunes",
+  "hp.suit_o2": "Suit O₂",
+  "hp.stations": "STATIONS",
+  "hp.here": "You are at: {name}",
+  "hp.go_station": "Walk up to a station or pick one from the strip.",
+  "hp.exit_desc": "Are suit O₂ and battery full? Outside, every minute comes out of the suit; count the walk back."
  }
 };
