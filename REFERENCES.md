@@ -106,6 +106,7 @@ Say which tool was used, and where and how. AI-generated images and videos need 
 | Tool | Used for | Where in the project |
 |---|---|---|
 | Claude (Anthropic), via Claude Code | Wrote the first version of the code skeleton and tests; values were checked against the NASA and NIST pages listed above | `index.html`, `src/main.js`, `src/core/`, `src/scenes/ending.js`, `src/data/nasa_data.json`, `tests/` |
+| Gemini, Adobe Firefly (AI-assisted pixel-art tools) and custom pixel-drawing scripts | In-game pixel art and UI icons, adjusted to the SOL 14 palette (statement by K4 on branch `nursedef`, 2026-11-15) | `assets/` (incl. `assets/ui/*.png`, `assets/interior/*`, `assets/screens/scr_ship_*`) |
 | Claude (Anthropic), via Claude Code | D-012 map, ice route, lava-tube sub-map, landing cutscene: code, procedural pixel drawing (lander, ice, boulders, cave), TR/EN texts and tests; sources checked against the NASA/JPL pages listed above | `src/systems/explore.js`, `src/fx/lander.js`, `src/fx/effects.js`, `data/explore_config.json`, `content/story.json`, `tests/explore.test.js` |
 
 ## Simplified values
