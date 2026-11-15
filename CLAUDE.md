@@ -26,10 +26,9 @@ npm start                      # npx serve . -l 8080   (or: python -m http.serve
 
 - `http://localhost:8080/?demo=1` is the judges' quick mode (5 sols); `?lang=en` starts in English.
 - The game must also run by double-clicking `index.html` (`file://`).
-- `node --test` on Node 22+ wants a **glob, not a folder**: `node --test "tests/*.test.js"`. A bare `node --test` also collects `_legacy/tests`.
+- `node --test` on Node 22+ wants a **glob, not a folder**: `node --test "tests/*.test.js"`.
 - No Node on a machine? VS Code's Electron can run as Node: set `ELECTRON_RUN_AS_NODE=1` and call `Code.exe tools/build.js data`. In PowerShell pipe the output through `| Out-String` or it is lost.
 - Browser check: Edge headless (`msedge --headless=new --allow-file-access-from-files --virtual-time-budget=5000 --screenshot=...`). Modal and toast entry animations come out half transparent in screenshots; inject `*{animation:none!important}` when checking.
-- **Do not run the PowerShell "sync" script in `CLAUDE_PROMPTS.md`.** It belongs to v2 (ES modules + `dist/app.bundle.js`); v3 has no `src/core/nasa_data.js`, `story_data.js` or `dist/`. Use `node tools/build.js data` instead.
 
 ## Real architecture (where it differs from the design docs)
 
@@ -45,9 +44,8 @@ npm start                      # npx serve . -l 8080   (or: python -m http.serve
 
 ## Folders
 
-- `_legacy/`: the old v2 (ES modules) version. **Reference only: do not run or edit.** `_legacy/content/story.json` has full TR/EN texts that can feed the new `content/story.json`.
-- The Turkish-named `*.png` files in the root are the original images; the game uses the mapped copies under `assets/` (mapping: `ARCHITECTURE.md` §3).
-- `menü tasarım örnekleri/`: reference images for the menu UI. PDFs: design doc v2, roadmap, K4 task card (design sources).
+- `assets/`: original images (build input) and `assets/processed/` (what the game loads). The old root copies and the v2 `_legacy/` folder were removed; both are in git history.
+- `docs/design/`: design sources: PDFs (design doc v2, roadmap, K4 task card), `menu-references/` (menu UI reference images), `ai-image-prompts.md` (image prompt library), `prompt-panel-cleaning-and-watering.md` (panel-cleaning and watering task spec).
 
 ## How decisions are made
 
@@ -179,4 +177,4 @@ Update this section as things change.
 
 ## Document map
 
-`README.md` (concept) · `REQUIREMENTS.md` (M1–M9) · `PLAN.md` (30-hour plan) · `ARCHITECTURE.md` · `API.md` · `DESIGN.md` · `TESTING.md` · `DEPLOYMENT.md` · `RULES.md` · `CONTRIBUTING.md` · `SECURITY.md` · `CHANGELOG.md` · `CLAUDE_PROMPTS.md` · `sol_14_red_horizon_t_m_g_rseller_i_in_ai_prompt_k_t_phanesi.md` (image prompt library) · `docs/decisions/` · `docs/submission/`
+`README.md` (concept) · `REQUIREMENTS.md` (M1–M9) · `PLAN.md` (30-hour plan) · `ARCHITECTURE.md` · `API.md` · `DESIGN.md` · `TESTING.md` · `DEPLOYMENT.md` · `RULES.md` · `CONTRIBUTING.md` · `SECURITY.md` · `CHANGELOG.md` · `docs/design/` (design sources, image prompt library) · `docs/decisions/` · `docs/submission/`

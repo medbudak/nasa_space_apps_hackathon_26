@@ -1,7 +1,9 @@
 /* =====================================================================
    SOL 14: RED HORIZON — Arayüz Stilleri (K3)
    Görsel dil: "menü tasarım örnekleri" mockup'ları — koyu paneller, turuncu ana eylem,
-   camgöbeği çubuklar, pixel-art sahne. Tüm ölçüler em (sahneye göre ölçeklenir: --k).
+   camgöbeği çubuklar, pixel-art sahne. Tüm ölçüler em: 1em = 16px · min(vw/960, vh/540), yani 960×540
+   tasarımı pencereye sığacak kadar ölçeklenir. Sahne pencerenin tamamını kaplar (siyah bant yok); öğeler
+   sahnenin kenarlarına bağlıdır, böylece 16:9 dışı pencerelerde artan alan ortada/kenarlarda boş kalır.
    ===================================================================== */
 :root {
   --bg0: #0f1015;
@@ -22,8 +24,8 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: #07080b; color: var(--text); font-family: var(--font); overflow: hidden; }
-body { display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; width: 100%; height: 100%; background: #07080b; color: var(--text); font-family: var(--font); overflow: hidden; }
+body { -webkit-tap-highlight-color: transparent; }
 button { font-family: inherit; color: inherit; }
 kbd {
   display: inline-block; padding: 0.05em 0.4em; border: 1px solid var(--line2); border-bottom-width: 2px;
@@ -32,9 +34,12 @@ kbd {
 [hidden] { display: none !important; }
 
 /* ---------------- Sahne ---------------- */
-.stage { position: relative; width: 960px; height: 540px; background: #000; overflow: hidden; box-shadow: 0 0 60px rgba(0,0,0,0.8); }
+/* Sahne = pencere. JS'ten önce de doğru: boyut ve yazı ölçeği yalnızca CSS ile; JS yalnızca tuvalin iç
+   çözünürlüğünü pencere oranına uyarlar (main.js fitStage), bu yüzden tuval %100 uzatılınca pikseller kare kalır. */
+.stage { position: fixed; inset: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
 #game { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
-.ui { position: absolute; inset: 0; font-size: calc(16px * var(--k, 1)); pointer-events: none; }
+.ui { position: absolute; inset: 0; font-size: min(1.66667vw, 2.96296vh); pointer-events: none; }
+@supports (height: 100dvh) { .ui { font-size: min(1.66667vw, 2.96296dvh); } }
 .ui > * { pointer-events: auto; }
 .screen-layer, .hud-layer, .modal-layer, .toast-layer { position: absolute; inset: 0; }
 .hud-layer { pointer-events: none; }
@@ -125,6 +130,9 @@ kbd {
 .toast.warn { border-left-color: var(--amber); }
 .toast.danger { border-left-color: var(--red); }
 .toast.out { opacity: 0; transform: translateY(-0.6em); }
+/* Dünyada bildirimler HUD uyarı bantlarının altında ve sol/sağ panellerin arasındaki sütunda kalır */
+body[data-scene='world'] .toast-layer { padding-top: calc(4.3em + var(--hud-alerts-h, 0px)); }
+body[data-scene='world'] .toast { max-width: 25em; }
 @keyframes toastIn { from { opacity: 0; transform: translateY(-0.6em); } }
 
 /* ---------------- HUD ---------------- */
@@ -173,7 +181,8 @@ kbd {
 .ponr-jump { position: absolute; top: 0.25em; height: 0.3em; background: repeating-linear-gradient(90deg, rgba(255,80,60,0.9) 0 0.35em, transparent 0.35em 0.55em); }
 .ponr-jump span { position: absolute; top: 50%; left: 100%; transform: translate(0.55em, -50%); font-size: 0.62em; font-weight: 900; color: #fff; background: var(--red); padding: 0 0.35em; border-radius: 0.25em; white-space: nowrap; }
 
-.minimap { position: absolute; left: 50%; bottom: 0.9em; transform: translateX(-50%); width: 30em; padding: 0.45em 0.7em; background: rgba(18,19,24,0.82); border: 1px solid var(--line); border-radius: 0.5em; }
+/* Genişlik, sağ alttaki hızlı erişim çubuğuna (≈16em) çarpmayacak kadar: 16:9'da 26em, geniş pencerede en çok 30em */
+.minimap { position: absolute; left: 50%; bottom: 0.9em; transform: translateX(-50%); width: min(30em, calc(100% - 34em)); padding: 0.45em 0.7em; background: rgba(18,19,24,0.82); border: 1px solid var(--line); border-radius: 0.5em; }
 .mm-track { position: relative; height: 0.9em; background: rgba(255,255,255,0.06); border-radius: 0.3em; }
 .mm-reach { position: absolute; top: 0; bottom: 0; background: rgba(63,224,230,0.18); border-right: 2px solid var(--cyan); }
 .mm-base { position: absolute; top: 0; bottom: 0; background: rgba(240,101,42,0.4); border-radius: 0.3em 0 0 0.3em; }
@@ -185,11 +194,11 @@ kbd {
 .mm-player.beyond { border-top-color: var(--red); }
 .mm-legend { font-size: 0.62em; color: var(--muted); margin-top: 0.35em; text-align: center; }
 
-.world-prompt { position: absolute; top: 35%; transform: translateX(-50%); display: flex; align-items: center; gap: 0.5em; padding: 0.45em 0.8em; background: rgba(15,16,20,0.92); border: 1px solid var(--cyan); border-radius: 0.45em; font-size: 0.82em; font-weight: 700; white-space: nowrap; cursor: pointer; animation: bob 1.4s ease-in-out infinite; box-shadow: 0 0 1em rgba(63,224,230,0.25); }
+.world-prompt { position: absolute; top: 35%; transform: translateX(-50%); display: flex; align-items: center; gap: 0.5em; padding: 0.45em 0.8em; background: rgba(15,16,20,0.92); border: 1px solid var(--cyan); border-radius: 0.45em; font-size: 0.82em; font-weight: 700; width: max-content; max-width: 22em; line-height: 1.25; cursor: pointer; animation: bob 1.4s ease-in-out infinite; box-shadow: 0 0 1em rgba(63,224,230,0.25); }
 .world-prompt::after { content: ''; position: absolute; bottom: -0.55em; left: 50%; transform: translateX(-50%); border: 0.5em solid transparent; border-bottom: 0; border-top-color: var(--cyan); }
 .world-prompt.wreck { border-color: var(--orange2); box-shadow: 0 0 1em rgba(240,101,42,0.35); }
 .world-prompt.wreck::after { border-top-color: var(--orange2); }
-.world-prompt kbd { background: var(--cyan); color: #071014; border-color: #9ff6f8; }
+.world-prompt kbd { flex: none; background: var(--cyan); color: #071014; border-color: #9ff6f8; }
 .world-prompt.wreck kbd { background: var(--orange); color: #fff; border-color: var(--orange2); }
 @keyframes bob { 50% { transform: translate(-50%, -0.25em); } }
 
@@ -208,7 +217,9 @@ kbd {
 }
 
 /* ---------------- Habitat paneli (mockup 05) ---------------- */
-.habitat-panel { position: absolute; left: 0.9em; right: 0.9em; bottom: 0.9em; height: 41%; display: grid; grid-template-columns: 1fr 2.1fr 1.35fr; gap: 0.7em; }
+/* Yükseklik em: 16:9'daki %41 (13.85em) her pencere oranında aynı kalır, tuvaldeki kesitin zemini panelin üstünde
+   görünür (effects.js renderInterior kesiti aynı oranda öteler). Geniş pencerede panel 16:9 genişliğinde ortalanır. */
+.habitat-panel { position: absolute; left: 0.9em; right: 0.9em; bottom: 0.9em; height: 13.85em; max-width: 58.2em; margin: 0 auto; display: grid; grid-template-columns: 1fr 2.1fr 1.35fr; gap: 0.7em; }
 .habitat-panel > .panel { padding: 0.8em 0.9em; overflow: hidden; }
 .hp-status { display: flex; flex-direction: column; gap: 0.45em; }
 .st-row { display: flex; align-items: center; gap: 0.6em; padding: 0.3em 0.5em; border: 1px solid var(--line); border-radius: 0.4em; background: rgba(255,255,255,0.02); }
@@ -249,7 +260,8 @@ kbd {
 .modal-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1.2em; }
 .modal-backdrop { position: absolute; inset: 0; background: rgba(5,6,10,0.62); animation: fadeIn 0.18s; }
 .modal-box { position: relative; max-width: 100%; max-height: 100%; animation: popIn 0.2s ease-out; display: flex; }
-.modal-box > * { max-height: calc(540px * var(--k, 1) - 2.4em); overflow: auto; }
+.modal-box > * { max-height: calc(100vh - 2.4em); overflow: auto; }
+@supports (height: 100dvh) { .modal-box > * { max-height: calc(100dvh - 2.4em); } }
 @keyframes fadeIn { from { opacity: 0; } }
 @keyframes popIn { from { opacity: 0; transform: translateY(0.6em) scale(0.98); } }
 .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 1em; margin-bottom: 0.7em; }
@@ -581,7 +593,7 @@ kbd {
 .transit-track { position: absolute; top: 4.6em; left: 2em; right: 2em; display: flex; align-items: center; gap: 0.8em; font-weight: 800; font-size: 0.8em; text-transform: uppercase; }
 .tt-earth { color: var(--blue); }
 .tt-mars { color: var(--orange2); }
-.tt-line { position: relative; flex: 1; height: 0.35em; background: rgba(255,255,255,0.15); border-radius: 1em; }
+.tt-line { position: relative; flex: 1; margin: 0 0.9em; height: 0.35em; background: rgba(255,255,255,0.15); border-radius: 1em; }
 .tt-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--orange)); border-radius: 1em; }
 .tt-ship { position: absolute; top: 50%; transform: translate(-50%, -50%) rotate(90deg); color: #fff; }
 .tt-ship .ico { width: 1.6em; height: 1.6em; filter: drop-shadow(0 0 0.4em #fff); }
@@ -599,7 +611,44 @@ kbd {
 .edl small { font-size: 0.75em; color: #ffd2bb; }
 .edl-on .cs-bg { filter: sepia(0.6) saturate(2) hue-rotate(-20deg) brightness(0.9); }
 .cs-skip { position: absolute; top: 4.2em; right: 1.2em; z-index: 3; }
-.transit-track ~ .cs-skip { top: 6.6em; }
+/* Transit görev zinciri: solda sorun kartı, sağda Geç + gemi durumu; çubuk yalnızca görev bitince ilerler */
+.tt-mark { position: absolute; top: 50%; width: 0.7em; height: 0.7em; margin: -0.35em 0 0 -0.35em; border-radius: 50%; background: #1b1d24; border: 2px solid var(--line2); }
+.tt-mark.ok { background: var(--green); border-color: #a6f5cb; }
+.tt-mark.degraded { background: var(--red); border-color: #ffb0a8; }
+.tk-card { width: 30em; max-height: calc(100% - 9em); overflow: auto; display: flex; flex-direction: column; gap: 0.45em; }
+.tk-card.tk-in { animation: popIn 0.25s ease-out; }
+.tk-card h2 { display: flex; align-items: center; gap: 0.4em; margin: 0; }
+.tk-card h2 .ico { color: var(--orange2); flex: none; }
+.tk-row { display: grid; grid-template-columns: 8.2em 1fr; gap: 0.6em; align-items: baseline; }
+.tk-row span { font-size: 0.64em; font-weight: 900; letter-spacing: 0.12em; color: var(--cyan); }
+.cs-panel .tk-row p { margin: 0; font-size: 0.8em; }
+.tk-stake, .tk-result { font-weight: 600; line-height: 1.4; }
+.tk-stake b { color: #fff; }
+.tk-start { align-self: flex-start; margin-top: 0.2em; }
+.tk-side { position: absolute; top: 6.4em; right: 1.5em; width: 17em; display: flex; flex-direction: column; gap: 0.45em; z-index: 3; }
+.tk-skip { align-self: flex-end; }
+.tk-skip.armed { border-color: var(--amber); color: var(--amber); }
+.tk-skipnote { align-self: flex-end; text-align: right; font-size: 0.66em; font-weight: 700; color: #ffd27a; text-shadow: 0 0.1em 0.3em #000; }
+.cs-ship { padding: 0.75em 0.9em; background: rgba(14,14,18,0.86); border: 1px solid var(--line); border-radius: 0.55em; }
+.cs-ship h4 { display: flex; align-items: center; gap: 0.4em; margin: 0 0 0.5em; font-size: 0.68em; font-weight: 900; letter-spacing: 0.15em; color: var(--orange2); }
+.cs-ship .cs-tlm { grid-template-columns: 1fr 1fr; }
+.cs-ship .cs-tlm div:last-child { grid-column: 1 / -1; }
+.tk-sys { display: flex; flex-direction: column; gap: 0.3em; margin-bottom: 0.6em; }
+.tk-sys-row { display: grid; grid-template-columns: auto 1fr auto; column-gap: 0.45em; align-items: center; padding-bottom: 0.3em; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.tk-sys-row .ico { color: var(--muted); }
+.tk-sys-row.ok .ico { color: var(--green); }
+.tk-sys-row.degraded .ico { color: var(--red); }
+.tk-sys-row span { font-size: 0.78em; font-weight: 700; }
+.tk-sys-row small { grid-column: 2 / 4; font-size: 0.66em; color: var(--muted); }
+.tk-sys-row.degraded small { color: #ffb0a8; }
+/* Retro daktilo alt yazısı: tek aralıklı, harf harf, yanıp sönen imleç. Ortası sağdaki panelin solunda kalır (5.6em × 1.7 ≈ 9.5em) */
+.cs-type { position: absolute; left: calc(50% - 5.6em); top: 40%; transform: translate(-50%, -50%); z-index: 2; padding: 0.45em 0.9em; white-space: nowrap; font: 700 1.7em/1.2 'Courier New', Consolas, monospace; letter-spacing: 0.12em; color: var(--cyan); text-shadow: 0 0 0.45em rgba(63,224,230,0.75); background: repeating-linear-gradient(0deg, rgba(5,6,10,0.78) 0 2px, rgba(5,6,10,0.62) 2px 4px); border: 1px solid rgba(63,224,230,0.35); border-radius: 0.2em; display: grid; }
+/* EDL kutusu daktilonun yerine, ortaya gelir (sağdaki gemi paneliyle çakışmaz) */
+.transit .edl { right: auto; bottom: auto; left: calc(50% - 9.5em); top: 40%; transform: translate(-50%, -50%); align-items: center; z-index: 2; }
+.cs-type > span { grid-area: 1 / 1; }
+.cs-type-ghost { visibility: hidden; }
+.cs-caret { display: inline-block; width: 0.55em; height: 1em; margin-left: 0.12em; vertical-align: -0.12em; background: currentColor; animation: caretBlink 0.9s steps(1) infinite; }
+@keyframes caretBlink { 50% { opacity: 0; } }
 .cs-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
 .cs-flash.on { animation: flash 0.9s; }
 @keyframes flash { 0% { opacity: 0.95; } 100% { opacity: 0; } }
@@ -636,7 +685,8 @@ kbd {
 .end-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 2em 2.4em; background: linear-gradient(0deg, rgba(0,0,0,0.85), transparent); }
 .end-cap h2 { margin: 0; font-size: 1.8em; text-transform: uppercase; letter-spacing: 0.06em; animation: slideIn 0.8s both; }
 .end-cap p { margin: 0.4em 0 0; color: #e2ddd5; font-size: 0.95em; animation: slideIn 0.8s 0.3s both; }
-.glint::after { content: ''; position: absolute; left: 62%; top: 34%; width: 1em; height: 1em; border-radius: 50%; background: #c8fbff; box-shadow: 0 0 1.5em 0.6em rgba(140,240,255,0.8); animation: glint 1.2s ease-in-out infinite alternate; }
+/* Parıltı arka plan görüntüsündeki (cover ile ortalanmış 16:9) ışığa bağlı: 16:9'da %62/%34, diğer oranlarda görüntüyle kayar */
+.glint::after { content: ''; position: absolute; left: calc(50% + 0.12 * max(100vw, 177.78vh)); top: calc(50% - 0.16 * max(100vh, 56.25vw)); width: 1em; height: 1em; border-radius: 50%; background: #c8fbff; box-shadow: 0 0 1.5em 0.6em rgba(140,240,255,0.8); animation: glint 1.2s ease-in-out infinite alternate; }
 @keyframes glint { from { opacity: 0.3; transform: scale(0.7); } to { opacity: 1; transform: scale(1.3); } }
 
 .last-tx .lt-dim { background: rgba(18,10,10,0.82); }

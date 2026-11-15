@@ -156,8 +156,9 @@
     }
     S.bus.emit('audio:play', 'launch');
     Game.setScene('transit');
-    S.Cutscenes.playTransit((repair) => {
-      S.Sim.land(S.getState(), repair);
+    // Transit görev sonuçları { arrays, leak, tcm, thermal } -> iniş kaynakları (Sim.transitOutcome)
+    S.Cutscenes.playTransit((transit) => {
+      S.Sim.land(S.getState(), transit);
       S.saveGame();
       Game.enterWorld();
       S.UI.toast(t('toast.landed', { site: t('site.' + s.design.landingSiteId + '.name') }), 'ok', 4200);
@@ -173,7 +174,7 @@
     s.scene = 'surface';
     Game.setScene('world');
     S.Surface.syncFromState(s);
-    S.FX.camX = S.Surface.body.px - 640 * 0.42;
+    S.FX.focusCamera(S.Surface.body.px);
     S.HUD.build(s.player.inside ? 'habitat' : 'surface');
     if (s.player.inside) S.HabitatPanel.show();
   };
@@ -182,7 +183,7 @@
     const s = S.getState();
     S.Surface.exitHabitat(s);
     S.HUD.build('surface');
-    S.FX.camX = S.Surface.body.px - 640 * 0.42;
+    S.FX.focusCamera(S.Surface.body.px);
   };
 
   Game.enterHabitat = function () {
@@ -334,7 +335,7 @@
         const input = { dir: Input.dir(), jump: Input.consumeJump() };
         if (s.player.inside) S.Surface.updateInterior(s, dt, input);
         else S.Surface.update(s, dt, input);
-        S.Sim.step(s, dt * S.DATA.gameplay.gameMinutesPerRealSecond);
+        S.Sim.step(s, dt * S.Sim.gameMinutesPerRealSecond(s));
       } else {
         S.Surface.body.moving = false;
       }
@@ -393,14 +394,24 @@
     else if (e.code === 'KeyJ') Game.openPanel('log');
   }
 
+  /**
+   * Sahne her zaman pencerenin tamamını kaplar (CSS: .stage position:fixed; inset:0) — siyah bant yok.
+   * Arayüz yazı ölçeği CSS'te: 1em = 16px · min(vw/960, vh/540). Burada yalnızca tuvalin iç çözünürlüğü
+   * pencere oranına uyarlanır: 640×360 tasarım alanı her zaman tam görünür, artan eksen daha fazla dünya
+   * gösterir (geniş pencere: yanlar, uzun pencere: gökyüzü). Pikseller kare kalır, sanat bozulmaz.
+   */
   function fitStage() {
-    const stage = document.getElementById('stage');
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const scale = Math.min(vw / 960, vh / 540);
-    stage.style.width = Math.floor(960 * scale) + 'px';
-    stage.style.height = Math.floor(540 * scale) + 'px';
-    stage.style.setProperty('--k', scale.toFixed(4));
+    const vw = Math.max(1, window.innerWidth);
+    const vh = Math.max(1, window.innerHeight);
+    const scale = Math.min(vw / S.FX.BASE_W, vh / S.FX.BASE_H);
+    const w = Math.max(S.FX.BASE_W, Math.round(vw / scale));
+    const h = Math.max(S.FX.BASE_H, Math.round(vh / scale));
+    if (Game.canvas.width !== w || Game.canvas.height !== h) {
+      Game.canvas.width = w;
+      Game.canvas.height = h;
+      Game.ctx.imageSmoothingEnabled = false;
+    }
+    S.FX.setView(w, h);
   }
 
   /* ================================================================ */

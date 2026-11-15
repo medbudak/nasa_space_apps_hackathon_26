@@ -5,9 +5,23 @@
  */
 (function (S) {
   'use strict';
-  const W = 640;
-  const H = 360;
+  /** Tasarım alanı: tüm dünya koordinatları (zemin y=300, habitat kesiti) 640×360 içinde çizilir */
+  const BASE_W = 640;
+  const BASE_H = 360;
+  /** Kamera, oyuncuyu ekran genişliğinin bu oranında tutar */
+  const CAM_LEAD = 0.42;
+  /**
+   * Gerçek tuval boyutu (main.js fitStage pencere oranına göre ayarlar; en az 640×360).
+   * Geniş pencerede W büyür (yanlarda daha fazla dünya), uzun pencerede H büyür: fazlası üstte gökyüzü olur,
+   * yani dünya OFF_Y kadar aşağı kayar ve zemin/HUD ilişkisi 16:9'daki gibi kalır.
+   */
+  let W = BASE_W;
+  let H = BASE_H;
+  let OFF_Y = 0;
   const FX = {
+    BASE_W,
+    BASE_H,
+    view: { w: BASE_W, h: BASE_H, offY: 0 },
     camX: -300,
     shake: 0,
     stormVis: 0,
@@ -94,6 +108,40 @@
 
   FX.worldToScreen = (px) => Math.round(px - FX.camX);
 
+  /** main.js fitStage: tuvalin iç çözünürlüğü değişti */
+  FX.setView = function (w, h) {
+    W = Math.max(BASE_W, Math.round(w));
+    H = Math.max(BASE_H, Math.round(h));
+    OFF_Y = H - BASE_H;
+    FX.view = { w: W, h: H, offY: OFF_Y };
+  };
+
+  /** Kamerayı oyuncuya anında hizala (sahneye giriş / habitattan çıkış) */
+  FX.focusCamera = function (px) {
+    FX.camX = px - W * CAM_LEAD;
+  };
+
+  /**
+   * Tasarım alanındaki bir ekran noktasını (x: tuval pikseli, y: 640×360 tasarım y'si) sahnenin yüzdesine çevirir.
+   * DOM'daki dünya-bağlı öğeler (ör. [E] etkileşim balonu) tuvalle hizalı kalsın diye.
+   */
+  FX.toStagePct = function (x, yBase) {
+    return { left: (x / W) * 100, top: ((yBase + OFF_Y) / H) * 100 };
+  };
+
+  /** Tam tuval kaplaması (dünya OFF_Y kadar ötelenmişken de üst şeridi örter) */
+  function fillView(ctx) {
+    ctx.fillRect(0, -OFF_Y, W, H);
+  }
+
+  /** Görüntüyü tuvali kaplayacak şekilde, en-boy oranını bozmadan ortalayarak çizer (CSS object-fit: cover; tuval koordinatı) */
+  function drawCover(ctx, img) {
+    const k = Math.max(W / img.width, H / img.height);
+    const dw = Math.round(img.width * k);
+    const dh = Math.round(img.height * k);
+    ctx.drawImage(img, Math.round((W - dw) / 2), Math.round((H - dh) / 2), dw, dh);
+  }
+
   /* ------------------------------------------------------------------ */
   function drawSprite(ctx, key, x, y, flip, alpha) {
     const img = S.Sprites.get(key);
@@ -133,7 +181,7 @@
     const light = S.Art.lighting(minute);
 
     // Kamera
-    const target = Math.max(Surf.worldLeftPx(), Math.min(Surf.worldRightPx() - W + 60, body.px - W * 0.42));
+    const target = Math.max(Surf.worldLeftPx(), Math.min(Surf.worldRightPx() - W + 60, body.px - W * CAM_LEAD));
     FX.camX += (target - FX.camX) * Math.min(1, dt * 6);
     if (Math.abs(target - FX.camX) > 400) FX.camX = target;
 
@@ -143,13 +191,17 @@
       ctx.translate(Math.round((Math.random() - 0.5) * 6 * Math.min(1, FX.shake)), Math.round((Math.random() - 0.5) * 4 * Math.min(1, FX.shake)));
     }
 
-    // Gökyüzü + sırtlar + zemin
-    S.Art.drawSky(ctx, site, minute, W, H);
+    // Gökyüzü tuvalin tamamını kaplar; geri kalan her şey tasarım koordinatında, OFF_Y kadar aşağıda çizilir
+    S.Art.drawSky(ctx, site, minute, W, H, { horizonY: 250 + OFF_Y });
+    ctx.save();
+    ctx.translate(0, OFF_Y);
+
+    // Sırtlar + zemin
     S.Art.drawRidges(ctx, site, minute, FX.camX, W);
     const markers = [];
     for (let m = 100; m <= S.DATA.gameplay.maxEvaRangeM; m += 100) markers.push({ px: Surf.mToPx(m), label: m + 'm' });
     const sandPits = S.DATA.terrain.sandPits.map((p) => ({ x0: Surf.mToPx(p.fromM), x1: Surf.mToPx(p.toM) }));
-    S.Art.drawGround(ctx, site, minute, FX.camX, W, H, GY, { markers, sandPits, revealSand: S.Sim.has(s, 'ingenuity') });
+    S.Art.drawGround(ctx, site, minute, FX.camX, W, BASE_H, GY, { markers, sandPits, revealSand: S.Sim.has(s, 'ingenuity') });
 
     // Buz yatağı (RIMFAX)
     if (S.Sim.has(s, 'rimfax')) {
@@ -295,13 +347,14 @@
     ctx.globalAlpha = 1;
     if (FX.stormVis > 0.02) {
       ctx.fillStyle = 'rgba(176, 82, 38,' + FX.stormVis * 0.45 + ')';
-      ctx.fillRect(0, 0, W, H);
+      fillView(ctx);
       const sv = S.Sprites.get('vfx_dust_storm');
       if (sv) {
-        const off = (t * 120) % W;
+        // Toz dokusu tuval yüksekliğine ölçeklenir ve yatayda döşenir (oran korunur, uzatma yok)
+        const tw = Math.max(1, Math.round((sv.width * H) / sv.height));
+        const off = (t * 120) % tw;
         ctx.globalAlpha = FX.stormVis * 0.55;
-        ctx.drawImage(sv, -off, 0, W, H);
-        ctx.drawImage(sv, W - off, 0, W, H);
+        for (let x = -off; x < W; x += tw) ctx.drawImage(sv, Math.round(x), -OFF_Y, tw, H);
         ctx.globalAlpha = 1;
       }
     }
@@ -309,7 +362,7 @@
     // Gece karartması + ışıklar
     if (light.dark > 0.02) {
       ctx.fillStyle = 'rgba(6, 8, 22,' + light.dark * 0.5 + ')';
-      ctx.fillRect(0, 0, W, H);
+      fillView(ctx);
       // Kask lambası konisi
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
@@ -326,7 +379,7 @@
     }
     if (light.dusk > 0.05) {
       ctx.fillStyle = 'rgba(80, 130, 200,' + light.dusk * 0.12 + ')';
-      ctx.fillRect(0, 0, W, H);
+      fillView(ctx);
     }
 
     // Halüsinasyon (moral düşük)
@@ -340,19 +393,20 @@
     if (FX.toxic > 0) {
       FX.toxic -= dt;
       ctx.fillStyle = 'rgba(190, 210, 60,' + Math.min(0.22, FX.toxic * 0.03) + ')';
-      ctx.fillRect(0, 0, W, H);
+      fillView(ctx);
     }
     if (FX.heat > 0) {
       FX.heat -= dt;
       ctx.fillStyle = 'rgba(255, 60, 30,' + Math.min(0.15, FX.heat * 0.02) + ')';
-      ctx.fillRect(0, 0, W, H);
+      fillView(ctx);
     }
     if (FX.flare > 0) {
       FX.flare = Math.max(0, FX.flare - dt * 0.4);
       ctx.fillStyle = 'rgba(255, 250, 220,' + FX.flare * 0.6 + ')';
-      ctx.fillRect(0, 0, W, H);
+      fillView(ctx);
     }
     FX.drawFloats(ctx, dt, GY);
+    ctx.restore(); // dünya ötelemesi (OFF_Y) biter; vizör ve parazit tüm tuvale çizilir
     FX.drawVisorFrost(ctx, s);
     FX.drawGlitch(ctx, dt);
     ctx.restore();
@@ -367,7 +421,7 @@
     const img = S.Sprites.get(s.suit.frozen ? 'vfx_frost_2' : 'vfx_frost_1');
     if (img) {
       ctx.globalAlpha = a;
-      ctx.drawImage(img, 0, 0, W, H);
+      drawCover(ctx, img);
       ctx.globalAlpha = 1;
     }
   };
@@ -393,14 +447,17 @@
   /* ---------------- Habitat içi ---------------- */
   FX.renderInterior = function (ctx, s, dt, t) {
     const st = S.Surface.nearestStation();
-    S.Art.drawInterior(ctx, s, st ? st.id : null, t);
+    // 640 px'lik kesit geniş tuvalde ortalanır; uzun tuvalde yüzeydeki gibi OFF_Y kadar aşağı iner,
+    // böylece alttaki habitat paneliyle (em ölçülü) ilişkisi her pencere oranında 16:9'daki gibi kalır.
+    const ox = Math.round((W - BASE_W) / 2);
+    S.Art.drawInterior(ctx, s, st ? st.id : null, t, { w: W, h: H, ox, oy: OFF_Y });
     const body = S.Surface.body;
     const pose = body.moving ? 'walk' : 'idle';
     const img = S.Sprites.get('astronaut_' + pose);
     if (img) {
       let y = S.Surface.INTERIOR.floorY + 1 - img.height;
       if (body.moving && Math.abs(Math.sin(t * 9)) > 0.5) y -= 1;
-      drawSprite(ctx, 'astronaut_' + pose, body.ix - img.width / 2, y, s.player.facing < 0);
+      drawSprite(ctx, 'astronaut_' + pose, ox + body.ix - img.width / 2, OFF_Y + y, s.player.facing < 0);
     }
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);

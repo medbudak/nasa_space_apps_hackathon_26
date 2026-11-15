@@ -103,7 +103,7 @@ sol14-red-horizon/
 
 ## 3. Görsel Varlık (Asset) Eşleme Tablosu
 
-Kök dizinde bulunan **32 adet üretilmiş PNG görseli**, `sol_14_red_horizon_t_m_g_rseller_i_in_ai_prompt_k_t_phanesi.md` içindeki standart dosya adlarına aşağıdaki şekilde eşlenir:
+Kök dizinde bulunan **32 adet üretilmiş PNG görseli**, `docs/design/ai-image-prompts.md` içindeki standart dosya adlarına aşağıdaki şekilde eşlenir:
 
 | Kök Dizindeki Mevcut Dosya Adı | Hedef `assets/` Yolu | Açıklama / Kullanım Yeri |
 | :--- | :--- | :--- |

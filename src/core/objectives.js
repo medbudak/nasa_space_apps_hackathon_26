@@ -77,6 +77,8 @@
     if (outside) {
       const ponr = S.Sim.ponr(s);
       if (ponr.critical || s.suit.leak) return goal('return', { m: ponr.distanceM });
+      // Elbise bataryası bitti: ısıtıcı durdu, eklem donmasına kadar uyarılı bir pencere var
+      if (s.suit.battery <= 0) return goal('return_cold', { m: ponr.distanceM });
     } else if (s.suit.leak) return goal('repair_suit');
 
     // 2) Son Sol: MAV
@@ -143,7 +145,7 @@
   O.compute = function (s) {
     if (!s || s.sol < 1 || s.ending || s.gameOver) return null;
     const main = O.mainGoal(s);
-    const critical = ['return', 'repair_suit', 'mav_fuel', 'mav_launch', 'return_night'].includes(main.id);
+    const critical = ['return', 'return_cold', 'repair_suit', 'mav_fuel', 'mav_launch', 'return_night'].includes(main.id);
     return { main, optional: critical ? null : O.optionalGoal(s, main), progress: O.progress(s) };
   };
 
