@@ -111,22 +111,24 @@ test('Lav tüneli: damar matkapla delinir; matkap yoksa delinmez (Kişi 4 aleti)
   s.player.cx = st.atM;
   S.Surface.syncFromState(s);
   assert.ok(S.Surface.interactables(s).some((it) => it.kind === 'mineral' && it.id === st.id), 'tünelde damar etkileşimi');
-  const cfg = S.DATA.explore.minerals;
-  const ph = cfg.toolPlaceholder;
-  cfg.toolPlaceholder = false;
-  try {
-    s.inventory.tools = Object.assign({}, s.inventory.tools, { drill: false });
-    const no = X.digMineral(s, st.id);
-    assert.equal(no.ok, false);
-    assert.equal(no.errKey, 'mineral.need_drill');
-    assert.notEqual(S.t(no.errKey), no.errKey);
-    s.inventory.tools.drill = true; // Kişi 4: matkap atölyede kurulunca inventory.tools.drill
-    const r = digOut(S, s, st.id);
-    assert.ok(r.done);
-    assert.equal(X.mineralCount(s, st.mineral), st.amount);
-  } finally {
-    cfg.toolPlaceholder = ph;
-  }
+  s.inventory.tools = Object.assign({}, s.inventory.tools, { drill: false });
+  const no = X.digMineral(s, st.id);
+  assert.equal(no.ok, false);
+  assert.equal(no.errKey, 'mineral.need_drill');
+  assert.notEqual(S.t(no.errKey), no.errKey);
+  s.inventory.tools.drill = true; // Kişi 4: matkap atölyede kurulunca inventory.tools.drill
+  const r = digOut(S, s, st.id);
+  assert.ok(r.done);
+  assert.equal(X.mineralCount(s, st.mineral), st.amount);
+});
+
+test('Başlangıçta matkap yok (atölyede kurulur): tünel damarı delinmez; kazma ve tarayıcı varken yüzey kazısı normal hızda', () => {
+  const { S, s } = landed();
+  const X = S.Explore;
+  assert.equal(X.hasTool(s, 'drill'), false);
+  assert.equal(X.digFactor(s), 1);
+  s.inventory.tools.pickaxe = false;
+  assert.equal(X.digFactor(s), S.DATA.tools.noPickaxeDigFactor, 'kazma yoksa vuruş daha uzun');
 });
 
 test('Harcama (tamir / yükseltme): yetmezse hiçbir şeye dokunmaz; yeterse düşer', () => {

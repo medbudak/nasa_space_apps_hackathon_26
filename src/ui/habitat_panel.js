@@ -9,9 +9,9 @@
   const HP = { selected: 'refill_suit', selStation: null, lastHtml: '' };
 
   // İstasyon → eylem (hava kilidi çıkış)
-  const STATION_ACTION = { locker: 'refill_suit', charger: 'charge_suit', workbench: 'repair_suit', bunk: 'sleep', lab: 'lab', comms: 'comms', power: 'power', workshop: 'workshop', airlock: 'exit' };
+  const STATION_ACTION = { locker: 'refill_suit', charger: 'charge_suit', workbench: 'repair_suit', bunk: 'sleep', lab: 'lab', comms: 'comms', power: 'power', workshop: 'workshop', bottles: 'bottle', airlock: 'exit' };
   const PANEL_ACTIONS = { lab: 'lab', comms: 'downlink', power: 'power', log: 'log', workshop: 'workshop', inventory: 'inventory' };
-  const STATION_ICON = { comms: 'signal', power: 'power', charger: 'battery', locker: 'tank', lab: 'flask', workshop: 'wrench', workbench: 'suit', bunk: 'bed', airlock: 'arrowL' };
+  const STATION_ICON = { comms: 'signal', power: 'power', charger: 'battery', locker: 'tank', lab: 'flask', workshop: 'wrench', workbench: 'suit', bunk: 'bed', bottles: 'tank', airlock: 'arrowL' };
 
   HP.stationToAction = (stationId) => STATION_ACTION[stationId] || null;
 
@@ -22,6 +22,11 @@
   HP.preview = function (s, id) {
     if (id === 'exit') {
       return { title: t('station.airlock'), lines: ['<p class="pv-desc">' + t('hp.exit_desc') + '</p>'], button: t('hp.exit'), can: null };
+    }
+    // D-016 (K2 Sude): hava kilidinin yanındaki şişe rafı (al / bırak)
+    if (id === 'bottle') {
+      const has = S.Sim.bottle(s);
+      return { title: t('station.bottles'), lines: ['<p class="pv-desc">' + t('hp.bottle_desc') + '</p>'], button: t(has ? 'bottle.rack_put' : 'bottle.rack_take'), can: null };
     }
     if (PANEL_ACTIONS[id]) {
       return { title: t('action.' + id), lines: ['<p class="pv-desc">' + t('action.' + id + '.desc') + '</p>'], button: t('action.open'), can: null };
@@ -105,7 +110,8 @@
     if (!HP.selStation) HP.selStation = 'locker';
     const sel = HP.selStation;
     HP.selected = HP.stationToAction(sel);
-    const pv = HP.preview(s, HP.selected);
+    // Tanınmayan bir istasyon paneli çökertmesin (her karede hata = oyun saati durur): adını göster
+    const pv = HP.preview(s, HP.selected) || { title: t('station.' + sel), lines: [], button: t('action.start'), can: null };
     const gh = S.HUD.greenhouseStatus(s);
     const here = near ? t('hp.here', { name: t('station.' + near.id) }) : t('hp.go_station');
     const html =
@@ -164,6 +170,12 @@
       S.Game.sleep();
       return;
     }
+    if (id === 'bottle') {
+      S.Game.bottleRack();
+      HP.lastHtml = '';
+      return;
+    }
+    if (!S.Sim.actions[id]) return;
     const res = S.Sim.doAction(s, id);
     if (!res.ok) S.UI.toast(t(res.errKey), 'warn');
     else S.UI.toast(I('check') + t('action.done.' + id), 'ok');
