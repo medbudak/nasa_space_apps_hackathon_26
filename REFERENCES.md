@@ -101,6 +101,7 @@ Include open-source and free items too. Note the license.
 | `docs/design/references/lava-tube-reference.png` | this repository | Supplied by the team as a mock-up (origin to be confirmed; has UI text baked in, so it is a design reference only and is not shipped in the game) | Palette and layout reference for the procedural lava-tube scene (`src/fx/effects.js` `renderCave`) — D-012 |
 | `docs/design/references/lander-reference.png` | this repository | Supplied by the team as the crew-lander mock-up (origin to be confirmed; Mars background baked in, so it is a design reference only and is not shipped in the game) | Art reference for the opening landing cutscene lander — D-012 |
 | Landing cutscene lander and lava-tube scene | this repository | Procedural pixel art drawn in code (`src/fx/lander.js`, `src/fx/effects.js`) | Opening landing sequence and the lava-tube sub-map — D-012 |
+| VT323 font (`assets/fonts/VT323-Regular.ttf`, embedded in `styles/fonts.css`) | https://github.com/google/fonts/tree/main/ofl/vt323 | SIL Open Font License 1.1 (`assets/fonts/OFL-VT323.txt`) | The single retro UI font for every panel, card, HUD and canvas label |
 | `assets/ui/field_cam.png` (FIELD CAM camera body) | this repository | Supplied by K3 (Medine) with the world prototype (origin to be confirmed) | Photo-evidence minigame frame (`src/ui/field_cam.js`) |
 | `assets/sprites/astronaut_indoor.png` (crew member inside the shuttle) | this repository | Supplied by K4 (Sedef) on branch `nursedef` (see the K4 AI-tool statement under Use of AI) | Shuttle deck walk during the transit tasks |
 | Western ice field, eastern lava-plain scenery, dig mounds, SCOUT-1 parts | this repository | Procedural pixel art drawn in code by the team (K2 `src/fx/westlands.js`, K3 prototype ported to `src/fx/dig_fx.js`) | Glacier and lava-plain routes |
@@ -177,3 +178,4 @@ Real-world values that were changed or rounded for gameplay.
 | `explore.cave.scout` (SCOUT-1 rover, fictional) and `explore.westFinds` | Game values; SCOUT-1 and the cargo lander are fictional | see `data/explore_config.json` | Vehicle finds in the tube and on the glacier |
 | `explore.fieldCam` | Game values | 40 s, focus tolerance 0.04 | FIELD CAM photo minigame |
 | `gameplay.cargoBonus` | K4 (Sedef) rule; game values | margin > 15% → +4 kg O₂, +10 L water at landing | Free payload mass carries consumables |
+| `gameplay.deploy` (minutes and minigame per base system) | Game values (ux-plan #8) | solar 30 min, ISRU 40, greenhouse 30, MAV 45 | Base systems land in crates and are set up by the player |

@@ -12,6 +12,7 @@ Player feedback after the first full playthrough of v3, turned into tasks. Goal:
 | 7 | Suit temperature: battery/heater lasts ~8 h at −80 °C; dead-battery cooling 0.025 → 0.004 /min (~1 h to return) | `116aa65` |
 | 5 | Sol 0 tooltips (What · Why · What changes) on every prep option and instrument; real effects for repair kits, MOXIE, Ingenuity, data volume, launch window | local-wip, merged 2026-11-15 |
 | 9 | Missions by action: no automatic discovery; wrecks are dug out, the skylight is dug open, SCOUT-1 parts and evidence photos need FIELD CAM; goals follow what was done | D-013, merge 2026-11-15 |
+| 8 | Base systems built by the player: solar array, ISRU/MOXIE, greenhouse and MAV land in cargo crates; E + minigame + game minutes; no solar power before the array, no fuel before ISRU + MAV | `Sim.deploy`, `gameplay.deploy` |
 | 6 | Transit: 4-task engineering chain (arrays `align`, O2 leak `wires`, TCM `qte`, thermal `converter`); bar moves only on completion; typewriter "GEZEGENE YAKLAŞILIYOR..."; outcomes feed landing (`gameplay.transit`, `Sim.transitOutcome`); skip asks twice and degrades | transit commit |
 
 ## To do (in this order)
