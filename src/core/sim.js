@@ -23,6 +23,27 @@
   Sim.has = (s, instrumentId) => s.design.instruments.includes(instrumentId);
   Sim.clockMinute = (s) => s.minute % 1480;
   Sim.ambient = (s) => E().ambientTempAt(Sim.site(s), Sim.clockMinute(s));
+
+  /**
+   * Extra cold in the western ice field (FICTIONAL game values, data terrain.westRegion.cold).
+   * extraC: added to the ambient temperature, growing with the ice (same ramp as the visuals).
+   * bleedCPerMin: suit heat lost beyond what the heaters can replace, from deepColdFromM to the wall.
+   */
+  Sim.westCold = function (s) {
+    const w = D().terrain.westRegion;
+    const none = { extraC: 0, bleedCPerMin: 0 };
+    if (!w || !w.cold || s.player.inside) return none;
+    const d = -s.player.x;
+    if (d <= w.frostStartM) return none;
+    const ramp = (a, b) => {
+      const x = Math.min(1, Math.max(0, (d - a) / (b - a)));
+      return x * x * (3 - 2 * x);
+    };
+    return {
+      extraC: w.cold.extraColdC * ramp(w.frostStartM, w.iceFullM),
+      bleedCPerMin: w.cold.deepColdBleedCPerMin * Math.max(0, Math.min(1, (d - w.cold.deepColdFromM) / (w.iceWallFromM - w.cold.deepColdFromM)))
+    };
+  };
   Sim.tod = (s) => E().timeOfDay(Sim.clockMinute(s));
   Sim.airlockX = 0;
   Sim.distanceFromHab = (s) => Math.abs(s.player.x - Sim.airlockX);
@@ -32,7 +53,13 @@
   /** M4 — Dönüşsüzlük noktası durumu (normal hız vs. donmuş eklem hızı) */
   Sim.ponr = function (s) {
     const dist = Sim.distanceFromHab(s);
-    const sandFactor = 1;
+    // the way home runs east, with the (FICTIONAL) blizzard behind you: a little slower there
+    const bz = D().terrain.westRegion && D().terrain.westRegion.blizzard;
+    let sandFactor = 1;
+    if (bz && !s.player.inside) {
+      const x = Math.min(1, Math.max(0, (-s.player.x - bz.fromM) / (bz.fullM - bz.fromM)));
+      sandFactor = 1 - (1 - bz.tailwindSpeedFactor) * x * x * (3 - 2 * x);
+    }
     const normal = E().calcPointOfNoReturnO2({ distanceM: dist, jointFrozen: false, leak: s.suit.leak, speedFactor: sandFactor });
     const required = E().calcPointOfNoReturnO2({ distanceM: dist, jointFrozen: s.suit.frozen, leak: s.suit.leak, speedFactor: sandFactor });
     return {
@@ -350,13 +377,16 @@
     if (outside) {
       const o2Factor = (suit.leak ? eva.suitLeakO2Multiplier : 1) * (s.rewards.evaO2Factor || 1);
       suit.o2 = Math.max(0, suit.o2 - eva.suitO2PctPerMin * o2Factor * dt);
-      const heater = (eva.suitHeaterPctPerMinPer100C * Math.max(0, -ambientC)) / 100;
+      // the western ice field is colder: the heaters work harder there, and deep in it they lose
+      const wc = Sim.westCold(s);
+      const localC = ambientC + wc.extraC;
+      const heater = (eva.suitHeaterPctPerMinPer100C * Math.max(0, -localC)) / 100;
       const integrityPenalty = suit.integrity < 50 ? 1.5 : 1;
       suit.battery = Math.max(0, suit.battery - (eva.suitBatteryBasePctPerMin + heater) * integrityPenalty * dt);
       if (suit.battery > 0) {
-        suit.tempC = round1(Math.min(eva.suitNominalC, suit.tempC + dt * 0.4));
+        suit.tempC = round1(Math.min(eva.suitNominalC, suit.tempC + dt * 0.4 - wc.bleedCPerMin * dt));
       } else {
-        suit.tempC = round1(suit.tempC + (ambientC - suit.tempC) * Math.min(1, eva.suitCoolingFracPerMin * dt));
+        suit.tempC = round1(suit.tempC + (localC - suit.tempC) * Math.min(1, eva.suitCoolingFracPerMin * dt) - wc.bleedCPerMin * dt);
       }
       s.stats.minutesOutside += dt;
       s.stats.maxDistanceM = Math.max(s.stats.maxDistanceM, Sim.distanceFromHab(s));
@@ -370,7 +400,9 @@
     if (outside && !suit.frozen && suit.tempC <= eva.jointFreezeSuitC) {
       suit.frozen = true;
       S.bus.emit('eva:frozen', { distanceM: Sim.distanceFromHab(s) });
-      if (!s.crisis.active) S.Events.trigger(s, 'joint_freeze', { dynamic: true });
+      // Frozen by the deep cold of the ice field: the joints stiffen (slower walk, higher M4 notch)
+      // but the heaters still work, so no heater-failure card that would also empty the battery.
+      if (!s.crisis.active && Sim.westCold(s).bleedCPerMin <= 0) S.Events.trigger(s, 'joint_freeze', { dynamic: true });
     } else if (suit.frozen && suit.tempC > eva.jointFreezeSuitC + 6) {
       suit.frozen = false;
       S.bus.emit('eva:unfrozen', {});

@@ -94,8 +94,8 @@ window.SOL14.DATA = {
   },
   "eva": {
    "simplified": true,
-   "simplifiedNote": "speedMPerMin and the suit percentages are game values. NASA xEVA planning assumes about 2 km/h (33 m/min) walking and up to 8 h EVAs; BVAD gives 0.086 kg O2 per EVA hour.",
-   "speedMPerMin": 45,
+   "simplifiedNote": "speedMPerMin and the suit percentages are game values. speedMPerMin is 90 so that the on-screen walk matches the slower EVA clock (gameplay.evaGameMinutesPerRealSecond); NASA xEVA planning assumes about 2 km/h (33 m/min) walking and up to 8 h EVAs; BVAD gives 0.086 kg O2 per EVA hour.",
+   "speedMPerMin": 90,
    "frozenSpeedFactor": 0.4,
    "suitO2PctPerMin": 0.5,
    "pointOfNoReturnSafetyFactor": 1.2,
@@ -130,6 +130,7 @@ window.SOL14.DATA = {
  },
  "gameplay": {
   "gameMinutesPerRealSecond": 4,
+  "evaGameMinutesPerRealSecond": 2,
   "solStartMinute": 360,
   "sunriseMinute": 360,
   "sunsetStartMinute": 1080,
@@ -579,7 +580,143 @@ window.SOL14.DATA = {
   "wreckVisibleWithoutDroneM": 160,
   "iceDigMinutes": 40,
   "iceDigWaterL": 6,
-  "src": "https://science.nasa.gov/mission/mer-spirit/"
+  "src": "https://science.nasa.gov/mission/mer-spirit/",
+  "westRegion": {
+   "src": "https://science.nasa.gov/mission/phoenix/",
+   "note": "Phoenix found water ice just under the surface and saw frost form on the ground: the basis for an icy area.",
+   "simplified": true,
+   "simplifiedNote": "K2 TRIAL. The western ice field, its lost cargo lander, the ice wall and every distance here are FICTIONAL game values on a compressed map, to be labelled as fiction in the game and on the project page. Distances are metres west of the airlock. The ice blocks across the glacier path, the hits needed to dig through them and the game minutes per hit are game values too. The trail signs follow what was really seen: Spirit dragged its broken right-front wheel from 2006 and left a furrow; HiRISE imaged Phoenix's parachute, backshell and heat-shield mark; Beagle 2 landed on airbags.",
+   "baseEdgeM": 140,
+   "endM": 5350,
+   "frostStartM": 280,
+   "iceFullM": 1500,
+   "screenFrostFromM": 700,
+   "screenFrostFullM": 2300,
+   "screenFrostHeavyFromM": 2000,
+   "iceWallFromM": 5000,
+   "spiritTrack": {
+    "fromM": 420,
+    "toM": 1138,
+    "dragFromM": 620
+   },
+   "craters": [
+    {
+     "atM": 1240,
+     "widthPx": 34
+    },
+    {
+     "atM": 1275,
+     "widthPx": 26
+    },
+    {
+     "atM": 1305,
+     "widthPx": 44
+    }
+   ],
+   "debrisFromM": 1320,
+   "vehicleAtM": 1460,
+   "iceCave": {
+    "atM": 1460,
+    "hitsToBreak": 6,
+    "minutesPerHit": 3,
+    "breakRangeM": 34,
+    "src": "https://www.jpl.nasa.gov/news/steep-slopes-on-mars-reveal-structure-of-buried-ice/",
+    "note": "Thick ice lies under a thin cover of rock and dust and is exposed where slopes erode.",
+    "simplified": true,
+    "simplifiedNote": "FICTIONAL: a walk-in cave in an ice bank has not been observed on Mars; it stands in for the buried ice exposed at scarps. The lost lander sealed inside it, the 6 hits needed to break the ice and 3 game minutes per hit are game values."
+   },
+   "iceVoids": [
+    1560,
+    2060
+   ],
+   "polygons": {
+    "fromM": 1600,
+    "toM": 2000,
+    "src": "https://science.nasa.gov/mission/phoenix/",
+    "note": "Phoenix landed among ice-rich polygons: patterned ground made by ice expanding and contracting."
+   },
+   "glacier": {
+    "fromM": 2120,
+    "toM": 5000,
+    "src": "https://www.jpl.nasa.gov/news/steep-slopes-on-mars-reveal-structure-of-buried-ice/",
+    "note": "Ice capped by a layer of ice-cemented rock and dust, exposed as blue ice at a steep scarp at its edge."
+   },
+   "parts": [
+    {
+     "id": "engine",
+     "atM": 1478,
+     "hiddenIn": "cave"
+    },
+    {
+     "id": "panel",
+     "atM": 2060,
+     "hiddenIn": "void"
+    },
+    {
+     "id": "wheel",
+     "atM": 2200,
+     "hiddenIn": "overhang"
+    }
+   ],
+   "partRevealM": 70,
+   "phoenixSigns": {
+    "heatShieldAtM": 1730,
+    "chuteAtM": 1765
+   },
+   "beagleBounces": [
+    2250,
+    2295,
+    2330,
+    2355
+   ],
+   "beagleOverhangM": 2380,
+   "iceBarriers": [
+    {
+     "atM": 2150,
+     "hits": 4
+    },
+    {
+     "atM": 2560,
+     "hits": 6
+    },
+    {
+     "atM": 2950,
+     "hits": 8
+    }
+   ],
+   "blizzard": {
+    "fromM": 2700,
+    "fullM": 3500,
+    "headwindSpeedFactor": 0.45,
+    "tailwindSpeedFactor": 0.85,
+    "src": "https://www.jpl.nasa.gov/news/nasa-mars-lander-sees-falling-snow-soil-data-suggest-liquid-past/",
+    "note": "Phoenix's lidar saw snow falling from clouds about 4 km above its site; the snow evaporated before reaching the ground.",
+    "simplified": true,
+    "simplifiedNote": "FICTIONAL: a ground blizzard that slows a walker has not been observed on Mars, and the thin air could not push a person this hard. Walking west into it drops to 45% speed, east with it to 85%, both at full strength from 3500 m. Game values, to be labelled as fiction."
+   },
+   "finalProbe": {
+    "atM": 4955,
+    "hits": 5,
+    "revealM": 160,
+    "rangeM": 26,
+    "src": "https://science.nasa.gov/missions/mars-polar-lander",
+    "note": "Deep Space 2 (Amundsen and Scott): two microprobes carried by Mars Polar Lander in 1999, built to bury their forebody about 1 m into the south polar ground and look for water ice, while the aftbody stayed on the surface to relay data. All three were lost on arrival.",
+    "simplified": true,
+    "simplifiedNote": "FICTIONAL placement: the probes were never found; putting one here, its 5 hits to dig out and its glint are game choices."
+   },
+   "barrierMinutesPerHit": 3,
+   "barrierRangeM": 30,
+   "pickupRangeM": 14,
+   "eastTrailM": 170,
+   "cold": {
+    "extraColdC": -35,
+    "deepColdFromM": 1900,
+    "deepColdBleedCPerMin": 1.2,
+    "src": "https://science.nasa.gov/mission/phoenix/",
+    "simplified": true,
+    "simplifiedNote": "FICTIONAL game values. The ice field is up to 35 C colder than the landing site, and from 1900 m the cold pulls heat out of the suit faster than its heaters can replace (up to 1.2 C per game minute at the ice wall). Phoenix, at a high northern latitude, measured the colder conditions that inspire this, but these numbers are not its measurements."
+   }
+  }
  },
  "scoring": {
   "forensicCorrectPoints": 100,
@@ -681,7 +818,7 @@ window.SOL14.DATA = {
     "agency": "NASA / JPL",
     "lastContact": "2010-03-22 (Sol 2210)",
     "realCoords": "Gusev / Troy 14.57°S 175.47°E",
-    "distanceM": 900,
+    "distanceM": -1150,
     "sprite": "rover_spirit",
     "correctCategory": "mechanical",
     "acceptedSecondary": "thermal",
@@ -703,7 +840,7 @@ window.SOL14.DATA = {
     "agency": "NASA / UArizona",
     "lastContact": "2008-11-02 (Sol 157)",
     "realCoords": "Vastitas Borealis 68.22°N 234.25°E",
-    "distanceM": 1160,
+    "distanceM": -1800,
     "sprite": "lander_phoenix",
     "correctCategory": "thermal",
     "acceptedSecondary": "mechanical",
@@ -724,7 +861,7 @@ window.SOL14.DATA = {
     "agency": "ESA / UK",
     "lastContact": "2003-12-25 (MRO HiRISE 2015)",
     "realCoords": "Isidis Planitia 11.53°N 90.43°E",
-    "distanceM": 1450,
+    "distanceM": -2380,
     "sprite": "lander_beagle2",
     "correctCategory": "comms",
     "acceptedSecondary": "mechanical",

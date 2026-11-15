@@ -263,14 +263,17 @@
   /** Mini harita: üs, enkazlar, buz, oyuncu ve O2'nin izin verdiği dönüş menzili */
   HUD.updateMinimap = function (s, ponr) {
     const maxM = S.DATA.gameplay.maxEvaRangeM;
-    const minM = -140;
+    const west = S.DATA.terrain.westRegion;
+    const minM = west ? -west.endM : -140;
+    const baseM = west ? -west.baseEdgeM : minM;
     const pos = (m) => ((m - minM) / (maxM - minM)) * 100;
     const eva = S.DATA.constants.eva;
     const v = eva.speedMPerMin * (s.suit.frozen ? eva.frozenSpeedFactor : 1);
     const rate = eva.suitO2PctPerMin * (s.suit.leak ? eva.suitLeakO2Multiplier : 1) * eva.pointOfNoReturnSafetyFactor;
     const reach = Math.max(0, Math.min(maxM, (s.suit.o2 / rate) * v));
-    let h = '<div class="mm-reach" style="left:' + pos(0) + '%;width:' + (pos(reach) - pos(0)) + '%"></div>';
-    h += '<div class="mm-base" style="left:' + pos(minM) + '%;width:' + (pos(0) - pos(minM)) + '%"></div>';
+    const reachW = Math.max(minM, -reach);
+    let h = '<div class="mm-reach" style="left:' + pos(reachW) + '%;width:' + (pos(reach) - pos(reachW)) + '%"></div>';
+    h += '<div class="mm-base" style="left:' + pos(baseM) + '%;width:' + (pos(0) - pos(baseM)) + '%"></div>';
     for (const c of S.Forensics.cases()) {
       const rec = s.forensics[c.id];
       const known = S.Forensics.identified(s, c);

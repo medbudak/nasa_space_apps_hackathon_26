@@ -113,13 +113,13 @@
       if (needE && !needF) return goal('lab', expVars);
       if (needF) {
         const dist = Math.round(Math.abs(needF.distanceM - s.player.x));
-        return S.Forensics.identified(s, needF) ? goal('wreck_go', { name: needF.name, dist }) : goal('wreck_signal', { dist });
+        return S.Forensics.identified(s, needF) ? goal('wreck_go', { name: needF.name, dist }) : goal('wreck_signal', { dist, dir: S.t(needF.distanceM < s.player.x ? 'dir.west' : 'dir.east') });
       }
       if (needE) return goal('lab', expVars);
     } else {
       if (needF) {
         const dist = Math.round(Math.abs(needF.distanceM - s.player.x));
-        return S.Forensics.identified(s, needF) ? goal('wreck_go', { name: needF.name, dist }) : goal('wreck_signal', { dist });
+        return S.Forensics.identified(s, needF) ? goal('wreck_go', { name: needF.name, dist }) : goal('wreck_signal', { dist, dir: S.t(needF.distanceM < s.player.x ? 'dir.west' : 'dir.east') });
       }
       if (needE) return goal('lab_go', expVars);
     }

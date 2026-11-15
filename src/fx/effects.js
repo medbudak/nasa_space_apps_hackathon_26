@@ -150,6 +150,8 @@
     for (let m = 100; m <= S.DATA.gameplay.maxEvaRangeM; m += 100) markers.push({ px: Surf.mToPx(m), label: m + 'm' });
     const sandPits = S.DATA.terrain.sandPits.map((p) => ({ x0: Surf.mToPx(p.fromM), x1: Surf.mToPx(p.toM) }));
     S.Art.drawGround(ctx, site, minute, FX.camX, W, H, GY, { markers, sandPits, revealSand: S.Sim.has(s, 'ingenuity') });
+    // K2 trial: the land turns to ice westwards; tracks and craters lead to the wrecks
+    if (S.Westlands) S.Westlands.drawLand(ctx, s, FX.camX, W, H, GY, t);
 
     // Buz yatağı (RIMFAX)
     if (S.Sim.has(s, 'rimfax')) {
@@ -215,6 +217,9 @@
         if (img) drawSprite(ctx, c.sprite, sx - img.width / 2, GY - img.height + 4, false, 0.15);
       }
     }
+
+    // K2 trial: debris, the lost cargo lander and its parts in the western ice field
+    if (S.Westlands) S.Westlands.drawObjects(ctx, s, FX.camX, W, GY, t);
 
     // Ingenuity
     if (S.Sim.has(s, 'ingenuity')) {
@@ -354,11 +359,13 @@
     }
     FX.drawFloats(ctx, dt, GY);
     FX.drawVisorFrost(ctx, s);
+    if (S.Westlands) S.Westlands.drawScreenFrost(ctx, s, W, H);
     FX.drawGlitch(ctx, dt);
     ctx.restore();
   };
 
   FX.drawVisorFrost = function (ctx, s) {
+    if (S.Westlands && S.Westlands.ownsVisor(s)) return; // K2 trial: the ice field draws its own visor frost
     const eva = S.DATA.constants.eva;
     let a = 0;
     if (s.suit.frozen) a = 0.9;

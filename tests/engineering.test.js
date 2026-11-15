@@ -73,13 +73,16 @@ test('calcFreeFallTime: 2 m düşüş Mars ≈ 1.04 s, Dünya ≈ 0.64 s', () =>
 });
 
 test('calcPointOfNoReturnO2 (M4): 900 m mesafede donmuş eklem çentiği 2.5× sıçrar', () => {
-  const normal = E.calcPointOfNoReturnO2({ distanceM: 900 });
-  const frozen = E.calcPointOfNoReturnO2({ distanceM: 900, jointFrozen: true });
-  // (900 / 45) · 0.5 · 1.2 = 12 %
+  // 20 minutes of walking at the data's EVA speed (900 m when it was 45 m/min)
+  const eva = D.constants.eva;
+  const dist = 20 * eva.speedMPerMin;
+  const normal = E.calcPointOfNoReturnO2({ distanceM: dist });
+  const frozen = E.calcPointOfNoReturnO2({ distanceM: dist, jointFrozen: true });
+  // 20 min · 0.5 %/min · 1.2 = 12 %
   assert.equal(normal, 12);
   assert.equal(frozen, 30);
-  assert.ok(Math.abs(frozen / normal - 1 / D.constants.eva.frozenSpeedFactor) < 0.01);
-  const leak = E.calcPointOfNoReturnO2({ distanceM: 900, leak: true });
+  assert.ok(Math.abs(frozen / normal - 1 / eva.frozenSpeedFactor) < 0.01);
+  const leak = E.calcPointOfNoReturnO2({ distanceM: dist, leak: true });
   assert.equal(leak, 24, 'sızıntı O₂ tüketimini 2× yapar');
   assert.equal(E.calcPointOfNoReturnO2({ distanceM: 0 }), 0);
   assert.equal(E.calcPointOfNoReturnO2({ distanceM: 1e6 }), 100, 'çentik %100 ile sınırlı');
@@ -90,7 +93,7 @@ test('M4: donmuş eklemle uzakta dönüşsüzlük noktası aşılır ve HUD duru
   S.Sim.launch(s);
   S.Sim.land(s, null);
   s.player.inside = false;
-  s.player.x = 1200;
+  s.player.x = (1200 / 45) * D.constants.eva.speedMPerMin; // 26.7 min of walking
   s.suit.o2 = 35; // normal hızla gereken %16, donmuş eklemle %40
   s.suit.frozen = false;
   assert.equal(S.Sim.ponr(s).beyond, false);

@@ -79,7 +79,7 @@ test('RIT-02: hedef önceliği — hayati tehlike > son Sol > yarım inceleme > 
   s.forensics.opportunity.evidence.telemetry = 0.9;
   assert.equal(S_main(ctx), 'wreck_diagnose');
   // Hayati tehlike her şeyin önünde
-  s.player.x = 1400;
+  s.player.x = (1400 / 45) * S.DATA.constants.eva.speedMPerMin; // 31 min of walking from home
   s.suit.o2 = 20;
   assert.equal(S_main(ctx), 'return');
   // İçeride sızıntı
