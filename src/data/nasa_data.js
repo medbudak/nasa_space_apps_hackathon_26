@@ -235,7 +235,9 @@ window.SOL14.DATA = {
    "drinkRelief": 30,
    "toiletMinutes": 5,
    "toiletMorale": 1,
-   "harvestHungerRelief": 10
+   "harvestHungerRelief": 10,
+   "mealKg": 0.8,
+   "mealKgNote": "BVAD (ntrs.nasa.gov/citations/20190027563): about 2.39 kg of packaged food per crew member per day, so about 0.8 kg per meal at 3 meals. Fresh greenhouse food (s.res.foodKg, K6) is eaten first, one meal = mealKg."
   },
   "launchWindow": {
    "simplified": true,

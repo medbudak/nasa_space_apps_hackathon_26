@@ -1946,7 +1946,7 @@ window.SOL14.STORY = {
   "hud.need_thirst": "Susuzluk",
   "hud.need_morale_tip": "Moral: uykusuzluk, açlık ve yalnızlık düşürür (ISS, Mars-500, HI-SEAS gözlemleri).",
   "hud.need_sleep_tip": "Dinlenmişlik. Uyumadıkça düşer; EVA'da daha hızlı.",
-  "hud.need_hunger_tip": "Açlık. Zamanla artar, EVA'da daha hızlı. Yemek ye ile düşer.",
+  "hud.need_hunger_tip": "Açlık. Zamanla artar, EVA'da daha hızlı. Yemek ye ile düşer; önce seradan gelen taze ürün yenir. Hasat da açlığı biraz azaltır.",
   "hud.need_thirst_tip": "Susuzluk. Zamanla artar, EVA'da daha hızlı. Su iç ile düşer.",
   "needs.title": "İhtiyaçlar",
   "needs.eat": "Yemek ye",
@@ -1968,7 +1968,8 @@ window.SOL14.STORY = {
   "needs.crit_fatigue": "Yorgunluk kritik! Yavaşlıyorsun, moral hızla düşüyor.",
   "action.done.eat": "Yemek yedin.",
   "action.done.drink": "Su içtin.",
-  "action.done.toilet": "Rahatladın."
+  "action.done.toilet": "Rahatladın.",
+  "needs.cost_fresh": "Taze ürün: {from} kg → {to} kg"
  },
  "en": {
   "ui.back": "Back",
@@ -3915,7 +3916,7 @@ window.SOL14.STORY = {
   "hud.need_thirst": "Thirst",
   "hud.need_morale_tip": "Morale: lowered by sleep loss, hunger and isolation (ISS, Mars-500, HI-SEAS findings).",
   "hud.need_sleep_tip": "How rested you are. Drops while awake, faster on EVA.",
-  "hud.need_hunger_tip": "Hunger. Rises over time, faster on EVA. Eat to lower it.",
+  "hud.need_hunger_tip": "Hunger. Rises over time, faster on EVA. Eat to lower it; fresh greenhouse food is eaten first. A harvest also eases it a little.",
   "hud.need_thirst_tip": "Thirst. Rises over time, faster on EVA. Drink to lower it.",
   "needs.title": "Needs",
   "needs.eat": "Eat",
@@ -3937,6 +3938,7 @@ window.SOL14.STORY = {
   "needs.crit_fatigue": "Fatigue critical! You slow down and morale falls fast.",
   "action.done.eat": "You ate a meal.",
   "action.done.drink": "You drank water.",
-  "action.done.toilet": "Feeling better."
+  "action.done.toilet": "Feeling better.",
+  "needs.cost_fresh": "Fresh food: {from} kg → {to} kg"
  }
 };

@@ -87,10 +87,23 @@ test('Uyu: Sim.sleep yorgunluğu sıfırlar, başla/bitti olaylarını yayınlar
   assert.deepEqual(ev.filter((x) => x.endsWith('sleep')), ['start:sleep', 'done:sleep']);
 });
 
-test('Sera bakımı (hasat) açlığı azaltır', () => {
+test('Hasat (K6): greenhouse:harvest olayı açlığı azaltır', () => {
   const { S, s } = landed();
-  if (!s.greenhouse.installed) return;
   s.needs.hunger = 50;
-  assert.equal(S.Sim.doAction(s, 'tend_greenhouse').ok, true);
-  assert.ok(s.needs.hunger < 50);
+  S.bus.emit('greenhouse:harvest', { s, kg: 1 });
+  assert.equal(s.needs.hunger, 50 - S.DATA.gameplay.needs.harvestHungerRelief);
+});
+
+test('Yemek ye: önce seradan gelen taze ürün (s.res.foodKg) yenir, erzak korunur', () => {
+  const { S, s } = landed();
+  const N = S.DATA.gameplay.needs;
+  s.res.foodKg = N.mealKg * 1.5;
+  const r0 = s.res.foodRations;
+  assert.equal(S.Sim.actions.eat.preview(s).costKey, 'needs.cost_fresh');
+  assert.equal(S.Sim.doAction(s, 'eat').ok, true);
+  assert.equal(s.res.foodRations, r0);
+  assert.ok(Math.abs(s.res.foodKg - N.mealKg * 0.5) < 0.01);
+  assert.equal(S.Sim.actions.eat.preview(s).costKey, 'needs.cost_food', 'yarım öğün kalınca erzağa döner');
+  s.res.foodRations = 0;
+  assert.equal(S.Sim.doAction(s, 'eat').errKey, 'needs.err_no_food');
 });

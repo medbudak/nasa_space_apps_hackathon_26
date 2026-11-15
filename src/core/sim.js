@@ -812,20 +812,27 @@
         s.res.waterL -= g.tendWaterL;
         s.res.morale = clamp(s.res.morale + g.tendMorale * (s.greenhouse.yieldPct / 100), 0, 100);
         s.greenhouse.tendedSol = s.sol;
-        // Hasat (K6): taze sebze açlığı biraz azaltır
-        Sim.relieveNeed(s, 'hunger', N().harvestHungerRelief * (s.greenhouse.yieldPct / 100));
       }
     },
     // İhtiyaç eylemleri (Kişi 2). Su, Sabatier yakıtıyla AYNI depodan gelir: önizleme bunu gösterir.
+    // Önce seradan gelen taze yiyecek (s.res.foodKg, K6 hasadı), yoksa paketli erzak
     eat: {
       minutes: () => N().eatMinutes,
       preview(s) {
         const h = Sim.needs(s).hunger;
-        return { from: Math.round(h), to: Math.round(Math.max(0, h - N().eatRelief)), costKey: 'needs.cost_food', costVars: { from: s.res.foodRations, to: s.res.foodRations - 1 } };
+        const fresh = Sim.hasFreshMeal(s);
+        const kg = round1(s.res.foodKg || 0);
+        return {
+          from: Math.round(h),
+          to: Math.round(Math.max(0, h - N().eatRelief)),
+          costKey: fresh ? 'needs.cost_fresh' : 'needs.cost_food',
+          costVars: fresh ? { from: kg, to: round1(kg - N().mealKg) } : { from: s.res.foodRations, to: s.res.foodRations - 1 }
+        };
       },
-      can: (s) => (s.res.foodRations < 1 ? 'needs.err_no_food' : null),
+      can: (s) => (Sim.hasFreshMeal(s) || s.res.foodRations >= 1 ? null : 'needs.err_no_food'),
       run(s) {
-        s.res.foodRations -= 1;
+        if (Sim.hasFreshMeal(s)) s.res.foodKg = round2(s.res.foodKg - N().mealKg);
+        else s.res.foodRations -= 1;
         Sim.relieveNeed(s, 'hunger', N().eatRelief);
       }
     },
@@ -937,6 +944,14 @@
   Sim.needCritical = (s) => NEED_IDS.some((k) => Sim.needs(s)[k] >= N().criticalAt);
   /** Kritik ihtiyaç yürüyüşü yavaşlatır (surface.js speedFactor ile çarpılır) */
   Sim.needsSpeedFactor = (s) => (Sim.needCritical(s) ? N().criticalSpeedFactor : 1);
+
+  Sim.hasFreshMeal = (s) => (s.res.foodKg || 0) >= N().mealKg - 1e-9;
+
+  /** K6 hasadı: greenhouse:harvest olayında taze ürün açlığı biraz azaltır (yiyecek s.res.foodKg'ye K6 ekler) */
+  Sim.onHarvest = function (s) {
+    if (s && s.res) Sim.relieveNeed(s, 'hunger', N().harvestHungerRelief);
+  };
+  S.bus.on('greenhouse:harvest', (e) => Sim.onHarvest((e && e.s) || (e && e.state) || (S.getState && S.getState())));
 
   Sim.relieveNeed = function (s, id, amount) {
     const n = Sim.needs(s);
