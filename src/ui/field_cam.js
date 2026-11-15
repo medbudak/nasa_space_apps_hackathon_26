@@ -277,7 +277,7 @@
         setStatus('cam.saved', 'saved');
         refreshBar();
         const err = Math.abs(focus - target((performance.now() - start) / 1000));
-        S.bus.emit('audio:play', 'success');
+        S.bus.emit('audio:play', 'shutter');
         finish(true, Math.max(0.5, 0.72 + 0.28 * (1 - err / P.tolerance) - 0.05 * misses), false);
       };
       const toggleAlbum = () => {

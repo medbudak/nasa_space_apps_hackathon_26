@@ -1,7 +1,9 @@
 /**
- * SOL 14: RED HORIZON — Prosedürel Ses Motoru (K5)
- * Web Audio API ile sentezlenir; harici/telifli ses dosyası yoktur.
- * bus 'audio:play' → kısa efektler; ambiyans (rüzgâr) ve habitat uğultusu sahneye göre değişir.
+ * SOL 14: RED HORIZON — Ses Motoru (K5)
+ * Kısa efektler Web Audio ile sentezlenir. Bazı olaylar ve yüzey ambiyansı K5 Arif'in CC0 kayıtlarını çalar
+ * (assets/audio, kaynaklar REFERENCES.md); kayıt açılamazsa sentez sesi çalar.
+ * Kayıtlar HTMLAudioElement ile çalınır: fetch gerekmez, file:// altında da çalışır.
+ * bus 'audio:play' → kısa efektler; ambiyans (rüzgâr, fırtına) ve mekik uğultusu sahneye göre değişir.
  */
 (function (S) {
   'use strict';
@@ -12,6 +14,48 @@
   let wind = null;
   let hum = null;
   let lastStep = 0;
+  const VOLUME = 0.55;
+
+  /* ---------------- Kayıtlı sesler (CC0) ---------------- */
+  const SAMPLE_DIR = 'assets/audio/';
+  const SAMPLES = {
+    alarm: { file: 'alarm', vol: 0.5, maxSec: 2.5 },
+    quake: { file: 'quake_rumble', vol: 0.8 },
+    launch: { file: 'rocket_rumble', vol: 0.7, maxSec: 10 },
+    static: { file: 'radio_static', vol: 0.25, maxSec: 2 },
+    shutter: { file: 'camera_shutter', vol: 0.6 }
+  };
+  const LOOPS = { wind: { file: 'wind_loop', vol: 0.35 }, storm: { file: 'storm_loop', vol: 0.6 } };
+  const failed = new Set(); // açılamayan kayıtlar: bir daha denenmez, sentez sesi çalar
+  const loops = {};
+
+  function playSample(name) {
+    const spec = SAMPLES[name];
+    if (!spec || failed.has(name) || muted || !unlocked) return false;
+    const el = new Audio(SAMPLE_DIR + spec.file + '.mp3');
+    el.volume = spec.vol * VOLUME;
+    el.addEventListener('error', () => failed.add(name));
+    el.play().catch(() => failed.add(name));
+    if (spec.maxSec) setTimeout(() => el.pause(), spec.maxSec * 1000);
+    return true;
+  }
+
+  /** Döngü kaydının sesi (0 = dur); dönüş: kayıt kullanılabiliyor mu */
+  function setLoop(name, vol) {
+    if (failed.has(name) || !unlocked) return false;
+    let el = loops[name];
+    if (!el) {
+      if (vol <= 0) return true;
+      el = loops[name] = new Audio(SAMPLE_DIR + LOOPS[name].file + '.mp3');
+      el.loop = true;
+      el.addEventListener('error', () => failed.add(name));
+    }
+    const v = muted ? 0 : Math.min(1, vol * LOOPS[name].vol * VOLUME * 2);
+    el.volume = v;
+    if (v > 0 && el.paused) el.play().catch(() => failed.add(name));
+    else if (v === 0 && !el.paused) el.pause();
+    return !failed.has(name);
+  }
 
   function ac() {
     // Tarayıcı autoplay politikası: ilk kullanıcı etkileşiminden önce AudioContext açma (konsol uyarısı üretir)
@@ -21,7 +65,7 @@
       if (!C) return null;
       ctx = new C();
       master = ctx.createGain();
-      master.gain.value = 0.55;
+      master.gain.value = VOLUME;
       master.connect(ctx.destination);
     }
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
@@ -126,6 +170,10 @@
     sol: () => [392, 523, 659].forEach((f, i) => tone({ type: 'sine', f0: f, dur: 0.5, vol: 0.04, delay: i * 0.18 })),
     ufo_ping: () => [740, 1110, 740, 1480].forEach((f, i) => tone({ type: 'sine', f0: f, dur: 0.12, vol: 0.05, delay: i * 0.14 })),
     static: () => noise({ dur: 0.8, vol: 0.06, freq: 2500, type: 'bandpass', q: 0.3 }),
+    shutter: () => {
+      noise({ dur: 0.04, vol: 0.08, freq: 4000, type: 'highpass' });
+      noise({ dur: 0.05, vol: 0.06, freq: 2500, type: 'highpass', delay: 0.07 });
+    },
     // K2 trial: sounds of the text-free launch intro (src/fx/opening.js O.cues)
     intro_music: () => {
       // slow A-minor chords, then a rising A major as the rocket leaves (about 14 s)
@@ -162,6 +210,7 @@
         if (now - lastStep < 220) return;
         lastStep = now;
       }
+      if (playSample(name)) return;
       const fn = SFX[name];
       if (fn) fn(payload);
     } catch (e) {
@@ -196,7 +245,11 @@
       hum = { g: hg };
     }
     const t = c.currentTime;
-    const windVol = mode === 'surface' ? 0.03 + intensity * 0.12 : 0;
+    // Yüzeyde rüzgâr kaydı; fırtınada fırtına kaydı da yükselir. Kayıt yoksa sentez rüzgârı çalar.
+    const outside = mode === 'surface';
+    const windRecorded = setLoop('wind', outside ? 0.4 + intensity * 0.6 : 0);
+    setLoop('storm', outside ? Math.max(0, intensity - 0.5) * 2 : 0);
+    const windVol = outside && !windRecorded ? 0.03 + intensity * 0.12 : 0;
     const humVol = mode === 'habitat' ? 0.025 : 0;
     wind.g.gain.setTargetAtTime(windVol, t, 0.6);
     wind.filt.frequency.setTargetAtTime(300 + intensity * 700, t, 0.6);
@@ -217,7 +270,8 @@
     setAmbience,
     toggleMute() {
       muted = !muted;
-      if (master) master.gain.value = muted ? 0 : 0.55;
+      if (master) master.gain.value = muted ? 0 : VOLUME;
+      if (muted) Object.values(loops).forEach((el) => el.pause());
       return muted;
     },
     isMuted: () => muted

@@ -101,11 +101,23 @@ Include open-source and free items too. Note the license.
 | `docs/design/references/lava-tube-reference.png` | this repository | Supplied by the team as a mock-up (origin to be confirmed; has UI text baked in, so it is a design reference only and is not shipped in the game) | Palette and layout reference for the procedural lava-tube scene (`src/fx/effects.js` `renderCave`) — D-012 |
 | `docs/design/references/lander-reference.png` | this repository | Supplied by the team as the crew-lander mock-up (origin to be confirmed; Mars background baked in, so it is a design reference only and is not shipped in the game) | Art reference for the opening landing cutscene lander — D-012 |
 | Landing cutscene lander and lava-tube scene | this repository | Procedural pixel art drawn in code (`src/fx/lander.js`, `src/fx/effects.js`) | Opening landing sequence and the lava-tube sub-map — D-012 |
+| "Monologue Wind.wav" by dlgebert (Freesound) | https://freesound.org/people/dlgebert/sounds/527281/ | CC0 | `assets/audio/wind_loop` (.mp3) · surface wind |
+| Storm sound by Vrymaa (Freesound) | https://freesound.org/people/Vrymaa/sounds/825860/ | CC0 | `assets/audio/storm_loop` (.mp3) · dust storm |
+| "Alarm.wav" by DylanTheFish (Freesound) | https://freesound.org/people/DylanTheFish/sounds/440307/ | CC0 | `assets/audio/alarm` (.mp3) · crisis card alert |
+| "FX - Earthquake" by bolkmar (Freesound) | https://freesound.org/people/bolkmar/sounds/529244/ | CC0 | `assets/audio/quake_rumble` (.mp3) · marsquake |
+| "Footsteps_Mountain_Boots_Gravel_Mono.wav" by Nox_Sound (Freesound) | https://freesound.org/people/Nox_Sound/sounds/556002/ | CC0 | `assets/audio/footsteps` (.mp3) · walking |
+| Radio static by giddster (Freesound) | https://freesound.org/people/giddster/sounds/805685/ | CC0 | `assets/audio/radio_static` (.mp3) · Mission Control, UFO scene |
+| "shuttlelaunch.wav" by klangfabrik (Freesound) | https://freesound.org/people/klangfabrik/sounds/220127/ | CC0 | `assets/audio/rocket_rumble` (.mp3) · MAV launch, UFO scene |
+| "Dark Voice Drone 01 - Loop" by kkenny101 (Freesound) | https://freesound.org/people/kkenny101/sounds/871594/ | CC0 | `assets/audio/drone_ambience` (.mp3) · UFO scene |
+| "Camera Shutter Click" by Kodack (Freesound) | https://freesound.org/people/Kodack/sounds/271010/ | CC0 | `assets/audio/camera_shutter` (.mp3) · automatic photo, evidence photo |
+| Data tick (60 ms, 1.2 kHz beep) | Made by the team with ffmpeg (sine generator), no external source | Own work | `assets/audio/data_tick` (.mp3) · downlink ticks. The Freesound pick (661435, a 7-minute track) did not fit and was not used |
 | VT323 font (`assets/fonts/VT323-Regular.ttf`, embedded in `styles/fonts.css`) | https://github.com/google/fonts/tree/main/ofl/vt323 | SIL Open Font License 1.1 (`assets/fonts/OFL-VT323.txt`) | The single retro UI font for every panel, card, HUD and canvas label |
 | `assets/ui/field_cam.png` (FIELD CAM camera body) | this repository | Supplied by K3 (Medine) with the world prototype (origin to be confirmed) | Photo-evidence minigame frame (`src/ui/field_cam.js`) |
 | `assets/sprites/astronaut_indoor.png` (crew member inside the shuttle) | this repository | Supplied by K4 (Sedef) on branch `nursedef` (see the K4 AI-tool statement under Use of AI) | Shuttle deck walk during the transit tasks |
 | Western ice field, eastern lava-plain scenery, dig mounds, SCOUT-1 parts | this repository | Procedural pixel art drawn in code by the team (K2 `src/fx/westlands.js`, K3 prototype ported to `src/fx/dig_fx.js`) | Glacier and lava-plain routes |
 | | | | |
+
+Sounds were trimmed, mixed to mono, loudness-normalised and converted to 96 kbps MP3 with ffmpeg so the game loads fast. Played by `src/fx/audio.js` (HTMLAudioElement, works over `file://`); the alarm, quake, launch, radio static, camera shutter, wind and storm sounds are wired, the others are kept for later use.
 
 ## Use of AI
 
