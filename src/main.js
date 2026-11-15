@@ -371,6 +371,43 @@
     Game.afterAction();
   };
 
+  /* D-016 (proposed): the water bottle. Rack by the airlock -> ice cave -> greenhouse. */
+  Game.bottleRack = function () {
+    const s = S.getState();
+    const r = S.Sim.toggleBottle(s);
+    S.bus.emit('audio:play', r.taken ? 'scan' : 'close');
+    S.UI.toast(S.UI.icon(r.taken ? 'check' : 'x') + t(r.taken ? 'bottle.taken' : r.poured ? 'bottle.returned_full' : 'bottle.returned'), r.taken ? 'ok' : 'info', 4000);
+  };
+
+  Game.fillBottle = function () {
+    const s = S.getState();
+    const r = S.Sim.fillBottle(s);
+    if (!r.ok) {
+      if (r.errKey) S.UI.toast(S.UI.icon('x') + t(r.errKey), 'warn', 5000);
+      return Game.afterAction();
+    }
+    S.Surface.body.actionT = 0.8;
+    S.bus.emit('ice:hit', { px: S.Surface.mToPx(-S.Sim.shelterCfg().veinM), hits: 1, total: 1 });
+    S.bus.emit('audio:play', 'bonus');
+    S.bus.emit('fx:float', { px: S.Surface.body.px, text: t('bottle.filled', { l: r.l }), tone: 'ok' });
+    Game.afterAction();
+  };
+
+  Game.waterGreenhouse = function (px) {
+    const s = S.getState();
+    s.player.facing = px < S.Surface.body.px ? -1 : 1;
+    const r = S.Sim.waterGreenhouse(s);
+    if (!r.ok) {
+      if (r.errKey) S.UI.toast(S.UI.icon('x') + t(r.errKey), 'warn', 5000);
+      return;
+    }
+    S.Surface.body.actionT = 1.6;
+    if (S.Westlands && S.Westlands.startPour) S.Westlands.startPour(px);
+    S.bus.emit('audio:play', 'success');
+    S.UI.toast(S.UI.icon('leaf') + t(r.tended ? 'bottle.watered' : 'bottle.watered_tank', { l: r.l, morale: r.morale }), 'ok', 5000);
+    Game.afterAction();
+  };
+
   /** Lav tünelindeki İZCİ-1 parçası: FIELD CAM ile fotoğrafla; beşi tamamlanınca aracın hikâyesi */
   Game.scoutPhoto = async function (id) {
     const s = S.getState();
@@ -475,6 +512,7 @@
       const st = S.Surface.nearestStation();
       if (!st) return;
       if (st.action === 'exit') return Game.exitHabitat();
+      if (st.action === 'bottle') return Game.bottleRack();
       const act = S.HabitatPanel.stationToAction(st.id);
       if (act) {
         S.HabitatPanel.selected = act;
@@ -496,6 +534,8 @@
     if (it.kind === 'dig') return Game.dig(it.id);
     if (it.kind === 'mineral') return Game.digMineral(it.id);
     if (it.action === 'pick_part') return Game.pickPart(it.partId);
+    if (it.kind === 'ice_vein') return Game.fillBottle();
+    if (it.action === 'water_gh') return Game.waterGreenhouse(it.px);
     if (it.action === 'door') return Game.enterHabitat();
     if (it.kind === 'wreck') return S.SciencePanels.openForensic(it.id);
     if (it.action === 'greenhouse') return S.HabitatPanel.openGreenhouse();

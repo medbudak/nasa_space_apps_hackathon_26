@@ -100,14 +100,13 @@
   Surf.interactables = function (s) {
     if (Surf.inCave(s)) return Surf.caveInteractables(s);
     // Üs sistemleri mekikteki atölyede üretilip kurulunca dışarıda görünür ve etkileşime açılır
-    const list = Surf.STRUCTURES.filter((st) => Surf.structureBuilt(s, st) && (st.id === 'habitat' || S.Sim.deployed(s, st.id))).map((st) => ({
-      id: st.id,
-      kind: 'structure',
-      px: st.interactPx !== undefined ? st.interactPx : st.px + st.w / 2,
-      action: st.action,
-      labelKey: st.labelKey,
-      range: 34
-    }));
+    const list = Surf.STRUCTURES.filter((st) => Surf.structureBuilt(s, st) && (st.id === 'habitat' || S.Sim.deployed(s, st.id))).map((st) => {
+      const px = st.interactPx !== undefined ? st.interactPx : st.px + st.w / 2;
+      // D-016 (K2 Sude): elde dolu şişeyle sera suyu alır (E sulamayı oynatır)
+      if (st.id === 'greenhouse' && S.Sim.bottle(s) === 'full' && s.greenhouse.installed && !s.greenhouse.frozen)
+        return { id: st.id, kind: 'structure', px, action: 'water_gh', range: 34 };
+      return { id: st.id, kind: 'structure', px, action: st.action, labelKey: st.labelKey, range: 34 };
+    });
     if (S.Sim.has(s, 'rimfax')) {
       list.push({ id: 'ice', kind: 'ice', px: Surf.mToPx(S.DATA.terrain.iceDepositM), action: 'dig_ice', labelKey: 'world.ice', range: 26 });
     }
@@ -159,6 +158,17 @@
         action: 'break_ice',
         labelKey: 'prompt.break_ice',
         range: w.iceCave.breakRangeM / G().metersPerPixel
+      });
+    }
+    // D-016: the clean ice at the back of the glacier ice cave fills the bottle
+    if (w && w.shelterCave) {
+      const b = S.Sim.bottle(s);
+      list.push({
+        id: 'ice_vein',
+        kind: 'ice_vein',
+        px: Surf.mToPx(-w.shelterCave.veinM),
+        action: b === 'empty' ? 'fill_bottle' : b === 'full' ? 'fill_bottle_full' : 'fill_bottle_none',
+        range: w.shelterCave.fillRangeM / G().metersPerPixel
       });
     }
     // the Deep Space 2 probe frozen in at the foot of the mountain
@@ -329,6 +339,8 @@
     // Sarkaç deneyi ödülü: 0.38g yürüyüş kalibrasyonu kum tuzağındaki hız kaybını azaltır (kum çukurları yalnızca yüzeyde;
     // Ingenuity rotayı önceden keşfettiyse çukurun çevresinden dolaşılır)
     if (!Surf.inCave(s) && Surf.inSandPit(s.player.x) && !Surf.sandPitAvoided(s)) f *= s.rewards.sandPitSpeedFactor || S.DATA.terrain.sandPitSpeedFactor;
+    // D-016: a full water bottle slows the walk (same factor as the M4 notch)
+    f *= S.Sim.carrySpeedFactor(s);
     // K2 trial: the blizzard (FICTIONAL) slows a walker heading west into it, a little heading home
     const bz = Surf.blizzard(s);
     if (bz.k > 0) {
@@ -350,7 +362,8 @@
     const d = -s.player.x;
     const x = Math.min(1, Math.max(0, (d - w.blizzard.fromM) / (w.blizzard.fullM - w.blizzard.fromM)));
     const g = 0.5 + 0.5 * Math.sin(stormClock * 0.7) * Math.sin(stormClock * 0.23 + 1.1);
-    return { k: x * x * (3 - 2 * x), gust: 0.55 + 0.45 * g };
+    // D-016: the glacier ice cave keeps the blizzard out (fades over its mouths)
+    return { k: x * x * (3 - 2 * x) * (1 - S.Sim.shelterK(s)), gust: 0.55 + 0.45 * g };
   };
 
   /**
@@ -436,6 +449,7 @@
   // Trail messages wait their turn, so two never sit on top of each other (real seconds).
   const MESSAGE_GAP_S = 2.6;
   const messages = { queue: [], wait: 0 };
+  let lastShelter = false;
 
   /** Say once what the trail shows as the astronaut walks west (danger keeps its words; finds get a "!"). */
   Surf.updateWest = function (s, dt = 0) {
@@ -457,6 +471,11 @@
       if (m.sound) S.bus.emit('audio:play', m.sound);
       messages.wait = MESSAGE_GAP_S;
     }
+    // D-016: walking into the glacier ice cave (every time) and seeing its mouth (once)
+    const shel = S.Sim.inShelter(s);
+    if (shel && !lastShelter) messages.queue.unshift({ key: 'shelter.enter', tone: 'ok', sound: 'scan' });
+    lastShelter = shel;
+    if (w.shelterCave && dist >= w.shelterCave.fromM - 60) notice('shelter', Surf.mToPx(-w.shelterCave.fromM));
     // Only what matters gets a message: a vehicle in sight, a find, and danger. The trail signs
     // (tracks, craters, polygons, ...) speak for themselves on screen.
     if (dist >= w.iceCave.atM - 50 && !sv.iceBroken) notice('cave', Surf.mToPx(-w.iceCave.atM));
@@ -501,6 +520,7 @@
       { id: 'workshop', x: 478, action: 'workshop' },
       { id: 'workbench', x: 528, action: 'repair_suit' },
       { id: 'bunk', x: 572, action: 'sleep' },
+      { id: 'bottles', x: 592, action: 'bottle' }, // D-016 (K2 Sude): su şişesi rafı hava kilidinin yanında
       { id: 'airlock', x: 612, action: 'exit' }
     ]
   };

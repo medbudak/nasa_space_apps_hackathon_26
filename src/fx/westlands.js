@@ -124,6 +124,7 @@
     for (const m of w.iceVoids) drawVoidBack(ctx, toScreen(Surf.mToPx(-m), camX), GY);
     drawCaveBack(ctx, toScreen(Surf.mToPx(-w.iceCave.atM), camX), GY);
     drawGlacier(ctx, camX, W, GY);
+    drawShelterBack(ctx, camX, W, GY, t);
   };
 
   /* ---------------- Ice landforms ---------------- */
@@ -1137,6 +1138,234 @@
       ctx.fillRect(sx + 6, GY - 6, 1, 6);
     }
   }
+
+
+  /* ---------------- D-016 (proposed): glacier ice cave, water bottle, watering ---------------- */
+  const shelter = () => (cfg() && cfg().shelterCave) || null;
+  /** Screen span of the cave: x0 west mouth, x1 east mouth. */
+  function shelterSpan(camX) {
+    const c = shelter();
+    return { x0: toScreen(S.Surface.mToPx(-c.toM), camX), x1: toScreen(S.Surface.mToPx(-c.fromM), camX) };
+  }
+  /** Height of the cave's ceiling above the ground at screen column x (an arch, lowest at the mouths). */
+  function archH(x, x0, x1) {
+    const half = (x1 - x0) / 2;
+    const u = Math.min(1, Math.abs(x - (x0 + half)) / (half + 4));
+    return Math.round(30 + 54 * Math.pow(1 - u * u, 0.7));
+  }
+
+  /** Back layer: the hollow cut into the glacier, its layered blue walls, icicles and the clean-ice vein. */
+  function drawShelterBack(ctx, camX, W, GY, t) {
+    const c = shelter();
+    if (!c) return;
+    const { x0, x1 } = shelterSpan(camX);
+    if (x1 < -30 || x0 > W + 30) return;
+    // the ice bank the cave is cut into: a rounded hill of layered blue ice, snow on top
+    const mid = (x0 + x1) / 2;
+    const span = (x1 - x0) / 2 + 12;
+    for (let x = x0 - 12; x <= x1 + 12; x += 2) {
+      const u = Math.min(1, Math.abs(x - mid) / span);
+      const h = Math.round(108 * Math.pow(1 - Math.pow(u, 3), 0.5) + Math.sin((x + camX) * 0.09) * 2);
+      if (h <= 2) continue;
+      const top = GY + 2 - h;
+      ctx.fillStyle = x < mid - 20 ? '#a9cbe8' : x < mid + 20 ? '#9cc4e6' : '#8fbbe0';
+      ctx.fillRect(x, top, 2, h);
+      for (let b = 1; b < 6; b++) {
+        ctx.fillStyle = b % 2 ? 'rgba(60,100,150,0.25)' : 'rgba(240,248,255,0.45)';
+        ctx.fillRect(x, top + 6 + Math.round(h * b * 0.16) + Math.round(Math.sin(x * 0.07 + b) * 2), 2, 1);
+      }
+      ctx.fillStyle = '#8e9aa8';
+      ctx.fillRect(x, top - 1, 2, 2);
+      ctx.fillStyle = '#f2f8ff';
+      ctx.fillRect(x, top - 2, 2, 2);
+    }
+    for (let x = x0; x < x1; x += 2) {
+      const h = archH(x, x0, x1);
+      const top = GY + 2 - h;
+      // rim of clear ice around the opening, then the dark inside
+      ctx.fillStyle = '#6f9fcb';
+      ctx.fillRect(x, top - 3, 2, 3);
+      ctx.fillStyle = '#2f5a8a';
+      ctx.fillRect(x, top, 2, h);
+      ctx.fillStyle = '#244a77';
+      ctx.fillRect(x, top + 10, 2, h - 10);
+      // layers in the back wall (old snow seasons)
+      for (let b = 1; b < 5; b++) {
+        ctx.fillStyle = b % 2 ? 'rgba(120,170,220,0.35)' : 'rgba(20,40,70,0.35)';
+        ctx.fillRect(x, top + 8 + b * 11 + Math.round(Math.sin(x * 0.08 + b * 1.7) * 2), 2, 1);
+      }
+      // icicles from the ceiling
+      const ix = Math.floor((x + camX) / 2);
+      if (hash(ix + 777) > 0.62) {
+        const len = 3 + Math.floor(hash(ix + 779) * 8);
+        ctx.fillStyle = '#cfe6f8';
+        ctx.fillRect(x, top, 1, len);
+        ctx.fillStyle = '#9cc4ea';
+        ctx.fillRect(x + 1, top, 1, Math.max(1, len - 2));
+      }
+    }
+    // frosted floor
+    ctx.fillStyle = '#cfe6f8';
+    ctx.fillRect(x0, GY - 1, x1 - x0, 3);
+    // the clean-ice vein in the back wall: bright, glinting
+    const vx = toScreen(S.Surface.mToPx(-c.veinM), camX);
+    ctx.fillStyle = '#bfe3ff';
+    ctx.fillRect(vx - 7, GY - 34, 14, 33);
+    ctx.fillStyle = '#e8f6ff';
+    ctx.fillRect(vx - 5, GY - 31, 4, 26);
+    ctx.fillRect(vx + 2, GY - 24, 3, 18);
+    ctx.fillStyle = '#7fb3dc';
+    ctx.fillRect(vx - 7, GY - 34, 14, 1);
+    ctx.fillRect(vx - 1, GY - 30, 1, 22);
+    const tw = 0.5 + 0.5 * Math.sin(t * 2.6);
+    ctx.fillStyle = 'rgba(255,255,255,' + tw.toFixed(2) + ')';
+    ctx.fillRect(vx - 3, GY - 27, 1, 1);
+    ctx.fillRect(vx + 3, GY - 15, 1, 1);
+    // chips knocked off it lie on the floor
+    ctx.fillStyle = '#e8f6ff';
+    ctx.fillRect(vx - 10, GY - 1, 2, 1);
+    ctx.fillRect(vx + 9, GY - 1, 3, 1);
+  }
+
+  /** Front layer (over the astronaut): blue shade inside and the ice lip at both mouths. */
+  function drawShelterFront(ctx, s, camX, W, GY) {
+    const c = shelter();
+    if (!c) return;
+    const { x0, x1 } = shelterSpan(camX);
+    if (x1 < -30 || x0 > W + 30) return;
+    const k = S.Sim.shelterK(s);
+    for (let x = x0; x < x1; x += 2) {
+      const h = archH(x, x0, x1);
+      // inside, the light is blue and dim; a little stronger while you stand in it
+      ctx.fillStyle = 'rgba(30,70,130,' + (0.1 + 0.14 * k).toFixed(3) + ')';
+      ctx.fillRect(x, GY + 2 - h, 2, h);
+    }
+    // the lip at each mouth hangs over the path
+    for (const [ax, dir] of [[x0, 1], [x1 - 2, -1]]) {
+      for (let i = 0; i < 12; i += 2) {
+        const x = ax + dir * i;
+        const h = archH(x, x0, x1);
+        const drop = Math.round((12 - i) * 0.9);
+        ctx.fillStyle = '#86b9e2';
+        ctx.fillRect(x, GY + 2 - h - 4, 2, 5 + drop);
+        ctx.fillStyle = '#d6ecfb';
+        ctx.fillRect(x, GY + 2 - h + drop, 2, 2);
+      }
+    }
+  }
+
+  /* The bottle: drawn in the astronaut's hand; while pouring, tipped with water running out. */
+  const pour = { px: null, start: null, dur: 1.6 };
+  West.startPour = function (px) {
+    pour.px = px;
+    pour.start = null;
+  };
+
+  function drawBottle(ctx, x, y, full, tilt) {
+    ctx.save();
+    ctx.translate(Math.round(x), Math.round(y));
+    if (tilt) ctx.rotate(tilt);
+    ctx.fillStyle = '#1b1622';
+    ctx.fillRect(-3, -9, 6, 11);
+    ctx.fillStyle = '#d9e6f0'; // clear plastic
+    ctx.fillRect(-2, -8, 4, 9);
+    if (full) {
+      ctx.fillStyle = '#3fa4e6';
+      ctx.fillRect(-2, -5, 4, 6);
+      ctx.fillStyle = '#9fdcff';
+      ctx.fillRect(-2, -5, 1, 5);
+    }
+    ctx.fillStyle = '#e2672c'; // cap
+    ctx.fillRect(-1, -11, 2, 2);
+    ctx.restore();
+  }
+
+  /**
+   * Front hook from effects.js, right after the astronaut: the cave's front layer, the bottle in
+   * hand and the pour into the greenhouse. a = { x, y (feet), pose } or null (landing scene).
+   */
+  West.drawFront = function (ctx, s, camX, W, GY, t, a) {
+    if (!cfg()) return;
+    drawShelterFront(ctx, s, camX, W, GY);
+    if (!a) return;
+    const b = S.Sim.bottle(s);
+    const f = s.player.facing < 0 ? -1 : 1;
+    if (pour.px !== null) {
+      if (pour.start === null) pour.start = t;
+      const u = (t - pour.start) / pour.dur;
+      if (u >= 1 || u < 0) {
+        pour.px = null;
+      } else {
+        // kneel, tip the bottle towards the greenhouse; water arcs down to its beds
+        const hx = a.x + f * 14;
+        const hy = a.y - 24;
+        const tip = Math.min(1, u * 4);
+        drawBottle(ctx, hx, hy, u < 0.8, f * (0.4 + 1.5 * tip));
+        if (u > 0.15 && u < 0.85) {
+          for (let i = 0; i < 9; i++) {
+            const p = (t * 2.4 + i / 9) % 1;
+            const dx = f * (6 + p * 22);
+            const dy = -2 + p * p * 24;
+            ctx.fillStyle = i % 3 ? '#5fb8f0' : '#bfe6ff';
+            ctx.fillRect(Math.round(hx + dx), Math.round(hy + dy), 2, 2);
+          }
+          // splash where it lands
+          ctx.fillStyle = 'rgba(191,230,255,' + (0.5 + 0.5 * Math.sin(t * 20)).toFixed(2) + ')';
+          ctx.fillRect(Math.round(hx + f * 28) - 3, Math.round(hy + 22), 6, 1);
+        }
+        return;
+      }
+    }
+    if (!b) return;
+    // hand height depends on the pose (sprites face right; walking swings the arm a little)
+    const kneel = a.pose === 'action';
+    const swing = a.pose === 'walk' ? Math.round(Math.sin(t * 9) * 2) : 0;
+    drawBottle(ctx, a.x + f * ((kneel ? 14 : 7) + swing), a.y - 22, b === 'full', 0);
+  };
+
+  /** Interior hook: the bottle rack on the wall by the airlock (design coords, offset ox/oy). */
+  West.drawInteriorRack = function (ctx, s, ox, oy, t, nearId) {
+    if (!shelter()) return;
+    const rack = S.Surface.INTERIOR.stations.find((st) => st.id === 'bottles');
+    const x = ox + rack.x - 12;
+    const y = oy + 66;
+    ctx.fillStyle = '#2b2420';
+    ctx.fillRect(x, y, 24, 42);
+    ctx.fillStyle = '#4a3d35';
+    ctx.fillRect(x + 1, y + 1, 22, 40);
+    ctx.fillStyle = '#7a6a5c';
+    ctx.fillRect(x, y + 19, 24, 2);
+    ctx.fillRect(x, y + 39, 24, 2);
+    ctx.fillStyle = '#3fa4e6';
+    ctx.fillRect(x + 4, y + 3, 16, 2); // blue water stripe
+    const left = S.Sim.bottle(s) ? 2 : 3;
+    const slots = [[6, 18], [17, 18], [12, 38]];
+    for (let i = 0; i < left; i++) drawBottle(ctx, x + slots[i][0], y + slots[i][1], false, 0);
+    if (nearId === 'bottles') {
+      ctx.save();
+      ctx.font = 'bold 8px "VT323", "Segoe UI", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const txt = '[E] ' + S.t(S.Sim.bottle(s) ? 'bottle.rack_put' : 'bottle.rack_take');
+      const tw = ctx.measureText(txt).width + 8;
+      ctx.fillStyle = 'rgba(8,10,14,0.8)';
+      // under the rack, above the astronaut's helmet (the HUD shortcut bar covers the wall above it)
+      const ly = oy + 116;
+      ctx.fillRect(Math.round(x + 12 - tw / 2), ly - 6, Math.round(tw), 12);
+      ctx.fillStyle = '#3fe0e6';
+      ctx.fillText(txt, x + 12, ly);
+      ctx.restore();
+    }
+  };
+
+  /** Interior hook after the astronaut: the bottle in hand. */
+  West.drawInteriorCarry = function (ctx, s, x, floorY, t, moving) {
+    const b = S.Sim.bottle(s);
+    if (!b) return;
+    const f = s.player.facing < 0 ? -1 : 1;
+    const swing = moving ? Math.round(Math.sin(t * 9) * 2) : 0;
+    drawBottle(ctx, x + f * (7 + swing), floorY - 22, b === 'full', 0);
+  };
 
   S.Westlands = West;
 })((window.SOL14 = window.SOL14 || {}));

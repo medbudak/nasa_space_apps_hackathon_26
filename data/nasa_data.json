@@ -530,6 +530,20 @@
         "simplified": true,
         "simplifiedNote": "FICTIONAL: a walk-in cave in an ice bank has not been observed on Mars; it stands in for the buried ice exposed at scarps. The lost lander sealed inside it, the 6 hits needed to break the ice and 3 game minutes per hit are game values."
       },
+      "shelterCave": {
+        "fromM": 1920,
+        "toM": 2020,
+        "veinM": 1985,
+        "edgeM": 12,
+        "fillRangeM": 22,
+        "fillMinutes": 15,
+        "bottleL": 2,
+        "carrySpeedFactor": 0.8,
+        "src": "https://www.jpl.nasa.gov/news/steep-slopes-on-mars-reveal-structure-of-buried-ice/",
+        "note": "Thick, fairly pure water ice lies under a thin cover of rock and dust and is exposed where slopes erode: the ice the player chips into the bottle.",
+        "simplified": true,
+        "simplifiedNote": "FICTIONAL (D-016, proposed): a walk-in ice cave on Mars has not been observed. It sits on the ice field before the glacier and the blizzard; inside it the ice field's extra cold and deep-cold heat loss do not reach the suit, and crises wait. Its position, the 2 L bottle, 15 game minutes to fill it and walking at 80% speed while carrying it are game values."
+      },
       "iceVoids": [1560, 2060],
       "polygons": {
         "fromM": 1600,

@@ -379,6 +379,8 @@
       // Elbise tarayıcısı: gerçek bir gömülü noktanın yanında "!" (sahte tümsek tepki vermez)
       if (S.DigFx && !landingAstro) S.DigFx.drawScanner(ctx, s, ax, ay - img.height, t);
     }
+    // D-016 (K2 Sude): glacier ice cave front layer, the water bottle in hand and the pour into the greenhouse
+    if (S.Westlands && S.Westlands.drawFront && !hideAstro) S.Westlands.drawFront(ctx, s, FX.camX, W, GY, t, landingAstro ? null : { x: ax, y: ay, pose });
     // Kayaya takılınca kısa zıplama ipucu
     if (body.blockedT > 0 && !hideAstro) {
       ctx.save();
@@ -1088,6 +1090,8 @@
     } else {
       S.Art.drawInterior(ctx, s, st ? st.id : null, t, { w: W, h: H, ox, oy: OFF_Y });
     }
+    // D-016 (K2 Sude): hava kilidinin yanındaki su şişesi rafı
+    if (S.Westlands && S.Westlands.drawInteriorRack) S.Westlands.drawInteriorRack(ctx, s, ox, OFF_Y, t, st ? st.id : null);
     // Yakındaki istasyonun işareti
     if (st) {
       const label = S.t('station.' + st.id);
@@ -1108,6 +1112,7 @@
     // Kasksız mürettebat (mekik içinde), adım atarak yürür
     body.stepPh = body.moving ? ((body.stepPh || 0) + dt * 1.9) % 1 : 0;
     FX.drawCrew(ctx, S.Sprites.get('astronaut_indoor'), ox + body.ix, OFF_Y + I.floorY + 1, 66, s.player.facing, body.stepPh, body.moving);
+    if (S.Westlands && S.Westlands.drawInteriorCarry) S.Westlands.drawInteriorCarry(ctx, s, ox + body.ix, OFF_Y + I.floorY + 1, t, body.moving);
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);
   };
