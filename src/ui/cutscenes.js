@@ -16,7 +16,6 @@
   // Görevler gameplay.transit.tasks'tan gelir: sorun kartı -> mini oyun -> gemi durumu. Çubuk, gün ve doz
   // zamanla değil, yalnızca bir görev bitince ilerler. Son görevden sonra daktilo alt yazısı, ardından EDL.
   const TASK_ICON = { arrays: 'power', leak: 'o2', tcm: 'target', thermal: 'temp' };
-  const TASK_BG = { arrays: 'shuttle_engineering_bay', leak: 'scr_ship_o2_leak', tcm: 'shuttle_cockpit_interior', thermal: 'scr_ship_reactor' };
   const TASK_MG = { thermal: { theme: 'thermal' } };
   const ADVANCE_MS = 1400; // görev sonrası çubuk/gün/doz animasyonu
   const TYPE_MS = 75; // daktilo: harf başına
@@ -33,7 +32,7 @@
     const results = {};
     const marks = tasks.map((tk, i) => '<i class="tt-mark" data-m="' + i + '" style="left:' + ((i + 1) / tasks.length) * 100 + '%"></i>').join('');
     const html =
-      '<div class="cutscene transit" style="--bg:url(\'' + S.Sprites.screen('scr_transit') + '\')"><div class="cs-bg"></div><div class="cs-stars"></div>' +
+      '<div class="cutscene transit" style="--bg:url(\'' + S.Sprites.screen('scr_ship_interior') + '\')"><div class="cs-bg"></div><div class="cs-stars"></div>' +
       UI_header() +
       '<div class="transit-track"><span class="tt-earth">' + t('transit.earth') + '</span><div class="tt-line"><div class="tt-fill"></div>' + marks +
       '<span class="tt-ship">' + I('rocket') + '</span></div><span class="tt-mars">' + t('transit.mars') + '</span></div>' +
@@ -166,8 +165,9 @@
 
     /* --- Akış: kart -> mini oyun -> sonuç + ilerleme -> sonraki kart / yaklaşma --- */
     const showCard = (note) => {
-      const bgKey = TASK_BG[tasks[idx].id] || 'scr_ship_interior';
-      root.style.setProperty('--bg', \url('\')\);
+      const bgMap = { arrays: 'shuttle_engineering_bay', leak: 'scr_ship_o2_leak', tcm: 'shuttle_cockpit_interior', thermal: 'scr_ship_reactor' };
+      const bgKey = bgMap[tasks[idx].id] || 'scr_ship_interior';
+      root.style.setProperty('--bg', 'url("' + S.Sprites.screen(bgKey) + '")');
       phase = 'card';
       card.innerHTML = cardHtml(note);
       card.querySelector('[data-start]').addEventListener('click', startTask);
@@ -207,7 +207,6 @@
       animateTo(idx / tasks.length, () => (idx < tasks.length ? showCard(note) : approach(note)));
     };
     const approach = (note) => {
-      root.style.setProperty('--bg', \url('\')\);
       phase = 'approach';
       const out = S.Sim.transitOutcome(results);
       card.innerHTML =
