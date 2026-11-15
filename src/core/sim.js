@@ -214,6 +214,16 @@
     s.res.morale = v.morale;
     s.res.radiationMsv = round1(orbit.transitDays * d.constants.radiation.transitDailyMsv);
     s.res.panelDust = 0.04;
+    // Yük marjı ek ikmali (K4 Sedef): tasarımda yeterince boş kütle kaldıysa iniş aracı ek O₂ ve su getirir
+    const cb = d.gameplay.cargoBonus;
+    const margin = S.Engineering.calcDesignTotals(s.design).massMarginPct;
+    s.cargoBonus = null;
+    if (cb && margin > cb.minMarginPct) {
+      s.res.o2ReserveKg = round1(s.res.o2ReserveKg + cb.o2Kg);
+      s.res.waterL = round1(s.res.waterL + cb.waterL);
+      s.cargoBonus = { pct: margin, o2: cb.o2Kg, w: cb.waterL };
+      S.logDecision({ category: 'engineering', titleKey: 'log.cargo.title', choiceKey: 'log.cargo.choice', resultKey: 'log.cargo.result', vars: { min: cb.minMarginPct, o2: cb.o2Kg, w: cb.waterL }, score: 0 }, s);
+    }
     s.res.habTempC = d.gameplay.habitatTargetC;
     s.inventory.repairKits = s.design.repairKits;
     s.inventory.rhuUnits = 0;

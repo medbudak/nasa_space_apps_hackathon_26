@@ -208,3 +208,24 @@ test('Sol 0 bilgi balonları: "Oyunda ne değişir?" sayıları tasarım toplaml
   const ing = text(DS.instrumentEffect(s, s.design, D.instruments.find((i) => i.id === 'ingenuity')));
   assert.ok(ing.includes(Math.round(D.terrain.sandPitSpeedFactor * 100) + '% speed'), ing);
 });
+
+test('Yük marjı ek ikmali (K4 Sedef): boş kütle %minMarginPct üstündeyse iniş aracı ek O₂ ve su getirir, günlüğe yazılır', () => {
+  const S = loadCore();
+  const cb = S.DATA.gameplay.cargoBonus;
+  const base = landed();
+  const margin = base.S.Engineering.calcDesignTotals(base.s.design).massMarginPct;
+  const site = base.S.Engineering.findById(base.S.DATA.landingSites, base.s.design.landingSiteId);
+  if (margin > cb.minMarginPct) {
+    assert.ok(base.s.cargoBonus, 'varsayılan tasarım marjı yüksek: ikmal gelir');
+    assert.equal(base.s.res.waterL, Math.round((site.waterStartL + cb.waterL) * 10) / 10);
+    assert.ok(base.s.decisionLog.some((l) => l.titleKey === 'log.cargo.title'));
+  }
+  // Marjı düşük tasarım: ikmal yok
+  const heavy = S.State.reset({ design: Object.assign({}, S.State.DEFAULT_DESIGN) });
+  heavy.design.rocketId = S.DATA.rockets.slice().sort((a, b) => a.payloadMarsKg - b.payloadMarsKg)[0].id;
+  heavy.design.instruments = S.DATA.instruments.slice(0, 5).map((i) => i.id);
+  const m2 = S.Engineering.calcDesignTotals(heavy.design).massMarginPct;
+  S.Sim.launch(heavy);
+  S.Sim.land(heavy, null);
+  assert.equal(Boolean(heavy.cargoBonus), m2 > cb.minMarginPct);
+});

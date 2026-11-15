@@ -1,7 +1,8 @@
 /**
  * SOL 14: RED HORIZON — Ara Sahneler (K3 + K4)
  *  1) Açılış / transit (Sol 0 -> Sol 1): Dünya'dan kalkış (tuval: src/fx/opening.js) → yolculukta sıralı görev zinciri
- *     (paneller, O₂ sızıntısı, TCM, ısı dengesi; görev kartında K4'ün mekik içi görseli) → daktilo "GEZEGENE YAKLAŞILIYOR..."
+ *     (paneller, O₂ sızıntısı, TCM, ısı dengesi). Her görevden önce mekik güvertesi (K4 Sedef): astronot mekik kesitinde
+ *     yürür, sıradaki görevin istasyonuna gidip E ile görev kartını açar; kart o istasyonun görseliyle gelir → daktilo "GEZEGENE YAKLAŞILIYOR..."
  *     → Mars'a varış. İniş sonra oyun dünyasında oynar (src/fx/lander.js). Yolculuk boyunca Mars bilgi kartları döner.
  *  2) Sol geçişi (M6): mavi Mars gün batımı, SOL X -> SOL X+1 telemetri özeti
  *  3) Final: MAV kalkışı -> ufukta anomali -> SON İLETİM (satır satır inen foto + Güneş Kavuşumu)
@@ -20,8 +21,11 @@
   // ardından varış yine gerçek zamanda oynar ve ekran iniş alanının gökyüzü rengine açılır.
   // Görevler gameplay.transit.tasks'tan gelir: sorun kartı -> mini oyun -> gemi durumu.
   const TASK_ICON = { arrays: 'power', leak: 'o2', tcm: 'target', thermal: 'temp' };
-  // K4 mekik içi görselleri (nursedef): her görev kartının üst şeridi
+  // K4 mekik içi görselleri (nursedef, Sedef): görev kartı açıkken istasyonun görseli arka plandır
   const TASK_BG = { arrays: 'shuttle_engineering_bay', leak: 'scr_ship_o2_leak', tcm: 'shuttle_cockpit_interior', thermal: 'scr_ship_reactor' };
+  // Mekik kesiti (scr_ship_interior) üzerinde istasyonların yatay konumu (% genişlik; görselin yerleşimi) ve yürüme sınırları
+  const STATION_X = { tcm: 22, leak: 46, arrays: 61, thermal: 71 };
+  const DECK = { minX: 15, maxX: 73, startX: 24, speedPctPerSec: 28, reachPct: 8 };
   const TASK_MG = { thermal: { theme: 'thermal' } };
   const ADVANCE_MS = 1400; // görev sonrası çubuk/gün/doz animasyonu
   const TYPE_MS = 75; // daktilo: harf başına
@@ -67,6 +71,12 @@
     const marks = tasks.map((tk, i) => '<i class="tt-mark" data-m="' + i + '" style="left:' + ((i + 1) / tasks.length) * 100 + '%"></i>').join('');
     const html =
       '<div class="cutscene transit"><canvas class="op-cv" width="' + O.W + '" height="' + O.H + '" data-r="cv"></canvas>' +
+      // Mekik güvertesi (K4 Sedef): kesit görseli, sıradaki istasyonun işareti, yürüyen astronot, [E] balonu
+      '<div class="sw-deck" data-r="deck" hidden><div class="sw-bg" data-r="deckbg"></div>' +
+      '<button type="button" class="sw-mark" data-r="mark"><span data-r="marklbl"></span><i>▼</i></button>' +
+      '<img class="sw-crew" data-r="crew" alt="" src="assets/processed/sprites/astronaut_indoor.png">' +
+      '<button type="button" class="world-prompt sw-prompt" data-r="swprompt" hidden></button>' +
+      '<p class="sw-hint" data-r="swhint"></p></div>' +
       UI_header() +
       '<div class="transit-track"><span class="tt-earth">' + t('transit.earth') + '</span><div class="tt-line"><div class="tt-fill"></div>' + marks +
       '<span class="tt-ship">' + I('rocket') + '</span></div><span class="tt-mars">' + t('transit.mars') + '</span></div>' +
@@ -98,6 +108,8 @@
     let guardUntil = 0;
     let armedUntil = 0;
     let ts = 0; // tuval zamanı (sn)
+    let crewX = DECK.startX; // mekik güvertesinde astronotun yeri (%)
+    let moveDir = 0;
     let arriveAt = 0; // varışın başladığı an (performance.now)
     let last = performance.now();
 
@@ -143,6 +155,7 @@
       } else {
         // Seyir: mekik yörüngede gösterilen ilerleme kadar yol alır (varış evresine girmeden)
         ts = O.T.cruise + shown * (O.T.arrive - O.T.cruise - 0.01);
+        if (phase === 'deck') updateDeck(dt);
       }
       O.draw(g, ts, { skyTo });
       raf = requestAnimationFrame(draw);
@@ -166,8 +179,10 @@
       const now = performance.now();
       if (phase === 'arrive' || phase === 'approach') {
         if (!R('fact').classList.contains('cf-arrive')) showFact(facts.find((f) => f.arrive), 'fact.head_arrive', 'cf-arrive');
-      } else if (S.isMinigameOpen()) {
-        factNext = now + FACT_MS;
+      } else if (phase === 'card' || phase === 'deck' || phase === 'mg' || S.isMinigameOpen()) {
+        // Görev kartı ya da mini oyun açıkken kart gizlenir; görev bitince kaldığı yerden döner
+        R('fact').classList.add('fade');
+        factNext = Math.min(factNext, now + 900);
       } else if (now >= factNext) {
         factI++;
         showFact(cruiseFacts[factI % cruiseFacts.length], 'fact.head');
@@ -204,15 +219,14 @@
       const v = vars();
       const k = 'transit.' + tk.id + '.';
       const row = (lbl, txt) => '<div class="tk-row"><span>' + t('transit.lbl_' + lbl) + '</span><p>' + txt + '</p></div>';
-      const bg = S.Sprites.screen(TASK_BG[tk.id] || 'scr_transit');
       return (
         note +
-        '<div class="tk-scene" style="background-image:url(\'' + bg + '\')"></div>' +
         '<span class="cs-badge">' + t('transit.task_badge', { n: idx + 1, total: tasks.length, day: dayAt(idx) }) + '</span>' +
         '<h2>' + I(TASK_ICON[tk.id]) + t(k + 'title') + '</h2>' +
         row('what', t(k + 'what', v)) + row('why', t(k + 'why', v)) + row('do', t(k + 'do', v)) +
         '<div class="alert warn tk-stake">' + I('alert') + '<span><b>' + t('transit.lbl_stake') + ':</b> ' + t(k + 'stake', v) + '</span></div>' +
-        '<button class="btn btn-primary tk-start" data-start>' + I('play') + t('transit.start') + ' <kbd>Enter</kbd></button>'
+        '<div class="tk-btns"><button class="btn btn-primary tk-start" data-start>' + I('play') + t('transit.start') + ' <kbd>Enter</kbd></button>' +
+        '<button class="btn btn-ghost btn-sm" data-deck>' + t('transit.deck_back') + '</button></div>'
       );
     };
     const popCard = () => {
@@ -241,6 +255,7 @@
       cancelAnimationFrame(raf);
       timers.forEach(clearTimeout);
       window.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('keyup', onKeyUp, true);
       // Geçilen görevler BOZUK sayılır (otomatik sistem); Sim.land cezaları uygular
       for (const tk of tasks) if (!results[tk.id]) results[tk.id] = { success: false, score: 0, timeUsed: 0, skipped: true };
       onDone(results, { skipped: Boolean(skipped) });
@@ -265,12 +280,64 @@
     const startCruise = () => {
       if (phase !== 'liftoff') return;
       ts = O.T.cruise;
-      showCard('');
+      enterDeck('');
     };
+    /* --- Mekik güvertesi (K4 Sedef): sıradaki görevin istasyonuna yürü, E ile kartı aç --- */
+    const deck = R('deck');
+    const setDeckBg = (key) => (R('deckbg').style.backgroundImage = "url('" + S.Sprites.screen(key) + "')");
+    const nearStation = () => idx < tasks.length && Math.abs(crewX - STATION_X[tasks[idx].id]) <= DECK.reachPct;
+    function placeDeck() {
+      const tk = tasks[idx];
+      const crew = R('crew');
+      crew.style.left = crewX + '%';
+      if (moveDir) crew.style.transform = 'translateX(-50%) scaleX(' + moveDir + ')';
+      const mark = R('mark');
+      mark.style.left = STATION_X[tk.id] + '%';
+      R('marklbl').textContent = t('transit.station.' + tk.id);
+      const pr = R('swprompt');
+      pr.hidden = !nearStation();
+      pr.style.left = STATION_X[tk.id] + '%';
+    }
+    function updateDeck(dt) {
+      if (!moveDir) return;
+      crewX = Math.max(DECK.minX, Math.min(DECK.maxX, crewX + moveDir * DECK.speedPctPerSec * dt));
+      placeDeck();
+    }
+    const enterDeck = (note) => {
+      phase = 'deck';
+      pendingNote = note;
+      card.hidden = true;
+      deck.hidden = false;
+      deck.classList.remove('show-card');
+      root.classList.add('on-deck');
+      setDeckBg('scr_ship_interior');
+      const tk = tasks[idx];
+      R('swprompt').innerHTML = '<kbd>E</kbd><span>' + t('transit.' + tk.id + '.title') + '</span>';
+      R('swhint').innerHTML = t('transit.deck_hint', { n: idx + 1, total: tasks.length, station: t('transit.station.' + tk.id) });
+      placeDeck();
+      guardUntil = performance.now() + KEY_GUARD_MS;
+      updateSkip();
+      S.bus.emit('audio:play', 'scan');
+    };
+    let pendingNote = '';
+    const openStation = () => {
+      if (phase !== 'deck' || done) return;
+      crewX = STATION_X[tasks[idx].id];
+      showCard(pendingNote);
+    };
+    R('mark').addEventListener('click', openStation);
+    R('swprompt').addEventListener('click', openStation);
+
     const showCard = (note) => {
       phase = 'card';
+      card.hidden = false;
+      deck.hidden = false;
+      deck.classList.add('show-card'); // istasyonun görseli arkada, güverte işaretleri gizli
+      root.classList.add('on-deck');
+      setDeckBg(TASK_BG[tasks[idx].id] || 'scr_ship_interior');
       card.innerHTML = cardHtml(note);
       card.querySelector('[data-start]').addEventListener('click', startTask);
+      card.querySelector('[data-deck]').addEventListener('click', () => enterDeck(note));
       popCard();
       guardUntil = performance.now() + KEY_GUARD_MS;
       updateSkip();
@@ -300,14 +367,19 @@
       m.classList.add(S.Sim.transitOutcome(results).status[tk.id]);
       idx++;
       phase = 'anim';
+      deck.hidden = true; // görev aralarında yörüngedeki mekik görünür
+      root.classList.remove('on-deck');
       R('ship').innerHTML = shipHtml();
       const note = resultNote(tk, r);
       card.innerHTML = note;
       updateSkip();
-      animateTo(idx / tasks.length, () => (idx < tasks.length ? showCard(note) : approach(note)));
+      animateTo(idx / tasks.length, () => (idx < tasks.length ? enterDeck(note) : approach(note)));
     };
     const approach = (note) => {
       phase = 'approach';
+      deck.hidden = true;
+      root.classList.remove('on-deck');
+      card.hidden = false;
       const out = S.Sim.transitOutcome(results);
       card.innerHTML =
         note + '<span class="cs-badge">' + t('transit.badge') + '</span><h2 data-r="title">' + t('transit.title_done') + '</h2>' +
@@ -337,6 +409,18 @@
 
     const onKey = (e) => {
       if (done || phase === 'mg' || S.isMinigameOpen()) return;
+      // Mekik güvertesi: A/D ya da oklarla yürü, istasyonun yanında E (ya da Enter) kartı açar
+      if (phase === 'deck') {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') moveDir = -1;
+        else if (e.code === 'ArrowRight' || e.code === 'KeyD') moveDir = 1;
+        else if ((e.code === 'KeyE' || e.key === 'Enter') && !e.repeat && performance.now() >= guardUntil) {
+          if (nearStation()) openStation();
+        }
+        if (e.code !== 'Escape' && e.key !== 'Escape') {
+          if (['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'KeyE', 'Enter'].includes(e.code) || e.key === 'Enter') e.preventDefault();
+          return;
+        }
+      }
       if (e.key !== 'Enter' && e.key !== 'Escape') return;
       e.preventDefault();
       e.stopPropagation();
@@ -346,7 +430,12 @@
       else if (e.key === 'Enter' && phase === 'card') startTask();
       else if (e.key === 'Escape' || phase === 'approach' || phase === 'arrive') skip();
     };
+    const onKeyUp = (e) => {
+      if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && moveDir === -1) moveDir = 0;
+      if ((e.code === 'ArrowRight' || e.code === 'KeyD') && moveDir === 1) moveDir = 0;
+    };
     window.addEventListener('keydown', onKey, true);
+    window.addEventListener('keyup', onKeyUp, true);
     skipBtn.addEventListener('click', skip);
 
     setProgress(0);

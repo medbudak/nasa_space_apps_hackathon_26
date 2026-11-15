@@ -136,6 +136,7 @@
     "simplifiedNote": "Game balance block. Time is compressed: a sol is 24.66 h (constants.sol, NASA Mars Fact Sheet); at gameMinutesPerRealSecond 2 it lasts about 12.3 real minutes (12 h of daylight ≈ 6 min) and in the jury quick mode (?demo, demoGameMinutesPerRealSecond 4) about 6.2 min. The on-screen walking speed is not a separate value: it is eva.speedMPerMin × game minutes per real second ÷ metersPerPixel, so metres walked per game minute always equal eva.speedMPerMin.",
     "gameMinutesPerRealSecond": 2,
     "demoGameMinutesPerRealSecond": 4,
+    "cargoBonus": { "minMarginPct": 15, "o2Kg": 4, "waterL": 10, "note": "K4 Sedef (nursedef design advisor): free payload mass carries extra consumables. Game values; 4 kg O2 + 10 L water is 14 kg, well inside a 15% margin of any rocket's Mars payload in this game." },
     "solStartMinute": 360,
     "sunriseMinute": 360,
     "sunsetStartMinute": 1080,

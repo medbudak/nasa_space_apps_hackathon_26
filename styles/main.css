@@ -966,10 +966,23 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .tk-stake, .tk-result { font-weight: 600; line-height: 1.4; }
 .tk-stake b { color: #fff; }
 .tk-start { align-self: flex-start; margin-top: 0.2em; }
-/* K4 mekik içi görseli: görev kartının üst şeridi (nursedef) */
-.tk-scene { flex: none; height: 6.2em; margin: -0.2em 0 0.15em; border-radius: 0.4em; border: 1px solid var(--line); background: #0b0c12 center / cover no-repeat; image-rendering: pixelated; }
-/* Mars bilgi kartları (K3 Medine): yolculuk boyunca sağ altta döner; varışta yerçekimi kartı (camgöbeği) */
-.cs-fact { position: absolute; right: 1.5em; bottom: 1.4em; width: 17em; z-index: 3; display: grid; gap: 0.25em; padding: 0.7em 0.9em; background: rgba(14,14,20,0.9); border-left: 3px solid var(--orange); border-radius: 0.5em; color: #f2ebe2; font-size: 0.82em; line-height: 1.45; box-shadow: 0 0.5em 1.5em rgba(0,0,0,0.45); transition: opacity 0.35s; }
+.tk-btns { display: flex; align-items: center; gap: 0.6em; flex-wrap: wrap; margin-top: 0.2em; }
+.tk-btns .tk-start { margin-top: 0; }
+/* Mekik güvertesi (K4 Sedef, nursedef): kesit görseli, istasyon işareti, yürüyen astronot; kart açıkken istasyonun görseli */
+.sw-deck { position: absolute; inset: 0; z-index: 1; }
+.sw-deck.show-card > :not(.sw-bg) { display: none; }
+.transit .tk-card { position: absolute; z-index: 2; }
+.on-deck .tk-side { transform: scale(0.84); transform-origin: top right; }
+.sw-bg { position: absolute; inset: 0; background: #07080d center / cover no-repeat; }
+.sw-mark { position: absolute; bottom: 43%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.1em; background: none; border: 0; cursor: pointer; font-family: inherit; font-size: 1em; color: var(--cyan); }
+.sw-mark span { background: rgba(15,16,21,0.92); border: 1px solid var(--cyan); padding: 0.15em 0.5em; font-size: 0.68em; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.sw-mark i { font-style: normal; font-size: 0.75em; animation: swBob 1s ease-in-out infinite alternate; }
+@keyframes swBob { to { transform: translateY(0.25em); } }
+.sw-crew { position: absolute; bottom: 24.5%; height: 20%; left: 24%; transform: translateX(-50%); pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.9)); }
+.sw-prompt { position: absolute; bottom: 48%; top: auto; transform: translateX(-50%); cursor: pointer; font-size: 0.86em; }
+.sw-hint { position: absolute; left: 50%; bottom: 1.2em; transform: translateX(-50%); margin: 0; padding: 0.4em 0.9em; border-radius: 0.4em; background: rgba(10,11,16,0.85); color: #e9e3d8; font-size: 0.8em; white-space: nowrap; }
+/* Mars bilgi kartları (K3 Medine): kalkışta, görev aralarında ve varışta sol üstte döner (görev kartı açıkken gizli); varışta yerçekimi kartı (camgöbeği) */
+.cs-fact { position: absolute; left: 1.5em; top: 6.4em; width: 22em; z-index: 3; pointer-events: none; display: grid; gap: 0.25em; padding: 0.7em 0.9em; background: rgba(14,14,20,0.9); border-left: 3px solid var(--orange); border-radius: 0.5em; color: #f2ebe2; font-size: 0.82em; line-height: 1.45; box-shadow: 0 0.5em 1.5em rgba(0,0,0,0.45); transition: opacity 0.35s; }
 .cs-fact b { color: var(--orange2); letter-spacing: 0.08em; font-size: 0.78em; }
 .cs-fact small { opacity: 0.6; font-size: 0.74em; }
 .cs-fact.cf-arrive { border-left-color: var(--cyan); }
@@ -1153,7 +1166,7 @@ body[data-scene='world'] .screen-layer { display: none; }
 .pcam-status.ok { color: #ff6a4f; }
 .pcam-status.saved { color: #7be0a4; }
 .pcam-help { position: absolute; left: 3%; top: 5%; color: rgba(255,255,255,0.75); font-size: 0.6em; line-height: 1.4; text-shadow: 0 1px 2px #000; }
-.pcam-help b { color: #fff; font: 600 1.1em/1.5 ui-monospace, Consolas, monospace; letter-spacing: 0.05em; text-transform: uppercase; }
+.pcam-help b { text-transform: none; color: #fff; font: 600 1.1em/1.5 ui-monospace, Consolas, monospace; letter-spacing: 0.05em; text-transform: uppercase; }
 .pcam-album { z-index: 4; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px; background: rgba(8,9,12,0.94); align-content: start; overflow: auto; }
 .pcam-album canvas { width: 100%; image-rendering: pixelated; border: 1px solid #3a3d44; }
 .pcam-album p { grid-column: 1 / -1; color: #c9ccd2; text-align: center; font-size: 0.7em; }
@@ -1165,3 +1178,12 @@ body[data-scene='world'] .screen-layer { display: none; }
 .pcam-shoot.ready kbd { color: #fff; border: 1px solid rgba(255,255,255,0.7); border-radius: 3px; padding: 0 0.3em; background: rgba(0,0,0,0.15); }
 .pcam-shoot.saved { background: #28473a !important; color: #d8f5e4 !important; }
 .pcam-flash { position: absolute; inset: 0; z-index: 5; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+
+/* Eğitim rehberi (K4 Sedef): 4 sekme */
+.help-tabs { display: flex; gap: 0.4em; flex-wrap: wrap; margin-bottom: 0.8em; }
+.help-tabs .btn { font-size: 0.78em; }
+.help-rows { display: grid; gap: 0.55em; font-size: 0.82em; line-height: 1.45; }
+.help-rows div { display: grid; grid-template-columns: auto 1fr; gap: 0.6em; align-items: start; }
+.help-rows .ico { color: var(--orange2); margin-top: 0.15em; }
+.help-nav { justify-content: space-between; align-items: center; margin-top: 0.9em; }
+.help-count { opacity: 0.7; font-size: 0.85em; }

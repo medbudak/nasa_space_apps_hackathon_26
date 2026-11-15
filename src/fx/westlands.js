@@ -383,7 +383,8 @@
   function drawWreckSnow(ctx, s, camX, W, GY) {
     if (!S.Forensics || !S.Forensics.cases) return;
     for (const c of S.Forensics.cases()) {
-      if (!(c.distanceM < 0)) continue;
+      // Araçlar hazır görünmez: kazılıp ortaya çıkmayan enkazın karlı silueti de çizilmez
+      if (!(c.distanceM < 0) || !S.Forensics.identified(s, c)) continue;
       const k = S.Surface.iciness(c.distanceM);
       if (k <= 0) continue;
       const sx = toScreen(S.Surface.mToPx(c.distanceM), camX);
@@ -391,7 +392,7 @@
       if (!m || sx < -m.w || sx > W + m.w) continue;
       const x = Math.round(sx - m.w / 2);
       const y = GY - m.h + 4;
-      const a = (S.Forensics.identified(s, c) ? 1 : 0.15) * Math.min(1, k * 1.2);
+      const a = Math.min(1, k * 1.2);
       ctx.save();
       ctx.globalAlpha = 0.28 * a;
       ctx.drawImage(m.sil, x, y); // frost over everything

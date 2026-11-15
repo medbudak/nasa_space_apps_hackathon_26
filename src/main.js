@@ -194,6 +194,10 @@
     S.Surface.syncFromState(s);
     S.HUD.build('surface');
     S.UI.toast(t('toast.landed', { site: t('site.' + s.design.landingSiteId + '.name') }), 'ok', 4200);
+    if (s.cargoBonus && s.sol === 1 && !s.cargoBonusShown) {
+      s.cargoBonusShown = true;
+      setTimeout(() => S.UI.toast(S.UI.icon('o2') + t('toast.cargo_bonus', s.cargoBonus), 'info', 5500), 900);
+    }
     if (s.sol === 1 && !Game.tutorialShown) {
       Game.tutorialShown = true;
       setTimeout(() => S.UI.toast(t('toast.tutorial'), 'info', 7000), 1200);
@@ -634,7 +638,6 @@
     S.Audio.init();
     S.FX.init();
     S.bus.on('sol:advance', (sum) => Game.pendingSol.push(sum));
-    // K2 trial: wrecks in the western ice field announce themselves with a "!" (core/surface.js)
     // İlk zıplama (K3 Medine): aynı güçle Mars'ta ne kadar yükseğe ve ne kadar süre (Dünya'yla karşılaştırma)
     S.bus.on('surface:jump', () => {
       const s = S.getState();

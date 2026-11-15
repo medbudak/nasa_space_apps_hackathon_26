@@ -77,6 +77,17 @@
         DS.showMenu(h);
       }
     });
+    // İlk açılışta eğitim rehberi bir kez kendiliğinden gelir (K4 Sedef); tarayıcı depolaması yoksa sessizce geçilir
+    try {
+      if (!localStorage.getItem(HELP_SEEN_KEY)) {
+        localStorage.setItem(HELP_SEEN_KEY, '1');
+        setTimeout(() => {
+          if (S.Game && S.Game.scene === 'menu' && !S.UI.topModal()) DS.openHelp(0);
+        }, 500);
+      }
+    } catch (e) {
+      /* depolama kapalı: rehber Ayarlar → Nasıl Oynanır'dan açılır */
+    }
   };
 
   /** Ayarlar: dil, ses, nasıl oynanır + proje künyesi ve kurgu notu */
@@ -109,7 +120,19 @@
     });
   };
 
-  DS.openHelp = function () {
+  /**
+   * Nasıl oynanır: 4 sekmeli eğitim rehberi (K4 Sedef'in nursedef taslağından; metinler story.json → help.*)
+   * 1 Kontroller · 2 Roket ve aletler · 3 Keşif: doğu ve batı · 4 Üs, yakıt ve veri
+   */
+  const HELP_SEEN_KEY = 'sol14_tutorial_seen_v1';
+  const HELP_TABS = [
+    { id: 'controls' },
+    { id: 'design', rows: [['rocket', 'help.design.rocket'], ['map', 'help.design.site'], ['camera', 'help.design.camera'], ['alert', 'help.design.warn'], ['signal', 'help.design.rimfax'], ['o2', 'help.design.life'], ['target', 'help.design.drone']] },
+    { id: 'explore', rows: [['target', 'help.explore.east'], ['map', 'help.explore.tube'], ['temp', 'help.explore.west'], ['camera', 'help.explore.photo']] },
+    { id: 'base', rows: [['flask', 'help.base.fuel'], ['o2', 'help.base.water'], ['leaf', 'help.base.greenhouse'], ['signal', 'help.base.downlink'], ['rocket', 'help.base.mav']] }
+  ];
+  DS.openHelp = function (startTab) {
+    let tab = Math.max(0, Math.min(HELP_TABS.length - 1, Number(startTab) || 0));
     const keys = [
       ['A / D · ← →', 'help.move'],
       ['W · Space · ↑', 'help.jump'],
@@ -119,13 +142,42 @@
       ['J', 'help.log'],
       ['Esc', 'help.pause']
     ];
-    const html =
-      '<div class="panel action-modal help-modal"><div class="modal-head"><h3>' + I('doc') + t('menu.help') + '</h3><button class="icon-btn" data-close>' + I('x') + '</button></div>' +
-      '<div class="help-keys">' + keys.map(([k, d]) => '<div><kbd>' + k + '</kbd><span>' + t(d) + '</span></div>').join('') + '</div>' +
-      '<div class="help-loop">' + ['help.loop1', 'help.loop2', 'help.loop3'].map((k, i) => '<div><b>' + (i + 1) + '</b><span>' + t(k) + '</span></div>').join('') + '</div>' +
-      '<p class="pv-desc">' + t('help.ponr') + '</p>' +
-      '<div class="modal-actions"><button class="btn btn-primary" data-close>' + t('ui.close') + '</button></div></div>';
-    S.UI.openModal('help', html, {});
+    const body = () => {
+      const tb = HELP_TABS[tab];
+      if (tb.id === 'controls') {
+        return (
+          '<div class="help-keys">' + keys.map(([k, d]) => '<div><kbd>' + k + '</kbd><span>' + t(d) + '</span></div>').join('') + '</div>' +
+          '<div class="help-loop">' + ['help.loop1', 'help.loop2', 'help.loop3'].map((k, i) => '<div><b>' + (i + 1) + '</b><span>' + t(k) + '</span></div>').join('') + '</div>' +
+          '<p class="pv-desc">' + t('help.ponr') + '</p>'
+        );
+      }
+      const cb = S.DATA.gameplay.cargoBonus || {};
+      const vars = { min: cb.minMarginPct };
+      return '<div class="help-rows">' + tb.rows.map(([ic, k]) => '<div>' + I(ic) + '<span>' + t(k, vars) + '</span></div>').join('') + '</div>';
+    };
+    const render = () =>
+      '<div class="panel action-modal help-modal"><div class="modal-head"><h3>' + I('doc') + t('help.guide_title') + '</h3><button class="icon-btn" data-close>' + I('x') + '</button></div>' +
+      '<div class="help-tabs" role="tablist">' +
+      HELP_TABS.map((tb, i) => '<button type="button" role="tab" aria-selected="' + (i === tab) + '" class="btn btn-sm ' + (i === tab ? 'btn-primary' : 'btn-ghost') + '" data-tab="' + i + '">' + t('help.tab.' + tb.id) + '</button>').join('') +
+      '</div><div class="help-body">' + body() + '</div>' +
+      '<div class="modal-actions help-nav"><button type="button" class="btn btn-ghost" data-prev' + (tab === 0 ? ' disabled' : '') + '>' + I('arrowL') + t('ui.back') + '</button>' +
+      '<span class="help-count">' + (tab + 1) + ' / ' + HELP_TABS.length + '</span>' +
+      (tab < HELP_TABS.length - 1
+        ? '<button type="button" class="btn btn-primary" data-next>' + t('ui.next') + I('arrowR') + '</button>'
+        : '<button type="button" class="btn btn-primary" data-close>' + t('help.done') + '</button>') +
+      '</div></div>';
+    const go = (i) => {
+      tab = Math.max(0, Math.min(HELP_TABS.length - 1, i));
+      S.UI.updateModal('help', render(), mount);
+    };
+    const mount = (box) => {
+      box.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => go(Number(b.dataset.tab))));
+      const prev = box.querySelector('[data-prev]');
+      if (prev) prev.addEventListener('click', () => go(tab - 1));
+      const next = box.querySelector('[data-next]');
+      if (next) next.addEventListener('click', () => go(tab + 1));
+    };
+    S.UI.openModal('help', render(), { onMount: mount });
   };
 
   /* ================================================================ */
@@ -367,7 +419,10 @@
         ff: th.fullSuccess.forensicsSent, fe: th.fullSuccess.experimentsSent, mf: th.minSuccess.forensicsSent, me: th.minSuccess.experimentsSent
       });
     }
-    if (f === 'rocketId') return join([t('tip.fx.rocket', { max: tot.massMax, m: findById(D.rockets, v).costM }), massText(tot), moneyText(tot)]);
+    if (f === 'rocketId') {
+      const cb = D.gameplay.cargoBonus;
+      return join([t('tip.fx.rocket', { max: tot.massMax, m: findById(D.rockets, v).costM }), massText(tot), moneyText(tot), cb ? t('tip.cargo_bonus', { min: cb.minMarginPct, o2: cb.o2Kg, w: cb.waterL }) : '']);
+    }
     if (f === 'orbitType') {
       const o = findById(D.orbits, v);
       const limit = D.constants.radiation.careerLimitMsv;
