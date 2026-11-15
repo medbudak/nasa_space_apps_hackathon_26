@@ -857,7 +857,7 @@
     },
     toilet: {
       minutes: () => N().toiletMinutes,
-      preview: (s) => ({ from: Math.round(s.res.morale), to: Math.min(100, Math.round(s.res.morale + N().toiletMorale)), costKey: 'needs.cost_toilet', costVars: {} }),
+      preview: (s) => ({ from: Math.round(s.res.morale), to: Math.min(100, Math.round(s.res.morale + N().toiletMorale)), costKey: 'needs.cost_toilet', costVars: { min: N().toiletMinutes, m: N().toiletMorale } }),
       can: () => null,
       run(s) {
         s.res.morale = clamp(s.res.morale + N().toiletMorale, 0, 100);
