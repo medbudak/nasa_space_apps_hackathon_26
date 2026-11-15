@@ -6,9 +6,5 @@
         "repo": "gamedev-skills/awesome-gamedev-agent-skills"
       }
     }
-  },
-  "enabledPlugins": {
-    "workflows@awesome-gamedev-agent-skills": true,
-    "disciplines@awesome-gamedev-agent-skills": true
   }
 }

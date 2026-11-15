@@ -95,7 +95,9 @@ Include open-source and free items too. Note the license.
 
 | Item | URL | License | Used for |
 |---|---|---|---|
-| awesome-gamedev-agent-skills (`workflows`, `disciplines` plugins) | https://github.com/gamedev-skills/awesome-gamedev-agent-skills | Apache-2.0 | Instructions for the team's AI coding agent (game-jam, UI/UX, game-feel checklists); not shipped in the game |
+| awesome-gamedev-agent-skills (14 skills copied into `.claude/skills/`, see CLAUDE.md "Project skills") | https://github.com/gamedev-skills/awesome-gamedev-agent-skills | Apache-2.0 (`LICENSE`, `NOTICE` in each folder) | Instructions for the team's AI coding agent (game-jam, UI/UX, game-feel, level design, performance ...); not shipped in the game |
+| claude-code-prompt-improver (`prompt-improver` skill only, in `.claude/skills/`) | https://github.com/severity1/claude-code-prompt-improver | MIT (`LICENSE` in the folder) | Lets the AI coding agent clarify vague requests before acting; not shipped in the game |
+| i-have-adhd (skill in `.claude/skills/`) | https://github.com/ayghri/i-have-adhd | MIT (`LICENSE` in the folder) | Optional action-first reply style for the AI coding agent; not shipped in the game |
 | Game artwork in `assets/` (backgrounds, sprites, screens, effects, ending) | this repository | Original work by the team (K4) | All in-game images |
 | `assets/sprites/astronaut_walk_sheet.png` (6-frame walk cycle) | this repository | Supplied by the team as a GIF, converted to a sprite strip (origin to be confirmed) | Astronaut walking animation on the surface and inside the habitat |
 | `docs/design/references/lava-tube-reference.png` | this repository | Supplied by the team as a mock-up (origin to be confirmed; has UI text baked in, so it is a design reference only and is not shipped in the game) | Palette and layout reference for the procedural lava-tube scene (`src/fx/effects.js` `renderCave`) — D-012 |
