@@ -16,7 +16,7 @@ function landed(patch = {}, opts = {}) {
   const design = Object.assign({}, S.State.DEFAULT_DESIGN, patch);
   const s = S.State.reset({ design });
   S.Sim.launch(s);
-  S.Sim.land(s, null);
+  S.Sim.land(s);
   baseReady(S, s);
   s.player.inside = true;
   return { S, s };
@@ -233,6 +233,6 @@ test('Yük marjı ek ikmali (K4 Sedef): boş kütle %minMarginPct üstündeyse i
   heavy.design.instruments = S.DATA.instruments.slice(0, 5).map((i) => i.id);
   const m2 = S.Engineering.calcDesignTotals(heavy.design).massMarginPct;
   S.Sim.launch(heavy);
-  S.Sim.land(heavy, null);
+  S.Sim.land(heavy);
   assert.equal(Boolean(heavy.cargoBonus), m2 > cb.minMarginPct);
 });

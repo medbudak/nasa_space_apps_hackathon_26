@@ -933,8 +933,6 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .op-cv { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
 /* K2 trial: the launch intro shows only the canvas (no text, no panels) */
 .op-intro .transit > :not(.op-cv) { visibility: hidden; }
-.cs-stars { position: absolute; inset: 0; background: radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent), radial-gradient(1px 1px at 40% 80%, #fff, transparent); opacity: 0.6; animation: starDrift 6s linear infinite; }
-@keyframes starDrift { to { transform: translateX(-3%); } }
 .transit-track { position: absolute; top: 4.6em; left: 2em; right: 2em; display: flex; align-items: center; gap: 0.8em; font-weight: 800; font-size: 0.8em; text-transform: uppercase; }
 .tt-earth { color: var(--blue); }
 .tt-mars { color: var(--orange2); }
@@ -950,45 +948,16 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .cs-tlm div { display: flex; flex-direction: column; font-size: 0.72em; }
 .cs-tlm span { color: var(--muted); text-transform: uppercase; font-weight: 800; font-size: 0.85em; }
 .cs-tlm b { font-size: 1.15em; color: var(--cyan); }
-.edl { position: absolute; right: 2em; bottom: 2em; padding: 0.8em 1.1em; background: rgba(110,24,14,0.85); border: 1px solid var(--orange2); border-radius: 0.5em; display: flex; flex-direction: column; align-items: flex-end; }
-.edl span { font-size: 0.7em; font-weight: 900; letter-spacing: 0.15em; color: #ffd2bb; }
-.edl b { font-size: 2.2em; font-weight: 900; }
-.edl small { font-size: 0.75em; color: #ffd2bb; }
-.edl-on .cs-bg { filter: sepia(0.6) saturate(2) hue-rotate(-20deg) brightness(0.9); }
 .cs-skip { position: absolute; top: 4.2em; right: 1.2em; z-index: 3; }
-/* Transit görev zinciri: solda sorun kartı, sağda Geç + gemi durumu; çubuk yalnızca görev bitince ilerler */
-.tt-mark { position: absolute; top: 50%; width: 0.7em; height: 0.7em; margin: -0.35em 0 0 -0.35em; border-radius: 50%; background: #1b1d24; border: 2px solid var(--line2); }
-.tt-mark.ok { background: var(--green); border-color: #a6f5cb; }
-.tt-mark.degraded { background: var(--red); border-color: #ffb0a8; }
+/* Transit: solda kart, sağda Geç + yolculuk telemetrisi; güvertede kesit tuvali ve ipucu satırı */
+.tr-deck { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; background: #05060a; image-rendering: pixelated; }
+.tr-hint { position: absolute; left: 50%; bottom: 1.2em; transform: translateX(-50%); z-index: 3; margin: 0; padding: 0.45em 1em; border-radius: 0.4em; background: rgba(10,11,16,0.88); color: #e9e3d8; font-size: 0.8em; white-space: nowrap; }
+.tr-hint kbd { font: inherit; border: 1px solid #6b7280; border-radius: 3px; padding: 0 0.3em; margin: 0 0.1em; }
 .tk-card { width: 30em; max-height: calc(100% - 9em); overflow: auto; display: flex; flex-direction: column; gap: 0.45em; }
 .tk-card.tk-in { animation: popIn 0.25s ease-out; }
 .tk-card h2 { display: flex; align-items: center; gap: 0.4em; margin: 0; }
 .tk-card h2 .ico { color: var(--orange2); flex: none; }
-.tk-row { display: grid; grid-template-columns: 8.2em 1fr; gap: 0.6em; align-items: baseline; }
-.tk-row span { font-size: 0.64em; font-weight: 900; letter-spacing: 0.12em; color: var(--cyan); }
-.cs-panel .tk-row p { margin: 0; font-size: 0.8em; }
-.tk-stake, .tk-result { font-weight: 600; line-height: 1.4; }
-.tk-stake b { color: #fff; }
-.tk-start { align-self: flex-start; margin-top: 0.2em; }
-.tk-btns { display: flex; align-items: center; gap: 0.6em; flex-wrap: wrap; margin-top: 0.2em; }
-.tk-btns .tk-start { margin-top: 0; }
-/* Mekik güvertesi (K4 Sedef, nursedef): kesit görseli, istasyon işareti, yürüyen astronot; kart açıkken istasyonun görseli */
-.sw-deck { position: absolute; inset: 0; z-index: 1; }
-.sw-deck { background: #05060a; }
-.sw-station { position: absolute; inset: 0; background: #07080d center / cover no-repeat; display: none; }
-.sw-deck.show-card .sw-station { display: block; }
-.sw-deck.show-card .sw-world, .sw-deck.show-card .sw-hint { display: none; }
 .transit .tk-card { position: absolute; z-index: 2; }
-.on-deck .tk-side { transform: scale(0.84); transform-origin: top right; }
-/* Mekik kesiti dünyası: görselin oranında, ekrandan geniş; içindeki her şey görselin yüzdesiyle konumlanır */
-.sw-world { position: absolute; left: 0; top: 0; background: center / 100% 100% no-repeat; image-rendering: pixelated; }
-.sw-mark { position: absolute; bottom: 43%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.1em; background: none; border: 0; cursor: pointer; font-family: inherit; font-size: 1em; color: var(--cyan); }
-.sw-mark span { background: rgba(15,16,21,0.92); border: 1px solid var(--cyan); padding: 0.15em 0.5em; font-size: 0.68em; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-.sw-mark i { font-style: normal; font-size: 0.75em; animation: swBob 1s ease-in-out infinite alternate; }
-@keyframes swBob { to { transform: translateY(0.25em); } }
-.sw-crew { position: absolute; bottom: 24.5%; height: 20%; left: 24%; transform: translateX(-50%); pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.9)); }
-.sw-prompt { position: absolute; bottom: 48%; top: auto; transform: translateX(-50%); cursor: pointer; font-size: 0.86em; }
-.sw-hint { position: absolute; left: 50%; bottom: 1.2em; transform: translateX(-50%); margin: 0; padding: 0.4em 0.9em; border-radius: 0.4em; background: rgba(10,11,16,0.85); color: #e9e3d8; font-size: 0.8em; white-space: nowrap; }
 /* Mars bilgi kartları (K3 Medine): kalkışta, görev aralarında ve varışta sol üstte döner (görev kartı açıkken gizli); varışta yerçekimi kartı (camgöbeği) */
 .cs-fact { position: absolute; left: 1.5em; top: 6.4em; width: 22em; z-index: 3; pointer-events: none; display: grid; gap: 0.25em; padding: 0.7em 0.9em; background: rgba(14,14,20,0.9); border-left: 3px solid var(--orange); border-radius: 0.5em; color: #f2ebe2; font-size: 0.82em; line-height: 1.45; box-shadow: 0 0.5em 1.5em rgba(0,0,0,0.45); transition: opacity 0.35s; }
 .cs-fact b { color: var(--orange2); letter-spacing: 0.08em; font-size: 0.78em; }
@@ -999,23 +968,12 @@ body[data-scene='world'] .toast { max-width: 25em; }
 .tk-side { position: absolute; top: 6.4em; right: 1.5em; width: 17em; display: flex; flex-direction: column; gap: 0.45em; z-index: 3; }
 .tk-skip { align-self: flex-end; }
 .tk-skip.armed { border-color: var(--amber); color: var(--amber); }
-.tk-skipnote { align-self: flex-end; text-align: right; font-size: 0.66em; font-weight: 700; color: #ffd27a; text-shadow: 0 0.1em 0.3em #000; }
 .cs-ship { padding: 0.75em 0.9em; background: rgba(14,14,18,0.86); border: 1px solid var(--line); border-radius: 0.55em; }
 .cs-ship h4 { display: flex; align-items: center; gap: 0.4em; margin: 0 0 0.5em; font-size: 0.68em; font-weight: 900; letter-spacing: 0.15em; color: var(--orange2); }
 .cs-ship .cs-tlm { grid-template-columns: 1fr 1fr; }
 .cs-ship .cs-tlm div:last-child { grid-column: 1 / -1; }
-.tk-sys { display: flex; flex-direction: column; gap: 0.3em; margin-bottom: 0.6em; }
-.tk-sys-row { display: grid; grid-template-columns: auto 1fr auto; column-gap: 0.45em; align-items: center; padding-bottom: 0.3em; border-bottom: 1px solid rgba(255,255,255,0.06); }
-.tk-sys-row .ico { color: var(--muted); }
-.tk-sys-row.ok .ico { color: var(--green); }
-.tk-sys-row.degraded .ico { color: var(--red); }
-.tk-sys-row span { font-size: 0.78em; font-weight: 700; }
-.tk-sys-row small { grid-column: 2 / 4; font-size: 0.66em; color: var(--muted); }
-.tk-sys-row.degraded small { color: #ffb0a8; }
 /* Retro daktilo alt yazısı: tek aralıklı, harf harf, yanıp sönen imleç. Ortası sağdaki panelin solunda kalır (5.6em × 1.7 ≈ 9.5em) */
 .cs-type { position: absolute; left: calc(50% - 5.6em); top: 40%; transform: translate(-50%, -50%); z-index: 2; padding: 0.45em 0.9em; white-space: nowrap; font: 700 1.7em/1.2 var(--font); letter-spacing: 0.12em; color: var(--cyan); text-shadow: 0 0 0.45em rgba(63,224,230,0.75); background: repeating-linear-gradient(0deg, rgba(5,6,10,0.78) 0 2px, rgba(5,6,10,0.62) 2px 4px); border: 1px solid rgba(63,224,230,0.35); border-radius: 0.2em; display: grid; }
-/* EDL kutusu daktilonun yerine, ortaya gelir (sağdaki gemi paneliyle çakışmaz) */
-.transit .edl { right: auto; bottom: auto; left: calc(50% - 9.5em); top: 40%; transform: translate(-50%, -50%); align-items: center; z-index: 2; }
 .cs-type > span { grid-area: 1 / 1; }
 .cs-type-ghost { visibility: hidden; }
 .cs-caret { display: inline-block; width: 0.55em; height: 1em; margin-left: 0.12em; vertical-align: -0.12em; background: currentColor; animation: caretBlink 0.9s steps(1) infinite; }

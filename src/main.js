@@ -158,14 +158,13 @@
     }
     // K2 trial: the launch roar now plays at ignition, after the intro (src/fx/opening.js O.cues)
     Game.setScene('transit');
-    // Açılış bir kez: kalkış + yolculuk görevleri → (kayıt: iniş tamamlanmış durum) → oyun dünyasında iniş sahnesi.
-    // Transit görev sonuçları { arrays, leak, tcm, thermal } -> iniş kaynakları (Sim.transitOutcome).
+    // Açılış bir kez: kalkış + mekik güvertesi + uçuş → (kayıt: iniş tamamlanmış durum) → oyun dünyasında iniş sahnesi.
     // Sim.land kaydı sahneden ÖNCE yazar; sayfa yenilenir ya da kayıt yüklenirse açılış/iniş tekrar oynamaz.
-    S.Cutscenes.playTransit((transit, info) => {
-      S.Sim.land(S.getState(), transit);
+    S.Cutscenes.playTransit((info) => {
+      S.Sim.land(S.getState());
       S.saveGame();
       Game.enterWorld();
-      if (info && info.skipped) Game.finishLanding(); // Esc: iniş tamamlanmış, astronot çıkış noktasında
+      if (info.skipped) Game.finishLanding(); // Esc: iniş tamamlanmış, astronot çıkış noktasında
       else Game.startLanding();
     });
   };
@@ -722,7 +721,7 @@
       playUfoEnding: () => {
         const s = S.getState();
         if (!s.totals) S.Sim.launch(s);
-        if (s.sol < 1) S.Sim.land(s, null);
+        if (s.sol < 1) S.Sim.land(s);
         S.Sim.launchMav(s, { auto: false });
         Game.playEnding();
       },

@@ -138,9 +138,7 @@ function play(design, { demoMode = false, policy = {} } = {}) {
   const log = [];
   const launch = S.Sim.launch(s);
   if (!launch.ok) return { S, s, log, launchErrors: launch.errors };
-  // Transit: dört seyir görevi de iyi oynandı (Sim.transitOutcome -> nominal iniş)
-  const good = { success: true, score: 0.95, skipped: false };
-  S.Sim.land(s, Object.fromEntries(S.DATA.gameplay.transit.tasks.map((tk) => [tk.id, good])));
+  S.Sim.land(s);
   // Sol 1 sabahı: mekikteki atölyede üs sistemlerini üret (önce tam güneş dizisi)
   s.player.inside = true;
   for (const id of ['solar_array', 'mav_line', 'isru_unit', 'greenhouse']) if (S.Workshop.status(s, id).state === 'ready') S.Workshop.build(s, id, 'full');

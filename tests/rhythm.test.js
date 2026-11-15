@@ -16,7 +16,7 @@ function landed(opts = {}) {
   const S = loadCore();
   const s = S.State.reset(opts);
   S.Sim.launch(s);
-  S.Sim.land(s, null);
+  S.Sim.land(s);
   baseReady(S, s);
   return { S, s };
 }

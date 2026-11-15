@@ -13,7 +13,7 @@ function landed(opts = {}) {
   const S = loadCore();
   const s = S.State.reset(opts);
   S.Sim.launch(s);
-  S.Sim.land(s, null);
+  S.Sim.land(s);
   baseReady(S, s);
   return { S, s };
 }
@@ -486,7 +486,7 @@ test('Atölye: üs sistemleri kit hâlinde iner, mekikte üretilir; seçim güc�
   const S = loadCore();
   const s = S.State.reset({ design: Object.assign({}, S.State.DEFAULT_DESIGN, { instruments: ['mastcam_z', 'meda', 'moxie', 'veggie', 'rad'] }) });
   S.Sim.launch(s);
-  S.Sim.land(s, null);
+  S.Sim.land(s);
   const W = S.Workshop;
   // Kargodaki kitler: temel kitler + seçilen aletlere bağlı kitler
   assert.equal(W.count(s, 'panel_kit'), 1);

@@ -378,7 +378,7 @@
   }
 
   /* ---------------- Bilgi balonları: Nedir? · Neden seçilir? · Oyunda ne değişir? ---------------- */
-  // "Ne değişir?" satırı her çizimde veriden üretilir (S.DATA + Engineering.calcDesignTotals + Sim.transitVars):
+  // "Ne değişir?" satırı her çizimde veriden üretilir (S.DATA + Engineering.calcDesignTotals + Sim.landingStart):
   // bütçe çubukları, iniş değerleri ve oyun aynı formülleri kullanır, bu yüzden metin sayılarla çelişmez.
   const findById = (list, id) => S.Engineering.findById(list, id);
   const round1 = (v) => S.util.round1(v);
@@ -393,8 +393,8 @@
     alt[f] = v;
     return alt;
   }
-  /** Nominal transitle iniş değerleri: Sim.land ile aynı kod yolu (yakıt, moral) */
-  const landing = (s, design) => S.Sim.transitVars({ demoMode: s.demoMode, design }, S.Sim.transitOutcome(null));
+  /** İniş değerleri: Sim.land ile aynı kod yolu (yakıt, moral) */
+  const landing = (s, design) => S.Sim.landingStart({ demoMode: s.demoMode, design });
 
   const moneyText = (tot) =>
     tot.moneyUsed <= tot.moneyMax ? t('tip.money_left', { left: tot.moneyMax - tot.moneyUsed }) : t('tip.money_over', { over: tot.moneyUsed - tot.moneyMax });

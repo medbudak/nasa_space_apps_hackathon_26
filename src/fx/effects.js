@@ -956,6 +956,39 @@
   };
 
   /* ---------------- Habitat içi ---------------- */
+  /**
+   * Kasksız mürettebatın yürüyüşü (K3 Medine): gövde hafifçe sallanır; bacaklar (figürün alt %44'ü) sol ve sağ yarı
+   * olarak ileri geri salınıp sırayla kalkar, ayaklar kaymaz. Görsel sola bakar; dir = +1 aynalar. footY: zemin çizgisi.
+   */
+  FX.drawCrew = function (c, img, x, footY, h, dir, phase, moving) {
+    if (!img) return;
+    const k = h / img.height;
+    const w = img.width * k;
+    const hip = 0.56; // bacakların başladığı yer (figür yüksekliğinin oranı)
+    const swing = moving ? Math.sin(phase * Math.PI * 2) : 0;
+    const bob = moving ? Math.abs(Math.cos(phase * Math.PI * 2)) * h * 0.012 : 0;
+    c.save();
+    c.translate(Math.round(x), Math.round(footY));
+    if (dir > 0) c.scale(-1, 1);
+    c.imageSmoothingEnabled = false;
+    c.fillStyle = 'rgba(0,0,0,0.35)';
+    c.beginPath();
+    c.ellipse(0, -2, w * 0.42, h * 0.02, 0, 0, Math.PI * 2);
+    c.fill();
+    const legTop = img.height * hip;
+    const legH = img.height - legTop;
+    const halfW = img.width / 2;
+    // önce geriye salınan bacak, sonra öndeki (öne giden bacak kalkar)
+    const legs = [{ sx: 0, off: -swing }, { sx: halfW, off: swing }].sort((a, b) => a.off - b.off);
+    for (const leg of legs) {
+      const dx = leg.off * h * 0.035;
+      const dy = moving ? -Math.max(0, leg.off) * h * 0.03 : 0;
+      c.drawImage(img, leg.sx, legTop, halfW, legH, -w / 2 + leg.sx * k + dx, -legH * k + dy - bob * 0.3, halfW * k, legH * k);
+    }
+    c.drawImage(img, 0, 0, img.width, legTop + 2, -w / 2, -h - bob, w, (legTop + 2) * k);
+    c.restore();
+  };
+
   FX.renderInterior = function (ctx, s, dt, t) {
     const st = S.Surface.nearestStation();
     // 640 px'lik kesit geniş tuvalde ortalanır; uzun tuvalde yüzeydeki gibi OFF_Y kadar aşağı iner,
@@ -970,7 +1003,7 @@
     if (ship) {
       const sh = Math.round((BASE_W * ship.height) / ship.width);
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(ship, ox, Math.round(OFF_Y + I.floorY - sh * 0.755), BASE_W, sh);
+      ctx.drawImage(ship, ox, Math.round(OFF_Y + I.floorY - sh * 0.695), BASE_W, sh); // güverte zemini görselin %69.5'inde
       ctx.imageSmoothingEnabled = false;
     } else {
       S.Art.drawInterior(ctx, s, st ? st.id : null, t, { w: W, h: H, ox, oy: OFF_Y });
@@ -992,23 +1025,9 @@
       ctx.fillRect(lx - 1, ly + 4, 3, 3);
       ctx.textAlign = 'left';
     }
-    // Kasksız mürettebat (mekik içinde): yürürken adım sallanması
-    const crew = S.Sprites.get('astronaut_indoor');
-    if (crew) {
-      const ch = 66;
-      const cw = Math.round((crew.width * ch) / crew.height);
-      const bob = body.moving ? (Math.floor(t * 7) % 2) * 1.5 : 0;
-      const x = Math.round(ox + body.ix);
-      const y = Math.round(OFF_Y + I.floorY + 1 - ch - bob);
-      ctx.save();
-      ctx.imageSmoothingEnabled = true;
-      if (s.player.facing < 0) {
-        ctx.translate(x, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(crew, -Math.round(cw / 2), y, cw, ch);
-      } else ctx.drawImage(crew, x - Math.round(cw / 2), y, cw, ch);
-      ctx.restore();
-    }
+    // Kasksız mürettebat (mekik içinde), adım atarak yürür
+    body.stepPh = body.moving ? ((body.stepPh || 0) + dt * 1.9) % 1 : 0;
+    FX.drawCrew(ctx, S.Sprites.get('astronaut_indoor'), ox + body.ix, OFF_Y + I.floorY + 1, 66, s.player.facing, body.stepPh, body.moving);
     if (FX.shake > 0) FX.shake -= dt;
     FX.drawGlitch(ctx, dt);
   };

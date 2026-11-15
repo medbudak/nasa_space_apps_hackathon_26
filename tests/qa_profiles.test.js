@@ -68,7 +68,7 @@ test('Profil 1 — Altın Yol: MEDA fırtınayı 1 Sol önceden haber verir, ser
   const S = loadCore();
   const s = S.State.reset({ design: GOLDEN });
   S.Sim.launch(s);
-  S.Sim.land(s, null);
+  S.Sim.land(s);
   s.player.inside = true;
   const stormSol = S.DATA.events.schedule.full.find((e) => e.id === 'dust_storm').sol;
   let guard = 0;
