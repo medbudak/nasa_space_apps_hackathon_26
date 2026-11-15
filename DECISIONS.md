@@ -155,3 +155,25 @@ Sources: the design document "SOL 14: Red Horizon v2" and the K1–K6 task cards
 - Decision: The surface map is centred on the base (0 m) with two routes. Left (−120 → −450 m): Icy Plain and Glacier Edge with 4 breakable ice clusters, 2 of them hiding a relic (inspect → break → photograph → collect; plain ice gives a science sample); broken ice and collected items persist in the save. Right: First Wreck (Opportunity, +180 m, photo tutorial), Wreck Field (Spirit, +360 m, "which part is still reusable?" engineering decision), Rocky Approach (sand pit + boulders to jump), lava-tube skylight at +600 m with ladder, beacon and comms relay. The tube is a separate sub-map (ladder base + relay, first-passage crack, layered basalt, last rock chamber with 3 short studies: temperature comparison, chamber span, vibration test whose result is open to interpretation and never a "safe" verdict); there is no second exit, finds are reported via the relay at the ladder base. A report is any find report that reaches Earth: 2 wreck reports + 2 relic reports (filed on entering the habitat) + 1 lava-tube survey; success thresholds are unchanged. InSight, Phoenix and Beagle 2 stay in the data but are not on the map. The game opens with a skippable (Space/Esc) lander touchdown at the base landing pad, then hands control to the player. The HUD shows only the active target's direction and distance plus the way home.
 - Why: A small, complete exploration loop that teaches one mechanic per area without empty walking. The lava tube is fictional (known Mars skylights are on Arsia Mons); this is labelled in the game. Rejected: lowering the report thresholds to 2 wrecks (ice and cave finds would not count).
 - Affects: `data/nasa_data.json` (terrain.map, boulders), `data/explore_config.json` (new), `data/forensics_cases.json` (activeCaseIds, Spirit salvageChoice), `src/systems/explore.js` (new), `src/fx/lander.js` (new), `src/core/surface.js`, `sim.js`, `state.js`, `objectives.js`, `score.js`, `src/ui/hud.js`, `science_panels.js`, `src/fx/effects.js`, `art.js`, `src/main.js`, `content/story.json`, tests
+
+### D-013: Vehicles are found by exploring: east lava plain with digging and a lava tube, west glacier
+- Status: Proposed (applied on K1's instruction, 2026-11-15; team to confirm)
+- Date: 2026-11-15
+- Agreed by: (pending; K1 decided)
+- Decision: Vehicles no longer appear when the player walks near them. There is no automatic discovery: wrecks are not revealed within 160 m, and Ingenuity no longer reveals them.
+  - Every wreck is buried and appears only when its dig site is dug out with E. Each swing costs game minutes.
+  - The suit scanner pings and the astronaut kneels only next to something real; decoy mounds come up empty. RIMFAX senses buried sites from farther away. Ingenuity keeps the sand-trap routing.
+  - East, lava plain to +1400 m: dried lake bed, dunes, crater field and lava plain.
+    - Opportunity and InSight are buried at the end of their trails.
+    - A rubble-sealed skylight must be dug open before the lava tube can be entered.
+    - The tube holds the fictional SCOUT-1 rover's five parts, photographed with FIELD CAM.
+  - West, glacier to the ice wall at −5000 m (K2's western ice field): cold, a blizzard and ice barriers.
+    - Spirit, Phoenix and Beagle 2 are frozen in.
+    - A fictional cargo lander and the Deep Space 2 probe are on this route.
+    - D-012's four ice clusters move onto the ice field.
+  - All five cases are on the map.
+  - Goals never name an undiscovered vehicle.
+  - Free payload mass above 15% adds +4 kg O₂ and +10 L water at landing (K4's cargo bonus, game values).
+- Why: The player asked for exploration, decisions and interaction instead of ready-made vehicles, with two routes that play differently. It builds on the three archives (K2 glacier, K3 buried wrecks and tube rover, D-012 map and UI). Rejected: keeping D-012's visible wrecks on the right route.
+- Changes D-012: the wreck positions, "InSight, Phoenix and Beagle 2 are not on the map" and the −450 / +600 m bounds. D-012's base-centred map, lava-tube sub-map, ice loop and landing cutscene stay.
+- Affects: `data/nasa_data.json` (terrain.map, westRegion, gameplay.cargoBonus), `data/explore_config.json` (dig, cave.scout, westFinds, fieldCam), `data/forensics_cases.json`, `src/systems/explore.js`, `src/systems/forensics.js`, `src/core/surface.js`, `objectives.js`, `sim.js`, `state.js`, `src/fx/dig_fx.js`, `westlands.js`, `effects.js`, `src/ui/field_cam.js`, `cutscenes.js`, `hud.js`, `science_panels.js`, `design_screens.js`, `content/story.json`, tests
