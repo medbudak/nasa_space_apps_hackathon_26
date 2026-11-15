@@ -105,6 +105,15 @@
   };
 
   /** Günlük dış sıcaklık eğrisi: min ~05:30, max ~14:00 (Mars gün-gece farkı 70–100 °C) */
+  /**
+   * Lav tüneli derin bölüm sıcaklığı (basitleştirilmiş, D-012): THEMIS skylight gözlemi — gece-gündüz salınımı
+   * çevre yüzeyin yaklaşık 1/3'ü. T_derin = T_ort + (T_yüzey − T_ort) · kesir, T_ort = (gece min + gündüz maks) / 2
+   */
+  E.calcCaveTempC = function (site, minute, swingFraction) {
+    const mean = (site.nightMinC + site.dayMaxC) / 2;
+    return round1(mean + (E.ambientTempAt(site, minute) - mean) * swingFraction);
+  };
+
   E.ambientTempAt = function (site, minute) {
     const tMin = site.nightMinC;
     const tMax = site.dayMaxC;
@@ -217,6 +226,10 @@
       solarNoonW,
       rtgW: pwr.rtgW,
       nightLoadW,
+      // Breakdown of nightLoadW for the design console's energy details (no new formula)
+      heatingNightW,
+      instrumentW,
+      nightHours: round1(nightHours),
       nightNeedKwh,
       batteryNightSafe,
       dataPerSolMbit,

@@ -29,6 +29,7 @@ function buildData() {
   nasa.forensics = readJson('data', 'forensics_cases.json');
   nasa.experimentsCfg = readJson('data', 'experiments_config.json');
   nasa.events = readJson('data', 'events_catalog.json');
+  nasa.explore = readJson('data', 'explore_config.json');
   const story = readJson('content', 'story.json');
   fs.mkdirSync(rel('src', 'data'), { recursive: true });
   const header = (src) =>
@@ -242,6 +243,8 @@ const ASSETS = [
   // Astronot pozları
   { src: 'sprites/astronaut_idle.png', mode: 'flood', size: { h: 58 } },
   { src: 'sprites/astronaut_walk.png', mode: 'flood', size: { h: 58 } },
+  // 6 karelik yürüme şeridi: kareler kaynakta ortak kutuya hizalı (151x266), kırpılmaz; 6 x 33 = 198 px
+  { src: 'sprites/astronaut_walk_sheet.png', mode: 'flood', size: { w: 198, h: 58 }, noCrop: true },
   { src: 'sprites/astronaut_jump.png', mode: 'flood', size: { h: 60 } },
   { src: 'sprites/astronaut_frozen.png', mode: 'flood', size: { h: 58 } },
   { src: 'sprites/astronaut_action.png', mode: 'flood', size: { h: 48 } },

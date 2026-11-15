@@ -202,6 +202,7 @@
           n++;
           if (p.kind === 'forensic' && s.forensics[p.refId]) s.forensics[p.refId].queued = false;
           if (p.kind === 'experiment' && s.experiments[p.refId]) s.experiments[p.refId].queued = false;
+          if (p.kind === 'report' && s.explore && s.explore.reports[p.refId]) s.explore.reports[p.refId].queued = false;
           return false;
         }
         return true;

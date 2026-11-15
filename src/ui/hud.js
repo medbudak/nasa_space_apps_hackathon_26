@@ -1,7 +1,8 @@
 /**
  * SOL 14: RED HORIZON — Yüzey HUD'u (K3)
- * Üst bar, yaşamsal değerler, M4 Dönüşsüzlük Noktası çentiği (eklem donunca sıçrama), mini harita
- * (dönüş menzili), uyarı bantları, [E] etkileşim balonu, hızlı erişim ve dokunmatik kontroller.
+ * Sakin düzen: sol üstte O₂ + elbise bataryası (M4 Dönüşsüzlük Noktası çentiği O₂ çubuğunda) ve habitata uzaklık,
+ * üst ortada tek satır hedef + mesafe (tıklanınca ipucu), sağ üstte Sol/saat/yer/sıcaklık, dünyada habitat ve hedef
+ * işaretleri, altta habitat→hedef çizgisi (dönüş menzili) ve kısayollar. Yalnızca sorun varsa uyarı bandı görünür.
  */
 (function (S) {
   'use strict';
@@ -10,64 +11,67 @@
   const HUD = { refs: {}, mode: null, lastFrozen: false, lastNotch: 0, prompt: null };
   /** [E] balonunun üst kenarı, 640×360 tasarım alanında (zemin y=300'ün 174 px üstü; 16:9'da sahnenin %35'i) */
   const PROMPT_BASE_Y = 126;
+  /** Dünya işaretlerinin y'si (640×360 tasarım alanı): habitat çatısının ve enkazların üstü */
+  const MARK_HOME_Y = 150;
+  const MARK_TARGET_Y = 212;
+  /** Habitat yapısının ortası (surface.js STRUCTURES: px = sol kenar) */
+  const HAB = () => S.Surface.STRUCTURES.find((x) => x.id === 'habitat');
 
   function ref(name) {
     return HUD.refs[name];
   }
 
+  const DOME =
+    '<svg class="hz-logo" viewBox="0 0 64 40" aria-hidden="true"><path d="M6 32a26 26 0 0 1 52 0z" fill="#e8592a"/>' +
+    '<path d="M2 36l14-10 8 5 10-9 10 7 8-4 10 11z" fill="#7a2a17"/><rect x="0" y="35" width="64" height="3" fill="#e8592a"/></svg>';
+
   HUD.build = function (mode) {
     HUD.mode = mode;
     const layer = UI().hudLayer();
     const I = UI().icon;
+    const surface = mode === 'surface';
     layer.hidden = false;
     layer.className = 'hud-layer mode-' + mode;
+    const navBtn = (q, key, label) => '<button class="hz-key" data-q="' + q + '"><kbd>' + key + '</kbd><span>' + label + '</span></button>';
     layer.innerHTML =
-      UI().header(
-        '<span class="loc-ico">' + I(mode === 'habitat' ? 'home' : 'walk') + '</span><span data-ref="loc"></span>',
-        '<div class="status-pill">' +
-          '<span>' + I('calendar') + '<b data-ref="sol"></b></span><i></i>' +
-          '<span>' + I('clock') + '<b data-ref="clock"></b></span><i></i>' +
-          '<span>' + I('temp') + '<b data-ref="temp"></b></span></div>'
-      ) +
-      '<div class="hud-alerts" data-ref="alerts"></div>' +
-      // RIT-02: tek ana hedef + en fazla bir isteğe bağlı hedef; RIT-12: istenirse ipucu
-      '<section class="panel goal-card" data-ref="goal" hidden>' +
-      '<div class="goal-main"><span class="goal-tag">' + I('target') + t('goal.label_main') + '</span>' +
-      '<button class="goal-hint-btn" data-ref="hintbtn" title="' + t('goal.hint_btn') + '">?</button></div>' +
-      '<b class="goal-text" data-ref="goaltxt"></b>' +
-      '<p class="goal-hint" data-ref="goalhint" hidden></p>' +
-      '<div class="goal-opt" data-ref="goalopt"></div>' +
-      '<div class="goal-prog" data-ref="goalprog"></div></section>' +
-      (mode === 'surface'
-        ? '<section class="panel vitals">' +
-          '<div class="vital"><div class="vital-head">' + I('o2') + '<span>' + t('hud.suit_o2') + '</span><b data-ref="o2"></b></div>' +
-          '<div class="bar cyan ponr-bar"><div class="bar-fill" data-ref="o2fill"></div>' +
-          '<div class="ponr-ghost" data-ref="ghost"></div><div class="ponr-jump" data-ref="jump"><span data-ref="jumplbl"></span></div>' +
-          '<div class="ponr-notch" data-ref="notch"></div></div>' +
-          '<div class="vital-sub" data-ref="ponrtxt"></div></div>' +
-          '<div class="vital"><div class="vital-head">' + I('battery') + '<span>' + t('hud.suit_battery') + '</span><b data-ref="sbat"></b></div>' +
-          '<div class="bar amber"><div class="bar-fill" data-ref="sbatfill"></div></div></div>' +
-          '<div class="vital"><div class="vital-head">' + I('suit') + '<span>' + t('hud.suit_temp') + '</span><b data-ref="stemp"></b></div>' +
-          '<div class="vital-sub" data-ref="heat"></div>' +
-          '<div class="vital-sub" data-ref="speed"></div></div>' +
-          '<div class="vital"><div class="vital-head">' + I('power') + '<span>' + t('hud.hab_battery') + '</span><b data-ref="hbat"></b></div>' +
-          '<div class="bar amber"><div class="bar-fill" data-ref="hbatfill"></div></div></div>' +
-          '<div class="vital vital-gh" data-ref="ghrow" hidden><div class="vital-head">' + I('leaf') + '<span>' + t('hud.greenhouse') + '</span></div>' +
-          '<div class="vital-sub" data-ref="gh"></div></div>' +
-          '</section>' +
-          '<div class="minimap"><div class="mm-track" data-ref="mm"></div><div class="mm-legend" data-ref="mmleg"></div></div>' +
-          '<div class="world-prompt" data-ref="prompt" hidden></div>'
+      // Sol üst: yaşamsallar
+      (surface
+        ? '<section class="hz-card hz-vitals">' +
+          '<div class="hz-row"><div class="hz-v"><div class="hz-vh">' + I('o2') + '<b>' + t('hud.o2_short') + ' <span data-ref="o2"></span></b></div>' +
+          '<div class="hz-bar ponr-bar"><div class="bar-fill" data-ref="o2fill"></div>' +
+          '<div class="ponr-ghost" data-ref="ghost" hidden></div><div class="ponr-jump" data-ref="jump" hidden><span data-ref="jumplbl"></span></div>' +
+          '<div class="ponr-notch" data-ref="notch"></div></div></div><i class="hz-div"></i>' +
+          '<div class="hz-v"><div class="hz-vh">' + I('battery') + '<b data-ref="sbat"></b></div><div class="hz-bar amber"><div class="bar-fill" data-ref="sbatfill"></div></div></div></div>' +
+          '<div class="hz-home" data-ref="home"></div></section>'
+        : '<section class="hz-card hz-vitals hab"><div class="hz-v"><div class="hz-vh">' + I('power') + '<b data-ref="hbat"></b></div>' +
+          '<div class="hz-bar amber"><div class="bar-fill" data-ref="hbatfill"></div></div></div></section>') +
+      // Üst orta: hedef (RIT-02) + ipucu (RIT-12) + uyarılar
+      '<div class="hz-center"><button class="hz-goal" data-ref="goal" hidden title="' + t('goal.hint_btn') + '"><span class="hz-dia"></span>' +
+      '<b data-ref="goaltxt"></b><span class="hz-dist" data-ref="goaldist"></span></button>' +
+      '<div class="hz-hint" data-ref="goalhint" hidden></div>' +
+      '<div class="hud-alerts" data-ref="alerts"></div></div>' +
+      // Sağ üst: Sol / saat / yer / sıcaklık
+      '<div class="hz-time"><b data-ref="sol"></b><span data-ref="place"></span></div>' +
+      (surface
+        ? '<div class="hz-mark" data-ref="mkhome">' + I('home') + '</div><div class="hz-mark tgt" data-ref="mktgt" hidden><span class="hz-dia"></span></div>' +
+          '<div class="world-prompt" data-ref="prompt" hidden></div>' +
+          '<footer class="hz-foot"><div class="hz-brand">' + DOME + '<b>SOL 14</b></div><i class="hz-sep"></i>' +
+          '<span class="hz-walk"><kbd>A</kbd>/<kbd>D</kbd>' + t('hud.walk') + '</span>' +
+          '<div class="hz-track"><div class="hz-t-line">' +
+          '<div class="hz-t-reach" data-ref="mmreach"></div><span class="hz-t-home in" data-ref="mmhome">' + I('home') + '</span>' +
+          '<span class="hz-t-tube" data-ref="mmtube"></span><span class="hz-dia hz-t-tgt" data-ref="mmtgt" hidden></span>' +
+          '<span class="hz-t-me" data-ref="mmme"></span></div></div></footer>'
         : '') +
-      '<nav class="quickbar">' +
-      '<button class="qb" data-q="downlink" title="L">' + I('signal') + '<span>' + t('hud.q_downlink') + '</span><kbd>L</kbd></button>' +
-      '<button class="qb" data-q="power" title="P">' + I('power') + '<span>' + t('hud.q_power') + '</span><kbd>P</kbd></button>' +
-      '<button class="qb" data-q="log" title="J">' + I('log') + '<span>' + t('hud.q_log') + '</span><kbd>J</kbd></button>' +
-      '<button class="qb" data-q="pause" title="Esc">' + I('pause') + '<span>' + t('hud.q_menu') + '</span><kbd>Esc</kbd></button>' +
+      '<nav class="hz-nav">' +
+      navBtn('downlink', 'L', t('hud.q_data')) + '<i class="hz-sep"></i>' +
+      navBtn('log', 'J', t('hud.q_log')) + '<i class="hz-sep"></i>' +
+      navBtn('power', 'P', t('hud.q_systems')) + '<i class="hz-sep"></i>' +
+      navBtn('pause', 'Esc', t('hud.q_menu')) +
       '</nav>' +
       '<div class="touch-controls">' +
       '<button class="tc" data-tc="left">' + I('arrowL') + '</button><button class="tc" data-tc="right">' + I('arrowR') + '</button>' +
       '<button class="tc tc-act" data-tc="act">E</button>' +
-      (mode === 'surface' ? '<button class="tc tc-act" data-tc="jump">' + I('up') + '</button>' : '') +
+      (surface ? '<button class="tc tc-act" data-tc="jump">' + I('up') + '</button>' : '') +
       '</div>';
     HUD.refs = {};
     layer.querySelectorAll('[data-ref]').forEach((el) => (HUD.refs[el.dataset.ref] = el));
@@ -94,7 +98,7 @@
       b.addEventListener('pointercancel', up);
     });
     if (ref('prompt')) ref('prompt').addEventListener('click', () => S.Game.interact());
-    ref('hintbtn').addEventListener('click', () => {
+    ref('goal').addEventListener('click', () => {
       const h = ref('goalhint');
       h.hidden = !h.hidden;
       S.bus.emit('audio:play', 'click');
@@ -102,6 +106,7 @@
     });
     HUD.lastFrozen = false;
     HUD._goalHtml = null;
+    HUD._alertsHtml = null;
   };
 
   HUD.hide = function () {
@@ -116,13 +121,26 @@
     if (!HUD.mode) return;
     const site = S.Sim.site(s);
     const amb = S.Sim.ambient(s);
-    ref('loc').textContent = HUD.mode === 'habitat' ? t('hud.loc_habitat') : t('hud.loc_surface', { site: t('site.' + site.id + '.short') });
-    ref('sol').textContent = 'SOL ' + s.sol + ' / ' + s.maxSols;
-    ref('clock').textContent = S.util.clock(S.Sim.clockMinute(s));
-    ref('temp').textContent = (HUD.mode === 'habitat' ? Math.round(s.res.habTempC) : Math.round(amb)) + ' °C';
+    const inHab = HUD.mode === 'habitat';
+    ref('sol').textContent = 'SOL ' + s.sol + ' / ' + s.maxSols + ' · ' + S.util.clock(S.Sim.clockMinute(s));
+    const zone = !inHab && S.Explore && s.explore ? S.Explore.zoneAt(s) : null;
+    ref('place').textContent = inHab
+      ? t('hud.place_hab', { temp: Math.round(s.res.habTempC) })
+      : zone === 'cave'
+        ? t('hud.place_cave', { temp: Math.round(S.Explore.deepTemp(s)) }) // D-012: kurgusal tünel etiketi her an görünür
+        : t('hud.place_zone', { site: t('site.' + site.id + '.short'), temp: Math.round(amb), zone: zone ? t('zone.' + zone) : '' });
+    // Bölgeye ilk girişte kısa bölge bandı
+    if (zone && s.explore && !s.explore.zonesSeen[zone]) {
+      s.explore.zonesSeen[zone] = true;
+      if (zone !== 'base') UI().toast(UI().icon('map') + t('toast.zone', { zone: t('zone.' + zone) }), 'info', 2600);
+    }
     HUD.updateAlerts(s, amb);
     HUD.updateGoal(s);
-    if (HUD.mode !== 'surface') return;
+    if (inHab) {
+      ref('hbat').textContent = s.res.energyKwh.toFixed(1) + ' / ' + s.res.batteryKwh + ' kWh';
+      ref('hbatfill').style.width = (s.res.energyKwh / s.res.batteryKwh) * 100 + '%';
+      return;
+    }
 
     // Yaşamsallar
     const suit = s.suit;
@@ -154,33 +172,84 @@
       notch.classList.add('jumped');
     }
     HUD.lastFrozen = suit.frozen;
-    ref('ponrtxt').innerHTML = S.Sim.isOutside(s)
-      ? t(ponr.beyond ? 'hud.ponr_beyond' : 'hud.ponr_line', { pct: ponr.requiredO2, m: ponr.distanceM, speed: ponr.speedPct })
-      : '';
-    ref('ponrtxt').classList.toggle('danger', ponr.critical);
 
     const heat = HUD.suitHeat(s, amb);
     ref('sbat').textContent = Math.round(suit.battery) + '%';
     ref('sbatfill').style.width = suit.battery + '%';
     ref('sbatfill').parentElement.classList.toggle('critical', heat.state !== 'heater');
-    ref('stemp').textContent = Math.round(suit.tempC) + ' °C';
-    ref('stemp').classList.toggle('danger', suit.frozen || suit.battery <= 0);
-    const heatHtml = '<span class="' + heat.tone + '">' + S.util.escape(heat.text) + '</span>';
-    if (ref('heat')._html !== heatHtml) {
-      ref('heat').innerHTML = heatHtml;
-      ref('heat')._html = heatHtml;
+
+    // Habitata uzaklık (dönüş yönüyle); dönüş O₂'si sınırdaysa kırmızı
+    const home = ref('home');
+    const m = Math.round(S.Sim.distanceFromHab(s));
+    const inCave = S.Sim.inCave(s);
+    const homeHtml = !S.Sim.isOutside(s)
+      ? UI().icon('home') + '<span>' + t('hud.home_here') + '</span>'
+      : inCave
+        ? UI().icon('home') + '<span>' + t('hud.cave_line', { lm: Math.max(0, Math.round(s.player.cx - S.DATA.explore.cave.ladderM)), m }) + '</span>'
+        : UI().icon('home') + '<span>' + t('hud.home_line', { dir: s.player.x > 0 ? '←' : '→', m }) + '</span>';
+    if (home._html !== homeHtml) {
+      home.innerHTML = homeHtml;
+      home._html = homeHtml;
     }
-    ref('speed').innerHTML = suit.frozen
-      ? '<span class="danger">' + t('hud.joints_frozen', { pct: ponr.speedPct }) + '</span>'
-      : S.Surface.inSandPit(s.player.x)
-        ? '<span class="warn">' + t('hud.sand_pit') + '</span>'
-        : t('hud.speed_normal');
-    ref('hbat').textContent = s.res.energyKwh.toFixed(1) + ' / ' + s.res.batteryKwh + ' kWh';
-    ref('hbatfill').style.width = (s.res.energyKwh / s.res.batteryKwh) * 100 + '%';
-    HUD.updateGreenhouse(s);
+    home.classList.toggle('danger', ponr.critical || ponr.beyond);
 
     HUD.updateMinimap(s, ponr);
     HUD.updatePrompt(s);
+  };
+
+  /**
+   * Dünyaya bağlı öğelerin KONUMU (habitat/hedef işaretleri, [E] balonu, alt çizgideki oyuncu noktası).
+   * main.js bunu her karede FX.render'dan hemen sonra çağırır: kamera (FX.camX) o karede nereye kaydıysa işaret de
+   * oraya gider. x, tuvaldeki çizimle aynı yuvarlamayla (FX.worldToScreen = Math.round(px − camX)) tuval pikseline
+   * oturtulur, sonra tuvalin CSS ölçeğiyle tam CSS pikseline çevrilir. Yumuşatma/transition yok: işaret nesneye kilitli.
+   * İçerik ve görünürlük (hangi nesne yakın, metin) HUD.update'te 10 Hz'de kalır.
+   */
+  HUD.syncWorld = function (s) {
+    if (HUD.mode !== 'surface' || !ref('mkhome')) return;
+    const FX = S.FX;
+    const v = FX.view;
+    // .stage pencereyi kaplar (position: fixed; inset: 0) ve tuval %100 uzatılır: ölçek = pencere / tuval
+    const kx = window.innerWidth / v.w;
+    const ky = window.innerHeight / v.h;
+    const sx = FX.shakeX || 0;
+    const sy = FX.shakeY || 0;
+    const cssX = (canvasX) => Math.round((canvasX + sx) * kx);
+    const cssY = (yBase) => Math.round((yBase + v.offY + sy) * ky);
+    const put = (el, canvasX, yBase) => {
+      const on = canvasX > -40 && canvasX < v.w + 40;
+      if (el.hidden === on) el.hidden = !on;
+      if (on) el.style.transform = 'translate3d(' + cssX(canvasX) + 'px,' + cssY(yBase) + 'px,0) translate(-50%,-100%)';
+    };
+    const hab = HAB();
+    const inCave = S.Sim.inCave(s);
+    // Mağarada ev işareti merdivenin üstünde durur (çıkış yolu)
+    if (inCave) put(ref('mkhome'), FX.worldToScreen(S.Surface.caveMToPx(S.DATA.explore.cave.ladderM)), MARK_HOME_Y);
+    else put(ref('mkhome'), FX.worldToScreen(hab.px) + hab.w / 2, MARK_HOME_Y);
+    const tgt = ref('mktgt');
+    const tg = HUD.target;
+    const tgPx = !tg ? null : inCave ? (tg.cx !== undefined ? S.Surface.caveMToPx(tg.cx) : null) : tg.m !== undefined ? S.Surface.mToPx(tg.m) : null;
+    if (tgPx === null || (S.Lander && S.Lander.active)) {
+      if (!tgt.hidden) tgt.hidden = true;
+    } else put(tgt, FX.worldToScreen(tgPx), MARK_TARGET_Y);
+
+    // [E] balonu: nesnenin üstünde, pencere kenarına taşmadan (genişlik içerik değişince önbelleğe alınır)
+    const el = ref('prompt');
+    if (HUD.prompt && !el.hidden) {
+      const half = (el._w || 0) / 2;
+      const gap = 8;
+      const x = Math.max(half + gap, Math.min(window.innerWidth - half - gap, cssX(FX.worldToScreen(HUD.prompt.px))));
+      el.style.left = x + 'px';
+      el.style.top = cssY(PROMPT_BASE_Y) + 'px';
+    }
+
+    // Alt çizgideki oyuncu noktası (mağarada tünel ağzında)
+    ref('mmme').style.left = HUD.trackPct(inCave ? S.DATA.terrain.map.tubeMouthM : s.player.x) + '%';
+  };
+
+  /** Alt çizgi ölçeği (D-012, iki yönlü): sol sınır (−450 m) → habitat (0 m) → lav tüneli ağzı (+600 m) */
+  HUD.trackPct = function (m) {
+    const map = S.DATA.terrain.map;
+    return Math.max(0, Math.min(100, ((m - map.leftLimitM) / (map.tubeMouthM - map.leftLimitM)) * 100));
   };
 
   /** Oyun dakikası → "3 sa 20 dk" / "45 dk" (geri sayım tahminleri; aşağı yuvarlanır) */
@@ -191,7 +260,7 @@
   };
 
   /**
-   * Elbise sıcaklığı satırı: sıcaklığın NEDENİNİ gösterir (ısıtıcı bataryadan çalışıyor / batarya azalıyor /
+   * Elbise sıcaklığı durumu: sıcaklığın NEDENİNİ verir (ısıtıcı bataryadan çalışıyor / batarya azalıyor /
    * batarya bitti, elbise soğuyor). Süreler o anki dış sıcaklıkla hesaplanan tahminlerdir (S.Sim.suitThermal).
    */
   HUD.suitHeat = function (s, amb) {
@@ -208,24 +277,53 @@
     return { state: th.state, tone: 'danger', text };
   };
 
-  /** RIT-02 — Hedef kartı. Ana hedef değişince 'goal:changed' yayınlanır (oyuncu testi günlüğü + kısa vurgu) */
+  /**
+   * Hedefin konumu — hedef motoru (Objectives) her hedefe { m } (yüzey) ya da { cx } (tünel) ekler.
+   * Habitat içindeyken dünya hedefi gösterilmez. Mağaradayken yüzey hedefine giden yol merdivenden geçer.
+   */
+  HUD.goalTarget = function (s, g) {
+    const tg = g.main.target;
+    if (!tg || !S.Sim.isOutside(s)) return null;
+    if (S.Sim.inCave(s)) return tg.cx !== undefined ? tg : { cx: S.DATA.explore.cave.ladderM };
+    return tg.m !== undefined ? tg : null;
+  };
+  /** Geriye uyumluluk: yüzey hedefinin metresi (yoksa null) */
+  HUD.goalTargetM = function (s, g) {
+    const tg = HUD.goalTarget(s, g);
+    return tg && tg.m !== undefined ? tg.m : null;
+  };
+
+  /** RIT-02 — Tek satır hedef + mesafe. Ana hedef değişince 'goal:changed' yayınlanır (oyuncu testi günlüğü + kısa vurgu) */
   HUD.updateGoal = function (s) {
     const card = ref('goal');
     if (!card) return;
     const g = S.Objectives.compute(s);
     card.hidden = !g;
-    if (!g) return;
+    if (!g) {
+      ref('goalhint').hidden = true;
+      return;
+    }
     const p = g.progress;
-    const mainTxt = S.util.escape(t(g.main.key, g.main.vars));
+    const target = HUD.goalTarget(s, g);
+    HUD.target = target;
+    HUD.targetM = target && target.m !== undefined ? target.m : null;
+    // Yalnızca aktif hedefin yönü ve mesafesi (D-012 minimalist navigasyon)
+    const d = !target ? 0 : Math.round(target.cx !== undefined ? target.cx - s.player.cx : target.m - s.player.x);
+    const distTxt = target && Math.abs(d) >= 3 ? (d > 0 ? '→ ' : '← ') + Math.abs(d) + ' m' : '';
+    const mainTxt = S.util.escape(t('goal.short.' + g.main.id, g.main.vars));
+    const hint = S.util.escape(t(g.main.hintKey, g.main.vars));
     const optTxt = g.optional ? S.util.escape(t(g.optional.key, g.optional.vars)) : '';
-    const progTxt = t('goal.progress', { f: p.forensicsSent, fr: p.full.forensicsSent, e: p.experimentsSent, er: p.full.experimentsSent, fuel: p.fuel });
-    const sig = [mainTxt, optTxt, progTxt, S.lang].join('\u0001');
+    const progTxt = S.util.escape(t('goal.progress', { f: p.forensicsSent, fr: p.full.forensicsSent, e: p.experimentsSent, er: p.full.experimentsSent, fuel: p.fuel }));
+    const sig = [mainTxt, distTxt, hint, optTxt, progTxt, S.lang].join('\u0001');
     if (sig === HUD._goalHtml) return;
     HUD._goalHtml = sig;
     ref('goaltxt').innerHTML = mainTxt;
-    ref('goalopt').innerHTML = optTxt ? '<span class="goal-tag opt">' + t('goal.label_opt') + '</span>' + optTxt : '';
-    ref('goalprog').textContent = progTxt;
-    ref('goalhint').textContent = t(g.main.hintKey, g.main.vars);
+    ref('goaldist').textContent = distTxt;
+    ref('goalhint').innerHTML =
+      '<b>' + S.util.escape(t(g.main.key, g.main.vars)) + '</b><p>' + hint + '</p>' +
+      (optTxt ? '<p class="hz-opt"><span>' + t('goal.label_opt') + '</span> ' + optTxt + '</p>' : '') +
+      '<p class="hz-prog">' + progTxt + '</p>';
+    card.classList.toggle('danger', ['return', 'return_cold', 'return_night'].includes(g.main.id));
     if (HUD.goalId !== g.main.id) {
       S.bus.emit('goal:changed', { from: HUD.goalId || null, to: g.main.id, sol: s.sol });
       HUD.goalId = g.main.id;
@@ -236,7 +334,7 @@
     }
   };
 
-  /** Sera durumu (sağlıklı / çimlenme bonusu / güçsüz / donmuş) — Adım 3.2 */
+  /** Sera durumu (sağlıklı / çimlenme bonusu / güçsüz / donmuş) — Adım 3.2; habitat paneli kullanır */
   HUD.greenhouseStatus = function (s) {
     const gh = s.greenhouse;
     if (!gh.installed) return null;
@@ -247,23 +345,10 @@
     return { tone: 'ok', text: t('hud.gh_ok', { pct: gh.yieldPct }) };
   };
 
-  HUD.updateGreenhouse = function (s) {
-    const row = ref('ghrow');
-    if (!row) return;
-    const st = HUD.greenhouseStatus(s);
-    row.hidden = !st;
-    if (!st) return;
-    const html = '<span class="' + st.tone + '">' + S.util.escape(st.text) + '</span>';
-    if (ref('gh')._html !== html) {
-      ref('gh').innerHTML = html;
-      ref('gh')._html = html;
-    }
-  };
-
   HUD.updateAlerts = function (s, amb) {
     const list = [];
     const ponr = S.Sim.ponr(s);
-    // Plan §6: kritik kaynak için tek öncelikli uyarı — en fazla 3 bant, önce en acil olan
+    // Plan §6: kritik kaynak için tek öncelikli uyarı — en fazla 2 bant, önce en acil olan
     if (ponr.beyond) list.push(['danger', 'alert', t('hud.alert_ponr_beyond'), 'ponr_beyond']);
     else if (ponr.critical) list.push(['danger', 'alert', t('hud.alert_ponr'), 'ponr']);
     if (s.suit.frozen && HUD.mode === 'surface') list.push(['cold', 'temp', t('hud.alert_frozen'), 'frozen']);
@@ -285,7 +370,7 @@
     if (S.Sim.horizons(s).conjunction) list.push(['warn', 'signal', t('hud.alert_conjunction'), 'conjunction']);
     if (s.loads.some((l) => l.shed)) list.push(['warn', 'power', t('hud.alert_shed'), 'shed']);
     if (s.sol >= s.maxSols) list.push(['info', 'rocket', t('hud.alert_final_sol'), 'final_sol']);
-    const shown = list.slice(0, 3);
+    const shown = list.slice(0, 2);
     const html = shown
       .map(([tone, ico, txt]) => '<div class="alert ' + tone + '">' + UI().icon(ico) + '<span>' + txt + '</span></div>')
       .join('');
@@ -300,30 +385,43 @@
     }
   };
 
-  /** Mini harita: üs, enkazlar, buz, oyuncu ve O2'nin izin verdiği dönüş menzili */
+  /** Alt çizgi (10 Hz): O₂'nin izin verdiği dönüş menzili ve hedef. Oyuncu noktası her karede HUD.syncWorld'de */
   HUD.updateMinimap = function (s, ponr) {
-    const maxM = S.DATA.gameplay.maxEvaRangeM;
-    const minM = -140;
-    const pos = (m) => ((m - minM) / (maxM - minM)) * 100;
+    const map = S.DATA.terrain.map;
     const eva = S.DATA.constants.eva;
     const v = eva.speedMPerMin * (s.suit.frozen ? eva.frozenSpeedFactor : 1);
     const rate = eva.suitO2PctPerMin * (s.suit.leak ? eva.suitLeakO2Multiplier : 1) * eva.pointOfNoReturnSafetyFactor;
-    const reach = Math.max(0, Math.min(maxM, (s.suit.o2 / rate) * v));
-    let h = '<div class="mm-reach" style="left:' + pos(0) + '%;width:' + (pos(reach) - pos(0)) + '%"></div>';
-    h += '<div class="mm-base" style="left:' + pos(minM) + '%;width:' + (pos(0) - pos(minM)) + '%"></div>';
-    for (const c of S.Forensics.cases()) {
-      const rec = s.forensics[c.id];
-      const known = S.Forensics.identified(s, c);
-      h += '<div class="mm-mark ' + (rec.queued ? 'done' : known ? 'wreck' : 'unknown') + '" style="left:' + pos(c.distanceM) + '%" title="' + (known ? S.util.escape(c.name) : '?') + '">' + (known ? '' : '?') + '</div>';
-    }
-    if (S.Sim.has(s, 'rimfax')) h += '<div class="mm-mark ice" style="left:' + pos(S.DATA.terrain.iceDepositM) + '%"></div>';
-    h += '<div class="mm-player' + (ponr.beyond ? ' beyond' : '') + '" style="left:' + pos(s.player.x) + '%"></div>';
-    ref('mm').innerHTML = h;
-    ref('mmleg').innerHTML = t('hud.mm_legend', { reach: Math.round(reach), dist: ponr.distanceM });
+    const reach = Math.max(0, (s.suit.o2 / rate) * v);
+    // Dönüş menzili habitatın iki yanına uzanır (sol buz rotası / sağ enkaz rotası)
+    const r = ref('mmreach');
+    const l = HUD.trackPct(Math.max(map.leftLimitM, -reach));
+    r.style.left = l + '%';
+    r.style.width = HUD.trackPct(Math.min(map.tubeMouthM, reach)) - l + '%';
+    r.title = t('hud.mm_legend', { reach: Math.round(reach), dist: ponr.distanceM });
+    ref('mmhome').style.left = HUD.trackPct(0) + '%';
+    ref('mmtube').style.left = HUD.trackPct(map.tubeMouthM) + '%';
+    const tg = ref('mmtgt');
+    const tgM = HUD.target ? (HUD.target.m !== undefined ? HUD.target.m : map.tubeMouthM) : null;
+    tg.hidden = tgM === null;
+    if (tgM !== null) tg.style.left = HUD.trackPct(tgM) + '%';
+    ref('mmme').classList.toggle('beyond', ponr.beyond);
   };
 
   /* ---------------- Etkileşim balonu ---------------- */
   HUD.promptText = function (s, it) {
+    const X = S.Explore;
+    if (it.kind === 'ice_cluster') return t('prompt.ice.' + X.iceStep(s, it.id));
+    if (it.kind === 'tube') return t('prompt.descend');
+    if (it.action === 'ascend') return t('prompt.ascend');
+    if (it.action === 'relay') {
+      const rep = s.explore.reports.cave_survey;
+      if (s.explore.cave.temp.entrance === null) return t('prompt.relay_temp');
+      if (rep.queued || rep.sent) return t('prompt.relay_done');
+      const p = X.caveProgress(s);
+      return t('prompt.relay', { n: p.done, total: p.total });
+    }
+    if (it.kind === 'cave_find') return t(s.explore.cave.finds[it.id] ? 'prompt.cave_done' : 'prompt.cave_find', { what: t('cave.find.' + it.id) });
+    if (it.kind === 'cave_study') return t(X.studyDone(s, it.id) ? 'prompt.cave_result' : 'prompt.cave_study', { what: t('cave.study.' + it.id) });
     if (it.kind === 'wreck') {
       const c = S.Forensics.get(it.id);
       return t(s.forensics[it.id].queued ? 'prompt.wreck_done' : 'prompt.wreck', { name: c.name });
@@ -338,37 +436,25 @@
   HUD.updatePrompt = function (s) {
     const el = ref('prompt');
     if (!el) return;
-    const it = S.Surface.nearest(s, S.Surface.body.px);
+    const it = S.Lander && S.Lander.active ? null : S.Surface.nearest(s);
     HUD.prompt = it;
     if (!it) {
       el.hidden = true;
+      HUD.syncWorld(s);
       return;
     }
+    const wasHidden = el.hidden;
     el.hidden = false;
     const html = '<kbd>E</kbd><span>' + S.util.escape(HUD.promptText(s, it)) + '</span>';
     if (el._html !== html) {
       el.innerHTML = html;
       el._html = html;
+      el._w = 0;
     }
     el.classList.toggle('wreck', it.kind === 'wreck');
-    // Tuval pencere oranına göre genişler/uzar: konum tuval → sahne yüzdesi olarak çevrilir, balon nesnenin üstünde kalır.
-    // Yatayda pencere kenarına ve aynı yükseklikteki yan panellere (yaşamsallar / hedef kartı) taşmayacak şekilde sınırlanır.
-    const pos = S.FX.toStagePct(S.FX.worldToScreen(it.px), PROMPT_BASE_Y);
-    el.style.top = pos.top + '%';
-    const stageW = el.offsetParent ? el.offsetParent.clientWidth : 0;
-    const half = el.offsetWidth / 2;
-    const gap = 8;
-    let minX = half + gap;
-    let maxX = stageW - half - gap;
-    const top = el.offsetTop;
-    const bottom = top + el.offsetHeight;
-    const overlapsY = (p) => p && !p.hidden && p.offsetTop < bottom && p.offsetTop + p.offsetHeight > top;
-    const vit = el.parentElement.querySelector('.vitals');
-    const goalCard = ref('goal');
-    if (overlapsY(vit)) minX = Math.max(minX, vit.offsetLeft + vit.offsetWidth + gap + half);
-    if (overlapsY(goalCard)) maxX = Math.min(maxX, goalCard.offsetLeft - gap - half);
-    const x = (pos.left / 100) * stageW;
-    el.style.left = (minX <= maxX ? Math.max(minX, Math.min(maxX, x)) : (minX + maxX) / 2) + 'px';
+    // Genişlik yalnızca içerik/görünürlük değişince ölçülür (her karede layout okuması yapılmasın); konum HUD.syncWorld'de
+    if (!el._w || wasHidden) el._w = el.offsetWidth;
+    HUD.syncWorld(s);
   };
 
   S.HUD = HUD;

@@ -1,18 +1,46 @@
 /**
  * SOL 14: RED HORIZON — Yüzey Oynanışı: dünya yerleşimi, 0.38g fizik ve etkileşimler (K2)
- * Dünya koordinatı: x metre (hava kilidi = 0). Hava kilidinin sağı keşif koridorudur (1 px = 1.2 m),
- * solu üs alanıdır (1 px = 0.2 m) — üs yapıları sprite ölçeğinde, koridor gerçek mesafede gösterilir.
+ * Dünya koordinatı: x metre (hava kilidi = 0). D-012 haritası üs merkezli ve iki yönlüdür:
+ *   x ≥ 0            sağ rota (enkazlar → kayalık yaklaşım → +600 m lav tüneli ağzı), 1 px = metersPerPixel
+ *   baseLeftM ≤ x < 0 üs alanı: yapılar sprite ölçeğinde, baseLeftM → baseLeftPx
+ *   x < baseLeftM    sol buz rotası (−450 m sınırı), 1 px = metersPerPixel
+ * Lav tüneli ayrı bir alt haritadır: s.player.zone === 'cave', konum s.player.cx (tünel metresi).
  */
 (function (S) {
   'use strict';
   const G = () => S.DATA.gameplay;
+  const MAP = () => S.DATA.terrain.map;
+  const CAVE = () => S.DATA.explore.cave;
   const Surf = {};
 
   Surf.GROUND_Y = 300;
-  Surf.mToPx = (m) => (m >= 0 ? m / G().metersPerPixel : m / G().baseAreaMetersPerPixel);
-  Surf.pxToM = (px) => (px >= 0 ? px * G().metersPerPixel : px * G().baseAreaMetersPerPixel);
-  Surf.worldLeftPx = () => -700;
-  Surf.worldRightPx = () => Surf.mToPx(G().maxEvaRangeM);
+  const baseMpp = () => MAP().baseLeftM / MAP().baseLeftPx;
+  Surf.mToPx = function (m) {
+    if (m >= 0) return m / G().metersPerPixel;
+    if (m >= MAP().baseLeftM) return m / baseMpp();
+    return MAP().baseLeftPx + (m - MAP().baseLeftM) / G().metersPerPixel;
+  };
+  Surf.pxToM = function (px) {
+    if (px >= 0) return px * G().metersPerPixel;
+    if (px >= MAP().baseLeftPx) return px * baseMpp();
+    return MAP().baseLeftM + (px - MAP().baseLeftPx) * G().metersPerPixel;
+  };
+  Surf.worldLeftPx = () => Surf.mToPx(MAP().leftLimitM);
+  Surf.worldRightPx = () => Surf.mToPx(MAP().tubeMouthM) + 24;
+
+  /* Lav tüneli alt haritası: yüzeyle aynı ölçek (gameplay.metersPerPixel) → aynı ekran hızı */
+  Surf.caveMToPx = (m) => m / G().metersPerPixel;
+  Surf.cavePxToM = (px) => px * G().metersPerPixel;
+  Surf.inCave = (s) => s.player.zone === 'cave';
+
+  /** Zemin yüksekliği (px, yukarı pozitif): kayalık yaklaşımdaki kayaların üstü */
+  Surf.groundAt = function (px) {
+    for (const b of S.DATA.terrain.boulders || []) {
+      const c = Surf.mToPx(b.atM);
+      if (px >= c - b.widthPx / 2 && px <= c + b.widthPx / 2) return b.heightPx;
+    }
+    return 0;
+  };
 
   /** Üs yapıları (piksel konumu = yapının sol kenarı) */
   Surf.STRUCTURES = [
@@ -23,7 +51,24 @@
     { id: 'habitat', sprite: null, px: -162, w: 160, action: 'door', labelKey: 'world.door', interactPx: -10 }
   ];
 
+  /** Lav tüneli içindeki etkileşimler (px: tünel pikseli) */
+  Surf.caveInteractables = function (s) {
+    const cc = CAVE();
+    const r = cc.interactRangeM / G().metersPerPixel;
+    const list = [
+      { id: 'ladder', kind: 'cave', action: 'ascend', px: Surf.caveMToPx(cc.ladderM), range: r },
+      { id: 'relay', kind: 'cave', action: 'relay', px: Surf.caveMToPx(cc.relayM), range: r }
+    ];
+    for (const f of cc.finds) list.push({ id: f.id, kind: 'cave_find', action: 'cave_find', px: Surf.caveMToPx(f.atM), range: r });
+    for (const st of cc.studies) list.push({ id: st.id, kind: 'cave_study', action: 'cave_study', px: Surf.caveMToPx(st.atM), range: r * 0.8 });
+    return list;
+  };
+
+  /** Oyuncunun bulunduğu alt haritadaki pikseli */
+  Surf.playerPx = (s) => (Surf.inCave(s) ? body.cpx : body.px);
+
   Surf.interactables = function (s) {
+    if (Surf.inCave(s)) return Surf.caveInteractables(s);
     const list = Surf.STRUCTURES.map((st) => ({
       id: st.id,
       kind: 'structure',
@@ -46,10 +91,21 @@
         name: c.name
       });
     }
+    // D-012 sol rota: buz kümeleri (kalıcı durum s.explore.ice); tamamlananlar listeden çıkar
+    if (S.Explore && s.explore) {
+      const ir = S.DATA.explore.ice.interactRangeM / G().metersPerPixel;
+      for (const c of S.Explore.clusters()) {
+        if (S.Explore.iceStep(s, c.id) === 'done') continue;
+        list.push({ id: c.id, kind: 'ice_cluster', action: 'ice_cluster', px: Surf.mToPx(c.atM), range: ir + c.size * 3 });
+      }
+    }
+    // Lav tüneli ağzı (merdiven + röle)
+    list.push({ id: 'tube', kind: 'tube', action: 'descend', px: Surf.mToPx(MAP().tubeMouthM), range: 20 });
     return list;
   };
 
   Surf.nearest = function (s, px) {
+    if (px === undefined) px = Surf.playerPx(s);
     let best = null;
     for (const it of Surf.interactables(s)) {
       const d = Math.abs(px - it.px);
@@ -63,7 +119,7 @@
   };
 
   /* ---------------- Oyuncu fiziği (gerçek zaman, saniye) ---------------- */
-  const body = { px: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560 };
+  const body = { px: 0, cpx: 0, y: 0, vy: 0, onGround: true, moving: false, actionT: 0, stepT: 0, landedT: 0, ix: 560 };
   Surf.body = body;
 
   Surf.gravityPx = () => S.DATA.constants.marsGravity.value * G().spritePxPerMeter;
@@ -75,8 +131,13 @@
   };
 
   Surf.syncFromState = function (s) {
+    // Eski kayıtlarda (D-012 öncesi 1600 m'lik koridor) konum yeni sınırlara kırpılır
+    const minM = MAP().leftLimitM;
+    const maxM = Surf.pxToM(Surf.worldRightPx());
+    if (s.player.x > maxM || s.player.x < minM) s.player.x = Math.max(minM, Math.min(maxM, s.player.x));
     body.px = Surf.mToPx(s.player.x);
-    body.y = 0;
+    body.cpx = Surf.caveMToPx(Math.max(0, Math.min(CAVE().lengthM, s.player.cx || 0)));
+    body.y = Surf.inCave(s) ? 0 : Surf.groundAt(body.px);
     body.vy = 0;
     body.onGround = true;
     if (typeof s.player.ix === 'number') body.ix = s.player.ix;
@@ -91,34 +152,53 @@
 
   Surf.speedFactor = function (s) {
     let f = s.suit.frozen ? S.DATA.constants.eva.frozenSpeedFactor : 1;
-    // Sarkaç deneyi ödülü: 0.38g yürüyüş kalibrasyonu kum tuzağındaki hız kaybını azaltır
-    if (Surf.inSandPit(s.player.x)) f *= s.rewards.sandPitSpeedFactor || S.DATA.terrain.sandPitSpeedFactor;
+    // Sarkaç deneyi ödülü: 0.38g yürüyüş kalibrasyonu kum tuzağındaki hız kaybını azaltır (kum çukurları yalnızca yüzeyde)
+    if (!Surf.inCave(s) && Surf.inSandPit(s.player.x)) f *= s.rewards.sandPitSpeedFactor || S.DATA.terrain.sandPitSpeedFactor;
     return f;
   };
 
-  /** Dış dünya güncellemesi. input: { dir: -1|0|1, jump: bool } */
+  /**
+   * Yüzey ve lav tüneli AYNI hareket kodunu kullanır (yürüme hızı, 0.38g zıplama, iniş, adım sesi, ayak tozu).
+   * Yalnızca konum alanı ve sınırlar farklıdır: yüzeyde body.px (kayalar dahil), tünelde body.cpx (0 … son duvar).
+   * Tünel de yüzeyle aynı metre/piksel ölçeğindedir, bu yüzden ekrandaki hız iki yerde de aynıdır.
+   */
   Surf.update = function (s, dt, input) {
+    const cave = Surf.inCave(s);
+    const key = cave ? 'cpx' : 'px';
+    const minPx = cave ? 0 : Surf.worldLeftPx();
+    const maxPx = cave ? Surf.caveMToPx(CAVE().lengthM) : Surf.worldRightPx(); // tünelde son kaya odasının duvarı geçilmez
+    const groundAt = cave ? () => 0 : Surf.groundAt;
     const speed = Surf.walkPxPerSecond(s) * Surf.speedFactor(s);
     body.moving = input.dir !== 0;
     if (input.dir !== 0) s.player.facing = input.dir;
-    body.px = Math.max(Surf.worldLeftPx(), Math.min(Surf.worldRightPx(), body.px + input.dir * speed * dt));
+    let nx = Math.max(minPx, Math.min(maxPx, body[key] + input.dir * speed * dt));
+    // Kayalık yaklaşım: yerdeyken yüksek kayaya yürüyerek çıkılmaz (zıpla); kayanın üstünde durulabilir
+    const stepUp = groundAt(nx) - body.y;
+    if (stepUp > 3) {
+      nx = body[key];
+      body.blockedT = 0.6;
+    }
+    body[key] = nx;
+    const floor = groundAt(body[key]);
+    if (body.onGround && body.y > floor) body.onGround = false; // kayadan düştü
 
     if (input.jump && body.onGround && !s.suit.frozen) {
       body.vy = Surf.jumpVelocityPx();
       body.onGround = false;
       S.bus.emit('audio:play', 'jump');
-      S.bus.emit('fx:puff', { px: body.px, size: 1 });
+      S.bus.emit('fx:puff', { px: body[key], size: 1 });
     }
+    if (body.blockedT > 0) body.blockedT -= dt;
     if (!body.onGround) {
       body.y += body.vy * dt;
       body.vy -= Surf.gravityPx() * dt;
-      if (body.y <= 0) {
-        body.y = 0;
+      if (body.y <= floor) {
+        body.y = floor;
         body.vy = 0;
         body.onGround = true;
         body.landedT = 0.25;
         S.bus.emit('audio:play', 'land');
-        S.bus.emit('fx:puff', { px: body.px, size: 2 });
+        S.bus.emit('fx:puff', { px: body[key], size: 2 });
       }
     }
     if (body.moving && body.onGround) {
@@ -126,11 +206,15 @@
       if (body.stepT <= 0) {
         body.stepT = s.suit.frozen ? 0.6 : 0.32;
         S.bus.emit('audio:play', 'step');
-        if (Math.random() < 0.5) S.bus.emit('fx:puff', { px: body.px - s.player.facing * 6, size: 0 });
+        if (Math.random() < 0.5) S.bus.emit('fx:puff', { px: body[key] - s.player.facing * 6, size: 0 });
       }
     }
     if (body.actionT > 0) body.actionT -= dt;
     if (body.landedT > 0) body.landedT -= dt;
+    if (cave) {
+      s.player.cx = Surf.cavePxToM(body.cpx);
+      return;
+    }
     s.player.x = Surf.pxToM(body.px);
     S.Forensics.updateDiscovery(s);
   };
@@ -189,7 +273,13 @@
     // RIT-08: habitata dönüş = güvenli alan; kısa bir süre yeni zorunlu kriz tetiklenmez
     s.calmUntil = s.totalMinutes + G().habitatCalmMinutes;
     S.bus.emit('habitat:enter', { sol: s.sol });
+    // D-012: üs = bulgu raporlama merkezi; toplanan kalıntılar rapor paketi olur
+    if (S.Explore && s.explore) {
+      const filed = S.Explore.fileRelicReports(s);
+      if (filed.length) S.bus.emit('explore:filed', { relics: filed });
+    }
     s.player.x = 0;
+    s.player.zone = 'surface';
     body.ix = Surf.INTERIOR.right - 10;
     s.player.ix = body.ix;
     s.player.facing = -1;
@@ -198,6 +288,7 @@
 
   Surf.exitHabitat = function (s) {
     s.player.inside = false;
+    s.player.zone = 'surface';
     s.player.x = 4;
     s.player.facing = 1;
     Surf.syncFromState(s);

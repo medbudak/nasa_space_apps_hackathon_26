@@ -1,6 +1,7 @@
 /**
  * SOL 14: RED HORIZON — Ara Sahneler (K3 + K4)
- *  1) Transit (Sol 0 -> Sol 1): 15 sn yolculuk + mikrometeorit kablo tamiri + EDL; tek tuşla geçilir
+ *  1) Açılış / transit (Sol 0 -> Sol 1): Dünya'dan kalkış + yolculuk + mikrometeorit kablo tamiri + Mars'a varış
+ *     (tuval: src/fx/opening.js); iniş sonra oyun dünyasında oynar (src/fx/lander.js). Esc tümünü atlar.
  *  2) Sol geçişi (M6): mavi Mars gün batımı, SOL X -> SOL X+1 telemetri özeti
  *  3) Final: MAV kalkışı -> ufukta anomali -> SON İLETİM (satır satır inen foto + Güneş Kavuşumu)
  */
@@ -13,28 +14,32 @@
   /* ================================================================ */
   /* 1) TRANSIT                                                         */
   /* ================================================================ */
-  const TRANSIT_MS = 15000;
-  const METEOR_AT = 5200;
-  const EDL_AT = 11500;
-
+  /**
+   * Açılış (görev seçiminden sonra bir kez): Dünya'dan kalkış → Dünya–Mars yolculuğu (meteor tamiri) → Mars'a varış.
+   * Alçalma ve iniş burada OYNAMAZ: onDone'dan sonra oyun dünyasında S.Lander sahnesi oynar (aynı iniş iki kez anlatılmaz).
+   * Esc / Enter / "Geç": açılışın tamamını atlar → onDone(repair, { skipped: true }) ile oyun inmiş durumda başlar.
+   */
   CS.playTransit = function (onDone) {
     const s = S.getState();
+    const O = S.Opening;
     const orbit = S.Engineering.findById(S.DATA.orbits, s.design.orbitType);
     const rocket = S.Engineering.findById(S.DATA.rockets, s.design.rocketId);
     const html =
-      '<div class="cutscene transit" style="--bg:url(\'' + S.Sprites.screen('scr_transit') + '\')"><div class="cs-bg"></div><div class="cs-stars"></div>' +
+      '<div class="cutscene transit"><canvas class="op-cv" width="' + O.W + '" height="' + O.H + '" data-r="cv"></canvas>' +
       UI_header() +
       '<div class="transit-track"><span class="tt-earth">' + t('transit.earth') + '</span><div class="tt-line"><div class="tt-fill"></div><span class="tt-ship">' + I('rocket') + '</span></div><span class="tt-mars">' + t('transit.mars') + '</span></div>' +
-      '<div class="cs-panel"><span class="cs-badge">' + t('transit.badge') + '</span><h2 data-r="title">' + t('transit.title_cruise') + '</h2>' +
-      '<p data-r="status">' + t('transit.status_cruise', { rocket: rocket.name }) + '</p>' +
+      '<div class="cs-panel"><span class="cs-badge" data-r="badge">' + t('transit.badge_launch') + '</span><h2 data-r="title">' + t('transit.title_launch') + '</h2>' +
+      '<p data-r="status">' + t('transit.status_launch', { rocket: rocket.name }) + '</p>' +
       '<div class="cs-tlm"><div><span>' + t('transit.day') + '</span><b data-r="day">0</b></div>' +
       '<div><span>' + t('transit.dose') + '</span><b data-r="dose">0</b></div>' +
       '<div><span>' + t('transit.orbit') + '</span><b>' + t('orbit.' + orbit.id + '.name') + '</b></div></div></div>' +
-      '<div class="edl" data-r="edl" hidden><span>' + t('transit.edl') + '</span><b data-r="alt">125 km</b><small data-r="edlphase"></small></div>' +
-      '<button class="btn btn-ghost cs-skip" data-skip>' + t('transit.skip') + ' <kbd>Enter</kbd></button>' +
+      '<button class="btn btn-ghost cs-skip" data-skip>' + t('transit.skip') + ' <kbd>Esc</kbd></button>' +
       '<div class="cs-flash" data-r="flash"></div></div>';
     const root = S.UI.showScreen(html, 'scene-transit');
     const R = (n) => root.querySelector('[data-r="' + n + '"]');
+    const g = R('cv').getContext('2d');
+    // Varışta açılacak renk = oyun dünyasının ilk karesindeki gökyüzü (iniş alanı, Sol 1 sabahı)
+    const skyTo = S.Art ? S.Art.palette(s.design.landingSiteId, S.DATA.gameplay.solStartMinute).skyTop : null;
     let elapsed = 0;
     let last = performance.now();
     let paused = false;
@@ -42,38 +47,53 @@
     let meteorDone = false;
     let done = false;
     let raf = 0;
+    let shownPhase = 'liftoff';
 
-    const finish = () => {
+    const finish = (skipped) => {
       if (done) return;
       done = true;
       cancelAnimationFrame(raf);
       window.removeEventListener('keydown', onKey, true);
-      onDone(repair || { success: true, score: 0, skipped: true });
+      onDone(repair || { success: true, score: 0, skipped: true }, { skipped: Boolean(skipped) });
     };
     const onKey = (e) => {
-      if (paused) return;
-      if (e.key === 'Enter' || e.key === 'Escape') {
+      if (paused || S.isMinigameOpen()) return;
+      // e.repeat: a held Enter from the "Start launch" button must not skip the opening at once
+      if ((e.key === 'Enter' || e.key === 'Escape') && !e.repeat) {
         e.preventDefault();
-        finish();
+        e.stopPropagation();
+        finish(true);
       }
     };
     window.addEventListener('keydown', onKey, true);
-    root.querySelector('[data-skip]').addEventListener('click', finish);
+    root.querySelector('[data-skip]').addEventListener('click', () => finish(true));
 
-    const edlPhases = ['transit.edl_entry', 'transit.edl_chute', 'transit.edl_crane', 'transit.edl_touch'];
     const loop = () => {
       const now = performance.now();
-      if (!paused) elapsed += now - last;
+      if (!paused) elapsed += Math.min(100, now - last);
       last = now;
-      const f = Math.min(1, elapsed / TRANSIT_MS);
-      const travel = Math.min(1, elapsed / EDL_AT);
+      const ts = elapsed / 1000;
+      O.draw(g, ts, { skyTo });
+      const travel = O.travel(ts);
       root.querySelector('.tt-fill').style.width = travel * 100 + '%';
       root.querySelector('.tt-ship').style.left = travel * 100 + '%';
       R('day').textContent = Math.round(travel * orbit.transitDays) + ' / ' + orbit.transitDays;
       R('dose').textContent = (travel * orbit.transitDays * S.DATA.constants.radiation.transitDailyMsv).toFixed(0) + ' mSv';
-      root.querySelector('.cs-bg').style.transform = 'scale(' + (1 + f * 0.18) + ')';
+      const ph = O.phase(ts);
+      if (ph !== shownPhase && !paused) {
+        shownPhase = ph;
+        if (ph === 'cruise' && !meteorDone) {
+          R('badge').textContent = t('transit.badge');
+          R('title').textContent = t('transit.title_cruise');
+          R('status').textContent = t('transit.status_cruise', { rocket: rocket.name });
+        } else if (ph === 'arrive') {
+          R('badge').textContent = t('transit.badge');
+          R('title').textContent = t('transit.title_arrive');
+          R('status').textContent = t('transit.status_arrive');
+        }
+      }
 
-      if (!meteorDone && elapsed >= METEOR_AT) {
+      if (!meteorDone && ts >= O.T.meteor) {
         meteorDone = true;
         paused = true;
         R('flash').classList.add('on');
@@ -92,18 +112,8 @@
           paused = false;
         }, 900);
       }
-      if (elapsed >= EDL_AT) {
-        const ef = Math.min(1, (elapsed - EDL_AT) / (TRANSIT_MS - EDL_AT));
-        R('edl').hidden = false;
-        R('alt').textContent = Math.max(0, Math.round(125 * (1 - ef) * (1 - ef))) + ' km';
-        R('edlphase').textContent = t(edlPhases[Math.min(3, Math.floor(ef * 4))]);
-        R('title').textContent = t('transit.title_edl');
-        R('status').textContent = t('transit.status_edl');
-        root.classList.add('edl-on');
-      }
-      if (elapsed >= TRANSIT_MS) {
-        S.bus.emit('audio:play', 'land');
-        finish();
+      if (ts >= O.T.end) {
+        finish(false);
         return;
       }
       raf = requestAnimationFrame(loop);

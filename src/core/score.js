@@ -13,13 +13,28 @@
     return s.design.commArchitecture === 'relay_xband' ? u.highResPct : u.highResRelayOnlyPct;
   };
 
+  /**
+   * D-012 — "Rapor" = Dünya'ya ulaşan her bulgu raporu: enkaz teşhisleri + buz kalıntıları + mağara araştırması.
+   * Kayıtlar { queued, sent, score } biçimindedir; başarı eşikleri bu toplamı sayar.
+   */
+  Score.reportRecords = function (s) {
+    return Object.entries(s.forensics).concat(Object.entries((s.explore && s.explore.reports) || {}));
+  };
+
+  /** Haritada yapılabilecek rapor sayısı (aktif enkazlar + kalıntılar + mağara) */
+  Score.reportsAvailable = function (s) {
+    const ids = D().forensics.activeCaseIds;
+    const wrecks = ids ? ids.length : D().forensics.cases.length;
+    return wrecks + Object.keys((s.explore && s.explore.reports) || {}).length;
+  };
+
   Score.calc = function (s) {
     const d = D();
     const sc = d.scoring;
     const obj = S.Engineering.findById(d.objectives, s.design.objectiveFocus);
     const thresholds = s.demoMode ? d.demoSuccess : obj;
 
-    const sentF = Object.entries(s.forensics).filter(([, r]) => r.sent);
+    const sentF = Score.reportRecords(s).filter(([, r]) => r.sent);
     const sentE = Object.entries(s.experiments).filter(([, r]) => r.sent);
     const photos = s.downlink.queue.filter((p) => p.kind === 'photo' && p.status === 'arrived');
 
@@ -57,7 +72,7 @@
       penalties,
       sentForensics: sentF.length,
       sentExperiments: sentE.length,
-      totalForensics: d.forensics.cases.length,
+      totalForensics: Score.reportsAvailable(s),
       totalExperiments: d.experimentsCfg.experiments.length,
       safeReturn,
       tier,

@@ -1,0 +1,58 @@
+{
+  "simplified": true,
+  "simplifiedNote": "D-012 exploration content (left ice route, lava-tube sub-map). Positions, minutes, points and rewards are game values for pacing, not measurements. The lava tube is fictional: known Mars skylights/possible caves are on Arsia Mons (Tharsis), not at the landing sites in this game.",
+  "src": "https://www.spaceappschallenge.org/",
+  "ice": {
+    "interactRangeM": 18,
+    "inspectMin": 5,
+    "breakMin": 10,
+    "photoMin": 5,
+    "collectMin": 10,
+    "sampleMin": 10,
+    "sampleWaterL": 4,
+    "photoNoCameraFactor": 0.5,
+    "clusters": [
+      { "id": "ice_1", "atM": -170, "size": 1, "hint": "none", "relic": null },
+      { "id": "ice_2", "atM": -255, "size": 2, "hint": "glint", "relic": "cable" },
+      { "id": "ice_3", "atM": -345, "size": 2, "hint": "none", "relic": null },
+      { "id": "ice_4", "atM": -420, "size": 3, "hint": "silhouette", "relic": "datalog" }
+    ],
+    "relics": [
+      { "id": "cable", "reportMbit": 8, "points": 70, "reward": { "repairKits": 1 } },
+      { "id": "datalog", "reportMbit": 12, "points": 90, "reward": { "extraMbit": 10 } }
+    ]
+  },
+  "cave": {
+    "scaleNote": "The tube uses the surface scale (gameplay.metersPerPixel), so walking speed, jumping and the metres-per-game-minute rule are identical inside and outside.",
+    "lengthM": 720,
+    "ladderM": 12,
+    "relayM": 44,
+    "interactRangeM": 22,
+    "reportMbit": 24,
+    "pointsPerItem": 25,
+    "pointsBase": 30,
+    "finds": [
+      { "id": "crack", "atM": 170, "minutes": 10 },
+      { "id": "basalt", "atM": 320, "minutes": 15 },
+      { "id": "room", "atM": 470, "minutes": 5 }
+    ],
+    "studies": [
+      { "id": "temp", "atM": 530, "minutes": 10 },
+      { "id": "distance", "atM": 590, "minutes": 10 },
+      { "id": "vibration", "atM": 650, "minutes": 15 }
+    ],
+    "roomSpanM": 34,
+    "roomSpanNote": "Fictional chamber width (game value). Real Arsia Mons skylight openings are about 100-225 m across.",
+    "skylight": {
+      "tempSwingFraction": 0.333,
+      "note": "Mars Odyssey THEMIS: from day to night the Arsia Mons skylight's temperature changes only about one third as much as the surrounding surface. Game model (simplified): deep reading = diurnal mean + (current surface - mean) x this fraction.",
+      "src": "https://science.nasa.gov/photojournal/temperature-behavior-of-possible-cave-skylight-on-mars"
+    },
+    "vibrationPoints": [
+      { "id": "wall", "amplitude": 0.42 },
+      { "id": "floor", "amplitude": 0.47 },
+      { "id": "ceiling", "amplitude": 0.71 }
+    ],
+    "vibrationNote": "Synthetic, relative amplitudes (no unit) for an interpretation exercise: one point rings differently, which needs more data; it never proves the chamber is safe."
+  }
+}

@@ -210,3 +210,15 @@ test('calcDesignTotals: kütle aşımı ve 5\'ten fazla alet hata verir', () => 
   assert.ok(tot.errors.includes('design.err_mass'));
   assert.equal(tot.canLaunch, false);
 });
+
+test('calcDesignTotals: night-load breakdown shown in the design console adds up (no new formula)', () => {
+  for (const design of [S.State.DEFAULT_DESIGN, Object.assign({}, S.State.DEFAULT_DESIGN, { powerSource: 'solar_only', insulation: 'thin', landingSiteId: 'arcadia', instruments: ['rad'] })]) {
+    const tot = E.calcDesignTotals(design);
+    const base = D.habitat.base;
+    assert.equal(tot.nightLoadW, base.lifeSupportW + base.commsW + tot.heatingNightW + tot.instrumentW);
+    const expectKwh = Math.round(((Math.max(0, tot.nightLoadW - tot.rtgW) * tot.nightHours) / 1000) * 10) / 10;
+    // nightHours is rounded to 0.1 h for display, so allow that rounding (≤ 0.05 h × load) plus 0.1 kWh
+    const tol = 0.1 + (Math.max(0, tot.nightLoadW - tot.rtgW) * 0.05) / 1000;
+    assert.ok(Math.abs(tot.nightNeedKwh - expectKwh) <= tol,`night need ${tot.nightNeedKwh} ≈ ${expectKwh} kWh`);
+  }
+});

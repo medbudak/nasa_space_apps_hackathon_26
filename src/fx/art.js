@@ -197,6 +197,25 @@
         ctx.fillRect(sx, groundY + 3 + Math.floor(hash(tIdx + 5) * 20), 6, 1);
       }
     }
+    // D-012 sol rota: üsten uzaklaştıkça ince buz tabakası → buzul (iceFromPx'ten iceFullPx'e artan örtü)
+    if (opts.iceFromPx !== undefined) {
+      const x1 = Math.round(opts.iceFromPx - camX);
+      if (x1 > 0) {
+        const span = Math.max(1, opts.iceFromPx - opts.iceFullPx);
+        for (let x = 0; x < Math.min(w, x1); x += 2) {
+          const k = Math.min(1, (opts.iceFromPx - (x + camX)) / span);
+          const n = hash(Math.floor((x + camX) / 2));
+          if (n < 0.25 + k * 0.7) {
+            ctx.fillStyle = mix(pal.ground, '#dbe9f0', 0.35 + k * 0.45);
+            ctx.fillRect(x, groundY, 2, 2 + Math.floor(k * 3));
+          }
+          if (n > 0.92 - k * 0.25) {
+            ctx.fillStyle = mix(pal.groundLight, '#eef8ff', 0.6);
+            ctx.fillRect(x, groundY + 4 + Math.floor(hash(x + camX + 7) * 30), 3, 1);
+          }
+        }
+      }
+    }
     // Kum çukurları (Spirit dersi)
     if (opts.sandPits) {
       for (const pit of opts.sandPits) {

@@ -14,6 +14,13 @@
     "whiteKeptPx": 30008
   },
   {
+    "asset": "sprites/astronaut_walk_sheet.png",
+    "size": "198x58",
+    "mode": "flood",
+    "bgRemovedPx": 0,
+    "whiteKeptPx": 11964
+  },
+  {
     "asset": "sprites/astronaut_jump.png",
     "size": "46x60",
     "mode": "flood",

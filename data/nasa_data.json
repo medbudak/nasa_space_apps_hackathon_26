@@ -141,11 +141,10 @@
     "sunsetStartMinute": 1080,
     "nightStartMinute": 1140,
     "metersPerPixel": 1.2,
-    "baseAreaMetersPerPixel": 0.2,
     "spritePxPerMeter": 30,
     "earthJumpHeightM": 0.5,
     "interiorWalkPxPerSecond": 105,
-    "maxEvaRangeM": 1600,
+    "maxEvaRangeM": 600,
     "habitatTargetC": 20,
     "habitatHeatCapacityJPerK": 81000,
     "habitatComfortMinC": 10,
@@ -369,10 +368,34 @@
     { "id": "ingenuity", "massKg": 1.8, "powerW": 12, "costM": 42, "dataMbit": 15, "src": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2020-052B" }
   ],
   "terrain": {
-    "iceDepositM": 260,
+    "map": {
+      "simplified": true,
+      "simplifiedNote": "Compressed, fictional map (D-012): base at 0 m, ice route to the left (-450 m), wreck route to the right ending at a lava-tube skylight (+600 m). Distances are game values chosen for walking time and suit O2, not a real site survey. Inside the base area (-120 m .. 0 m) structures are drawn at sprite scale: -120 m maps to baseLeftPx.",
+      "leftLimitM": -450,
+      "baseLeftM": -120,
+      "baseLeftPx": -700,
+      "baseRightM": 100,
+      "landingPadM": 85,
+      "landingExitM": 40,
+      "tubeMouthM": 600,
+      "zones": [
+        { "id": "glacier_edge", "fromM": -450, "toM": -300 },
+        { "id": "icy_plain", "fromM": -300, "toM": -120 },
+        { "id": "base", "fromM": -120, "toM": 100 },
+        { "id": "first_wreck", "fromM": 100, "toM": 250 },
+        { "id": "wreck_field", "fromM": 250, "toM": 450 },
+        { "id": "rocky_approach", "fromM": 450, "toM": 590 },
+        { "id": "tube_mouth", "fromM": 590, "toM": 610 }
+      ],
+      "src": "https://www.spaceappschallenge.org/"
+    },
+    "iceDepositM": -140,
     "sandPits": [
-      { "fromM": 760, "toM": 820 },
-      { "fromM": 1280, "toM": 1330 }
+      { "fromM": 470, "toM": 510 }
+    ],
+    "boulders": [
+      { "atM": 530, "heightPx": 18, "widthPx": 16 },
+      { "atM": 565, "heightPx": 24, "widthPx": 20 }
     ],
     "sandPitSpeedFactor": 0.5,
     "droneRevealAllWrecks": true,

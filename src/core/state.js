@@ -22,6 +22,49 @@
 
   let gameState = null;
 
+  /**
+   * D-012 keşif kaydı: kırılan buz, toplanan kalıntı, mağara bulguları ve bulgu raporları.
+   * Kalıcıdır (kayıtla birlikte saklanır): bölgeye gidip gelince yeniden oluşmaz.
+   */
+  function blankExplore(D) {
+    const cfg = D.explore;
+    const ice = {};
+    for (const c of cfg.ice.clusters) ice[c.id] = { inspected: false, broken: false, photo: null, collected: false, sampled: false };
+    const reports = {};
+    for (const c of cfg.ice.clusters) if (c.relic) reports['relic_' + c.id] = { queued: false, sent: false, score: 0 };
+    reports.cave_survey = { queued: false, sent: false, score: 0 };
+    const finds = {};
+    for (const f of cfg.cave.finds) finds[f.id] = false;
+    return {
+      ice,
+      reports,
+      cave: { finds, temp: { entrance: null, deep: null }, distance: null, vibration: null, visited: false },
+      zonesSeen: {}
+    };
+  }
+
+  /** Eski kayıtlara (D-012 öncesi) eksik alanları ekler; mevcut ilerlemeye dokunmaz */
+  S.ensureExploreState = function (s) {
+    if (!s || !S.DATA.explore) return s;
+    const blank = blankExplore(S.DATA);
+    if (!s.explore) s.explore = blank;
+    else {
+      for (const k of ['ice', 'reports']) {
+        s.explore[k] = s.explore[k] || {};
+        for (const id of Object.keys(blank[k])) if (!s.explore[k][id]) s.explore[k][id] = blank[k][id];
+      }
+      if (!s.explore.cave) s.explore.cave = blank.cave;
+      for (const id of Object.keys(blank.cave.finds)) if (s.explore.cave.finds[id] === undefined) s.explore.cave.finds[id] = false;
+      if (!s.explore.zonesSeen) s.explore.zonesSeen = {};
+    }
+    if (s.player) {
+      if (!s.player.zone) s.player.zone = 'surface';
+      if (typeof s.player.cx !== 'number') s.player.cx = 0;
+    }
+    if (!s.lander) s.lander = { landed: s.sol >= 1 };
+    return s;
+  };
+
   function createState({ lang = S.lang || 'tr', demoMode = false, design = null, seed = 20261114 } = {}) {
     const D = S.DATA;
     const forensics = {};
@@ -82,7 +125,9 @@
         frozen: false,
         coldMinutes: 0
       },
-      player: { x: -40, inside: true, facing: 1 },
+      player: { x: -40, inside: true, facing: 1, zone: 'surface', cx: 0 },
+      explore: blankExplore(D),
+      lander: { landed: false },
       loads: [
         { id: 'life_support', on: true, shed: false },
         { id: 'heating', on: true, shed: false },
@@ -159,7 +204,7 @@
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (parsed && parsed.version === 3 && parsed.sol >= 1 && !parsed.gameOver && !parsed.ending) {
-        gameState = parsed;
+        gameState = S.ensureExploreState(parsed);
         return parsed;
       }
     } catch (e) {
@@ -211,11 +256,13 @@
   S.loadCheckpoint = function () {
     const info = S.checkpointInfo();
     if (!info) return null;
-    gameState = JSON.parse(info.raw);
+    gameState = S.ensureExploreState(JSON.parse(info.raw));
     gameState.checkpointRetries = (gameState.checkpointRetries || 0) + 1;
-    // "Güvenli" dönüş: Sol sabahı habitatın içinde başla (gece EVA'sında kaydedilmiş olsa bile)
+    // "Güvenli" dönüş: Sol sabahı habitatın içinde başla (gece EVA'sında / mağarada kaydedilmiş olsa bile)
     gameState.player.inside = true;
     gameState.player.x = 0;
+    gameState.player.zone = 'surface';
+    gameState.player.cx = 0;
     gameState.crisis.active = null;
     S.bus.emit('state:changed', gameState);
     return gameState;

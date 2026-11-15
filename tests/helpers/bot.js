@@ -48,6 +48,51 @@ function walkTo(S, s, targetX, log) {
 function enterHabitat(S, s, log) {
   walkTo(S, s, S.Sim.airlockX, log);
   s.player.inside = true;
+  // D-012: üs = bulgu raporlama merkezi; toplanan kalıntılar habitata girince rapor olur
+  S.Explore.fileRelicReports(s);
+}
+
+/** D-012 sol rota: kalıntılı buz kümelerini kır, fotoğrafla, topla (raporu habitata girince düşer) */
+function playIceRoute(S, s, log) {
+  for (const c of S.Explore.clusters().filter((x) => x.relic)) {
+    if (S.Explore.iceStep(s, c.id) === 'done') continue;
+    walkTo(S, s, c.atM, log);
+    let guard = 0;
+    while (S.Explore.iceStep(s, c.id) !== 'done' && !s.gameOver && guard++ < 6) {
+      handleCrisis(S, s, log);
+      S.Explore.iceAction(s, c.id, S.Explore.iceStep(s, c.id));
+    }
+  }
+  log.push(`Sol ${s.sol} buz rotası`);
+}
+
+/** D-012 lav tüneli: in, giriş sıcaklığı, 3 bulgu + 3 çalışma, röleden raporla, çık */
+function playCave(S, s, log) {
+  walkTo(S, s, S.DATA.terrain.map.tubeMouthM, log);
+  if (s.gameOver) return;
+  S.Explore.descend(s);
+  const speed = S.DATA.constants.eva.speedMPerMin;
+  const step = (m) => {
+    handleCrisis(S, s, log);
+    const dist = Math.abs(m - s.player.cx);
+    s.player.cx = m;
+    if (dist > 0) S.Sim.step(s, dist / speed);
+  };
+  step(S.DATA.explore.cave.relayM);
+  S.Explore.readEntranceTemp(s);
+  for (const f of S.Explore.caveFinds()) {
+    step(f.atM);
+    S.Explore.recordFind(s, f.id);
+  }
+  for (const st of S.Explore.caveStudies()) {
+    step(st.atM);
+    S.Explore.runStudy(s, st.id);
+  }
+  step(S.DATA.explore.cave.relayM);
+  S.Explore.relayReport(s);
+  step(S.DATA.explore.cave.ladderM);
+  S.Explore.ascend(s);
+  log.push(`Sol ${s.sol} mağara raporu`);
 }
 
 function play(design, { demoMode = false, policy = {} } = {}) {
@@ -86,8 +131,15 @@ function play(design, { demoMode = false, policy = {} } = {}) {
       handleCrisis(S, s, log);
       if (!s.gameOver) {
         S.Forensics.diagnose(s, target.id, target.correctCategory);
-        S.Forensics.salvage(s, target.id);
+        const choice = target.salvageChoice && target.salvageChoice.options.find((o) => o.reusable);
+        S.Forensics.salvage(s, target.id, choice ? choice.id : undefined);
       }
+      enterHabitat(S, s, log);
+    } else if (S.Sim.clockMinute(s) < 900 && policy.forensics !== false && S.Explore.openRelicClusters(s).length) {
+      playIceRoute(S, s, log);
+      enterHabitat(S, s, log);
+    } else if (S.Sim.clockMinute(s) < 900 && policy.forensics !== false && S.Explore.caveOpen(s)) {
+      playCave(S, s, log);
       enterHabitat(S, s, log);
     } else {
       enterHabitat(S, s, log);
