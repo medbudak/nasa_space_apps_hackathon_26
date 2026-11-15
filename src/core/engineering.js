@@ -192,6 +192,10 @@
     const dataPerSolMbit = d.habitat.relayPasses
       .filter((p) => !p.requires || p.requires === design.commArchitecture)
       .reduce((a, p) => a + p.capacityMbit, 0);
+    // Aletlerin günlük rutin verisi (gameplay.instrumentData): her geçişte raporlardan önce gönderilir
+    const instrumentDataMbit = insts.reduce((a, i) => a + (i.dataMbit || 0), 0);
+    const reportDataMbit = Math.max(0, dataPerSolMbit - instrumentDataMbit);
+    const largestReportMbit = Math.max(0, ...((d.forensics && d.forensics.cases) || []).map((c) => c.reportMbit || 0));
 
     const spof = [];
     if (design.powerSource === 'solar_only') spof.push('spof.no_rtg');
@@ -201,6 +205,7 @@
     if (design.insulation === 'thin' && site.nightMinC <= -90) spof.push('spof.thin_insulation_cold');
     if (!design.instruments.includes('meda')) spof.push('spof.no_meda');
     if (massMarginPct < d.habitat.massMarginGoodPct) spof.push('spof.low_mass_margin');
+    if (reportDataMbit < largestReportMbit) spof.push('spof.data_full');
 
     const errors = [];
     if (massUsed > massMax) errors.push('design.err_mass');
@@ -217,9 +222,14 @@
       solarNoonW,
       rtgW: pwr.rtgW,
       nightLoadW,
+      heatingNightW,
+      nightHours: round1(nightHours),
       nightNeedKwh,
       batteryNightSafe,
       dataPerSolMbit,
+      instrumentDataMbit,
+      reportDataMbit,
+      largestReportMbit,
       transitDays: orbit.transitDays,
       transitDoseMsv: round1(orbit.transitDays * d.constants.radiation.transitDailyMsv),
       spof,

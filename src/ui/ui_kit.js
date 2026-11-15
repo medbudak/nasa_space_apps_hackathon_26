@@ -105,6 +105,7 @@
    */
   UI.openModal = function (id, html, opts = {}) {
     UI.closeModal(id, true);
+    UI.hideTip();
     const layer = UI.modalLayer();
     const wrap = document.createElement('div');
     wrap.className = 'modal-wrap ' + (opts.cls || '');
@@ -176,6 +177,7 @@
 
   /* ---------------- Ekran (tam sayfa DOM sahneleri) ---------------- */
   UI.showScreen = function (html, cls = '') {
+    UI.hideTip(); // eski öğeye bağlı bilgi balonu kalmasın
     const layer = UI.screenLayer();
     layer.className = 'screen-layer ' + cls;
     layer.innerHTML = html;
@@ -183,6 +185,7 @@
     return layer;
   };
   UI.hideScreen = function () {
+    UI.hideTip();
     const layer = UI.screenLayer();
     layer.innerHTML = '';
     layer.hidden = true;
@@ -213,6 +216,164 @@
       '<p class="pv-note">' + esc(S.t('status.note')) + '</p></div>'
     );
   };
+
+  /* ---------------- Bilgi balonu (tooltip) ---------------- */
+  // Herhangi bir öğeye UI.tipAttr(html) ile data-tip verilir. Balon fareyle üzerine gelince, klavye odağında
+  // (:focus-visible) ve dokunmatikte basılı tutunca (ya da .tip-i rozetine dokununca) açılır. Dinleyiciler bir kez
+  // kurulur; balon #ui içinde (em ölçeği) öğenin altına, sığmazsa üstüne yerleşir ve pencereden taşmaz.
+  const tip = { el: null, anchor: null, mode: null, timer: 0, start: null, suppressClick: false };
+  const TIP_GAP = 6;
+  const LONG_PRESS_MS = 450;
+
+  /** rows: [[etiket, metin, ton]] — ton: 'what' | 'why' | 'fx' (etiket rengi) */
+  UI.tipHtml = (title, rows) =>
+    (title ? '<div class="tip-title">' + title + '</div>' : '') +
+    rows
+      .filter((r) => r && r[1])
+      .map(([label, text, tone]) => '<p class="tip-row ' + (tone || '') + '"><b>' + label + '</b><span>' + text + '</span></p>')
+      .join('');
+  UI.tipAttr = (html) => (html ? ' data-tip="' + esc(html) + '"' : '');
+  /** Dokunmatik ve fare için küçük "i" rozeti (dokununca seçim yapmadan balonu açar) */
+  UI.tipBadge = () => '<span class="tip-i" aria-hidden="true">i</span>';
+
+  function tipBox() {
+    if (!tip.el || !tip.el.isConnected) {
+      tip.el = document.createElement('div');
+      tip.el.className = 'ui-tip';
+      tip.el.id = 'ui-tip';
+      tip.el.setAttribute('role', 'tooltip');
+      tip.el.hidden = true;
+      UI.root().appendChild(tip.el);
+    }
+    return tip.el;
+  }
+
+  function placeTip() {
+    const box = tip.el;
+    const a = tip.anchor;
+    if (!box || !a || !a.isConnected) return UI.hideTip();
+    const root = UI.root().getBoundingClientRect();
+    const r = a.getBoundingClientRect();
+    box.style.left = '0px';
+    box.style.top = '0px';
+    const w = box.offsetWidth;
+    const h = box.offsetHeight;
+    let left = r.left - root.left + r.width / 2 - w / 2;
+    left = Math.max(TIP_GAP, Math.min(root.width - w - TIP_GAP, left));
+    let top = r.bottom - root.top + TIP_GAP;
+    let above = false;
+    if (top + h > root.height - TIP_GAP) {
+      const up = r.top - root.top - TIP_GAP - h;
+      if (up >= TIP_GAP) {
+        top = up;
+        above = true;
+      } else {
+        // Ne altına ne üstüne sığıyor: öğenin yanına (sağ, yoksa sol) geç ve dikeyde pencereye sığdır
+        top = Math.max(TIP_GAP, Math.min(root.height - h - TIP_GAP, r.top - root.top));
+        const right = r.right - root.left + TIP_GAP;
+        const leftSide = r.left - root.left - TIP_GAP - w;
+        if (right + w <= root.width - TIP_GAP) left = right;
+        else if (leftSide >= TIP_GAP) left = leftSide;
+      }
+    }
+    box.style.left = Math.round(left) + 'px';
+    box.style.top = Math.round(top) + 'px';
+    box.classList.toggle('above', above);
+  }
+
+  UI.showTip = function (anchor, mode = 'hover') {
+    const html = anchor && anchor.getAttribute('data-tip');
+    if (!html || !UI.root()) return;
+    const box = tipBox();
+    if (tip.anchor && tip.anchor !== anchor) tip.anchor.removeAttribute('aria-describedby');
+    tip.anchor = anchor;
+    tip.mode = mode;
+    box.innerHTML = html;
+    box.hidden = false;
+    anchor.setAttribute('aria-describedby', 'ui-tip');
+    placeTip();
+  };
+
+  UI.hideTip = function () {
+    clearTimeout(tip.timer);
+    if (tip.anchor) tip.anchor.removeAttribute('aria-describedby');
+    tip.anchor = null;
+    tip.mode = null;
+    if (tip.el) tip.el.hidden = true;
+  };
+
+  function tipTarget(e) {
+    const el = e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+    const root = UI.root();
+    return el && root && root.contains(el) ? el : null;
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('pointerover', (e) => {
+      if (e.pointerType === 'touch') return;
+      const el = tipTarget(e);
+      if (el) {
+        if (el !== tip.anchor) UI.showTip(el, 'hover');
+      } else if (tip.mode === 'hover') UI.hideTip();
+    });
+    document.addEventListener('pointerleave', () => {
+      if (tip.mode === 'hover') UI.hideTip();
+    });
+    document.addEventListener('focusin', (e) => {
+      const el = tipTarget(e);
+      if (el && el.matches(':focus-visible')) UI.showTip(el, 'focus');
+      else if (tip.mode === 'focus') UI.hideTip();
+    });
+    document.addEventListener('focusout', (e) => {
+      if (tip.mode === 'focus' && e.target === tip.anchor) UI.hideTip();
+    });
+    document.addEventListener('pointerdown', (e) => {
+      clearTimeout(tip.timer);
+      tip.suppressClick = false;
+      const el = tipTarget(e);
+      // "i" rozeti: seçim yapmadan balonu aç (dokunmatik + fare)
+      if (el && e.target.closest('.tip-i')) {
+        UI.showTip(el, 'touch');
+        tip.suppressClick = true;
+        return;
+      }
+      if (e.pointerType !== 'touch') return;
+      if (tip.anchor && tip.anchor !== el) UI.hideTip();
+      if (!el) return;
+      tip.start = { x: e.clientX, y: e.clientY };
+      tip.timer = setTimeout(() => {
+        UI.showTip(el, 'touch');
+        tip.suppressClick = true; // basılı tutma = bilgi; parmak kalkınca seçim yapılmaz
+      }, LONG_PRESS_MS);
+    });
+    document.addEventListener('pointermove', (e) => {
+      if (tip.start && Math.hypot(e.clientX - tip.start.x, e.clientY - tip.start.y) > 10) clearTimeout(tip.timer);
+    });
+    ['pointerup', 'pointercancel'].forEach((ev) =>
+      document.addEventListener(ev, () => {
+        clearTimeout(tip.timer);
+        tip.start = null;
+      })
+    );
+    document.addEventListener(
+      'click',
+      (e) => {
+        if (!tip.suppressClick) return;
+        tip.suppressClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true
+    );
+    document.addEventListener('contextmenu', (e) => {
+      if (tipTarget(e)) e.preventDefault(); // uzun basışta tarayıcı menüsü açılmasın
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && tip.anchor) UI.hideTip();
+    });
+    document.addEventListener('scroll', () => tip.anchor && UI.hideTip(), true);
+    window.addEventListener('resize', () => tip.anchor && UI.hideTip());
+  }
 
   S.UI = UI;
 })((window.SOL14 = window.SOL14 || {}));

@@ -43,7 +43,9 @@
       '<div class="panel big-panel dl-panel" style="--bg:url(\'' + S.Sprites.screen('scr_downlink') + '\')">' +
       '<div class="bp-head"><span class="bp-num">05</span><h2>DOWNLINK</h2>' + passChip + '<button class="icon-btn" data-close>' + I('x') + '</button></div>' +
       '<div class="dl-top"><div class="dl-cap"><div class="dl-cap-head"><span>' + t('dl.capacity') + '</span><b>' + cap.used + ' / ' + cap.total + ' Mbit</b></div>' +
-      S.UI.segBar((cap.used / Math.max(1, cap.total)) * 100, 24) + '</div>' +
+      S.UI.segBar((cap.used / Math.max(1, cap.total)) * 100, 24) +
+      // Aletlerin günlük rutin verisi raporlardan önce gider (Sol 0 seçimi: alet sayısı ve veri hacmi)
+      '<small class="dl-routine">' + I('sat') + t('dl.routine', { left: Math.round(s.downlink.routineMbit || 0), total: S.Sim.instrumentDataMbit(s) }) + '</small></div>' +
       '<div class="dl-delay"><span>' + t('dl.light_delay') + '</span><b>' + t('unit.mmss', { m: h.mm, s: h.ss }) + '</b><small>' + h.distanceMillionKm + ' M km · JPL Horizons</small></div></div>' +
       (!commsOk ? '<div class="alert warn">' + I('power') + '<span>' + t('dl.comms_shed') + '</span></div>' : '') +
       '<div class="dl-queue"><div class="dl-qhead">' + t('dl.queue_title') + '</div>' +

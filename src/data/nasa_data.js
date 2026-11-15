@@ -166,10 +166,24 @@ window.SOL14.DATA = {
    "chargeSuitMin": 30,
    "repairSuitMin": 40,
    "repairSuitIntegrity": 50,
+   "repairSuitKitMin": 20,
    "cleanPanelsMin": 30,
    "salvageMin": 30,
    "diagnoseMin": 10,
    "sleepMorale": 6
+  },
+  "launchWindow": {
+   "simplified": true,
+   "simplifiedNote": "Game values: crew morale at landing when the launch window is caught (90) or missed (80). Real: Earth-Mars launch windows open about every 26 months (constants.synodicPeriod, NASA Trajectory Browser); a missed window means a long wait on the ground, modelled here as extra cost and lower starting morale.",
+   "moraleStartCaught": 90,
+   "moraleStartMissed": 80,
+   "src": "https://trajbrowser.arc.nasa.gov/"
+  },
+  "instrumentData": {
+   "simplified": true,
+   "simplifiedNote": "Game rule: each instrument dataMbit (instruments list) is its routine science and housekeeping volume per sol. It is downlinked automatically before the player report packets on every relay pass, so data-heavy instruments leave less room for reports. The per-instrument volumes are game values scaled to the game relay pass capacities (habitat.relayPasses), not measured instrument data volumes.",
+   "routineSentFirst": true,
+   "src": "https://science.nasa.gov/mission/mars-reconnaissance-orbiter/"
   },
   "transit": {
    "simplified": true,
@@ -607,6 +621,8 @@ window.SOL14.DATA = {
   }
  ],
  "terrain": {
+  "simplified": true,
+  "simplifiedNote": "Corridor layout, sand pit positions, the slowdown factor, ice dig values and the drone rules (Ingenuity reveals the wrecks and routes the walker around sand pits) are game values. Real lesson behind the sand pits: Spirit was stuck in soft sand at Troy (NASA Spirit mission page).",
   "iceDepositM": 260,
   "sandPits": [
    {
@@ -620,6 +636,7 @@ window.SOL14.DATA = {
   ],
   "sandPitSpeedFactor": 0.5,
   "droneRevealAllWrecks": true,
+  "droneRoutesAroundSandPits": true,
   "wreckVisibleWithoutDroneM": 160,
   "iceDigMinutes": 40,
   "iceDigWaterL": 6,

@@ -31,6 +31,8 @@
       full: th.fullSuccess,
       fuel: Math.round(s.res.mavFuel),
       fuelOk: s.res.mavFuel >= 100,
+      // MOXIE yoksa ISRU ünitesi yok: yakıt artırılamaz, hedefler Sabatier istemez
+      canFuel: S.Sim.hasIsru(s),
       launchSol: s.maxSols
     };
   };
@@ -41,7 +43,7 @@
     return [
       { key: 'status.reports', vars: { n: p.forensicsSent, req: p.full.forensicsSent }, done: p.forensicsSent >= p.full.forensicsSent },
       { key: 'status.experiments', vars: { n: p.experimentsSent, req: p.full.experimentsSent }, done: p.experimentsSent >= p.full.experimentsSent },
-      { key: 'status.fuel', vars: { fuel: p.fuel }, done: p.fuelOk },
+      { key: p.canFuel || p.fuelOk ? 'status.fuel' : 'status.fuel_no_isru', vars: { fuel: p.fuel }, done: p.fuelOk },
       { key: 'status.sol', vars: { sol: p.launchSol, now: s.sol }, done: s.sol >= p.launchSol }
     ];
   };
@@ -82,7 +84,7 @@
     } else if (s.suit.leak) return goal('repair_suit');
 
     // 2) Son Sol: MAV
-    if (s.sol >= s.maxSols) return p.fuelOk ? goal('mav_launch') : goal('mav_fuel', { fuel: p.fuel });
+    if (s.sol >= s.maxSols) return p.fuelOk || !p.canFuel ? goal('mav_launch') : goal('mav_fuel', { fuel: p.fuel });
 
     // 3) Yarım kalan enkaz incelemesi
     const wip = wreckInProgress(s);
@@ -125,7 +127,7 @@
       }
       if (needE) return goal('lab_go', expVars);
     }
-    if (!p.fuelOk) return goal('isru', { fuel: p.fuel });
+    if (!p.fuelOk && p.canFuel) return goal('isru', { fuel: p.fuel });
     return goal('sleep');
   };
 
@@ -136,7 +138,7 @@
     if (s.res.panelDust >= 0.3) opts.push(goal('opt_clean', { pct: Math.round(s.res.panelDust * 100) }));
     if (gh.installed && !gh.frozen && gh.tendedSol !== s.sol && s.res.waterL >= ghCfg.tendWaterL) opts.push(goal('opt_greenhouse'));
     if (S.Sim.has(s, 'rimfax') && s.iceDugSol !== s.sol && s.res.waterL < 30) opts.push(goal('opt_ice', { l: Math.round(s.res.waterL) }));
-    if (s.res.mavFuel < 100 && s.sol < s.maxSols) opts.push(goal('opt_sabatier', { fuel: Math.round(s.res.mavFuel) }));
+    if (s.res.mavFuel < 100 && s.sol < s.maxSols && S.Sim.hasIsru(s)) opts.push(goal('opt_sabatier', { fuel: Math.round(s.res.mavFuel) }));
     // Ana hedefle aynı işi isteğe bağlı olarak tekrar gösterme
     const same = { isru: 'opt_sabatier', mav_fuel: 'opt_sabatier' };
     return opts.find((o) => !main || same[main.id] !== o.id) || null;

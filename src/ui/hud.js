@@ -173,7 +173,9 @@
     ref('speed').innerHTML = suit.frozen
       ? '<span class="danger">' + t('hud.joints_frozen', { pct: ponr.speedPct }) + '</span>'
       : S.Surface.inSandPit(s.player.x)
-        ? '<span class="warn">' + t('hud.sand_pit') + '</span>'
+        ? S.Surface.sandPitAvoided(s)
+          ? t('hud.sand_pit_routed')
+          : '<span class="warn">' + t('hud.sand_pit') + '</span>'
         : t('hud.speed_normal');
     ref('hbat').textContent = s.res.energyKwh.toFixed(1) + ' / ' + s.res.batteryKwh + ' kWh';
     ref('hbatfill').style.width = (s.res.energyKwh / s.res.batteryKwh) * 100 + '%';
