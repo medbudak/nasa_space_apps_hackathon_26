@@ -7,7 +7,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { play } = require('./helpers/bot.js');
+const { play, tendNeeds } = require('./helpers/bot.js');
 const { loadCore } = require('./helpers/load_core.js');
 
 const GOLDEN = {
@@ -73,6 +73,7 @@ test('Profil 1 — Altın Yol: MEDA fırtınayı 1 Sol önceden haber verir, ser
   const stormSol = S.DATA.events.schedule.full.find((e) => e.id === 'dust_storm').sol;
   let guard = 0;
   while (s.sol < stormSol - 1 && !s.gameOver && guard++ < 50) {
+    tendNeeds(S, s);
     S.Sim.sleep(s);
     if (s.crisis.active) S.Events.resolve(s, 'A');
   }

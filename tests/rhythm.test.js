@@ -10,7 +10,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const { loadCore, readJson, ROOT } = require('./helpers/load_core.js');
-const { play } = require('./helpers/bot.js');
+const { play, tendNeeds } = require('./helpers/bot.js');
 
 function landed(opts = {}) {
   const S = loadCore();
@@ -32,6 +32,7 @@ function toSol(S, s, n) {
   s.player.inside = true;
   let guard = 0;
   while (s.sol < n && !s.gameOver && guard++ < 60) {
+    tendNeeds(S, s);
     S.Sim.sleep(s);
     if (s.crisis.active) S.Events.resolve(s, 'A');
   }
